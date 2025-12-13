@@ -3,12 +3,29 @@ import React from 'react';
 import { User } from '../types';
 import { MOCK_EVENTS } from '../constants';
 import { Settings, LogOut, ChevronRight, MapPin, Link as LinkIcon, Edit2, Shield, BellRing, Moon } from 'lucide-react';
+import { useAuth } from './AuthProvider';
 
 interface ProfileViewProps {
   currentUser: User;
 }
 
 export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
+  const auth = useAuth();
+  const useSupabase = () => {
+    return (import.meta as any).env?.VITE_USE_SUPABASE === 'true' && 
+           (import.meta as any).env?.VITE_SUPABASE_URL && 
+           (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
+  };
+  
+  const handleSignOut = async () => {
+    if (useSupabase() && auth.signOut) {
+      try {
+        await auth.signOut();
+      } catch (error) {
+        console.error('Error signing out:', error);
+      }
+    }
+  };
   const hostedCount = MOCK_EVENTS.filter(e => e.hostId === currentUser.id).length;
   const attendedCount = MOCK_EVENTS.filter(e => e.attendees.includes(currentUser.id)).length;
 
@@ -111,9 +128,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
                  </button>
              </div>
 
-             <button className="w-full mt-6 p-4 rounded-xl border border-red-900/30 bg-red-900/10 text-red-400 font-bold flex items-center justify-center gap-2 hover:bg-red-900/20 transition-colors">
-                 <LogOut className="w-5 h-5" /> Sign Out
-             </button>
+             {useSupabase() && (
+                 <button 
+                     onClick={handleSignOut}
+                     className="w-full mt-6 p-4 rounded-xl border border-red-900/30 bg-red-900/10 text-red-400 font-bold flex items-center justify-center gap-2 hover:bg-red-900/20 transition-colors"
+                 >
+                     <LogOut className="w-5 h-5" /> Sign Out
+                 </button>
+             )}
         </div>
     </div>
   );

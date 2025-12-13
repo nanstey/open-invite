@@ -19,9 +19,9 @@ import { fetchEvents, createEvent, updateEvent, joinEvent, leaveEvent } from './
 import { realtimeService } from './services/realtimeService';
 
 const useSupabase = () => {
-  return import.meta.env.VITE_USE_SUPABASE === 'true' && 
-         import.meta.env.VITE_SUPABASE_URL && 
-         import.meta.env.VITE_SUPABASE_ANON_KEY;
+  return (import.meta as any).env?.VITE_USE_SUPABASE === 'true' && 
+         (import.meta as any).env?.VITE_SUPABASE_URL && 
+         (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
 };
 
 const AppContent: React.FC = () => {
@@ -734,18 +734,12 @@ const AppContent: React.FC = () => {
 };
 
 const App: React.FC = () => {
-  const useSupabaseFlag = useSupabase();
-  
-  if (useSupabaseFlag) {
-    return (
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
-    );
-  }
-  
-  // Fallback: use mock data without auth
-  return <AppContent />;
+  // Always wrap in AuthProvider - it handles the case when Supabase is disabled
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
+  );
 };
 
 export default App;
