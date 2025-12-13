@@ -1,0 +1,69 @@
+
+export interface User {
+  id: string;
+  name: string;
+  avatar: string;
+  isCurrentUser?: boolean;
+}
+
+export interface Comment {
+  id: string;
+  userId: string;
+  text: string;
+  timestamp: string;
+}
+
+export interface Reaction {
+  emoji: string;
+  count: number;
+  userReacted: boolean;
+}
+
+export enum EventPrivacy {
+  OPEN = 'OPEN', // Anyone can join
+  INVITE_ONLY = 'INVITE_ONLY',
+}
+
+export enum EventGroup {
+  ALL_FRIENDS = 'ALL_FRIENDS',
+  CLIMBERS = 'CLIMBERS',
+  FAMILY = 'FAMILY',
+  WORK = 'WORK',
+}
+
+export interface SocialEvent {
+  id: string;
+  hostId: string;
+  title: string;
+  description: string;
+  activityType: string; // e.g., "Dining", "Sport", "Travel"
+  location: string;
+  coordinates: { lat: number; lng: number }; // Real coordinates
+  startTime: string; // ISO String
+  endTime?: string;
+  isFlexibleStart: boolean;
+  isFlexibleEnd: boolean;
+  privacy: EventPrivacy;
+  targetGroup: EventGroup;
+  maxSeats?: number;
+  attendees: string[]; // User IDs
+  noPhones: boolean;
+  comments: Comment[];
+  reactions: Record<string, Reaction>; // key is emoji
+}
+
+export interface Notification {
+  id: string;
+  type: 'INVITE' | 'COMMENT' | 'REACTION' | 'REMINDER' | 'SYSTEM';
+  title: string;
+  message: string;
+  timestamp: string;
+  relatedEventId?: string;
+  isRead: boolean;
+  actorId?: string; // Who triggered it
+}
+
+export type ViewMode = 'EVENTS' | 'FRIENDS' | 'ALERTS' | 'PROFILE';
+export type InvitesMode = 'LIST' | 'MAP' | 'CALENDAR';
+export type FriendsMode = 'FRIENDS' | 'GROUPS';
+export type MyEventsMode = 'HOSTING' | 'ATTENDING';
