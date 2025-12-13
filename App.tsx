@@ -63,6 +63,21 @@ const AppContent: React.FC = () => {
     }
   }, [viewMode, invitesMode]);
 
+  // Handle OAuth callback - close login modal when user becomes authenticated
+  useEffect(() => {
+    if (currentUser && showLoginModal) {
+      // User just authenticated (likely from OAuth callback)
+      setShowLoginModal(false);
+      // Clean up OAuth callback URL parameters
+      if (window.location.hash.includes('access_token') || window.location.search.includes('code')) {
+        const url = new URL(window.location.href);
+        url.hash = '';
+        url.search = '';
+        window.history.replaceState({}, '', url.toString());
+      }
+    }
+  }, [currentUser, showLoginModal]);
+
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     // Only apply logic in List view where FilterBar is relevant
     if (viewMode !== 'EVENTS' || invitesMode !== 'LIST') return;

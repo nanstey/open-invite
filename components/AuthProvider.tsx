@@ -18,6 +18,7 @@ interface AuthContextType {
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any } | null>;
   signUp: (email: string, password: string, name: string, avatar: string) => Promise<{ error: any } | null>;
+  signInWithGoogle: () => Promise<{ error: any } | null>;
   signOut: () => Promise<void>;
 }
 
@@ -148,6 +149,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return null;
   };
 
+  const signInWithGoogle = async () => {
+    if (!useSupabase()) {
+      return { error: { message: 'Supabase is not enabled' } };
+    }
+    devLog('Signing in with Google...');
+    const { signInWithGoogle } = await import('../lib/supabaseClient');
+    const result = await signInWithGoogle();
+    if (result.error) {
+      devError('Google sign in error:', result.error);
+      return { error: result.error };
+    }
+    // OAuth redirect will happen, so we don't need to update user state here
+    // The auth state change listener will handle it when the user returns
+    return null;
+  };
+
   const signOut = async () => {
     if (!useSupabase()) {
       return;
@@ -158,7 +175,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, loading, signIn, signUp, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
   );

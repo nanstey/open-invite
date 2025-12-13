@@ -44,8 +44,11 @@ export async function getCurrentUser(): Promise<User | null> {
     } catch (timeoutError) {
       devError('getCurrentUser: Profile fetch timed out or failed:', timeoutError);
       // If fetch fails, try to create profile
-      const defaultName = user.email?.split('@')[0] || 'User';
-      const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultName)}&background=random`;
+      // Use OAuth metadata if available (for Google OAuth users)
+      const oauthName = user.user_metadata?.full_name || user.user_metadata?.name;
+      const oauthAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+      const defaultName = oauthName || user.email?.split('@')[0] || 'User';
+      const defaultAvatar = oauthAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultName)}&background=random`;
       return {
         id: user.id,
         name: defaultName,
@@ -62,8 +65,11 @@ export async function getCurrentUser(): Promise<User | null> {
       if (profileError.code === 'PGRST116' || profileError.message?.includes('No rows')) {
         devLog('getCurrentUser: Profile does not exist, creating default profile...');
         // Profile doesn't exist - create a default one
-        const defaultName = user.email?.split('@')[0] || 'User';
-        const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultName)}&background=random`;
+        // Use OAuth metadata if available (for Google OAuth users)
+        const oauthName = user.user_metadata?.full_name || user.user_metadata?.name;
+        const oauthAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+        const defaultName = oauthName || user.email?.split('@')[0] || 'User';
+        const defaultAvatar = oauthAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultName)}&background=random`;
         
         const { data: newProfile, error: insertError } = await supabase
           .from('user_profiles')
@@ -97,8 +103,11 @@ export async function getCurrentUser(): Promise<User | null> {
       }
       devError('getCurrentUser: Unexpected profile error:', profileError);
       // Return a basic user object even on error
-      const defaultName = user.email?.split('@')[0] || 'User';
-      const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultName)}&background=random`;
+      // Use OAuth metadata if available (for Google OAuth users)
+      const oauthName = user.user_metadata?.full_name || user.user_metadata?.name;
+      const oauthAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+      const defaultName = oauthName || user.email?.split('@')[0] || 'User';
+      const defaultAvatar = oauthAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultName)}&background=random`;
       return {
         id: user.id,
         name: defaultName,
@@ -109,8 +118,11 @@ export async function getCurrentUser(): Promise<User | null> {
 
     if (!profile) {
       devLog('getCurrentUser: Profile is null');
-      const defaultName = user.email?.split('@')[0] || 'User';
-      const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultName)}&background=random`;
+      // Use OAuth metadata if available (for Google OAuth users)
+      const oauthName = user.user_metadata?.full_name || user.user_metadata?.name;
+      const oauthAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+      const defaultName = oauthName || user.email?.split('@')[0] || 'User';
+      const defaultAvatar = oauthAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultName)}&background=random`;
       return {
         id: user.id,
         name: defaultName,
@@ -132,8 +144,11 @@ export async function getCurrentUser(): Promise<User | null> {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        const defaultName = user.email?.split('@')[0] || 'User';
-        const defaultAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultName)}&background=random`;
+        // Use OAuth metadata if available (for Google OAuth users)
+        const oauthName = user.user_metadata?.full_name || user.user_metadata?.name;
+        const oauthAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
+        const defaultName = oauthName || user.email?.split('@')[0] || 'User';
+        const defaultAvatar = oauthAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultName)}&background=random`;
         return {
           id: user.id,
           name: defaultName,
@@ -184,6 +199,21 @@ export async function signIn(email: string, password: string) {
   return await supabase.auth.signInWithPassword({
     email,
     password,
+  });
+}
+
+/**
+ * Sign in with Google OAuth
+ */
+export async function signInWithGoogle() {
+  const redirectUrl = `${window.location.origin}/auth/callback`;
+  devLog('Signing in with Google, redirect URL:', redirectUrl);
+  
+  return await supabase.auth.signInWithOAuth({
+    provider: 'google',
+    options: {
+      redirectTo: redirectUrl,
+    },
   });
 }
 
