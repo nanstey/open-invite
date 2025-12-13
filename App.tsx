@@ -1,7 +1,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { ViewMode, InvitesMode, FriendsMode, SocialEvent, User } from './types';
-import { USERS, MOCK_EVENTS } from './constants';
+import { MOCK_EVENTS as FALLBACK_EVENTS, USERS as FALLBACK_USERS } from './constants';
 import { EventCard } from './components/EventCard';
 import { CreateEventModal } from './components/CreateEventModal';
 import { EventDetail } from './components/EventDetail';
@@ -13,11 +13,24 @@ import { ProfileView } from './components/ProfileView';
 import { FilterBar, TimeFilter, StatusFilter } from './components/FilterBar';
 import { TabGroup, TabOption } from './components/TabGroup';
 import { Plus, LayoutGrid, Map as MapIcon, Calendar as CalendarIcon, Bell, Users as UsersIcon, UserCircle, CalendarDays } from 'lucide-react';
+import { AuthProvider, useAuth } from './components/AuthProvider';
+import { LoginModal } from './components/LoginModal';
+import { fetchEvents, createEvent, updateEvent, joinEvent, leaveEvent } from './services/eventService';
+import { realtimeService } from './services/realtimeService';
 
-const App: React.FC = () => {
-  const [currentUser] = useState<User>(USERS[0]);
-  const [events, setEvents] = useState<SocialEvent[]>(MOCK_EVENTS);
+const useSupabase = () => {
+  return import.meta.env.VITE_USE_SUPABASE === 'true' && 
+         import.meta.env.VITE_SUPABASE_URL && 
+         import.meta.env.VITE_SUPABASE_ANON_KEY;
+};
+
+const AppContent: React.FC = () => {
+  const { user: currentUser, loading: authLoading } = useAuth();
+  const [events, setEvents] = useState<SocialEvent[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
   const [dismissedEventIds, setDismissedEventIds] = useState<Set<string>>(new Set());
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const useSupabaseFlag = useSupabase();
   
   // Top level navigation state
   const [viewMode, setViewMode] = useState<ViewMode>('EVENTS');
@@ -82,40 +95,175 @@ const App: React.FC = () => {
     { id: 'GROUPS', label: 'Groups', icon: <UserCircle className="w-4 h-4" /> },
   ];
 
-  const handleCreateEvent = (newEventData: Omit<SocialEvent, 'id' | 'hostId' | 'attendees' | 'comments' | 'reactions'>) => {
-    const newEvent: SocialEvent = {
-      ...newEventData,
-      id: Date.now().toString(),
-      hostId: currentUser.id,
-      attendees: [currentUser.id],
-      comments: [],
-      reactions: {}
+  // Load events on mount and when user changes
+  useEffect(() => {
+    if (authLoading) return;
+    
+    if (!useSupabaseFlag || !currentUser) {
+      // Fallback to mock data
+      setEvents(FALLBACK_EVENTS);
+      setEventsLoading(false);
+      return;
+    }
+
+    const loadEvents = async () => {
+      setEventsLoading(true);
+      try {
+        const fetchedEvents = await fetchEvents();
+        setEvents(fetchedEvents);
+      } catch (error) {
+        console.error('Error loading events:', error);
+        // Fallback to mock data on error
+        setEvents(FALLBACK_EVENTS);
+      } finally {
+        setEventsLoading(false);
+      }
     };
-    setEvents(prev => [newEvent, ...prev]); // Add to top
-    setShowCreateModal(false);
-    setStatusFilter('HOSTING'); // Switch view to hosting to see it
+
+    loadEvents();
+
+    // Subscribe to new events
+    const unsubscribeNewEvents = realtimeService.subscribeToAllEvents((newEvent) => {
+      setEvents(prev => {
+        // Check if event already exists
+        if (prev.some(e => e.id === newEvent.id)) {
+          return prev.map(e => e.id === newEvent.id ? newEvent : e);
+        }
+        return [newEvent, ...prev];
+      });
+    });
+
+    return () => {
+      unsubscribeNewEvents();
+    };
+  }, [currentUser, authLoading, useSupabaseFlag]);
+
+  // Subscribe to event updates for selected event
+  useEffect(() => {
+    if (!selectedEvent || !useSupabaseFlag) return;
+
+    const unsubscribe = realtimeService.subscribeToEvent(selectedEvent.id, {
+      onUpdate: (updatedEvent) => {
+        setSelectedEvent(updatedEvent);
+        setEvents(prev => prev.map(e => e.id === updatedEvent.id ? updatedEvent : e));
+      },
+      onDelete: () => {
+        setSelectedEvent(null);
+        setEvents(prev => prev.filter(e => e.id !== selectedEvent.id));
+      },
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [selectedEvent, useSupabaseFlag]);
+
+  const handleCreateEvent = async (newEventData: Omit<SocialEvent, 'id' | 'hostId' | 'attendees' | 'comments' | 'reactions'>) => {
+    if (!currentUser) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    if (useSupabaseFlag) {
+      try {
+        const newEvent = await createEvent(newEventData);
+        if (newEvent) {
+          setEvents(prev => [newEvent, ...prev]);
+          setShowCreateModal(false);
+          setStatusFilter('HOSTING');
+        }
+      } catch (error) {
+        console.error('Error creating event:', error);
+      }
+    } else {
+      // Fallback to mock behavior
+      const newEvent: SocialEvent = {
+        ...newEventData,
+        id: Date.now().toString(),
+        hostId: currentUser.id,
+        attendees: [currentUser.id],
+        comments: [],
+        reactions: {}
+      };
+      setEvents(prev => [newEvent, ...prev]);
+      setShowCreateModal(false);
+      setStatusFilter('HOSTING');
+    }
   };
 
-  const handleUpdateEvent = (updated: SocialEvent) => {
-    setEvents(prev => prev.map(e => e.id === updated.id ? updated : e));
-    setSelectedEvent(updated);
+  const handleUpdateEvent = async (updated: SocialEvent) => {
+    if (useSupabaseFlag) {
+      try {
+        const result = await updateEvent(updated.id, updated);
+        if (result) {
+          setSelectedEvent(result);
+          setEvents(prev => prev.map(e => e.id === result.id ? result : e));
+        }
+      } catch (error) {
+        console.error('Error updating event:', error);
+      }
+    } else {
+      // Fallback to mock behavior
+      setEvents(prev => prev.map(e => e.id === updated.id ? updated : e));
+      setSelectedEvent(updated);
+    }
   };
 
   // --- Action Handlers (Swipe / Buttons) ---
-  const handleJoinEvent = (eventId: string) => {
-    setEvents(prev => prev.map(e => {
-      if (e.id !== eventId) return e;
-      if (e.attendees.includes(currentUser.id)) return e; // Already joined
-      if (e.maxSeats && e.attendees.length >= e.maxSeats) return e; // Full
-      return { ...e, attendees: [...e.attendees, currentUser.id] };
-    }));
+  const handleJoinEvent = async (eventId: string) => {
+    if (!currentUser) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    if (useSupabaseFlag) {
+      try {
+        const success = await joinEvent(eventId);
+        if (success) {
+          // Event will be updated via realtime subscription
+          const updatedEvent = await fetchEvents();
+          const event = updatedEvent.find(e => e.id === eventId);
+          if (event) {
+            setEvents(prev => prev.map(e => e.id === eventId ? event : e));
+          }
+        }
+      } catch (error) {
+        console.error('Error joining event:', error);
+      }
+    } else {
+      // Fallback to mock behavior
+      setEvents(prev => prev.map(e => {
+        if (e.id !== eventId) return e;
+        if (e.attendees.includes(currentUser.id)) return e;
+        if (e.maxSeats && e.attendees.length >= e.maxSeats) return e;
+        return { ...e, attendees: [...e.attendees, currentUser.id] };
+      }));
+    }
   };
 
-  const handleLeaveEvent = (eventId: string) => {
-    setEvents(prev => prev.map(e => {
-      if (e.id !== eventId) return e;
-      return { ...e, attendees: e.attendees.filter(uid => uid !== currentUser.id) };
-    }));
+  const handleLeaveEvent = async (eventId: string) => {
+    if (!currentUser) return;
+
+    if (useSupabaseFlag) {
+      try {
+        const success = await leaveEvent(eventId);
+        if (success) {
+          const updatedEvent = await fetchEvents();
+          const event = updatedEvent.find(e => e.id === eventId);
+          if (event) {
+            setEvents(prev => prev.map(e => e.id === eventId ? event : e));
+          }
+        }
+      } catch (error) {
+        console.error('Error leaving event:', error);
+      }
+    } else {
+      // Fallback to mock behavior
+      setEvents(prev => prev.map(e => {
+        if (e.id !== eventId) return e;
+        return { ...e, attendees: e.attendees.filter(uid => uid !== currentUser.id) };
+      }));
+    }
   };
 
   const handleDismiss = (eventId: string) => {
@@ -134,6 +282,9 @@ const App: React.FC = () => {
     });
   };
 
+  // Get current user for filtering (fallback if not authenticated)
+  const effectiveUser = currentUser || FALLBACK_USERS[0];
+
   // --- Filter Logic ---
   const filteredEvents = useMemo(() => {
     const now = new Date();
@@ -148,8 +299,8 @@ const App: React.FC = () => {
       }
 
       // 2. Status Filter Bucket Logic
-      const isHost = event.hostId === currentUser.id;
-      const isAttending = event.attendees.includes(currentUser.id);
+      const isHost = event.hostId === effectiveUser.id;
+      const isAttending = event.attendees.includes(effectiveUser.id);
       const isPast = new Date(event.startTime) < now;
 
       // Filter by Past/Future first
@@ -221,7 +372,7 @@ const App: React.FC = () => {
        const timeB = new Date(b.startTime).getTime();
        return statusFilter === 'PAST' ? timeB - timeA : timeA - timeB;
     });
-  }, [events, searchTerm, filterCategory, showOpenOnly, timeFilter, statusFilter, currentUser.id, dismissedEventIds]);
+  }, [events, searchTerm, filterCategory, showOpenOnly, timeFilter, statusFilter, effectiveUser.id, dismissedEventIds]);
 
   // --- Grouping Logic for Card View ---
   const groupedEvents = useMemo(() => {
@@ -289,6 +440,39 @@ const App: React.FC = () => {
       }
   }, [viewMode]);
 
+  // Show loading state
+  if (authLoading || eventsLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-slate-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-slate-400">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show login prompt if using Supabase and not authenticated
+  if (useSupabaseFlag && !currentUser) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-slate-100">
+        <div className="text-center max-w-md p-6">
+          <h1 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
+            Open Invite
+          </h1>
+          <p className="text-slate-400 mb-6">Please sign in to continue</p>
+          <button
+            onClick={() => setShowLoginModal(true)}
+            className="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-6 rounded-lg transition-colors"
+          >
+            Sign In
+          </button>
+        </div>
+        {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row max-w-7xl mx-auto overflow-hidden h-screen text-slate-100 bg-background">
       
@@ -342,7 +526,7 @@ const App: React.FC = () => {
                 className={`p-3 rounded-xl transition-all flex items-center justify-start gap-3 w-full ${viewMode === 'PROFILE' ? 'bg-primary/10 text-primary' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
             >
               <div className={`w-6 h-6 rounded-full bg-gradient-to-br from-primary to-secondary p-[1px] ${viewMode === 'PROFILE' ? 'ring-2 ring-primary ring-offset-2 ring-offset-slate-900' : ''}`}>
-                 <img src={currentUser.avatar} alt="Me" className="rounded-full w-full h-full bg-slate-900 object-cover" />
+                 <img src={effectiveUser.avatar} alt="Me" className="rounded-full w-full h-full bg-slate-900 object-cover" />
               </div>
               <span className="hidden lg:block font-medium">Profile</span>
            </button>
@@ -437,7 +621,7 @@ const App: React.FC = () => {
                                           <EventCard 
                                              event={event} 
                                              onClick={() => setSelectedEvent(event)} 
-                                             currentUser={currentUser}
+                                             currentUser={effectiveUser}
                                              onJoin={handleJoinEvent}
                                              onLeave={handleLeaveEvent}
                                              onHide={handleDismiss}
@@ -467,11 +651,11 @@ const App: React.FC = () => {
                   )}
 
                   {invitesMode === 'MAP' && (
-                    <MapView events={filteredEvents} onEventClick={setSelectedEvent} currentUser={currentUser} />
+                    <MapView events={filteredEvents} onEventClick={setSelectedEvent} currentUser={effectiveUser} />
                   )}
 
                   {invitesMode === 'CALENDAR' && (
-                    <CalendarView events={filteredEvents} onEventClick={setSelectedEvent} currentUser={currentUser} />
+                    <CalendarView events={filteredEvents} onEventClick={setSelectedEvent} currentUser={effectiveUser} />
                   )}
                </>
             )}
@@ -485,7 +669,7 @@ const App: React.FC = () => {
             )}
 
             {viewMode === 'PROFILE' && (
-                <ProfileView currentUser={currentUser} />
+                <ProfileView currentUser={effectiveUser} />
             )}
           </div>
 
@@ -518,7 +702,7 @@ const App: React.FC = () => {
 
           <button onClick={() => setViewMode('PROFILE')} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${viewMode === 'PROFILE' ? 'text-primary' : 'text-slate-400'}`}>
              <div className={`w-6 h-6 rounded-full overflow-hidden border ${viewMode === 'PROFILE' ? 'border-primary' : 'border-slate-500'}`}>
-               <img src={currentUser.avatar} alt="Me" className="w-full h-full object-cover" />
+               <img src={effectiveUser.avatar} alt="Me" className="w-full h-full object-cover" />
              </div>
              <span className="text-[10px] font-medium">Profile</span>
           </button>
@@ -532,7 +716,7 @@ const App: React.FC = () => {
       {selectedEvent && (
         <EventDetail 
           event={selectedEvent} 
-          currentUser={currentUser} 
+          currentUser={effectiveUser} 
           onClose={() => setSelectedEvent(null)} 
           onUpdateEvent={handleUpdateEvent}
           onDismiss={
@@ -543,8 +727,25 @@ const App: React.FC = () => {
         />
       )}
 
+      {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
+
     </div>
   );
+};
+
+const App: React.FC = () => {
+  const useSupabaseFlag = useSupabase();
+  
+  if (useSupabaseFlag) {
+    return (
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    );
+  }
+  
+  // Fallback: use mock data without auth
+  return <AppContent />;
 };
 
 export default App;
