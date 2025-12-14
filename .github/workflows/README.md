@@ -144,3 +144,86 @@ Configure these secrets in each environment (Settings → Environments → [envi
 - Check that all environment variables are set correctly
 - Verify `pnpm build` works locally
 - Check build logs in GitHub Actions for specific errors
+
+## OAuth Provider Setup
+
+**Important:** The `supabase/config.toml` file only applies to local development. For remote Supabase projects (staging and production), OAuth providers must be configured directly in the Supabase Dashboard.
+
+#### Setting Up Google OAuth Credentials
+
+If you don't have Google OAuth credentials yet:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select an existing one
+3. Enable **Google Identity API** (or **Google+ API**)
+4. Go to **Credentials** → **Create Credentials** → **OAuth client ID**
+5. Configure OAuth consent screen if prompted (required for OAuth)
+6. Create OAuth client ID:
+   - Application type: **Web application**
+   - Name: e.g., "Open Invite OAuth"
+   - Authorized redirect URIs (add both):
+     - `https://<staging-project-ref>.supabase.co/auth/v1/callback`
+     - `https://<production-project-ref>.supabase.co/auth/v1/callback`
+   - Note: Replace `<staging-project-ref>` and `<production-project-ref>` with your actual Supabase project reference IDs
+   - Save and note the **Client ID** and **Client Secret**
+
+#### Configuring Google OAuth in Supabase Dashboard
+
+For each environment, configure Google OAuth in the Supabase Dashboard:
+
+##### Staging Environment
+
+1. Go to Supabase Dashboard → Select your staging project (`open-invite-staging`)
+2. Navigate to **Authentication** → **Providers**
+3. Find **Google** in the list of providers and click to configure
+4. Enable the Google provider toggle
+5. Enter your Google OAuth credentials:
+   - **Client ID (for OAuth)**: Your Google OAuth Client ID
+   - **Client Secret (for OAuth)**: Your Google OAuth Client Secret
+6. Configure redirect URLs:
+   - Go to **Authentication** → **URL Configuration**
+   - Add `https://staging.openinvite.cc/auth/callback` to **Redirect URLs**
+   - The redirect URL format matches what's used in the app: `${window.location.origin}/auth/callback`
+7. Click **Save**
+
+##### Production Environment
+
+1. Go to Supabase Dashboard → Select your production project (`open-invite-prod`)
+2. Navigate to **Authentication** → **Providers**
+3. Find **Google** in the list of providers and click to configure
+4. Enable the Google provider toggle
+5. Enter your Google OAuth credentials:
+   - **Client ID (for OAuth)**: Your Google OAuth Client ID (can be the same or different from staging)
+   - **Client Secret (for OAuth)**: Your Google OAuth Client Secret
+6. Configure redirect URLs:
+   - Go to **Authentication** → **URL Configuration**
+   - Add `https://openinvite.cc/auth/callback` to **Redirect URLs**
+7. Click **Save**
+
+#### Optional: Adding OAuth Secrets to GitHub
+
+While not strictly required for remote projects (since configuration is done in the Dashboard), you can add Google OAuth secrets to GitHub Environments for reference and potential future automation:
+
+Add to both `staging` and `production` GitHub Environments:
+- `SUPABASE_AUTH_EXTERNAL_GOOGLE_CLIENT_ID` - Google OAuth Client ID
+- `SUPABASE_AUTH_EXTERNAL_GOOGLE_SECRET` - Google OAuth Client Secret
+
+**Note:** These secrets are referenced in the staging deployment workflow but are primarily used during `supabase db reset` operations. The main OAuth configuration must be done in the Supabase Dashboard.
+
+#### Verifying OAuth Configuration
+
+After configuration, test OAuth in each environment:
+
+1. **Staging:**
+   - Navigate to `https://staging.openinvite.cc`
+   - Attempt Google sign-in
+   - Verify successful redirect to `https://staging.openinvite.cc/auth/callback`
+
+2. **Production:**
+   - Navigate to `https://openinvite.cc`
+   - Attempt Google sign-in
+   - Verify successful redirect to `https://openinvite.cc/auth/callback`
+
+3. **Check Supabase Dashboard:**
+   - Verify Google provider shows as "Enabled" in both projects
+   - Verify redirect URLs are correctly configured in URL Configuration
