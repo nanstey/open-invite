@@ -1,5 +1,4 @@
 -- Enable necessary extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
 CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA public;
 
 -- Create enum types matching TypeScript enums
@@ -18,7 +17,7 @@ CREATE TABLE public.user_profiles (
 
 -- Events table
 CREATE TABLE public.events (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   host_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   title TEXT NOT NULL,
   description TEXT NOT NULL,
@@ -39,7 +38,7 @@ CREATE TABLE public.events (
 
 -- Event attendees (many-to-many relationship)
 CREATE TABLE public.event_attendees (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   joined_at TIMESTAMPTZ DEFAULT NOW(),
@@ -48,7 +47,7 @@ CREATE TABLE public.event_attendees (
 
 -- Comments table
 CREATE TABLE public.comments (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   text TEXT NOT NULL,
@@ -58,7 +57,7 @@ CREATE TABLE public.comments (
 
 -- Reactions table (for emoji reactions on events)
 CREATE TABLE public.reactions (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   emoji TEXT NOT NULL,
@@ -68,7 +67,7 @@ CREATE TABLE public.reactions (
 
 -- Notifications table
 CREATE TABLE public.notifications (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   type notification_type NOT NULL,
   title TEXT NOT NULL,
@@ -82,7 +81,7 @@ CREATE TABLE public.notifications (
 
 -- User friends table (many-to-many relationship)
 CREATE TABLE public.user_friends (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   friend_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -92,7 +91,7 @@ CREATE TABLE public.user_friends (
 
 -- Groups table (user-created groups with per-user uniqueness)
 CREATE TABLE public.groups (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   created_by UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   updated_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
@@ -105,7 +104,7 @@ CREATE TABLE public.groups (
 
 -- User groups table (for group memberships) - OLD VERSION (will be replaced)
 CREATE TABLE public.user_groups (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   group_type event_group NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -114,7 +113,7 @@ CREATE TABLE public.user_groups (
 
 -- Event groups table (many-to-many relationship for GROUPS visibility) - OLD VERSION (will be replaced)
 CREATE TABLE public.event_groups (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
   group_type event_group NOT NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -123,7 +122,7 @@ CREATE TABLE public.event_groups (
 
 -- Event invites table (for INVITE_ONLY visibility)
 CREATE TABLE public.event_invites (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   invited_by UUID REFERENCES auth.users(id) ON DELETE SET NULL,
@@ -174,7 +173,7 @@ ON CONFLICT (created_by, name) DO NOTHING;
 
 -- Step 2: Create new user_groups table with group_id reference
 CREATE TABLE public.user_groups_new (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
   role TEXT NOT NULL DEFAULT 'MEMBER',
@@ -199,7 +198,7 @@ ON CONFLICT (user_id, group_id) DO NOTHING;
 
 -- Step 4: Create new event_groups table with group_id reference
 CREATE TABLE public.event_groups_new (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_id UUID NOT NULL REFERENCES public.events(id) ON DELETE CASCADE,
   group_id UUID NOT NULL REFERENCES public.groups(id) ON DELETE CASCADE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
