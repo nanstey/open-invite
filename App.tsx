@@ -14,6 +14,7 @@ import { TabGroup, TabOption } from './components/TabGroup';
 import { Plus, LayoutGrid, Map as MapIcon, Calendar as CalendarIcon, Bell, Users as UsersIcon, UserCircle, CalendarDays } from 'lucide-react';
 import { AuthProvider, useAuth } from './components/AuthProvider';
 import { LoginModal } from './components/LoginModal';
+import { LandingPage } from './components/LandingPage';
 import { fetchEvents, createEvent, updateEvent, joinEvent, leaveEvent } from './services/eventService';
 import { realtimeService } from './services/realtimeService';
 
@@ -448,24 +449,13 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // Show login prompt if using Supabase and not authenticated
+  // Show landing page if using Supabase and not authenticated
   if (useSupabaseFlag && !currentUser) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background text-slate-100">
-        <div className="text-center max-w-md p-6">
-          <h1 className="text-3xl font-bold mb-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary">
-            Open Invite
-          </h1>
-          <p className="text-slate-400 mb-6">Please sign in to continue</p>
-          <button
-            onClick={() => setShowLoginModal(true)}
-            className="bg-primary hover:bg-primary/90 text-white font-bold py-2 px-6 rounded-lg transition-colors"
-          >
-            Sign In
-          </button>
-        </div>
+      <>
+        <LandingPage onSignIn={() => setShowLoginModal(true)} />
         {showLoginModal && <LoginModal onClose={() => setShowLoginModal(false)} />}
-      </div>
+      </>
     );
   }
 
