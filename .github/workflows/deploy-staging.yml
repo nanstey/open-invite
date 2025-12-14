@@ -34,17 +34,9 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Supabase CLI
-        timeout-minutes: 5
-        run: |
-          ARCH=$(uname -m)
-          if [ "$ARCH" = "x86_64" ]; then
-            ARCH="amd64"
-          elif [ "$ARCH" = "aarch64" ]; then
-            ARCH="arm64"
-          fi
-          curl -fsSL https://github.com/supabase/cli/releases/latest/download/supabase_linux_${ARCH}.tar.gz | tar -xz
-          sudo mv supabase /usr/local/bin/
-          supabase --version
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
 
       - name: Link to Supabase Staging Project
         run: |
