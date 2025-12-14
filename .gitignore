@@ -10,7 +10,7 @@ lerna-debug.log*
 .env
 .env.local
 .env.staging
-.env.production
+.env.prod
 
 node_modules
 dist

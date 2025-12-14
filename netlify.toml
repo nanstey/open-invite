@@ -1,0 +1,9 @@
+# Build happens in GitHub Actions, not in Netlify
+# This file is kept for redirects and other Netlify configuration
+# The build command is not used when deploying via CLI with --dir flag
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
