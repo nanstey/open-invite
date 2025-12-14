@@ -1,6 +1,6 @@
 -- Enable necessary extensions
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp" WITH SCHEMA public;
+CREATE EXTENSION IF NOT EXISTS "pgcrypto" WITH SCHEMA public;
 
 -- Create enum types matching TypeScript enums
 CREATE TYPE event_visibility_type AS ENUM ('ALL_FRIENDS', 'GROUPS', 'INVITE_ONLY');
