@@ -28,27 +28,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const useSupabase = () => {
-    return (import.meta as any).env?.VITE_USE_SUPABASE === 'true' && 
-           (import.meta as any).env?.VITE_SUPABASE_URL && 
-           (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
-  };
-
   useEffect(() => {
-    const isSupabaseEnabled = useSupabase();
-    
     // Safety timeout to ensure loading never gets stuck
     const timeoutId = setTimeout(() => {
       devWarn('AuthProvider: Loading timeout, forcing loading to false');
       setLoading(false);
     }, 5000);
-
-    // Only initialize auth if Supabase is enabled
-    if (!isSupabaseEnabled) {
-      clearTimeout(timeoutId);
-      setLoading(false);
-      return;
-    }
 
     let subscription: { unsubscribe: () => void } | null = null;
     let loadingResolved = false;
@@ -97,9 +82,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (email: string, password: string) => {
-    if (!useSupabase()) {
-      return { error: { message: 'Supabase is not enabled' } };
-    }
     devLog('Signing in...');
     const { signIn, getSession } = await import('../lib/supabaseClient');
     const result = await signIn(email, password);
@@ -136,9 +118,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, name: string, avatar: string) => {
-    if (!useSupabase()) {
-      return { error: { message: 'Supabase is not enabled' } };
-    }
     const { signUp } = await import('../lib/supabaseClient');
     const result = await signUp(email, password, name, avatar);
     if (result.error) {
@@ -150,9 +129,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithGoogle = async () => {
-    if (!useSupabase()) {
-      return { error: { message: 'Supabase is not enabled' } };
-    }
     devLog('Signing in with Google...');
     const { signInWithGoogle } = await import('../lib/supabaseClient');
     const result = await signInWithGoogle();
@@ -166,9 +142,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    if (!useSupabase()) {
-      return;
-    }
     const { signOut } = await import('../lib/supabaseClient');
     await signOut();
     setUser(null);

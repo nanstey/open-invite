@@ -16,15 +16,9 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
   const [attendedCount, setAttendedCount] = useState(0);
   const [friendsCount, setFriendsCount] = useState(0);
   const [loading, setLoading] = useState(true);
-
-  const useSupabase = () => {
-    return (import.meta as any).env?.VITE_USE_SUPABASE === 'true' && 
-           (import.meta as any).env?.VITE_SUPABASE_URL && 
-           (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
-  };
   
   useEffect(() => {
-    if (!useSupabase() || !currentUser) {
+    if (!currentUser) {
       setLoading(false);
       return;
     }
@@ -74,7 +68,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
   }, [currentUser]);
   
   const handleSignOut = async () => {
-    if (useSupabase() && auth.signOut) {
+    if (auth.signOut) {
       try {
         await auth.signOut();
       } catch (error) {
@@ -175,14 +169,12 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
                  </button>
              </div>
 
-             {useSupabase() && (
-                 <button 
-                     onClick={handleSignOut}
-                     className="w-full mt-6 p-4 rounded-xl border border-red-900/30 bg-red-900/10 text-red-400 font-bold flex items-center justify-center gap-2 hover:bg-red-900/20 transition-colors"
-                 >
-                     <LogOut className="w-5 h-5" /> Sign Out
-                 </button>
-             )}
+             <button 
+                 onClick={handleSignOut}
+                 className="w-full mt-6 p-4 rounded-xl border border-red-900/30 bg-red-900/10 text-red-400 font-bold flex items-center justify-center gap-2 hover:bg-red-900/20 transition-colors"
+             >
+                 <LogOut className="w-5 h-5" /> Sign Out
+             </button>
         </div>
     </div>
   );

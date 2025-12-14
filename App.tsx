@@ -18,19 +18,12 @@ import { LandingPage } from './components/LandingPage';
 import { fetchEvents, createEvent, updateEvent, joinEvent, leaveEvent } from './services/eventService';
 import { realtimeService } from './services/realtimeService';
 
-const useSupabase = () => {
-  return (import.meta as any).env?.VITE_USE_SUPABASE === 'true' && 
-         (import.meta as any).env?.VITE_SUPABASE_URL && 
-         (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
-};
-
 const AppContent: React.FC = () => {
   const { user: currentUser, loading: authLoading } = useAuth();
   const [events, setEvents] = useState<SocialEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [dismissedEventIds, setDismissedEventIds] = useState<Set<string>>(new Set());
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const useSupabaseFlag = useSupabase();
   
   // Top level navigation state
   const [viewMode, setViewMode] = useState<ViewMode>('EVENTS');
@@ -114,7 +107,7 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     if (authLoading) return;
     
-    if (!useSupabaseFlag || !currentUser) {
+    if (!currentUser) {
       setEvents([]);
       setEventsLoading(false);
       return;
@@ -149,11 +142,11 @@ const AppContent: React.FC = () => {
     return () => {
       unsubscribeNewEvents();
     };
-  }, [currentUser, authLoading, useSupabaseFlag]);
+  }, [currentUser, authLoading]);
 
   // Subscribe to event updates for selected event
   useEffect(() => {
-    if (!selectedEvent || !useSupabaseFlag) return;
+    if (!selectedEvent) return;
 
     const unsubscribe = realtimeService.subscribeToEvent(selectedEvent.id, {
       onUpdate: (updatedEvent) => {
@@ -169,16 +162,11 @@ const AppContent: React.FC = () => {
     return () => {
       unsubscribe();
     };
-  }, [selectedEvent, useSupabaseFlag]);
+  }, [selectedEvent]);
 
   const handleCreateEvent = async (newEventData: Omit<SocialEvent, 'id' | 'hostId' | 'attendees' | 'comments' | 'reactions'>) => {
     if (!currentUser) {
       setShowLoginModal(true);
-      return;
-    }
-
-    if (!useSupabaseFlag) {
-      console.error('Supabase is not enabled');
       return;
     }
 
@@ -195,20 +183,14 @@ const AppContent: React.FC = () => {
   };
 
   const handleUpdateEvent = async (updated: SocialEvent) => {
-    if (useSupabaseFlag) {
-      try {
-        const result = await updateEvent(updated.id, updated);
-        if (result) {
-          setSelectedEvent(result);
-          setEvents(prev => prev.map(e => e.id === result.id ? result : e));
-        }
-      } catch (error) {
-        console.error('Error updating event:', error);
+    try {
+      const result = await updateEvent(updated.id, updated);
+      if (result) {
+        setSelectedEvent(result);
+        setEvents(prev => prev.map(e => e.id === result.id ? result : e));
       }
-    } else {
-      // Fallback to mock behavior
-      setEvents(prev => prev.map(e => e.id === updated.id ? updated : e));
-      setSelectedEvent(updated);
+    } catch (error) {
+      console.error('Error updating event:', error);
     }
   };
 
@@ -216,11 +198,6 @@ const AppContent: React.FC = () => {
   const handleJoinEvent = async (eventId: string) => {
     if (!currentUser) {
       setShowLoginModal(true);
-      return;
-    }
-
-    if (!useSupabaseFlag) {
-      console.error('Supabase is not enabled');
       return;
     }
 
@@ -241,11 +218,6 @@ const AppContent: React.FC = () => {
 
   const handleLeaveEvent = async (eventId: string) => {
     if (!currentUser) return;
-
-    if (!useSupabaseFlag) {
-      console.error('Supabase is not enabled');
-      return;
-    }
 
     try {
       const success = await leaveEvent(eventId);
@@ -449,8 +421,8 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // Show landing page if using Supabase and not authenticated
-  if (useSupabaseFlag && !currentUser) {
+  // Show landing page if not authenticated
+  if (!currentUser) {
     return (
       <>
         <LandingPage onSignIn={() => setShowLoginModal(true)} />

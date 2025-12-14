@@ -6,21 +6,7 @@
 
 **Prerequisites:**  Node.js
 
-### Quick Start (Mock Data Mode)
-
-1. Install dependencies:
-   ```bash
-   pnpm install
-   ```
-2. Set the `GEMINI_API_KEY` in `.env.local` to your Gemini API key
-3. Run the app:
-   ```bash
-   pnpm run dev
-   ```
-
-The app will run with mock data by default.
-
-### Supabase Local Development Setup
+### Quick Start
 
 For full database functionality with authentication and real-time features:
 
@@ -67,7 +53,6 @@ For full database functionality with authentication and real-time features:
    ```env
    VITE_SUPABASE_URL=http://127.0.0.1:54321
    VITE_SUPABASE_ANON_KEY=<your-anon-key-from-step-2>
-   VITE_USE_SUPABASE=true
    GEMINI_API_KEY=<your-gemini-api-key>
    ```
 
@@ -101,10 +86,8 @@ For full database functionality with authentication and real-time features:
 - **Authentication**: Sign up/sign in with email and password
 - **Real-time Updates**: Live updates for events, comments, reactions, and notifications
 - **Database**: PostgreSQL with Row Level Security (RLS) policies
-- **Fallback Mode**: Automatically falls back to mock data if Supabase is not configured
 
 ### Notes
 
 - Local Supabase data persists in `supabase/.branches` directory
-- To disable Supabase and use mock data, set `VITE_USE_SUPABASE=false` in `.env.local` or remove the Supabase environment variables
-- The app requires authentication when Supabase is enabled
+- The app requires authentication to use
