@@ -17,7 +17,6 @@
     "supabase:logs:all": "docker logs $(docker ps --filter 'name=supabase' --format '{{.Names}}' | tr '\\n' ' ') --tail 100 -f"
   },
   "dependencies": {
-    "@google/genai": "^1.31.0",
     "@supabase/supabase-js": "^2.39.0",
     "lucide-react": "^0.556.0",
     "react": "^19.2.1",

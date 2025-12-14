@@ -1,9 +1,8 @@
 
 
 import React, { useState, useEffect } from 'react';
-import { parseEventFromText, ParsedEventData } from '../services/geminiService';
 import { EventVisibility, SocialEvent, Group } from '../lib/types';
-import { X, Sparkles, Loader2, Calendar, MapPin, Type, AlignLeft } from 'lucide-react';
+import { X, Calendar, MapPin, Type, AlignLeft } from 'lucide-react';
 import { fetchGroups } from '../services/friendService';
 import { supabase } from '../lib/supabase';
 
@@ -13,10 +12,6 @@ interface CreateEventModalProps {
 }
 
 export const CreateEventModal: React.FC<CreateEventModalProps> = ({ onClose, onCreate }) => {
-  const [magicInput, setMagicInput] = useState('');
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [useAI, setUseAI] = useState(true);
-
   // Form State
   const [title, setTitle] = useState('');
   const [location, setLocation] = useState('');
@@ -43,27 +38,6 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ onClose, onC
     };
     loadGroups();
   }, [visibilityType]);
-
-  const handleMagicFill = async () => {
-    if (!magicInput.trim()) return;
-    setIsProcessing(true);
-    const data = await parseEventFromText(magicInput);
-    setIsProcessing(false);
-
-    if (data) {
-      setTitle(data.title);
-      setLocation(data.location);
-      setDescription(data.description);
-      setActivityType(data.activityType);
-      if (data.startTime) {
-        // Convert ISO to datetime-local format: YYYY-MM-DDThh:mm
-        const date = new Date(data.startTime);
-        const localIso = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
-        setStartDateTime(localIso);
-      }
-      setUseAI(false); // Switch to manual edit mode to review
-    }
-  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,44 +81,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ onClose, onC
         </div>
 
         <div className="overflow-y-auto p-4 custom-scrollbar">
-          
-          {useAI ? (
-            <div className="space-y-4 py-8">
-              <div className="text-center space-y-2 mb-6">
-                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-gradient-to-tr from-primary to-secondary mb-2">
-                  <Sparkles className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-xl font-bold text-white">Magic Draft</h3>
-                <p className="text-slate-400 text-sm">
-                  Describe your plan, and we'll fill in the details.
-                </p>
-              </div>
-
-              <div className="relative">
-                <textarea
-                  value={magicInput}
-                  onChange={(e) => setMagicInput(e.target.value)}
-                  placeholder="e.g., Rock climbing at Crag X tomorrow at 5pm with the climbing crew..."
-                  className="w-full bg-slate-900 border border-slate-700 rounded-xl p-4 text-white focus:ring-2 focus:ring-primary focus:border-transparent outline-none h-32 resize-none"
-                />
-                <button
-                  onClick={handleMagicFill}
-                  disabled={isProcessing || !magicInput.trim()}
-                  className="absolute bottom-3 right-3 bg-white text-black px-4 py-2 rounded-lg font-semibold text-sm hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                >
-                  {isProcessing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4 text-secondary" />}
-                  {isProcessing ? 'Thinking...' : 'Auto-Fill'}
-                </button>
-              </div>
-
-              <div className="text-center">
-                <button onClick={() => setUseAI(false)} className="text-sm text-slate-500 hover:text-slate-300 underline">
-                  Skip to manual entry
-                </button>
-              </div>
-            </div>
-          ) : (
-            <form id="create-event-form" onSubmit={handleSubmit} className="space-y-4">
+          <form id="create-event-form" onSubmit={handleSubmit} className="space-y-4">
               
               <div className="space-y-1">
                 <label className="text-xs font-semibold text-slate-400 uppercase">What & Where</label>
@@ -273,22 +210,16 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ onClose, onC
                   </div>
               </div>
 
-            </form>
-          )}
+          </form>
         </div>
 
         {/* Footer */}
-        {!useAI && (
-          <div className="p-4 border-t border-slate-700 bg-slate-900/50 flex justify-between items-center">
-            <button type="button" onClick={() => setUseAI(true)} className="text-sm text-primary hover:text-primary/80 flex items-center gap-1">
-              <Sparkles className="w-3 h-3" /> Use AI
-            </button>
-            <div className="flex gap-2">
-              <button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-300 hover:bg-slate-800 text-sm font-medium">Cancel</button>
-              <button form="create-event-form" type="submit" className="px-6 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-bold shadow-lg shadow-primary/20">Create Invite</button>
-            </div>
+        <div className="p-4 border-t border-slate-700 bg-slate-900/50 flex justify-end items-center">
+          <div className="flex gap-2">
+            <button onClick={onClose} className="px-4 py-2 rounded-lg text-slate-300 hover:bg-slate-800 text-sm font-medium">Cancel</button>
+            <button form="create-event-form" type="submit" className="px-6 py-2 rounded-lg bg-primary hover:bg-primary/90 text-white text-sm font-bold shadow-lg shadow-primary/20">Create Invite</button>
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

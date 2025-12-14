@@ -53,7 +53,6 @@ For full database functionality with authentication and real-time features:
    ```env
    VITE_SUPABASE_URL=http://127.0.0.1:54321
    VITE_SUPABASE_ANON_KEY=<your-anon-key-from-step-2>
-   GEMINI_API_KEY=<your-gemini-api-key>
    ```
 
 4. **Run database migrations**:
