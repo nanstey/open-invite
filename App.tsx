@@ -1,7 +1,6 @@
 
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { ViewMode, InvitesMode, FriendsMode, SocialEvent, User } from './types';
-import { MOCK_EVENTS as FALLBACK_EVENTS, USERS as FALLBACK_USERS } from './constants';
+import { ViewMode, InvitesMode, FriendsMode, SocialEvent, User } from './lib/types';
 import { EventCard } from './components/EventCard';
 import { CreateEventModal } from './components/CreateEventModal';
 import { EventDetail } from './components/EventDetail';
@@ -115,8 +114,7 @@ const AppContent: React.FC = () => {
     if (authLoading) return;
     
     if (!useSupabaseFlag || !currentUser) {
-      // Fallback to mock data
-      setEvents(FALLBACK_EVENTS);
+      setEvents([]);
       setEventsLoading(false);
       return;
     }
@@ -128,8 +126,7 @@ const AppContent: React.FC = () => {
         setEvents(fetchedEvents);
       } catch (error) {
         console.error('Error loading events:', error);
-        // Fallback to mock data on error
-        setEvents(FALLBACK_EVENTS);
+        setEvents([]);
       } finally {
         setEventsLoading(false);
       }
@@ -179,30 +176,20 @@ const AppContent: React.FC = () => {
       return;
     }
 
-    if (useSupabaseFlag) {
-      try {
-        const newEvent = await createEvent(newEventData);
-        if (newEvent) {
-          setEvents(prev => [newEvent, ...prev]);
-          setShowCreateModal(false);
-          setStatusFilter('HOSTING');
-        }
-      } catch (error) {
-        console.error('Error creating event:', error);
+    if (!useSupabaseFlag) {
+      console.error('Supabase is not enabled');
+      return;
+    }
+
+    try {
+      const newEvent = await createEvent(newEventData);
+      if (newEvent) {
+        setEvents(prev => [newEvent, ...prev]);
+        setShowCreateModal(false);
+        setStatusFilter('HOSTING');
       }
-    } else {
-      // Fallback to mock behavior
-      const newEvent: SocialEvent = {
-        ...newEventData,
-        id: Date.now().toString(),
-        hostId: currentUser.id,
-        attendees: [currentUser.id],
-        comments: [],
-        reactions: {}
-      };
-      setEvents(prev => [newEvent, ...prev]);
-      setShowCreateModal(false);
-      setStatusFilter('HOSTING');
+    } catch (error) {
+      console.error('Error creating event:', error);
     }
   };
 
@@ -231,53 +218,45 @@ const AppContent: React.FC = () => {
       return;
     }
 
-    if (useSupabaseFlag) {
-      try {
-        const success = await joinEvent(eventId);
-        if (success) {
-          // Event will be updated via realtime subscription
-          const updatedEvent = await fetchEvents();
-          const event = updatedEvent.find(e => e.id === eventId);
-          if (event) {
-            setEvents(prev => prev.map(e => e.id === eventId ? event : e));
-          }
+    if (!useSupabaseFlag) {
+      console.error('Supabase is not enabled');
+      return;
+    }
+
+    try {
+      const success = await joinEvent(eventId);
+      if (success) {
+        // Event will be updated via realtime subscription
+        const updatedEvent = await fetchEvents();
+        const event = updatedEvent.find(e => e.id === eventId);
+        if (event) {
+          setEvents(prev => prev.map(e => e.id === eventId ? event : e));
         }
-      } catch (error) {
-        console.error('Error joining event:', error);
       }
-    } else {
-      // Fallback to mock behavior
-      setEvents(prev => prev.map(e => {
-        if (e.id !== eventId) return e;
-        if (e.attendees.includes(currentUser.id)) return e;
-        if (e.maxSeats && e.attendees.length >= e.maxSeats) return e;
-        return { ...e, attendees: [...e.attendees, currentUser.id] };
-      }));
+    } catch (error) {
+      console.error('Error joining event:', error);
     }
   };
 
   const handleLeaveEvent = async (eventId: string) => {
     if (!currentUser) return;
 
-    if (useSupabaseFlag) {
-      try {
-        const success = await leaveEvent(eventId);
-        if (success) {
-          const updatedEvent = await fetchEvents();
-          const event = updatedEvent.find(e => e.id === eventId);
-          if (event) {
-            setEvents(prev => prev.map(e => e.id === eventId ? event : e));
-          }
+    if (!useSupabaseFlag) {
+      console.error('Supabase is not enabled');
+      return;
+    }
+
+    try {
+      const success = await leaveEvent(eventId);
+      if (success) {
+        const updatedEvent = await fetchEvents();
+        const event = updatedEvent.find(e => e.id === eventId);
+        if (event) {
+          setEvents(prev => prev.map(e => e.id === eventId ? event : e));
         }
-      } catch (error) {
-        console.error('Error leaving event:', error);
       }
-    } else {
-      // Fallback to mock behavior
-      setEvents(prev => prev.map(e => {
-        if (e.id !== eventId) return e;
-        return { ...e, attendees: e.attendees.filter(uid => uid !== currentUser.id) };
-      }));
+    } catch (error) {
+      console.error('Error leaving event:', error);
     }
   };
 
@@ -297,11 +276,13 @@ const AppContent: React.FC = () => {
     });
   };
 
-  // Get current user for filtering (fallback if not authenticated)
-  const effectiveUser = currentUser || FALLBACK_USERS[0];
+  // Get current user for filtering
+  const effectiveUser = currentUser;
 
   // --- Filter Logic ---
   const filteredEvents = useMemo(() => {
+    if (!effectiveUser) return [];
+    
     const now = new Date();
 
     return events.filter(event => {
@@ -387,7 +368,7 @@ const AppContent: React.FC = () => {
        const timeB = new Date(b.startTime).getTime();
        return statusFilter === 'PAST' ? timeB - timeA : timeA - timeB;
     });
-  }, [events, searchTerm, filterCategory, showOpenOnly, timeFilter, statusFilter, effectiveUser.id, dismissedEventIds]);
+  }, [events, searchTerm, filterCategory, showOpenOnly, timeFilter, statusFilter, effectiveUser?.id, dismissedEventIds]);
 
   // --- Grouping Logic for Card View ---
   const groupedEvents = useMemo(() => {
@@ -504,7 +485,7 @@ const AppContent: React.FC = () => {
                 className={`p-3 rounded-xl transition-all flex items-center justify-start gap-3 w-full ${viewMode === 'EVENTS' ? 'bg-primary/10 text-primary' : 'text-slate-400 hover:bg-slate-800 hover:text-white'}`}
               >
                 <CalendarDays className="w-6 h-6" />
-                <span className="hidden lg:block font-medium">Invites</span>
+                <span className="hidden lg:block font-medium">Events</span>
               </button>
               <button 
                  onClick={() => setViewMode('FRIENDS')} 

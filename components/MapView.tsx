@@ -1,7 +1,8 @@
 
-import React, { useEffect, useRef } from 'react';
-import { SocialEvent, User } from '../types';
-import { USERS, getTheme } from '../constants';
+import React, { useEffect, useRef, useState } from 'react';
+import { SocialEvent, User } from '../lib/types';
+import { getTheme } from '../lib/constants';
+import { fetchUsers } from '../services/userService';
 
 // Add declaration for Leaflet on window object
 declare global {
@@ -20,6 +21,20 @@ export const MapView: React.FC<MapViewProps> = ({ events, onEventClick, currentU
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
+  const [hostsMap, setHostsMap] = useState<Map<string, User>>(new Map());
+
+  // Fetch all unique host users
+  useEffect(() => {
+    const loadHosts = async () => {
+      const uniqueHostIds = [...new Set(events.map((e: SocialEvent) => e.hostId))] as string[];
+      if (uniqueHostIds.length > 0) {
+        const fetchedHosts = await fetchUsers(uniqueHostIds);
+        const hostsMap = new Map(fetchedHosts.map(u => [u.id, u]));
+        setHostsMap(hostsMap);
+      }
+    };
+    loadHosts();
+  }, [events]);
 
   useEffect(() => {
     // Ensure Leaflet is loaded
@@ -63,7 +78,9 @@ export const MapView: React.FC<MapViewProps> = ({ events, onEventClick, currentU
 
     // Add new markers
     events.forEach(event => {
-       const host = USERS.find(u => u.id === event.hostId) || USERS[0];
+       const host = hostsMap.get(event.hostId);
+       if (!host) return; // Skip if host not loaded yet
+       
        const theme = getTheme(event.activityType);
        const isHost = event.hostId === currentUser.id;
        const isAttending = event.attendees.includes(currentUser.id);
@@ -134,7 +151,7 @@ export const MapView: React.FC<MapViewProps> = ({ events, onEventClick, currentU
        markersRef.current.push(marker);
     });
 
-  }, [events, onEventClick, currentUser]);
+  }, [events, onEventClick, currentUser, hostsMap]);
 
   return (
     <div className="w-full h-full relative md:rounded-2xl overflow-hidden shadow-inner md:border border-slate-700 bg-slate-900 touch-pan-y">

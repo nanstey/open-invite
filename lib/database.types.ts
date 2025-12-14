@@ -48,8 +48,8 @@ export interface Database {
           end_time: string | null
           is_flexible_start: boolean
           is_flexible_end: boolean
-          privacy: 'OPEN' | 'INVITE_ONLY'
-          target_group: 'ALL_FRIENDS' | 'CLIMBERS' | 'FAMILY' | 'WORK'
+          visibility_type: 'ALL_FRIENDS' | 'GROUPS' | 'INVITE_ONLY'
+          allow_friend_invites: boolean
           max_seats: number | null
           no_phones: boolean
           created_at: string
@@ -67,8 +67,8 @@ export interface Database {
           end_time?: string | null
           is_flexible_start?: boolean
           is_flexible_end?: boolean
-          privacy?: 'OPEN' | 'INVITE_ONLY'
-          target_group?: 'ALL_FRIENDS' | 'CLIMBERS' | 'FAMILY' | 'WORK'
+          visibility_type?: 'ALL_FRIENDS' | 'GROUPS' | 'INVITE_ONLY'
+          allow_friend_invites?: boolean
           max_seats?: number | null
           no_phones?: boolean
           created_at?: string
@@ -86,8 +86,8 @@ export interface Database {
           end_time?: string | null
           is_flexible_start?: boolean
           is_flexible_end?: boolean
-          privacy?: 'OPEN' | 'INVITE_ONLY'
-          target_group?: 'ALL_FRIENDS' | 'CLIMBERS' | 'FAMILY' | 'WORK'
+          visibility_type?: 'ALL_FRIENDS' | 'GROUPS' | 'INVITE_ONLY'
+          allow_friend_invites?: boolean
           max_seats?: number | null
           no_phones?: boolean
           created_at?: string
@@ -221,23 +221,107 @@ export interface Database {
           created_at?: string
         }
       }
+      groups: {
+        Row: {
+          id: string
+          name: string
+          created_by: string
+          updated_by: string | null
+          is_open: boolean
+          deleted_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          created_by: string
+          updated_by?: string | null
+          is_open?: boolean
+          deleted_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          created_by?: string
+          updated_by?: string | null
+          is_open?: boolean
+          deleted_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
       user_groups: {
         Row: {
           id: string
           user_id: string
-          group_type: 'ALL_FRIENDS' | 'CLIMBERS' | 'FAMILY' | 'WORK'
+          group_id: string
+          role: 'MEMBER' | 'ADMIN'
+          joined_at: string
           created_at: string
         }
         Insert: {
           id?: string
           user_id: string
-          group_type: 'ALL_FRIENDS' | 'CLIMBERS' | 'FAMILY' | 'WORK'
+          group_id: string
+          role?: 'MEMBER' | 'ADMIN'
+          joined_at?: string
           created_at?: string
         }
         Update: {
           id?: string
           user_id?: string
-          group_type?: 'ALL_FRIENDS' | 'CLIMBERS' | 'FAMILY' | 'WORK'
+          group_id?: string
+          role?: 'MEMBER' | 'ADMIN'
+          joined_at?: string
+          created_at?: string
+        }
+      }
+      event_groups: {
+        Row: {
+          id: string
+          event_id: string
+          group_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          event_id: string
+          group_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          event_id?: string
+          group_id?: string
+          created_at?: string
+        }
+      }
+      event_invites: {
+        Row: {
+          id: string
+          event_id: string
+          user_id: string
+          invited_by: string | null
+          invited_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          event_id: string
+          user_id: string
+          invited_by?: string | null
+          invited_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          event_id?: string
+          user_id?: string
+          invited_by?: string | null
+          invited_at?: string
           created_at?: string
         }
       }
@@ -249,8 +333,7 @@ export interface Database {
       [_ in never]: never
     }
     Enums: {
-      event_privacy: 'OPEN' | 'INVITE_ONLY'
-      event_group: 'ALL_FRIENDS' | 'CLIMBERS' | 'FAMILY' | 'WORK'
+      event_visibility_type: 'ALL_FRIENDS' | 'GROUPS' | 'INVITE_ONLY'
       notification_type: 'INVITE' | 'COMMENT' | 'REACTION' | 'REMINDER' | 'SYSTEM'
     }
   }

@@ -1,8 +1,9 @@
 
-import React, { useState } from 'react';
-import { SocialEvent, User, Comment } from '../types';
-import { USERS, getTheme } from '../constants';
+import React, { useState, useEffect } from 'react';
+import { SocialEvent, User, Comment } from '../lib/types';
+import { getTheme } from '../lib/constants';
 import { X, Calendar, MapPin, Users, Send, CheckCircle2, EyeOff } from 'lucide-react';
+import { fetchUser, fetchUsers } from '../services/userService';
 
 interface EventDetailProps {
   event: SocialEvent;
@@ -14,13 +15,40 @@ interface EventDetailProps {
 
 export const EventDetail: React.FC<EventDetailProps> = ({ event, currentUser, onClose, onUpdateEvent, onDismiss }) => {
   const [commentText, setCommentText] = useState('');
+  const [host, setHost] = useState<User | null>(null);
+  const [attendeesList, setAttendeesList] = useState<User[]>([]);
+  const [commentUsers, setCommentUsers] = useState<Map<string, User>>(new Map());
   const theme = getTheme(event.activityType);
   
-  const host = USERS.find(u => u.id === event.hostId) || USERS[0];
+  useEffect(() => {
+    const loadUsers = async () => {
+      // Fetch host
+      const fetchedHost = await fetchUser(event.hostId);
+      if (fetchedHost) {
+        setHost(fetchedHost);
+      }
+
+      // Fetch attendees
+      if (event.attendees.length > 0) {
+        const fetchedAttendees = await fetchUsers(event.attendees);
+        setAttendeesList(fetchedAttendees);
+      }
+
+      // Fetch comment authors
+      const commentUserIds: string[] = event.comments.map(c => c.userId);
+      if (commentUserIds.length > 0) {
+        const uniqueCommentUserIds: string[] = [...new Set(commentUserIds)];
+        const fetchedCommentUsers = await fetchUsers(uniqueCommentUserIds);
+        const usersMap = new Map(fetchedCommentUsers.map(u => [u.id, u]));
+        setCommentUsers(usersMap);
+      }
+    };
+    loadUsers();
+  }, [event.hostId, event.attendees, event.comments]);
+
   const isHost = event.hostId === currentUser.id;
   const isAttending = event.attendees.includes(currentUser.id);
   const isInvolved = isHost || isAttending;
-  const attendeesList = USERS.filter(u => event.attendees.includes(u.id));
 
   const handleJoin = () => {
     let newAttendees;
@@ -109,11 +137,23 @@ export const EventDetail: React.FC<EventDetailProps> = ({ event, currentUser, on
                     </div>
 
                     <div className="flex items-center gap-4 pt-2 pb-4 border-b border-slate-800">
-                        <img src={host.avatar} className="w-12 h-12 rounded-full border-2 border-slate-700" alt={host.name} />
-                        <div>
-                            <div className="text-sm text-slate-400">Hosted by</div>
-                            <div className="font-bold text-white text-lg">{host.name}</div>
-                        </div>
+                        {host ? (
+                          <>
+                            <img src={host.avatar} className="w-12 h-12 rounded-full border-2 border-slate-700" alt={host.name} />
+                            <div>
+                                <div className="text-sm text-slate-400">Hosted by</div>
+                                <div className="font-bold text-white text-lg">{host.name}</div>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="w-12 h-12 rounded-full bg-slate-700 animate-pulse border-2 border-slate-700" />
+                            <div>
+                                <div className="text-sm text-slate-400">Hosted by</div>
+                                <div className="font-bold text-white text-lg">Loading...</div>
+                            </div>
+                          </>
+                        )}
                     </div>
                 </div>
 
@@ -156,13 +196,17 @@ export const EventDetail: React.FC<EventDetailProps> = ({ event, currentUser, on
                         </div>
                         )}
                         {event.comments.map(c => {
-                        const u = USERS.find(user => user.id === c.userId);
+                        const u = commentUsers.get(c.userId);
                         return (
                             <div key={c.id} className="flex gap-4">
-                                <img src={u?.avatar} className="w-10 h-10 rounded-full" alt="avatar" />
+                                {u ? (
+                                    <img src={u.avatar} className="w-10 h-10 rounded-full" alt={u.name} />
+                                ) : (
+                                    <div className="w-10 h-10 rounded-full bg-slate-700 animate-pulse" />
+                                )}
                                 <div className="bg-slate-800 rounded-2xl rounded-tl-none p-4 flex-1">
                                     <div className="flex justify-between items-baseline mb-1">
-                                        <span className="text-sm font-bold text-slate-200">{u?.name}</span>
+                                        <span className="text-sm font-bold text-slate-200">{u?.name || 'Loading...'}</span>
                                         <span className="text-[10px] text-slate-500">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
                                     <p className="text-slate-300 leading-normal">{c.text}</p>

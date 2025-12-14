@@ -1,9 +1,10 @@
 
-import React, { useState, useRef } from 'react';
-import { SocialEvent, User } from '../types';
-import { USERS, getTheme } from '../constants';
+import React, { useState, useRef, useEffect } from 'react';
+import { SocialEvent, User } from '../lib/types';
+import { getTheme } from '../lib/constants';
 import { Calendar, MapPin, Users, PhoneOff, MessageSquare, Crown, CheckCircle2, X, LogOut } from 'lucide-react';
 import { StatusFilter } from './FilterBar';
+import { fetchUser } from '../services/userService';
 
 // Helper for color interpolation
 const hexToRgb = (hex: string) => {
@@ -45,7 +46,18 @@ export const EventCard: React.FC<EventCardProps> = ({
   onHide,
   filterContext = 'ALL'
 }) => {
-  const host = USERS.find(u => u.id === event.hostId) || USERS[0];
+  const [host, setHost] = useState<User | null>(null);
+
+  useEffect(() => {
+    const loadHost = async () => {
+      const fetchedHost = await fetchUser(event.hostId);
+      if (fetchedHost) {
+        setHost(fetchedHost);
+      }
+    };
+    loadHost();
+  }, [event.hostId]);
+
   const date = new Date(event.startTime);
   const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   const dateString = date.toLocaleDateString([], { weekday: 'short', month: 'short', day: 'numeric' });
@@ -302,19 +314,35 @@ export const EventCard: React.FC<EventCardProps> = ({
           >
             <div className="flex justify-between items-start mb-2">
               <div className="flex items-center space-x-2">
-                <img 
-                  src={host.avatar} 
-                  alt={host.name} 
-                  className={`w-8 h-8 rounded-full object-cover border-2 ${isInvolved ? 'border-white/30' : 'border-slate-600'}`} 
-                />
-                <div className="flex flex-col">
-                  <div className={`text-xs leading-tight ${isInvolved ? 'text-white/90' : 'text-slate-400'}`}>
-                    <span className={`font-medium ${isInvolved ? 'text-white' : 'text-slate-200'}`}>{host.name}</span>
-                  </div>
-                  <div className={`text-[10px] font-bold uppercase tracking-wider ${badgeColor}`}>
-                    {event.activityType}
-                  </div>
-                </div>
+                {host ? (
+                  <>
+                    <img 
+                      src={host.avatar} 
+                      alt={host.name} 
+                      className={`w-8 h-8 rounded-full object-cover border-2 ${isInvolved ? 'border-white/30' : 'border-slate-600'}`} 
+                    />
+                    <div className="flex flex-col">
+                      <div className={`text-xs leading-tight ${isInvolved ? 'text-white/90' : 'text-slate-400'}`}>
+                        <span className={`font-medium ${isInvolved ? 'text-white' : 'text-slate-200'}`}>{host.name}</span>
+                      </div>
+                      <div className={`text-[10px] font-bold uppercase tracking-wider ${badgeColor}`}>
+                        {event.activityType}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className={`w-8 h-8 rounded-full bg-slate-700 animate-pulse border-2 ${isInvolved ? 'border-white/30' : 'border-slate-600'}`} />
+                    <div className="flex flex-col">
+                      <div className={`text-xs leading-tight ${isInvolved ? 'text-white/90' : 'text-slate-400'}`}>
+                        <span className={`font-medium ${isInvolved ? 'text-white' : 'text-slate-200'}`}>Loading...</span>
+                      </div>
+                      <div className={`text-[10px] font-bold uppercase tracking-wider ${badgeColor}`}>
+                        {event.activityType}
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
               
               <div className="flex items-center gap-2">

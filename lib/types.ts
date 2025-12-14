@@ -19,16 +19,18 @@ export interface Reaction {
   userReacted: boolean;
 }
 
-export enum EventPrivacy {
-  OPEN = 'OPEN', // Anyone can join
+export enum EventVisibility {
+  ALL_FRIENDS = 'ALL_FRIENDS',
+  GROUPS = 'GROUPS',
   INVITE_ONLY = 'INVITE_ONLY',
 }
 
-export enum EventGroup {
-  ALL_FRIENDS = 'ALL_FRIENDS',
-  CLIMBERS = 'CLIMBERS',
-  FAMILY = 'FAMILY',
-  WORK = 'WORK',
+export interface Group {
+  id: string;
+  name: string;
+  createdBy: string;
+  isOpen: boolean;
+  deletedAt?: string;
 }
 
 export interface SocialEvent {
@@ -43,8 +45,9 @@ export interface SocialEvent {
   endTime?: string;
   isFlexibleStart: boolean;
   isFlexibleEnd: boolean;
-  privacy: EventPrivacy;
-  targetGroup: EventGroup;
+  visibilityType: EventVisibility;
+  groupIds: string[]; // Array of group UUIDs (for GROUPS visibility)
+  allowFriendInvites: boolean;
   maxSeats?: number;
   attendees: string[]; // User IDs
   noPhones: boolean;

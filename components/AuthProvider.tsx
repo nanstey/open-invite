@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { onAuthStateChange, getCurrentUser } from '../lib/supabaseClient';
-import type { User } from '../types';
+import type { User } from '../lib/types';
 
 const isDev = (import.meta as any).env?.DEV ?? false;
 const devLog = (...args: any[]) => {

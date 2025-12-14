@@ -1,9 +1,10 @@
 
-import React from 'react';
-import { User } from '../types';
-import { MOCK_EVENTS } from '../constants';
+import React, { useState, useEffect } from 'react';
+import { User } from '../lib/types';
 import { Settings, LogOut, ChevronRight, MapPin, Link as LinkIcon, Edit2, Shield, BellRing, Moon } from 'lucide-react';
 import { useAuth } from './AuthProvider';
+import { supabase } from '../lib/supabase';
+import { fetchFriends } from '../services/friendService';
 
 interface ProfileViewProps {
   currentUser: User;
@@ -11,11 +12,66 @@ interface ProfileViewProps {
 
 export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
   const auth = useAuth();
+  const [hostedCount, setHostedCount] = useState(0);
+  const [attendedCount, setAttendedCount] = useState(0);
+  const [friendsCount, setFriendsCount] = useState(0);
+  const [loading, setLoading] = useState(true);
+
   const useSupabase = () => {
     return (import.meta as any).env?.VITE_USE_SUPABASE === 'true' && 
            (import.meta as any).env?.VITE_SUPABASE_URL && 
            (import.meta as any).env?.VITE_SUPABASE_ANON_KEY;
   };
+  
+  useEffect(() => {
+    if (!useSupabase() || !currentUser) {
+      setLoading(false);
+      return;
+    }
+
+    const loadProfileData = async () => {
+      try {
+        // Fetch hosted events count
+        const { count: hosted } = await supabase
+          .from('events')
+          .select('*', { count: 'exact', head: true })
+          .eq('host_id', currentUser.id);
+
+        // Fetch attended events count (events where user is an attendee but not host)
+        const { data: attendeeData } = await supabase
+          .from('event_attendees')
+          .select('event_id')
+          .eq('user_id', currentUser.id);
+
+        if (attendeeData && attendeeData.length > 0) {
+          const eventIds = attendeeData.map((a: { event_id: string }) => a.event_id);
+          const { data: eventsData } = await supabase
+            .from('events')
+            .select('id, host_id')
+            .in('id', eventIds);
+
+          const attended = eventsData?.filter(
+            (e: { id: string; host_id: string }) => e.host_id !== currentUser.id
+          ).length || 0;
+          setAttendedCount(attended);
+        } else {
+          setAttendedCount(0);
+        }
+
+        // Fetch friends count
+        const friends = await fetchFriends();
+
+        setHostedCount(hosted || 0);
+        setFriendsCount(friends.length);
+      } catch (error) {
+        console.error('Error loading profile data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProfileData();
+  }, [currentUser]);
   
   const handleSignOut = async () => {
     if (useSupabase() && auth.signOut) {
@@ -26,8 +82,6 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
       }
     }
   };
-  const hostedCount = MOCK_EVENTS.filter(e => e.hostId === currentUser.id).length;
-  const attendedCount = MOCK_EVENTS.filter(e => e.attendees.includes(currentUser.id)).length;
 
   return (
     <div className="max-w-2xl mx-auto pb-20 pt-8 px-4 animate-fade-in">
@@ -43,19 +97,19 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
                 </button>
             </div>
             <h2 className="text-2xl font-bold text-white mb-1">{currentUser.name}</h2>
-            <p className="text-slate-400 text-sm mb-4">@alex_climbs • Victoria, BC</p>
+            <p className="text-slate-400 text-sm mb-4">{currentUser.name.toLowerCase().replace(/\s+/g, '_')}</p>
             
             <div className="flex gap-4 text-center">
                 <div className="bg-slate-800/50 rounded-xl p-3 min-w-[100px] border border-slate-700">
-                    <div className="text-xl font-bold text-white">{hostedCount}</div>
+                    <div className="text-xl font-bold text-white">{loading ? '...' : hostedCount}</div>
                     <div className="text-xs text-slate-500 uppercase font-bold tracking-wider">Hosted</div>
                 </div>
                 <div className="bg-slate-800/50 rounded-xl p-3 min-w-[100px] border border-slate-700">
-                    <div className="text-xl font-bold text-white">{attendedCount}</div>
+                    <div className="text-xl font-bold text-white">{loading ? '...' : attendedCount}</div>
                     <div className="text-xs text-slate-500 uppercase font-bold tracking-wider">Joined</div>
                 </div>
                 <div className="bg-slate-800/50 rounded-xl p-3 min-w-[100px] border border-slate-700">
-                    <div className="text-xl font-bold text-white">42</div>
+                    <div className="text-xl font-bold text-white">{loading ? '...' : friendsCount}</div>
                     <div className="text-xs text-slate-500 uppercase font-bold tracking-wider">Friends</div>
                 </div>
             </div>
@@ -65,17 +119,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
         <div className="bg-surface rounded-xl p-5 border border-slate-700 mb-6 shadow-sm">
             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">About</h3>
             <p className="text-slate-300 text-sm leading-relaxed mb-4">
-                Always down for spontaneous climbing or coffee. Trying to hike every trail in Victoria this year. 🧗‍♂️☕️
+                {/* Bio field not yet in database - can be added later */}
             </p>
             <div className="flex flex-col gap-2 text-sm text-slate-400">
-                <div className="flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-slate-500" />
-                    <span>Fernwood, Victoria</span>
-                </div>
-                <div className="flex items-center gap-2">
-                    <LinkIcon className="w-4 h-4 text-slate-500" />
-                    <a href="#" className="text-primary hover:underline">instagram.com/alex_climbs</a>
-                </div>
+                {/* Location and social links not yet in database - can be added later */}
             </div>
         </div>
 

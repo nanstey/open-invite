@@ -11,7 +11,10 @@
     "supabase:stop": "supabase stop",
     "supabase:reset": "supabase db reset",
     "supabase:migrate": "supabase migration up",
-    "supabase:studio": "supabase studio"
+    "supabase:studio": "supabase studio",
+    "supabase:logs": "docker logs supabase_db_open-invite --tail 100 -f",
+    "supabase:logs:auth": "docker logs supabase_auth_open-invite --tail 100 -f",
+    "supabase:logs:all": "docker logs $(docker ps --filter 'name=supabase' --format '{{.Names}}' | tr '\\n' ' ') --tail 100 -f"
   },
   "dependencies": {
     "@google/genai": "^1.31.0",
