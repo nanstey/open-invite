@@ -23,14 +23,14 @@ export const EventDetail: React.FC<EventDetailProps> = ({ event, currentUser, on
   useEffect(() => {
     const loadUsers = async () => {
       // Fetch host
-      const fetchedHost = await fetchUser(event.hostId);
+      const fetchedHost = await fetchUser(event.hostId, currentUser.id);
       if (fetchedHost) {
         setHost(fetchedHost);
       }
 
       // Fetch attendees
       if (event.attendees.length > 0) {
-        const fetchedAttendees = await fetchUsers(event.attendees);
+        const fetchedAttendees = await fetchUsers(event.attendees, currentUser.id);
         setAttendeesList(fetchedAttendees);
       }
 
@@ -38,13 +38,13 @@ export const EventDetail: React.FC<EventDetailProps> = ({ event, currentUser, on
       const commentUserIds: string[] = event.comments.map(c => c.userId);
       if (commentUserIds.length > 0) {
         const uniqueCommentUserIds: string[] = [...new Set(commentUserIds)];
-        const fetchedCommentUsers = await fetchUsers(uniqueCommentUserIds);
+        const fetchedCommentUsers = await fetchUsers(uniqueCommentUserIds, currentUser.id);
         const usersMap = new Map(fetchedCommentUsers.map(u => [u.id, u]));
         setCommentUsers(usersMap);
       }
     };
     loadUsers();
-  }, [event.hostId, event.attendees, event.comments]);
+  }, [event.hostId, event.attendees, event.comments, currentUser.id]);
 
   const isHost = event.hostId === currentUser.id;
   const isAttending = event.attendees.includes(currentUser.id);

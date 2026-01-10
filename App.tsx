@@ -17,11 +17,16 @@ import { LoginModal } from './components/LoginModal';
 import { LandingPage } from './components/LandingPage';
 import { fetchEvents, createEvent, updateEvent, joinEvent, leaveEvent } from './services/eventService';
 import { realtimeService } from './services/realtimeService';
+import { fetchUsers } from './services/userService';
 
 const AppContent: React.FC = () => {
   const { user: currentUser, loading: authLoading } = useAuth();
   const [events, setEvents] = useState<SocialEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
+  const eventsLoadRef = useRef<{ userId: string | null; inFlight: Promise<void> | null }>({
+    userId: null,
+    inFlight: null,
+  });
   const [dismissedEventIds, setDismissedEventIds] = useState<Set<string>>(new Set());
   const [showLoginModal, setShowLoginModal] = useState(false);
   
@@ -110,13 +115,24 @@ const AppContent: React.FC = () => {
     if (!currentUser) {
       setEvents([]);
       setEventsLoading(false);
+      eventsLoadRef.current.userId = null;
+      eventsLoadRef.current.inFlight = null;
       return;
     }
 
-    const loadEvents = async () => {
+    // Deduplicate initial loads (React StrictMode + multiple auth events can trigger this twice)
+    if (eventsLoadRef.current.userId === currentUser.id && eventsLoadRef.current.inFlight) {
+      return;
+    }
+
+    eventsLoadRef.current.userId = currentUser.id;
+    const loadPromise = (async () => {
       setEventsLoading(true);
       try {
-        const fetchedEvents = await fetchEvents();
+        const fetchedEvents = await fetchEvents(currentUser.id);
+        // Prefetch host profiles in a single request so EventCard doesn't fan out N queries
+        const hostIds = [...new Set(fetchedEvents.map(e => e.hostId))];
+        await fetchUsers(hostIds, currentUser.id);
         setEvents(fetchedEvents);
       } catch (error) {
         console.error('Error loading events:', error);
@@ -124,9 +140,13 @@ const AppContent: React.FC = () => {
       } finally {
         setEventsLoading(false);
       }
-    };
+    })();
 
-    loadEvents();
+    eventsLoadRef.current.inFlight = loadPromise.finally(() => {
+      if (eventsLoadRef.current.inFlight === loadPromise) {
+        eventsLoadRef.current.inFlight = null;
+      }
+    });
 
     // Subscribe to new events
     const unsubscribeNewEvents = realtimeService.subscribeToAllEvents((newEvent) => {
@@ -205,7 +225,7 @@ const AppContent: React.FC = () => {
       const success = await joinEvent(eventId);
       if (success) {
         // Event will be updated via realtime subscription
-        const updatedEvent = await fetchEvents();
+        const updatedEvent = await fetchEvents(currentUser.id);
         const event = updatedEvent.find(e => e.id === eventId);
         if (event) {
           setEvents(prev => prev.map(e => e.id === eventId ? event : e));
@@ -222,7 +242,7 @@ const AppContent: React.FC = () => {
     try {
       const success = await leaveEvent(eventId);
       if (success) {
-        const updatedEvent = await fetchEvents();
+        const updatedEvent = await fetchEvents(currentUser.id);
         const event = updatedEvent.find(e => e.id === eventId);
         if (event) {
           setEvents(prev => prev.map(e => e.id === eventId ? event : e));

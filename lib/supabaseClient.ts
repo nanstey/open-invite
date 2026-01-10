@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { User } from '../types';
+import type { User } from './types';
 
 const isDev = (import.meta as any).env?.DEV ?? false;
 const devLog = (...args: any[]) => {
@@ -12,153 +12,142 @@ const devError = (...args: any[]) => {
   if (isDev) console.error(...args);
 };
 
+// Dedupe profile loads across rapid auth events (INITIAL_SESSION + SIGNED_IN, etc.)
+const inFlightCurrentUser = new Map<string, Promise<User | null>>();
+
+type AuthSessionUserLike = {
+  id?: string;
+  email?: string;
+  user_metadata?: Record<string, any>;
+};
+
+const PROFILE_FETCH_TIMEOUT_MS = 2000;
+
+function getDefaultProfileFields(authUser: AuthSessionUserLike): { name: string; avatar: string } {
+  const oauthName = authUser.user_metadata?.full_name || authUser.user_metadata?.name;
+  const oauthAvatar = authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture;
+  const defaultName = oauthName || authUser.email?.split('@')[0] || 'User';
+  const defaultAvatar =
+    oauthAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultName)}&background=random`;
+  return { name: defaultName, avatar: defaultAvatar };
+}
+
+function buildDefaultUser(authUser: AuthSessionUserLike): User | null {
+  if (!authUser.id) return null;
+  const { name, avatar } = getDefaultProfileFields(authUser);
+  return { id: authUser.id, name, avatar, isCurrentUser: true };
+}
+
+function isNoRowsProfileError(profileError: any): boolean {
+  return profileError?.code === 'PGRST116' || profileError?.message?.includes('No rows');
+}
+
+async function fetchUserProfileWithTimeout(userId: string): Promise<{ profile: any; profileError: any }> {
+  const profilePromise = supabase
+    .from('user_profiles')
+    .select('*')
+    .eq('id', userId)
+    .single();
+
+  const timeoutPromise = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Profile fetch timeout')), PROFILE_FETCH_TIMEOUT_MS);
+  });
+
+  const profileResult = (await Promise.race([profilePromise, timeoutPromise])) as any;
+  const { data: profile, error: profileError } = profileResult ?? {};
+  return { profile, profileError };
+}
+
+async function createDefaultUserProfile(userId: string, fields: { name: string; avatar: string }): Promise<any | null> {
+  const { data: newProfile, error: insertError } = await supabase
+    .from('user_profiles')
+    // Our Supabase client isn't strongly typed with Database here, so insert typing defaults to never.
+    // Cast to any to avoid TS false positives (runtime shape is correct).
+    .insert({ id: userId, name: fields.name, avatar: fields.avatar } as any)
+    .select()
+    .single();
+
+  if (insertError || !newProfile) {
+    devError('getCurrentUser: Error creating default profile:', insertError);
+    return null;
+  }
+
+  return newProfile;
+}
+
+function buildUserFromProfile(userId: string, profile: any): User {
+  return {
+    id: userId,
+    name: profile.name,
+    avatar: profile.avatar,
+    isCurrentUser: true,
+  };
+}
+
+async function getUserFromAuthSessionUser(authUser: AuthSessionUserLike): Promise<User | null> {
+  if (!authUser?.id) return null;
+
+  const cached = inFlightCurrentUser.get(authUser.id);
+  if (cached) return cached;
+
+  const p = (async () => {
+    try {
+      const { profile, profileError } = await fetchUserProfileWithTimeout(authUser.id);
+
+      if (profileError) {
+        devLog('getCurrentUser: Profile error:', profileError.code, profileError.message);
+
+        if (isNoRowsProfileError(profileError)) {
+          devLog('getCurrentUser: Profile does not exist, creating default profile...');
+          const fields = getDefaultProfileFields(authUser);
+          const createdProfile = await createDefaultUserProfile(authUser.id, fields);
+          if (!createdProfile) {
+            return buildDefaultUser(authUser);
+          }
+          devLog('getCurrentUser: Profile created successfully:', createdProfile);
+          return buildUserFromProfile(authUser.id, createdProfile);
+        }
+
+        devError('getCurrentUser: Unexpected profile error:', profileError);
+        return buildDefaultUser(authUser);
+      }
+
+      if (!profile) {
+        devLog('getCurrentUser: Profile is null');
+        return buildDefaultUser(authUser);
+      }
+
+      devLog('getCurrentUser: Profile found:', profile);
+      return buildUserFromProfile(authUser.id, profile);
+    } catch (timeoutError) {
+      devError('getCurrentUser: Profile fetch timed out or failed:', timeoutError);
+      return buildDefaultUser(authUser);
+    }
+  })().finally(() => {
+    inFlightCurrentUser.delete(authUser.id);
+  });
+
+  inFlightCurrentUser.set(authUser.id, p);
+  return p;
+}
+
 /**
  * Get the current authenticated user
  */
 export async function getCurrentUser(): Promise<User | null> {
   try {
     devLog('getCurrentUser: Starting...');
-    const { data: { user }, error } = await supabase.auth.getUser();
-    
-    if (error || !user) {
-      devLog('getCurrentUser: No auth user found:', error);
+    // Prefer session (no network) vs auth.getUser() (network)
+    const { data: { session }, error } = await supabase.auth.getSession();
+    if (error || !session?.user) {
+      devLog('getCurrentUser: No session user found:', error);
       return null;
     }
 
-    devLog('getCurrentUser: Auth user found:', user.id, user.email);
-
-    // Fetch user profile with timeout
-    const profilePromise = supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', user.id)
-      .single();
-
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error('Profile fetch timeout')), 2000);
-    });
-
-    let profileResult;
-    try {
-      profileResult = await Promise.race([profilePromise, timeoutPromise]);
-    } catch (timeoutError) {
-      devError('getCurrentUser: Profile fetch timed out or failed:', timeoutError);
-      // If fetch fails, try to create profile
-      // Use OAuth metadata if available (for Google OAuth users)
-      const oauthName = user.user_metadata?.full_name || user.user_metadata?.name;
-      const oauthAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
-      const defaultName = oauthName || user.email?.split('@')[0] || 'User';
-      const defaultAvatar = oauthAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultName)}&background=random`;
-      return {
-        id: user.id,
-        name: defaultName,
-        avatar: defaultAvatar,
-        isCurrentUser: true,
-      };
-    }
-
-    const { data: profile, error: profileError } = profileResult as any;
-
-    if (profileError) {
-      devLog('getCurrentUser: Profile error:', profileError.code, profileError.message);
-      // If profile doesn't exist, create a default one
-      if (profileError.code === 'PGRST116' || profileError.message?.includes('No rows')) {
-        devLog('getCurrentUser: Profile does not exist, creating default profile...');
-        // Profile doesn't exist - create a default one
-        // Use OAuth metadata if available (for Google OAuth users)
-        const oauthName = user.user_metadata?.full_name || user.user_metadata?.name;
-        const oauthAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
-        const defaultName = oauthName || user.email?.split('@')[0] || 'User';
-        const defaultAvatar = oauthAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultName)}&background=random`;
-        
-        const { data: newProfile, error: insertError } = await supabase
-          .from('user_profiles')
-          .insert({
-            id: user.id,
-            name: defaultName,
-            avatar: defaultAvatar,
-          })
-          .select()
-          .single();
-
-        if (insertError) {
-          devError('getCurrentUser: Error creating default profile:', insertError);
-          // Even if profile creation fails, return a basic user object
-          return {
-            id: user.id,
-            name: defaultName,
-            avatar: defaultAvatar,
-            isCurrentUser: true,
-          };
-        }
-
-        devLog('getCurrentUser: Profile created successfully:', newProfile);
-        // Return the newly created profile
-        return {
-          id: user.id,
-          name: newProfile.name,
-          avatar: newProfile.avatar,
-          isCurrentUser: true,
-        };
-      }
-      devError('getCurrentUser: Unexpected profile error:', profileError);
-      // Return a basic user object even on error
-      // Use OAuth metadata if available (for Google OAuth users)
-      const oauthName = user.user_metadata?.full_name || user.user_metadata?.name;
-      const oauthAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
-      const defaultName = oauthName || user.email?.split('@')[0] || 'User';
-      const defaultAvatar = oauthAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultName)}&background=random`;
-      return {
-        id: user.id,
-        name: defaultName,
-        avatar: defaultAvatar,
-        isCurrentUser: true,
-      };
-    }
-
-    if (!profile) {
-      devLog('getCurrentUser: Profile is null');
-      // Use OAuth metadata if available (for Google OAuth users)
-      const oauthName = user.user_metadata?.full_name || user.user_metadata?.name;
-      const oauthAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
-      const defaultName = oauthName || user.email?.split('@')[0] || 'User';
-      const defaultAvatar = oauthAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultName)}&background=random`;
-      return {
-        id: user.id,
-        name: defaultName,
-        avatar: defaultAvatar,
-        isCurrentUser: true,
-      };
-    }
-
-    devLog('getCurrentUser: Profile found:', profile);
-    return {
-      id: user.id,
-      name: profile.name,
-      avatar: profile.avatar,
-      isCurrentUser: true,
-    };
+    devLog('getCurrentUser: Session user found:', session.user.id, session.user.email);
+    return await getUserFromAuthSessionUser(session.user);
   } catch (error) {
     devError('getCurrentUser: Error:', error);
-    // Try to get at least the auth user info
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        // Use OAuth metadata if available (for Google OAuth users)
-        const oauthName = user.user_metadata?.full_name || user.user_metadata?.name;
-        const oauthAvatar = user.user_metadata?.avatar_url || user.user_metadata?.picture;
-        const defaultName = oauthName || user.email?.split('@')[0] || 'User';
-        const defaultAvatar = oauthAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultName)}&background=random`;
-        return {
-          id: user.id,
-          name: defaultName,
-          avatar: defaultAvatar,
-          isCurrentUser: true,
-        };
-      }
-    } catch (e) {
-      devError('getCurrentUser: Could not get auth user:', e);
-    }
     return null;
   }
 }
@@ -179,11 +168,7 @@ export async function signUp(email: string, password: string, name: string, avat
   // Create user profile
   const { error: profileError } = await supabase
     .from('user_profiles')
-    .insert({
-      id: authData.user.id,
-      name,
-      avatar,
-    });
+    .insert({ id: authData.user.id, name, avatar } as any);
 
   if (profileError) {
     return { error: profileError };
@@ -243,22 +228,26 @@ export function onAuthStateChange(callback: (user: User | null) => void) {
           // Add a small delay to ensure the session is fully established
           await new Promise(resolve => setTimeout(resolve, 100));
           
-          // Set a timeout for getCurrentUser to prevent hanging
-          const userPromise = getCurrentUser();
+          // Set a timeout for profile fetch to prevent hanging
+          // IMPORTANT: Never "UI logout" due to a slow profile fetch.
+          // If we have an auth session, we keep the user authenticated and fall back to a default profile.
+          const fallbackUser = buildDefaultUser(session.user);
+
+          const userPromise = getUserFromAuthSessionUser(session.user);
           const timeoutPromise = new Promise<User | null>((resolve) => {
             setTimeout(() => {
-              devWarn('getCurrentUser timeout, calling callback with null');
-              resolve(null);
+              devWarn('Profile fetch slow; using fallback user to avoid UI logout');
+              resolve(fallbackUser);
             }, 3000);
           });
           
           const user = await Promise.race([userPromise, timeoutPromise]);
           devLog('Got user from getCurrentUser:', user?.id, user?.name);
-          callback(user);
+          callback(user ?? fallbackUser);
         } catch (error) {
           devError('Error in onAuthStateChange callback:', error);
-          // Still call callback with null if getCurrentUser fails
-          callback(null);
+          // Still keep the user authenticated if we have a session
+          callback(buildDefaultUser(session.user));
         }
       } else {
         devLog('No session, calling callback with null');

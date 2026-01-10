@@ -38,7 +38,7 @@ function transformEventRow(row: any, attendees: string[], comments: Comment[], r
 /**
  * Fetch all events visible to the current user
  */
-export async function fetchEvents(): Promise<SocialEvent[]> {
+export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]> {
   const { data: eventsData, error } = await supabase
     .from('events')
     .select('*')
@@ -112,9 +112,6 @@ export async function fetchEvents(): Promise<SocialEvent[]> {
 
   // Process reactions
   if (reactionsData) {
-    const { data: { user } } = await supabase.auth.getUser();
-    const currentUserId = user?.id;
-
     reactionsData.forEach(reaction => {
       if (!reactionsMap.has(reaction.event_id)) {
         reactionsMap.set(reaction.event_id, new Map());

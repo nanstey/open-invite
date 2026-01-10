@@ -14,15 +14,16 @@ type UserGroupInsert = Database['public']['Tables']['user_groups']['Insert'];
  * Fetch friends for the current user
  */
 export async function fetchFriends(): Promise<User[]> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) {
     return [];
   }
 
   const { data: friendships, error } = await supabase
     .from('user_friends')
     .select('friend_id')
-    .eq('user_id', user.id);
+    .eq('user_id', userId);
 
   if (error || !friendships) {
     console.error('Error fetching friends:', error);
@@ -30,22 +31,23 @@ export async function fetchFriends(): Promise<User[]> {
   }
 
   const friendIds = (friendships as Pick<UserFriendRow, 'friend_id'>[]).map(f => f.friend_id);
-  return fetchUsers(friendIds);
+  return fetchUsers(friendIds, userId);
 }
 
 /**
  * Add a friend
  */
 export async function addFriend(friendId: string): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) {
     return false;
   }
 
   // Add bidirectional friendship
   const inserts: UserFriendInsert[] = [
-    { user_id: user.id, friend_id: friendId },
-    { user_id: friendId, friend_id: user.id },
+    { user_id: userId, friend_id: friendId },
+    { user_id: friendId, friend_id: userId },
   ];
   const { error } = await (supabase
     .from('user_friends') as any)
@@ -58,8 +60,9 @@ export async function addFriend(friendId: string): Promise<boolean> {
  * Remove a friend
  */
 export async function removeFriend(friendId: string): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) {
     return false;
   }
 
@@ -67,7 +70,7 @@ export async function removeFriend(friendId: string): Promise<boolean> {
   const { error } = await supabase
     .from('user_friends')
     .delete()
-    .or(`and(user_id.eq.${user.id},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${user.id})`);
+    .or(`and(user_id.eq.${userId},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${userId})`);
 
   return !error;
 }
@@ -130,14 +133,15 @@ export async function fetchUserGroups(userId: string): Promise<Group[]> {
  * Create a new group
  */
 export async function createGroup(name: string, isOpen: boolean): Promise<Group | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
+  const { data: { session } } = await supabase.auth.getSession();
+  const userId = session?.user?.id;
+  if (!userId) {
     return null;
   }
 
   const insertData: GroupInsert = {
     name,
-    created_by: user.id,
+    created_by: userId,
     is_open: isOpen,
   };
   const { data: group, error } = await (supabase
@@ -153,7 +157,7 @@ export async function createGroup(name: string, isOpen: boolean): Promise<Group 
 
   // Add creator as admin member
   const userGroupInsert: UserGroupInsert = {
-    user_id: user.id,
+    user_id: userId,
     group_id: (group as GroupRow).id,
     role: 'ADMIN',
   };
