@@ -229,21 +229,25 @@ export function onAuthStateChange(callback: (user: User | null) => void) {
           await new Promise(resolve => setTimeout(resolve, 100));
           
           // Set a timeout for profile fetch to prevent hanging
+          // IMPORTANT: Never "UI logout" due to a slow profile fetch.
+          // If we have an auth session, we keep the user authenticated and fall back to a default profile.
+          const fallbackUser = buildDefaultUser(session.user);
+
           const userPromise = getUserFromAuthSessionUser(session.user);
           const timeoutPromise = new Promise<User | null>((resolve) => {
             setTimeout(() => {
-              devWarn('getCurrentUser timeout, calling callback with null');
-              resolve(null);
+              devWarn('Profile fetch slow; using fallback user to avoid UI logout');
+              resolve(fallbackUser);
             }, 3000);
           });
           
           const user = await Promise.race([userPromise, timeoutPromise]);
           devLog('Got user from getCurrentUser:', user?.id, user?.name);
-          callback(user);
+          callback(user ?? fallbackUser);
         } catch (error) {
           devError('Error in onAuthStateChange callback:', error);
-          // Still call callback with null if getCurrentUser fails
-          callback(null);
+          // Still keep the user authenticated if we have a session
+          callback(buildDefaultUser(session.user));
         }
       } else {
         devLog('No session, calling callback with null');
