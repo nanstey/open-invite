@@ -50,13 +50,13 @@ export const EventCard: React.FC<EventCardProps> = ({
 
   useEffect(() => {
     const loadHost = async () => {
-      const fetchedHost = await fetchUser(event.hostId);
+      const fetchedHost = await fetchUser(event.hostId, currentUser.id);
       if (fetchedHost) {
         setHost(fetchedHost);
       }
     };
     loadHost();
-  }, [event.hostId]);
+  }, [event.hostId, currentUser.id]);
 
   const date = new Date(event.startTime);
   const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });

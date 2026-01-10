@@ -46,17 +46,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Check initial session
-    getCurrentUser()
-      .then(user => {
-        setUser(user);
-        resolveLoading();
-      })
-      .catch((error) => {
-        devError('Error getting current user:', error);
-        resolveLoading();
-      });
-
     // Listen for auth state changes
     try {
       const result = onAuthStateChange((user) => {
@@ -83,37 +72,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     devLog('Signing in...');
-    const { signIn, getSession } = await import('../lib/supabaseClient');
+    const { signIn } = await import('../lib/supabaseClient');
     const result = await signIn(email, password);
     if (result.error) {
       devError('Sign in error:', result.error);
       return { error: result.error };
     }
     devLog('Sign in successful, result:', result.data);
-    
-    // Wait a moment for session to be established
-    await new Promise(resolve => setTimeout(resolve, 200));
-    
-    // Verify session exists
-    const { data: sessionData } = await getSession();
-    devLog('Session after sign in:', sessionData?.session?.user?.id);
-    
-    // The auth state change listener will update the user automatically
-    // But we also try to fetch immediately for faster feedback
-    try {
-      const currentUser = await getCurrentUser();
-      devLog('Got user after sign in:', currentUser);
-      if (currentUser) {
-        setUser(currentUser);
-        setLoading(false);
-      } else {
-        devWarn('getCurrentUser returned null after sign in, will wait for auth state change');
-        // Don't set loading to false here - let the auth state listener handle it
-      }
-    } catch (error) {
-      devError('Error fetching user after sign in:', error);
-      // Auth state listener will handle it
-    }
     return null;
   };
 
