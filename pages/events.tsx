@@ -397,8 +397,8 @@ const EventsPage: React.FC = () => {
                             event={event}
                             onClick={() =>
                               navigate({
-                                to: '/events/$eventId',
-                                params: { eventId: event.id },
+                                to: '/events/$slug',
+                                params: { slug: event.slug },
                                 search: { view: undefined },
                                 state: { fromEventsView: view },
                               })
@@ -439,8 +439,8 @@ const EventsPage: React.FC = () => {
             events={filteredEvents}
             onEventClick={(e) =>
               navigate({
-                to: '/events/$eventId',
-                params: { eventId: e.id },
+                to: '/events/$slug',
+                params: { slug: e.slug },
                 search: { view: undefined },
                 state: { fromEventsView: view },
               })
@@ -452,8 +452,8 @@ const EventsPage: React.FC = () => {
             events={filteredEvents}
             onEventClick={(e) =>
               navigate({
-                to: '/events/$eventId',
-                params: { eventId: e.id },
+                to: '/events/$slug',
+                params: { slug: e.slug },
                 search: { view: undefined },
                 state: { fromEventsView: view },
               })

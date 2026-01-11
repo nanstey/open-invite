@@ -14,6 +14,7 @@ type EventGroupRow = Database['public']['Tables']['event_groups']['Row'];
 function transformEventRow(row: any, attendees: string[], comments: Comment[], reactions: Record<string, Reaction>, groupIds: string[]): SocialEvent {
   return {
     id: row.id,
+    slug: row.slug,
     hostId: row.host_id,
     title: row.title,
     description: row.description,
@@ -207,6 +208,27 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
   }
 
   return transformEventRow(event as EventRow, attendees, comments, reactions, groupIds);
+}
+
+/**
+ * Fetch a single event by slug
+ * (Resolve slug -> id, then hydrate with existing fetchEventById logic)
+ */
+export async function fetchEventBySlug(slug: string): Promise<SocialEvent | null> {
+  // Supabase select typing can fall back to `never` for narrow selects; cast to the row shape we need.
+  const result = await supabase
+    .from('events')
+    .select('id')
+    .eq('slug', slug)
+    .single();
+  const { data, error } = result as unknown as { data: Pick<EventRow, 'id'> | null; error: any };
+
+  if (error || !data?.id) {
+    console.error('Error fetching event by slug:', error);
+    return null;
+  }
+
+  return fetchEventById(data.id);
 }
 
 /**

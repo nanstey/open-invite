@@ -35,6 +35,7 @@ export interface Group {
 
 export interface SocialEvent {
   id: string;
+  slug: string;
   hostId: string;
   title: string;
   description: string;

@@ -85,7 +85,7 @@ function AppShellLayout() {
       if (pathname.startsWith('/events/') && pathname !== '/events/new') {
         const eventId = pathname.slice('/events/'.length).split('/')[0]
         if (eventId) {
-          navigate({ to: '/e/$eventId', params: { eventId }, replace: true })
+          navigate({ to: '/e/$slug', params: { slug: eventId }, replace: true })
           return
         }
       }
