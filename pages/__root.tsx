@@ -121,7 +121,7 @@ function AppShellLayout() {
     ) : null
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row max-w-7xl mx-auto overflow-hidden h-screen text-slate-100 bg-background">
+    <div className="min-h-screen w-full flex flex-col md:flex-row overflow-hidden h-screen text-slate-100 bg-background">
       {/* Desktop Sidebar */}
       <nav className="hidden md:flex w-20 lg:w-64 bg-slate-900 border-r border-slate-800 flex-col justify-between items-center p-4 z-20 shrink-0">
         <div className="flex flex-col items-center gap-8 w-full">

@@ -384,7 +384,7 @@ const EventsPage: React.FC = () => {
                     <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3 mt-6 first:mt-0 py-1">
                       {group.title}
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                       {group.events.map((event) => (
                         <div key={event.id} className="relative group">
                           <EventCard
