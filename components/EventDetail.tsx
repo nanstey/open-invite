@@ -1,9 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { SocialEvent, User, Comment } from '../lib/types';
 import { getTheme } from '../lib/constants';
-import { X, Calendar, MapPin, Users, Send, CheckCircle2, EyeOff } from 'lucide-react';
+import { ArrowLeft, Calendar, Info, MapPin, MessageSquare, Send, Users, X, CheckCircle2, EyeOff } from 'lucide-react';
 import { fetchUser, fetchUsers } from '../services/userService';
+import { TabGroup, type TabOption } from './TabGroup';
 
 interface EventDetailProps {
   event: SocialEvent;
@@ -18,6 +19,10 @@ export const EventDetail: React.FC<EventDetailProps> = ({ event, currentUser, on
   const [host, setHost] = useState<User | null>(null);
   const [attendeesList, setAttendeesList] = useState<User[]>([]);
   const [commentUsers, setCommentUsers] = useState<Map<string, User>>(new Map());
+  const [activeTab, setActiveTab] = useState<'details' | 'going' | 'discussion'>('details');
+  const miniMapContainerRef = useRef<HTMLDivElement>(null);
+  const miniMapInstanceRef = useRef<any>(null);
+  const miniMapMarkerRef = useRef<any>(null);
   const theme = getTheme(event.activityType);
   
   useEffect(() => {
@@ -49,6 +54,103 @@ export const EventDetail: React.FC<EventDetailProps> = ({ event, currentUser, on
   const isHost = event.hostId === currentUser.id;
   const isAttending = event.attendees.includes(currentUser.id);
   const isInvolved = isHost || isAttending;
+  const startDate = new Date(event.startTime);
+  const dateLabel = startDate.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
+  const timeLabel = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const goingLabel = `${attendeesList.length}/${event.maxSeats || '∞'}`;
+  const spotsLeft = event.maxSeats ? Math.max(event.maxSeats - attendeesList.length, 0) : null;
+
+  const tabs: TabOption[] = [
+    { id: 'details', label: 'Details', icon: <Info className="w-4 h-4" /> },
+    { id: 'going', label: `Going (${goingLabel})`, icon: <Users className="w-4 h-4" /> },
+    { id: 'discussion', label: `Discussion (${event.comments.length})`, icon: <MessageSquare className="w-4 h-4" /> },
+  ];
+
+  const openInMaps = () => {
+    const lat = event.coordinates?.lat;
+    const lng = event.coordinates?.lng;
+    if (typeof lat !== 'number' || typeof lng !== 'number') return;
+
+    const url = `https://www.google.com/maps?q=${encodeURIComponent(`${lat},${lng}`)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  useEffect(() => {
+    if (activeTab !== 'details') return;
+    if (!miniMapContainerRef.current) return;
+
+    const L = (window as any)?.L;
+    if (!L) return;
+
+    const lat = event.coordinates?.lat;
+    const lng = event.coordinates?.lng;
+    if (typeof lat !== 'number' || typeof lng !== 'number') return;
+
+    // Create once; update position on changes.
+    if (!miniMapInstanceRef.current) {
+      const map = L.map(miniMapContainerRef.current, {
+        zoomControl: false,
+        attributionControl: false,
+        dragging: false,
+        scrollWheelZoom: false,
+        doubleClickZoom: false,
+        boxZoom: false,
+        keyboard: false,
+        tap: false,
+        touchZoom: false,
+      }).setView([lat, lng], 15);
+
+      // Use a lighter basemap for clarity (CartoDB Voyager)
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        subdomains: 'abcd',
+        maxZoom: 20,
+        opacity: 0.95,
+      }).addTo(map);
+
+      miniMapInstanceRef.current = map;
+    } else {
+      miniMapInstanceRef.current.setView([lat, lng], 15);
+    }
+
+    // Marker (recreate on changes)
+    if (miniMapMarkerRef.current) {
+      miniMapMarkerRef.current.remove();
+      miniMapMarkerRef.current = null;
+    }
+
+    miniMapMarkerRef.current = L.circleMarker([lat, lng], {
+      radius: 8,
+      weight: 2,
+      color: '#ffffff',
+      fillColor: theme.hex,
+      fillOpacity: 0.9,
+    }).addTo(miniMapInstanceRef.current);
+
+    return () => {
+      // Keep the map instance while tabbing around; cleanup happens on unmount below.
+    };
+  }, [activeTab, event.coordinates?.lat, event.coordinates?.lng, theme.hex]);
+
+  // If the Details tab unmounts its DOM (tab switch), Leaflet stays bound to a dead element.
+  // Tear down the map when leaving Details so it can be recreated cleanly when returning.
+  useEffect(() => {
+    if (activeTab === 'details') return;
+    if (miniMapInstanceRef.current) {
+      miniMapInstanceRef.current.remove();
+      miniMapInstanceRef.current = null;
+    }
+    miniMapMarkerRef.current = null;
+  }, [activeTab]);
+
+  useEffect(() => {
+    return () => {
+      if (miniMapInstanceRef.current) {
+        miniMapInstanceRef.current.remove();
+        miniMapInstanceRef.current = null;
+      }
+      miniMapMarkerRef.current = null;
+    };
+  }, []);
 
   const handleJoin = () => {
     let newAttendees;
@@ -77,194 +179,318 @@ export const EventDetail: React.FC<EventDetailProps> = ({ event, currentUser, on
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex justify-end">
-      <div className="w-full md:max-w-md bg-surface h-full md:border-l border-slate-700 shadow-2xl flex flex-col animate-slide-in-right relative">
-        
-        {/* Fixed Close Button - Stays visible while scrolling */}
-        <button 
-            onClick={onClose} 
-            className="absolute top-4 right-4 z-50 bg-black/40 hover:bg-black/60 p-2 rounded-full text-white backdrop-blur transition-all"
-        >
-            <X className="w-5 h-5" />
-        </button>
+    <div className="flex-1 overflow-y-auto custom-scrollbar bg-background text-slate-100 pb-44 md:pb-10">
+      {/* Hero / Header */}
+      <div className="relative w-full h-56 md:h-72 bg-slate-800">
+        <img
+          src={`https://picsum.photos/seed/${event.id}/1200/800`}
+          className="w-full h-full object-cover"
+          alt="cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/45 to-transparent" />
 
-        {/* Scrollable Content Area */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar relative bg-surface">
-            
-            {/* Header Image Area (Now part of scroll) */}
-            <div className="relative h-64 md:h-56 bg-slate-800 shrink-0">
-                <img 
-                    src={`https://picsum.photos/seed/${event.id}/800/800`} 
-                    className="w-full h-full object-cover opacity-70" 
-                    alt="cover" 
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-surface via-surface/20 to-transparent" />
-                
-                <div className="absolute bottom-0 left-0 right-0 p-6 pt-12 bg-gradient-to-t from-surface to-transparent">
-                    <div className={`inline-block px-2 py-0.5 rounded text-xs font-bold mb-2 text-white ${theme.bg}`}>
-                    {event.activityType}
-                    </div>
-                    <h2 className="text-3xl font-bold text-white leading-tight shadow-black drop-shadow-md">{event.title}</h2>
+        <div className="absolute top-4 left-4">
+          <button
+            onClick={onClose}
+            className="bg-black/40 hover:bg-black/60 p-2 rounded-full text-white backdrop-blur transition-all border border-white/10"
+            type="button"
+            aria-label="Back"
+          >
+            <ArrowLeft className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0">
+          <div className="max-w-6xl mx-auto px-4 md:px-6 pb-5">
+            <div className={`inline-block px-2 py-0.5 rounded text-xs font-bold text-white ${theme.bg}`}>
+              {event.activityType}
+            </div>
+            <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mt-2 mb-4">{event.title}</h1>
+          </div>
+        </div>
+      </div>
+
+      {/* Key facts */}
+      <div className="max-w-6xl mx-auto px-4 md:px-6 -mt-6 relative z-10">
+        <div className="bg-surface/95 backdrop-blur border border-slate-800 rounded-2xl p-4 md:p-5 shadow-lg">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/40 border border-slate-800">
+              <div className="p-2 bg-slate-800 rounded-lg shrink-0">
+                <Calendar className="w-5 h-5 text-secondary" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">When</div>
+                <div className="font-bold text-white truncate">{dateLabel}</div>
+                <div className="text-sm text-slate-400">
+                  {timeLabel}
+                  {event.isFlexibleStart && <span className="italic"> (Flexible)</span>}
                 </div>
+              </div>
             </div>
 
-            <div className="p-6 space-y-6">
-                {/* Main Info */}
-                <div className="space-y-4">
-                    <div className="flex items-start gap-4">
-                        <div className="p-2 bg-slate-800 rounded-lg shrink-0">
-                            <Calendar className="w-6 h-6 text-secondary" />
-                        </div>
-                        <div>
-                        <div className="font-bold text-lg text-white">
-                            {new Date(event.startTime).toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })}
-                        </div>
-                        <div className="text-slate-400 font-medium">
-                            {new Date(event.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            {event.isFlexibleStart && ' (Flexible)'}
-                        </div>
-                        </div>
-                    </div>
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/40 border border-slate-800">
+              <div className="p-2 bg-slate-800 rounded-lg shrink-0">
+                <MapPin className="w-5 h-5 text-accent" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Where</div>
+                <div className="font-bold text-white truncate">{event.location}</div>
+                <button
+                  className="text-sm text-slate-500 underline decoration-slate-600 decoration-dashed hover:text-slate-300 transition-colors"
+                  type="button"
+                  onClick={openInMaps}
+                >
+                  View on map
+                </button>
+              </div>
+            </div>
 
-                    <div className="flex items-start gap-4">
-                        <div className="p-2 bg-slate-800 rounded-lg shrink-0">
-                             <MapPin className="w-6 h-6 text-accent" />
-                        </div>
-                        <div>
-                             <div className="font-bold text-lg text-white">{event.location}</div>
-                             <div className="text-sm text-slate-500 underline decoration-slate-600 decoration-dashed cursor-pointer">View on map</div>
-                        </div>
-                    </div>
+            <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/40 border border-slate-800">
+              <div className="p-2 bg-slate-800 rounded-lg shrink-0">
+                <Users className="w-5 h-5 text-slate-300" />
+              </div>
+              <div className="min-w-0">
+                <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Seats</div>
+                <div className="font-bold text-white truncate">{goingLabel} going</div>
+                {spotsLeft !== null ? (
+                  <div className="text-sm text-slate-400">{spotsLeft} spots left</div>
+                ) : (
+                  <div className="text-sm text-slate-500">No limit</div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-                    <div className="flex items-center gap-4 pt-2 pb-4 border-b border-slate-800">
-                        {host ? (
-                          <>
-                            <img src={host.avatar} className="w-12 h-12 rounded-full border-2 border-slate-700" alt={host.name} />
-                            <div>
-                                <div className="text-sm text-slate-400">Hosted by</div>
-                                <div className="font-bold text-white text-lg">{host.name}</div>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="w-12 h-12 rounded-full bg-slate-700 animate-pulse border-2 border-slate-700" />
-                            <div>
-                                <div className="text-sm text-slate-400">Hosted by</div>
-                                <div className="font-bold text-white text-lg">Loading...</div>
-                            </div>
-                          </>
-                        )}
-                    </div>
+      {/* Body */}
+      <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 grid grid-cols-1 md:grid-cols-[1fr_320px] lg:grid-cols-[1fr_360px] gap-6">
+        {/* Left: tabbed content */}
+        <div className="space-y-4 min-w-0">
+          <TabGroup tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+
+          {activeTab === 'details' ? (
+            <div className="space-y-4">
+              <div className="bg-surface border border-slate-700 rounded-2xl p-5">
+                <h2 className="text-lg font-bold text-white mb-3">About</h2>
+                <div className="text-slate-300 leading-relaxed text-base whitespace-pre-wrap">{event.description}</div>
+              </div>
+
+              <div className="bg-surface border border-slate-700 rounded-2xl p-5">
+                <h2 className="text-lg font-bold text-white mb-3">Location</h2>
+                <div className="flex items-start gap-3">
+                  <div className="p-2 bg-slate-800 rounded-lg shrink-0">
+                    <MapPin className="w-5 h-5 text-accent" />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="font-bold text-white">{event.location}</div>
+                    <button
+                      className="text-sm text-slate-500 underline decoration-slate-600 decoration-dashed hover:text-slate-300 transition-colors"
+                      type="button"
+                      onClick={openInMaps}
+                    >
+                      Open in maps
+                    </button>
+                  </div>
                 </div>
 
-                {/* Description */}
-                <div className="text-slate-300 leading-relaxed text-base">
-                    {event.description}
+                {/* Mini map preview */}
+                <div className="mt-4 relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-900">
+                  <div ref={miniMapContainerRef} className="w-full h-44 md:h-56" />
+                  <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/25 via-transparent to-transparent" />
+                  <div className="absolute bottom-3 right-3 pointer-events-auto">
+                    <button
+                      onClick={openInMaps}
+                      className="text-xs font-bold px-3 py-2 rounded-xl bg-slate-900/80 backdrop-blur border border-slate-700 text-white hover:bg-slate-800 transition-colors"
+                      type="button"
+                    >
+                      Open
+                    </button>
+                  </div>
                 </div>
+              </div>
+            </div>
+          ) : null}
 
-                {/* Attendees */}
-                <div>
-                    <div className="flex justify-between items-center mb-4">
-                    <h3 className="font-bold text-white flex items-center gap-2 text-lg">
-                        <Users className="w-5 h-5 text-slate-400" /> Going ({attendeesList.length}/{event.maxSeats || '∞'})
-                    </h3>
-                    </div>
-                    <div className="flex flex-wrap gap-3">
-                    {attendeesList.map(u => (
-                        <div key={u.id} className="relative group cursor-pointer" title={u.name}>
-                        <img src={u.avatar} className="w-12 h-12 rounded-full border-2 border-surface" alt={u.name} />
-                        {u.id === host.id && (
-                            <div className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold border border-surface">★</div>
-                        )}
-                        </div>
-                    ))}
-                    {event.maxSeats && attendeesList.length < event.maxSeats && (
-                        <div className="w-12 h-12 rounded-full border-2 border-dashed border-slate-700 flex items-center justify-center text-slate-500 bg-slate-800/50">
-                        <div className="text-xs font-medium">+{(event.maxSeats - attendeesList.length)}</div>
-                        </div>
+          {activeTab === 'going' ? (
+            <div className="bg-surface border border-slate-700 rounded-2xl p-5">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-lg font-bold text-white flex items-center gap-2">
+                  <Users className="w-5 h-5 text-slate-400" /> Going
+                </h2>
+                <div className="text-sm text-slate-400 font-medium">{goingLabel}</div>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                {attendeesList.map((u) => (
+                  <div key={u.id} className="relative group cursor-pointer" title={u.name}>
+                    <img src={u.avatar} className="w-12 h-12 rounded-full border-2 border-surface" alt={u.name} />
+                    {host && u.id === host.id && (
+                      <div className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold border border-surface">
+                        ★
+                      </div>
                     )}
-                    </div>
-                </div>
-
-                {/* Chat / Comments */}
-                <div className="pt-6 border-t border-slate-800">
-                    <h3 className="font-bold text-white mb-6 text-lg">Discussion</h3>
-                    <div className="space-y-6 mb-6">
-                        {event.comments.length === 0 && (
-                        <div className="text-center py-8 bg-slate-800/30 rounded-xl border border-dashed border-slate-800">
-                            <p className="text-slate-500 italic">No comments yet.</p>
-                        </div>
-                        )}
-                        {event.comments.map(c => {
-                        const u = commentUsers.get(c.userId);
-                        return (
-                            <div key={c.id} className="flex gap-4">
-                                {u ? (
-                                    <img src={u.avatar} className="w-10 h-10 rounded-full" alt={u.name} />
-                                ) : (
-                                    <div className="w-10 h-10 rounded-full bg-slate-700 animate-pulse" />
-                                )}
-                                <div className="bg-slate-800 rounded-2xl rounded-tl-none p-4 flex-1">
-                                    <div className="flex justify-between items-baseline mb-1">
-                                        <span className="text-sm font-bold text-slate-200">{u?.name || 'Loading...'}</span>
-                                        <span className="text-[10px] text-slate-500">{new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                    </div>
-                                    <p className="text-slate-300 leading-normal">{c.text}</p>
-                                </div>
-                            </div>
-                        );
-                        })}
-                    </div>
-                    
-                    <form onSubmit={handlePostComment} className="relative mt-4">
-                        <input 
-                        value={commentText}
-                        onChange={e => setCommentText(e.target.value)}
-                        placeholder="Ask a question or say hi..." 
-                        className="w-full bg-slate-900 border border-slate-700 rounded-full py-3.5 pl-5 pr-14 text-white focus:border-primary outline-none transition-colors"
-                        />
-                        <button type="submit" disabled={!commentText.trim()} className="absolute right-2 top-2 p-1.5 bg-primary text-white rounded-full hover:bg-primary/90 disabled:opacity-50 disabled:bg-slate-700 transition-colors">
-                        <Send className="w-5 h-5" />
-                        </button>
-                    </form>
-                </div>
-                
-                {/* Spacer for bottom bar */}
-                <div className="h-20"></div>
+                  </div>
+                ))}
+                {event.maxSeats && attendeesList.length < event.maxSeats && (
+                  <div className="w-12 h-12 rounded-full border-2 border-dashed border-slate-700 flex items-center justify-center text-slate-500 bg-slate-800/50">
+                    <div className="text-xs font-medium">+{event.maxSeats - attendeesList.length}</div>
+                  </div>
+                )}
+              </div>
             </div>
+          ) : null}
+
+          {activeTab === 'discussion' ? (
+            <div className="bg-surface border border-slate-700 rounded-2xl p-5">
+              <h2 className="text-lg font-bold text-white mb-4">Discussion</h2>
+
+              <div className="space-y-6 mb-6">
+                {event.comments.length === 0 && (
+                  <div className="text-center py-8 bg-slate-800/30 rounded-xl border border-dashed border-slate-800">
+                    <p className="text-slate-500 italic">No comments yet.</p>
+                  </div>
+                )}
+
+                {event.comments.map((c) => {
+                  const u = commentUsers.get(c.userId);
+                  return (
+                    <div key={c.id} className="flex gap-4">
+                      {u ? (
+                        <img src={u.avatar} className="w-10 h-10 rounded-full" alt={u.name} />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-slate-700 animate-pulse" />
+                      )}
+                      <div className="bg-slate-800 rounded-2xl rounded-tl-none p-4 flex-1">
+                        <div className="flex justify-between items-baseline mb-1">
+                          <span className="text-sm font-bold text-slate-200">{u?.name || 'Loading...'}</span>
+                          <span className="text-[10px] text-slate-500">
+                            {new Date(c.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        </div>
+                        <p className="text-slate-300 leading-normal">{c.text}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              <form onSubmit={handlePostComment} className="relative">
+                <input
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  placeholder="Ask a question or say hi..."
+                  className="w-full bg-slate-900 border border-slate-700 rounded-full py-3.5 pl-5 pr-14 text-white focus:border-primary outline-none transition-colors"
+                />
+                <button
+                  type="submit"
+                  disabled={!commentText.trim()}
+                  className="absolute right-2 top-2 p-1.5 bg-primary text-white rounded-full hover:bg-primary/90 disabled:opacity-50 disabled:bg-slate-700 transition-colors"
+                >
+                  <Send className="w-5 h-5" />
+                </button>
+              </form>
+            </div>
+          ) : null}
         </div>
 
-        {/* Bottom Action Bar (Fixed) */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-800 bg-surface/95 backdrop-blur flex gap-3 z-40 pb-safe-area">
-           {onDismiss && !isInvolved && (
-             <button
-               onClick={onDismiss}
-               className="w-1/3 py-3.5 rounded-2xl font-bold text-base flex items-center justify-center gap-2 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200 transition-all border border-slate-700 hover:border-slate-600"
-             >
-               <EyeOff className="w-5 h-5" /> Hide
-             </button>
-           )}
+        {/* Right: sticky action card (desktop) */}
+        <aside className="hidden md:block">
+          <div className="sticky top-6 space-y-4">
+            <div className="bg-surface border border-slate-700 rounded-2xl p-5 shadow-sm">
+              <div className="flex items-center gap-4">
+                {host ? (
+                  <img src={host.avatar} className="w-12 h-12 rounded-full border-2 border-slate-700" alt={host.name} />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-slate-700 animate-pulse border-2 border-slate-700" />
+                )}
+                <div className="min-w-0">
+                  <div className="text-xs text-slate-400">Hosted by</div>
+                  <div className="font-bold text-white text-lg truncate">{host?.name || 'Loading...'}</div>
+                </div>
+              </div>
 
-           <button 
-             onClick={handleJoin}
-             className={`flex-1 py-3.5 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg ${
-               isAttending 
-                 ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/50' 
-                 : 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
-             }`}
-           >
-              {isAttending ? (
-                <>
-                  <X className="w-5 h-5" /> Leave Event
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="w-5 h-5" /> I'm In!
-                </>
-              )}
-           </button>
+              <div className="mt-4 pt-4 border-t border-slate-800 space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-slate-400">Going</span>
+                  <span className="font-bold text-white">{goingLabel}</span>
+                </div>
+                {spotsLeft !== null ? (
+                  <div className="text-xs text-slate-500">{spotsLeft} spots left</div>
+                ) : (
+                  <div className="text-xs text-slate-600">No limit</div>
+                )}
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {onDismiss && !isInvolved && (
+                  <button
+                    onClick={onDismiss}
+                    className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all border border-slate-700"
+                    type="button"
+                  >
+                    <EyeOff className="w-5 h-5" /> Hide
+                  </button>
+                )}
+
+                <button
+                  onClick={handleJoin}
+                  className={`w-full py-3 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg ${
+                    isAttending
+                      ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/50'
+                      : 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
+                  }`}
+                  type="button"
+                >
+                  {isAttending ? (
+                    <>
+                      <X className="w-5 h-5" /> Leave Event
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 className="w-5 h-5" /> I'm In!
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      {/* Mobile action bar (fixed, above bottom nav) */}
+      <div className="md:hidden fixed left-0 right-0 bottom-16 p-4 border-t border-slate-800 bg-surface/95 backdrop-blur z-40 pb-safe-area">
+        <div className="max-w-6xl mx-auto flex gap-3">
+          {onDismiss && !isInvolved && (
+            <button
+              onClick={onDismiss}
+              className="w-1/3 py-3.5 rounded-2xl font-bold text-base flex items-center justify-center gap-2 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200 transition-all border border-slate-700 hover:border-slate-600"
+              type="button"
+            >
+              <EyeOff className="w-5 h-5" /> Hide
+            </button>
+          )}
+
+          <button
+            onClick={handleJoin}
+            className={`flex-1 py-3.5 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg ${
+              isAttending
+                ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/50'
+                : 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
+            }`}
+            type="button"
+          >
+            {isAttending ? (
+              <>
+                <X className="w-5 h-5" /> Leave Event
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="w-5 h-5" /> I'm In!
+              </>
+            )}
+          </button>
         </div>
-
       </div>
     </div>
   );

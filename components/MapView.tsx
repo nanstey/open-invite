@@ -45,11 +45,12 @@ export const MapView: React.FC<MapViewProps> = ({ events, onEventClick, currentU
       // Center on Victoria BC
       const map = window.L.map(mapContainerRef.current).setView([48.4284, -123.3656], 13);
       
-      // Add Dark Matter tiles (CartoDB)
-      window.L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      // Add a lighter basemap for better legibility in our dark UI (CartoDB Voyager)
+      window.L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
         subdomains: 'abcd',
-        maxZoom: 20
+        maxZoom: 20,
+        opacity: 0.95,
       }).addTo(map);
 
       mapInstanceRef.current = map;
