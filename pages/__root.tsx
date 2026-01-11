@@ -80,6 +80,14 @@ function AppShellLayout() {
 
   React.useEffect(() => {
     if (!loading && !user && activeSection !== 'PUBLIC') {
+      if (pathname.startsWith('/events/') && pathname !== '/events/new') {
+        const eventId = pathname.slice('/events/'.length).split('/')[0]
+        if (eventId) {
+          navigate({ to: '/e/$eventId', params: { eventId }, replace: true })
+          return
+        }
+      }
+
       navigate({ to: '/', replace: true })
     }
   }, [loading, user, activeSection, navigate])

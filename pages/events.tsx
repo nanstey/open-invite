@@ -13,10 +13,11 @@ import { fetchUsers } from '../services/userService'
 
 type EventsView = 'list' | 'map' | 'calendar'
 
-function parseEventsView(value: unknown): EventsView {
-  const view = typeof value === 'string' ? value.toLowerCase() : 'list'
+function parseEventsView(value: unknown): EventsView | undefined {
+  if (typeof value !== 'string') return undefined
+  const view = value.toLowerCase()
   if (view === 'map' || view === 'calendar' || view === 'list') return view
-  return 'list'
+  return undefined
 }
 
 export const Route = createFileRoute('/events')({
@@ -46,7 +47,7 @@ export const Route = createFileRoute('/events')({
 const EventsPage: React.FC = () => {
   const navigate = useNavigate()
   const { user: currentUser, loading: authLoading } = useAuth()
-  const { view } = Route.useSearch()
+  const view = Route.useSearch().view ?? 'list'
 
   const [events, setEvents] = useState<SocialEvent[]>([])
   const [eventsLoading, setEventsLoading] = useState(true)
@@ -398,7 +399,8 @@ const EventsPage: React.FC = () => {
                               navigate({
                                 to: '/events/$eventId',
                                 params: { eventId: event.id },
-                                search: { view },
+                                search: { view: undefined },
+                                state: { fromEventsView: view },
                               })
                             }
                             currentUser={currentUser}
@@ -439,7 +441,8 @@ const EventsPage: React.FC = () => {
               navigate({
                 to: '/events/$eventId',
                 params: { eventId: e.id },
-                search: { view },
+                search: { view: undefined },
+                state: { fromEventsView: view },
               })
             }
             currentUser={currentUser}
@@ -451,7 +454,8 @@ const EventsPage: React.FC = () => {
               navigate({
                 to: '/events/$eventId',
                 params: { eventId: e.id },
-                search: { view },
+                search: { view: undefined },
+                state: { fromEventsView: view },
               })
             }
             currentUser={currentUser}

@@ -42,7 +42,13 @@ export const Route = createFileRoute('/e/$eventId')({
     React.useEffect(() => {
       if (!user) return
       setShowLoginModal(false)
-      navigate({ to: '/events/$eventId', params: { eventId }, replace: true, search: { view: 'list' } })
+      navigate({
+        to: '/events/$eventId',
+        params: { eventId },
+        search: { view: undefined },
+        replace: true,
+        state: { fromEventsView: 'list' },
+      })
     }, [user, navigate, eventId])
 
     if (!event) {

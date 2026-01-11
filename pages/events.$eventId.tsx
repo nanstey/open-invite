@@ -1,5 +1,5 @@
 import React from 'react'
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate, useRouterState } from '@tanstack/react-router'
 
 import type { SocialEvent } from '../lib/types'
 import { useAuth } from '../components/AuthProvider'
@@ -16,19 +16,24 @@ function parseEventsView(value: unknown): EventsView {
 }
 
 export const Route = createFileRoute('/events/$eventId')({
-  validateSearch: (search: Record<string, unknown>) => ({
-    view: parseEventsView(search.view),
-  }),
-  beforeLoad: ({ context }) => {
+  beforeLoad: ({ context, params }) => {
     if (!context.auth.loading && !context.auth.user) {
-      throw redirect({ to: '/' })
+      throw redirect({
+        to: '/e/$eventId',
+        params: { eventId: params.eventId },
+      })
     }
   },
   component: function EventDetailRouteComponent() {
     const { user } = useAuth()
     const navigate = useNavigate()
     const { eventId } = Route.useParams()
-    const { view } = Route.useSearch()
+    const { fromEventsView } = useRouterState({
+      select: (s) => ({
+        fromEventsView: s.location.state.fromEventsView,
+      }),
+    })
+    const view = parseEventsView(fromEventsView)
 
     const [event, setEvent] = React.useState<SocialEvent | null>(null)
 
