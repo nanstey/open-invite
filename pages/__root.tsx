@@ -71,6 +71,9 @@ function AppShellLayout() {
 
   const activeSection = getActiveSection(pathname)
   const pageTitle = getPageTitle(pathname)
+  const isEventsIndex = pathname === '/events'
+  const isEventsChildRoute = pathname.startsWith('/events/') && !isEventsIndex
+  const hideShellHeaderForRoute = activeSection === 'EVENTS' && isEventsChildRoute
 
   const eventsView = React.useMemo<EventsView>(() => coerceEventsView((search as any)?.view), [search])
   const friendsTab = React.useMemo<FriendsTab>(() => coerceFriendsTab((search as any)?.tab), [search])
@@ -106,7 +109,7 @@ function AppShellLayout() {
   ]
 
   const headerTabs =
-    activeSection === 'EVENTS' ? (
+    activeSection === 'EVENTS' && isEventsIndex ? (
       <TabGroup
         tabs={inviteTabs}
         activeTab={eventsView}
@@ -121,7 +124,7 @@ function AppShellLayout() {
     ) : null
 
   return (
-    <div className="min-h-screen flex flex-col md:flex-row max-w-7xl mx-auto overflow-hidden h-screen text-slate-100 bg-background">
+    <div className="min-h-screen w-full flex flex-col md:flex-row overflow-hidden h-screen text-slate-100 bg-background">
       {/* Desktop Sidebar */}
       <nav className="hidden md:flex w-20 lg:w-64 bg-slate-900 border-r border-slate-800 flex-col justify-between items-center p-4 z-20 shrink-0">
         <div className="flex flex-col items-center gap-8 w-full">
@@ -214,37 +217,45 @@ function AppShellLayout() {
       </nav>
 
       {/* Mobile Top Header (Fixed) */}
-      <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-slate-900/95 backdrop-blur border-b border-slate-800 z-40 flex items-center justify-between px-4 shadow-lg">
-        <h1 className="text-lg font-bold text-white tracking-wide">{pageTitle}</h1>
-        <div>
-          {activeSection === 'EVENTS' ? (
-            <TabGroup
-              tabs={inviteTabs}
-              activeTab={eventsView}
-              onChange={(id) => navigate({ to: '/events', search: { view: coerceEventsView(id) } })}
-              hideLabel
-            />
-          ) : null}
-          {activeSection === 'FRIENDS' ? (
-            <TabGroup
-              tabs={friendsTabs}
-              activeTab={friendsTab}
-              onChange={(id) => navigate({ to: '/friends', search: { tab: coerceFriendsTab(id) } })}
-              hideLabel
-            />
-          ) : null}
+      {!hideShellHeaderForRoute ? (
+        <div className="md:hidden fixed top-0 left-0 right-0 h-14 bg-slate-900/95 backdrop-blur border-b border-slate-800 z-40 flex items-center justify-between px-4 shadow-lg">
+          <h1 className="text-lg font-bold text-white tracking-wide">{pageTitle}</h1>
+          <div>
+            {activeSection === 'EVENTS' && isEventsIndex ? (
+              <TabGroup
+                tabs={inviteTabs}
+                activeTab={eventsView}
+                onChange={(id) => navigate({ to: '/events', search: { view: coerceEventsView(id) } })}
+                hideLabel
+              />
+            ) : null}
+            {activeSection === 'FRIENDS' ? (
+              <TabGroup
+                tabs={friendsTabs}
+                activeTab={friendsTab}
+                onChange={(id) => navigate({ to: '/friends', search: { tab: coerceFriendsTab(id) } })}
+                hideLabel
+              />
+            ) : null}
+          </div>
         </div>
-      </div>
+      ) : null}
 
       {/* Main Content Area */}
-      <main className="flex-1 relative flex flex-col bg-background overflow-hidden pt-14 pb-16 md:pt-0 md:pb-0 h-screen md:h-auto">
+      <main
+        className={`flex-1 relative flex flex-col bg-background overflow-hidden ${
+          hideShellHeaderForRoute ? 'pt-0' : 'pt-14'
+        } pb-16 md:pt-0 md:pb-0 h-screen md:h-auto`}
+      >
         {/* Desktop Header */}
-        <header className="hidden md:flex flex-col gap-4 p-4 md:p-6 pb-2 shrink-0 border-b border-transparent z-10">
-          <div className="flex items-center justify-between w-full">
-            <h1 className="text-2xl font-bold text-white whitespace-nowrap">{pageTitle}</h1>
-            <div className="block">{headerTabs}</div>
-          </div>
-        </header>
+        {!hideShellHeaderForRoute ? (
+          <header className="hidden md:flex flex-col gap-4 p-4 md:p-6 pb-2 shrink-0 border-b border-transparent z-10">
+            <div className="flex items-center justify-between w-full">
+              <h1 className="text-2xl font-bold text-white whitespace-nowrap">{pageTitle}</h1>
+              <div className="block">{headerTabs}</div>
+            </div>
+          </header>
+        ) : null}
 
         {/* Page Content */}
         <div className="flex-1 flex flex-col overflow-hidden relative">

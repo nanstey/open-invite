@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react'
-import { Outlet, createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { Outlet, createFileRoute, redirect, useNavigate, useRouterState } from '@tanstack/react-router'
 
 import type { SocialEvent } from '../lib/types'
 import { useAuth } from '../components/AuthProvider'
@@ -29,9 +29,14 @@ export const Route = createFileRoute('/events')({
     }
   },
   component: function EventsRouteComponent() {
+    const { pathname } = useRouterState({
+      select: (s) => ({ pathname: s.location.pathname }),
+    })
+
+    const isEventsIndex = pathname === '/events'
     return (
       <>
-        <EventsPage />
+        {isEventsIndex ? <EventsPage /> : null}
         <Outlet />
       </>
     )
@@ -384,7 +389,7 @@ const EventsPage: React.FC = () => {
                     <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3 mt-6 first:mt-0 py-1">
                       {group.title}
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
                       {group.events.map((event) => (
                         <div key={event.id} className="relative group">
                           <EventCard

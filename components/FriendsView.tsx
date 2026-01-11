@@ -72,7 +72,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({ activeTab }) => {
   );
 
   return (
-    <div className="max-w-5xl mx-auto pb-20 pt-2 space-y-6">
+    <div className="w-full pb-20 pt-2 space-y-6">
       
       {/* Search Bar */}
       <div className="bg-slate-900/50 p-1">
@@ -115,7 +115,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({ activeTab }) => {
                   <p>{searchTerm ? 'No friends found matching your search.' : 'No friends yet. Add some friends to get started!'}</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                   {filteredFriends.map(friend => (
                <div key={friend.id} className="bg-surface border border-slate-700 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-colors">
                   <div className="flex items-center gap-3">
@@ -166,7 +166,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({ activeTab }) => {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {groups.length === 0 ? (
                   <div className="col-span-2 text-center py-12 text-slate-400">
                     <p>No groups yet. Create a group to get started!</p>
