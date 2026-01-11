@@ -11,7 +11,12 @@ DELETE FROM public.notifications WHERE user_id IN (
   '00000000-0000-0000-0000-000000000004',
   '00000000-0000-0000-0000-000000000005',
   '00000000-0000-0000-0000-000000000006',
-  '00000000-0000-0000-0000-000000000007'
+  '00000000-0000-0000-0000-000000000007',
+  '00000000-0000-0000-0000-000000000008',
+  '00000000-0000-0000-0000-000000000009',
+  '00000000-0000-0000-0000-000000000010',
+  '00000000-0000-0000-0000-000000000011',
+  '00000000-0000-0000-0000-000000000012'
 );
 DELETE FROM public.reactions;
 DELETE FROM public.comments;
@@ -29,7 +34,12 @@ DELETE FROM public.user_profiles WHERE id IN (
   '00000000-0000-0000-0000-000000000004',
   '00000000-0000-0000-0000-000000000005',
   '00000000-0000-0000-0000-000000000006',
-  '00000000-0000-0000-0000-000000000007'
+  '00000000-0000-0000-0000-000000000007',
+  '00000000-0000-0000-0000-000000000008',
+  '00000000-0000-0000-0000-000000000009',
+  '00000000-0000-0000-0000-000000000010',
+  '00000000-0000-0000-0000-000000000011',
+  '00000000-0000-0000-0000-000000000012'
 );
 DELETE FROM auth.identities WHERE user_id IN (
   '00000000-0000-0000-0000-000000000001',
@@ -38,7 +48,12 @@ DELETE FROM auth.identities WHERE user_id IN (
   '00000000-0000-0000-0000-000000000004',
   '00000000-0000-0000-0000-000000000005',
   '00000000-0000-0000-0000-000000000006',
-  '00000000-0000-0000-0000-000000000007'
+  '00000000-0000-0000-0000-000000000007',
+  '00000000-0000-0000-0000-000000000008',
+  '00000000-0000-0000-0000-000000000009',
+  '00000000-0000-0000-0000-000000000010',
+  '00000000-0000-0000-0000-000000000011',
+  '00000000-0000-0000-0000-000000000012'
 );
 DELETE FROM auth.users WHERE id IN (
   '00000000-0000-0000-0000-000000000001',
@@ -47,7 +62,12 @@ DELETE FROM auth.users WHERE id IN (
   '00000000-0000-0000-0000-000000000004',
   '00000000-0000-0000-0000-000000000005',
   '00000000-0000-0000-0000-000000000006',
-  '00000000-0000-0000-0000-000000000007'
+  '00000000-0000-0000-0000-000000000007',
+  '00000000-0000-0000-0000-000000000008',
+  '00000000-0000-0000-0000-000000000009',
+  '00000000-0000-0000-0000-000000000010',
+  '00000000-0000-0000-0000-000000000011',
+  '00000000-0000-0000-0000-000000000012'
 );
 
 -- User ID mappings (u1-u7 to UUIDs)
@@ -58,6 +78,11 @@ DELETE FROM auth.users WHERE id IN (
 -- u5 = Raj
 -- u6 = Chloe
 -- u7 = Tom
+-- u8 = Maya (not friends with Alex)
+-- u9 = Ben (not friends with Alex)
+-- u10 = Nina (not friends with Alex)
+-- u11 = Omar (not friends with Alex)
+-- u12 = Zoe (not friends with Alex)
 
 -- Insert auth users
 -- Password for all users: "password123"
@@ -92,7 +117,12 @@ BEGIN
     ('00000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000000', 'elena@example.com', pwd_hash, NOW(), 'authenticated', 'authenticated', NOW(), NOW(), '{"provider":"email","providers":["email"]}', '{}', false, '', '', '', ''),
     ('00000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000000', 'raj@example.com', pwd_hash, NOW(), 'authenticated', 'authenticated', NOW(), NOW(), '{"provider":"email","providers":["email"]}', '{}', false, '', '', '', ''),
     ('00000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000000', 'chloe@example.com', pwd_hash, NOW(), 'authenticated', 'authenticated', NOW(), NOW(), '{"provider":"email","providers":["email"]}', '{}', false, '', '', '', ''),
-    ('00000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000000', 'tom@example.com', pwd_hash, NOW(), 'authenticated', 'authenticated', NOW(), NOW(), '{"provider":"email","providers":["email"]}', '{}', false, '', '', '', '')
+    ('00000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000000', 'tom@example.com', pwd_hash, NOW(), 'authenticated', 'authenticated', NOW(), NOW(), '{"provider":"email","providers":["email"]}', '{}', false, '', '', '', ''),
+    ('00000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000000', 'maya@example.com', pwd_hash, NOW(), 'authenticated', 'authenticated', NOW(), NOW(), '{"provider":"email","providers":["email"]}', '{}', false, '', '', '', ''),
+    ('00000000-0000-0000-0000-000000000009', '00000000-0000-0000-0000-000000000000', 'ben@example.com', pwd_hash, NOW(), 'authenticated', 'authenticated', NOW(), NOW(), '{"provider":"email","providers":["email"]}', '{}', false, '', '', '', ''),
+    ('00000000-0000-0000-0000-000000000010', '00000000-0000-0000-0000-000000000000', 'nina@example.com', pwd_hash, NOW(), 'authenticated', 'authenticated', NOW(), NOW(), '{"provider":"email","providers":["email"]}', '{}', false, '', '', '', ''),
+    ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000000', 'omar@example.com', pwd_hash, NOW(), 'authenticated', 'authenticated', NOW(), NOW(), '{"provider":"email","providers":["email"]}', '{}', false, '', '', '', ''),
+    ('00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000000', 'zoe@example.com', pwd_hash, NOW(), 'authenticated', 'authenticated', NOW(), NOW(), '{"provider":"email","providers":["email"]}', '{}', false, '', '', '', '')
   ON CONFLICT (id) DO NOTHING;
   
   RAISE NOTICE 'Auth users inserted with password hash';
@@ -115,7 +145,12 @@ INSERT INTO auth.identities (
   ('40000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000004', '{"sub": "00000000-0000-0000-0000-000000000004", "email": "elena@example.com"}', 'email', 'elena@example.com', NOW(), NOW(), NOW()),
   ('40000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000005', '{"sub": "00000000-0000-0000-0000-000000000005", "email": "raj@example.com"}', 'email', 'raj@example.com', NOW(), NOW(), NOW()),
   ('40000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000006', '{"sub": "00000000-0000-0000-0000-000000000006", "email": "chloe@example.com"}', 'email', 'chloe@example.com', NOW(), NOW(), NOW()),
-  ('40000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000007', '{"sub": "00000000-0000-0000-0000-000000000007", "email": "tom@example.com"}', 'email', 'tom@example.com', NOW(), NOW(), NOW())
+  ('40000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000007', '{"sub": "00000000-0000-0000-0000-000000000007", "email": "tom@example.com"}', 'email', 'tom@example.com', NOW(), NOW(), NOW()),
+  ('40000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000008', '{"sub": "00000000-0000-0000-0000-000000000008", "email": "maya@example.com"}', 'email', 'maya@example.com', NOW(), NOW(), NOW()),
+  ('40000000-0000-0000-0000-000000000009', '00000000-0000-0000-0000-000000000009', '{"sub": "00000000-0000-0000-0000-000000000009", "email": "ben@example.com"}', 'email', 'ben@example.com', NOW(), NOW(), NOW()),
+  ('40000000-0000-0000-0000-000000000010', '00000000-0000-0000-0000-000000000010', '{"sub": "00000000-0000-0000-0000-000000000010", "email": "nina@example.com"}', 'email', 'nina@example.com', NOW(), NOW(), NOW()),
+  ('40000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000011', '{"sub": "00000000-0000-0000-0000-000000000011", "email": "omar@example.com"}', 'email', 'omar@example.com', NOW(), NOW(), NOW()),
+  ('40000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000012', '{"sub": "00000000-0000-0000-0000-000000000012", "email": "zoe@example.com"}', 'email', 'zoe@example.com', NOW(), NOW(), NOW())
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert user profiles
@@ -126,7 +161,12 @@ INSERT INTO public.user_profiles (id, name, avatar) VALUES
   ('00000000-0000-0000-0000-000000000004', 'Elena', 'https://picsum.photos/seed/elena/100/100'),
   ('00000000-0000-0000-0000-000000000005', 'Raj', 'https://picsum.photos/seed/raj/100/100'),
   ('00000000-0000-0000-0000-000000000006', 'Chloe', 'https://picsum.photos/seed/chloe/100/100'),
-  ('00000000-0000-0000-0000-000000000007', 'Tom', 'https://picsum.photos/seed/tom/100/100')
+  ('00000000-0000-0000-0000-000000000007', 'Tom', 'https://picsum.photos/seed/tom/100/100'),
+  ('00000000-0000-0000-0000-000000000008', 'Maya', 'https://picsum.photos/seed/maya/100/100'),
+  ('00000000-0000-0000-0000-000000000009', 'Ben', 'https://picsum.photos/seed/ben/100/100'),
+  ('00000000-0000-0000-0000-000000000010', 'Nina', 'https://picsum.photos/seed/nina/100/100'),
+  ('00000000-0000-0000-0000-000000000011', 'Omar', 'https://picsum.photos/seed/omar/100/100'),
+  ('00000000-0000-0000-0000-000000000012', 'Zoe', 'https://picsum.photos/seed/zoe/100/100')
 ON CONFLICT (id) DO NOTHING;
 
 -- Event ID mappings (e1-e35 to UUIDs)
@@ -138,131 +178,131 @@ INSERT INTO public.events (
   start_time, is_flexible_start, is_flexible_end, visibility_type, max_seats, no_phones, allow_friend_invites
 ) VALUES
   -- e1: Bouldering at Crag X (GROUPS: CLIMBERS)
-  ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002', 'Bouldering at Crag X', 'Projecting the new V4s in the cave. Come hang!', 'Sport', '769 Pandora Ave', '{"lat": 48.4293, "lng": -123.3635}'::jsonb, NOW() + INTERVAL '0 days' + INTERVAL '17 hours' + INTERVAL '30 minutes', false, true, 'GROUPS', 5, false, false),
+  ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002', 'Bouldering at Crag X', 'Projecting the new V4s in the cave. Come hang!', 'Sport', '769 Pandora Ave', '{"lat": 48.4293, "lng": -123.3635}'::jsonb, date_trunc('day', NOW()) + INTERVAL '0 days' + INTERVAL '17 hours' + INTERVAL '30 minutes', false, true, 'GROUPS', 5, false, false),
   
   -- e2: Costco Run (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000003', 'Costco Run 🛒', 'Driving to Costco in Langford. I have 2 seats if anyone needs a ride or bulk snacks.', 'Errand', 'Costco Langford', '{"lat": 48.4557, "lng": -123.5097}'::jsonb, NOW() + INTERVAL '2 days' + INTERVAL '11 hours', true, false, 'ALL_FRIENDS', 2, false, false),
+  ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000003', 'Costco Run 🛒', 'Driving to Costco in Langford. I have 2 seats if anyone needs a ride or bulk snacks.', 'Errand', 'Costco Langford', '{"lat": 48.4557, "lng": -123.5097}'::jsonb, date_trunc('day', NOW()) + INTERVAL '2 days' + INTERVAL '11 hours', true, false, 'ALL_FRIENDS', 2, false, false),
   
   -- e3: Board Game Night (INVITE_ONLY)
-  ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000004', 'Board Game Night', 'Settlers of Catan and Pizza. No phones at the table please!', 'Social', 'Fernwood Square', '{"lat": 48.4353, "lng": -123.3409}'::jsonb, NOW() + INTERVAL '4 days' + INTERVAL '19 hours', false, false, 'INVITE_ONLY', 6, true, false),
+  ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000004', 'Board Game Night', 'Settlers of Catan and Pizza. No phones at the table please!', 'Social', 'Fernwood Square', '{"lat": 48.4353, "lng": -123.3409}'::jsonb, date_trunc('day', NOW()) + INTERVAL '4 days' + INTERVAL '19 hours', false, false, 'INVITE_ONLY', 6, true, false),
   
   -- e4: Sunset Walk (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000001', 'Sunset Walk', 'Walking the dog along Dallas Rd. Catching the sunset.', 'Social', 'Dallas Road', '{"lat": 48.4069, "lng": -123.3752}'::jsonb, NOW() + INTERVAL '0 days' + INTERVAL '20 hours' + INTERVAL '15 minutes', true, true, 'ALL_FRIENDS', 10, true, false),
+  ('10000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000001', 'Sunset Walk', 'Walking the dog along Dallas Rd. Catching the sunset.', 'Social', 'Dallas Road', '{"lat": 48.4069, "lng": -123.3752}'::jsonb, date_trunc('day', NOW()) + INTERVAL '0 days' + INTERVAL '16 hours' + INTERVAL '45 minutes', true, true, 'ALL_FRIENDS', 10, true, false),
   
   -- e5: Deep Focus Study (GROUPS: WORK)
-  ('10000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000005', 'Deep Focus Study', 'Grinding out some code at the library. Silent company welcome.', 'Work', 'UVic Library', '{"lat": 48.4633, "lng": -123.3113}'::jsonb, NOW() + INTERVAL '1 days' + INTERVAL '14 hours', false, false, 'GROUPS', 4, true, false),
+  ('10000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000005', 'Deep Focus Study', 'Grinding out some code at the library. Silent company welcome.', 'Work', 'UVic Library', '{"lat": 48.4633, "lng": -123.3113}'::jsonb, date_trunc('day', NOW()) + INTERVAL '1 days' + INTERVAL '14 hours', false, false, 'GROUPS', 4, true, false),
   
   -- e6: Morning Coffee @ Hey Happy (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000007', 'Morning Coffee @ Hey Happy', 'Quick espresso before work. Come say hi.', 'Food', 'Hey Happy Coffee', '{"lat": 48.4286, "lng": -123.3660}'::jsonb, NOW() + INTERVAL '1 days' + INTERVAL '8 hours' + INTERVAL '30 minutes', true, true, 'ALL_FRIENDS', 8, false, false),
+  ('10000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000007', 'Morning Coffee @ Hey Happy', 'Quick espresso before work. Come say hi.', 'Food', 'Hey Happy Coffee', '{"lat": 48.4286, "lng": -123.3660}'::jsonb, date_trunc('day', NOW()) + INTERVAL '1 days' + INTERVAL '8 hours' + INTERVAL '30 minutes', true, true, 'ALL_FRIENDS', 8, false, false),
   
   -- e7: Spikeball in the Park (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000006', 'Spikeball in the Park', 'Bringing the net and some snacks. Beginners welcome!', 'Sport', 'Beacon Hill Park', '{"lat": 48.4132, "lng": -123.3642}'::jsonb, NOW() + INTERVAL '3 days' + INTERVAL '13 hours', false, true, 'ALL_FRIENDS', 12, false, false),
+  ('10000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000006', 'Spikeball in the Park', 'Bringing the net and some snacks. Beginners welcome!', 'Sport', 'Beacon Hill Park', '{"lat": 48.4132, "lng": -123.3642}'::jsonb, date_trunc('day', NOW()) + INTERVAL '3 days' + INTERVAL '13 hours', false, true, 'ALL_FRIENDS', 12, false, false),
   
   -- e8: Friday Night Beers (ALL_FRIENDS) - allow friend invites
-  ('10000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000002', 'Friday Night Beers', 'The Drake Eatery. Craft beer and good vibes.', 'Social', 'The Drake', '{"lat": 48.4290, "lng": -123.3680}'::jsonb, NOW() + INTERVAL '5 days' + INTERVAL '19 hours' + INTERVAL '30 minutes', true, true, 'ALL_FRIENDS', 20, false, true),
+  ('10000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000002', 'Friday Night Beers', 'The Drake Eatery. Craft beer and good vibes.', 'Social', 'The Drake', '{"lat": 48.4290, "lng": -123.3680}'::jsonb, date_trunc('day', NOW()) + INTERVAL '5 days' + INTERVAL '19 hours' + INTERVAL '30 minutes', true, true, 'ALL_FRIENDS', 20, false, true),
   
   -- e9: Mt Doug Hike (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000009', '00000000-0000-0000-0000-000000000004', 'Mt Doug Hike', 'Hiking up to the summit for the view. Moderate pace.', 'Sport', 'Mount Douglas Park', '{"lat": 48.4925, "lng": -123.3456}'::jsonb, NOW() + INTERVAL '12 days' + INTERVAL '10 hours', false, false, 'ALL_FRIENDS', 10, false, false),
+  ('10000000-0000-0000-0000-000000000009', '00000000-0000-0000-0000-000000000004', 'Mt Doug Hike', 'Hiking up to the summit for the view. Moderate pace.', 'Sport', 'Mount Douglas Park', '{"lat": 48.4925, "lng": -123.3456}'::jsonb, date_trunc('day', NOW()) + INTERVAL '12 days' + INTERVAL '10 hours', false, false, 'ALL_FRIENDS', 10, false, false),
   
   -- e10: Fish & Chips Lunch (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000010', '00000000-0000-0000-0000-000000000001', 'Fish & Chips Lunch', 'Red Fish Blue Fish on the wharf. It might be busy.', 'Food', 'Inner Harbour', '{"lat": 48.4246, "lng": -123.3689}'::jsonb, NOW() + INTERVAL '0 days' + INTERVAL '12 hours' + INTERVAL '15 minutes', false, false, 'ALL_FRIENDS', 4, false, false),
+  ('10000000-0000-0000-0000-000000000010', '00000000-0000-0000-0000-000000000001', 'Fish & Chips Lunch', 'Red Fish Blue Fish on the wharf. It might be busy.', 'Food', 'Inner Harbour', '{"lat": 48.4246, "lng": -123.3689}'::jsonb, date_trunc('day', NOW()) + INTERVAL '0 days' + INTERVAL '12 hours' + INTERVAL '15 minutes', false, false, 'ALL_FRIENDS', 4, false, false),
   
   -- e11: Hackathon Prep (INVITE_ONLY)
-  ('10000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000003', 'Hackathon Prep', 'Brainstorming ideas for the upcoming hackathon.', 'Work', 'Kanzei Style Office', '{"lat": 48.4275, "lng": -123.3665}'::jsonb, NOW() + INTERVAL '8 days' + INTERVAL '18 hours', false, false, 'INVITE_ONLY', 5, false, false),
+  ('10000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000003', 'Hackathon Prep', 'Brainstorming ideas for the upcoming hackathon.', 'Work', 'Kanzei Style Office', '{"lat": 48.4275, "lng": -123.3665}'::jsonb, date_trunc('day', NOW()) + INTERVAL '8 days' + INTERVAL '18 hours', false, false, 'INVITE_ONLY', 5, false, false),
   
   -- e12: Surfing Jordan River (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000005', 'Surfing Jordan River', 'Early morning swell looks good. Need a ride? I have a rack.', 'Sport', 'Jordan River', '{"lat": 48.4230, "lng": -124.0540}'::jsonb, NOW() + INTERVAL '25 days' + INTERVAL '6 hours', false, false, 'ALL_FRIENDS', 3, false, false),
+  ('10000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000005', 'Surfing Jordan River', 'Early morning swell looks good. Need a ride? I have a rack.', 'Sport', 'Jordan River', '{"lat": 48.4230, "lng": -124.0540}'::jsonb, date_trunc('day', NOW()) + INTERVAL '25 days' + INTERVAL '6 hours', false, false, 'ALL_FRIENDS', 3, false, false),
   
   -- e13: Thrift Shopping (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000006', 'Thrift Shopping', 'Hitting up Value Village and WIN downtown.', 'Errand', 'Store Street', '{"lat": 48.4310, "lng": -123.3690}'::jsonb, NOW() + INTERVAL '-1 days' + INTERVAL '14 hours', true, true, 'ALL_FRIENDS', 4, false, false),
+  ('10000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000006', 'Thrift Shopping', 'Hitting up Value Village and WIN downtown.', 'Errand', 'Store Street', '{"lat": 48.4310, "lng": -123.3690}'::jsonb, date_trunc('day', NOW()) - INTERVAL '1 day' + INTERVAL '14 hours', true, true, 'ALL_FRIENDS', 4, false, false),
   
   -- e14: Trivia Night (GROUPS: CLIMBERS)
-  ('10000000-0000-0000-0000-000000000014', '00000000-0000-0000-0000-000000000007', 'Trivia Night', 'Need big brains for the quiz at Beagle Pub.', 'Social', 'Cook Street Village', '{"lat": 48.4144, "lng": -123.3567}'::jsonb, NOW() + INTERVAL '16 days' + INTERVAL '20 hours', false, false, 'GROUPS', 6, true, false),
+  ('10000000-0000-0000-0000-000000000014', '00000000-0000-0000-0000-000000000007', 'Trivia Night', 'Need big brains for the quiz at Beagle Pub.', 'Social', 'Cook Street Village', '{"lat": 48.4144, "lng": -123.3567}'::jsonb, date_trunc('day', NOW()) + INTERVAL '16 days' + INTERVAL '20 hours', false, false, 'GROUPS', 6, true, false),
   
   -- e15: Willows Beach Chill (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000015', '00000000-0000-0000-0000-000000000002', 'Willows Beach Chill', 'Bonfire (if allowed) and blankets. Watching the moon rise.', 'Social', 'Willows Beach', '{"lat": 48.4380, "lng": -123.3080}'::jsonb, NOW() + INTERVAL '32 days' + INTERVAL '21 hours', true, true, 'ALL_FRIENDS', 15, true, false),
+  ('10000000-0000-0000-0000-000000000015', '00000000-0000-0000-0000-000000000002', 'Willows Beach Chill', 'Bonfire (if allowed) and blankets. Watching the moon rise.', 'Social', 'Willows Beach', '{"lat": 48.4380, "lng": -123.3080}'::jsonb, date_trunc('day', NOW()) + INTERVAL '32 days' + INTERVAL '21 hours', true, true, 'ALL_FRIENDS', 15, true, false),
   
   -- e16: Winter Market Walk (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000016', '00000000-0000-0000-0000-000000000004', 'Winter Market Walk', 'Browsing the artisan stalls at Bastion Square.', 'Social', 'Bastion Square', '{"lat": 48.4256, "lng": -123.3694}'::jsonb, NOW() + INTERVAL '45 days' + INTERVAL '13 hours', true, true, 'ALL_FRIENDS', 6, false, false),
+  ('10000000-0000-0000-0000-000000000016', '00000000-0000-0000-0000-000000000004', 'Winter Market Walk', 'Browsing the artisan stalls at Bastion Square.', 'Social', 'Bastion Square', '{"lat": 48.4256, "lng": -123.3694}'::jsonb, date_trunc('day', NOW()) + INTERVAL '45 days' + INTERVAL '13 hours', true, true, 'ALL_FRIENDS', 6, false, false),
   
   -- e17: Code & Coffee (GROUPS: WORK)
-  ('10000000-0000-0000-0000-000000000017', '00000000-0000-0000-0000-000000000005', 'Code & Coffee', 'Working on side projects. Habit Coffee has good wifi.', 'Work', 'Habit Coffee', '{"lat": 48.4286, "lng": -123.3644}'::jsonb, NOW() + INTERVAL '60 days' + INTERVAL '9 hours', false, false, 'GROUPS', 4, true, false),
+  ('10000000-0000-0000-0000-000000000017', '00000000-0000-0000-0000-000000000005', 'Code & Coffee', 'Working on side projects. Habit Coffee has good wifi.', 'Work', 'Habit Coffee', '{"lat": 48.4286, "lng": -123.3644}'::jsonb, date_trunc('day', NOW()) + INTERVAL '60 days' + INTERVAL '9 hours', false, false, 'GROUPS', 4, true, false),
   
   -- e18: Badminton Drop-in (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000018', '00000000-0000-0000-0000-000000000006', 'Badminton Drop-in', 'Casual games at Commonwealth Place.', 'Sport', 'Commonwealth Place', '{"lat": 48.5086, "lng": -123.3934}'::jsonb, NOW() + INTERVAL '18 days' + INTERVAL '18 hours' + INTERVAL '30 minutes', false, false, 'ALL_FRIENDS', 4, false, false),
+  ('10000000-0000-0000-0000-000000000018', '00000000-0000-0000-0000-000000000006', 'Badminton Drop-in', 'Casual games at Commonwealth Place.', 'Sport', 'Commonwealth Place', '{"lat": 48.5086, "lng": -123.3934}'::jsonb, date_trunc('day', NOW()) + INTERVAL '18 days' + INTERVAL '18 hours' + INTERVAL '30 minutes', false, false, 'ALL_FRIENDS', 4, false, false),
   
   -- e19: Sushi Dinner (INVITE_ONLY)
-  ('10000000-0000-0000-0000-000000000019', '00000000-0000-0000-0000-000000000001', 'Sushi Dinner', 'Craving Ebizo sushi. Need reservations, let me know by noon.', 'Food', 'Ebizo Japanese', '{"lat": 48.4262, "lng": -123.3664}'::jsonb, NOW() + INTERVAL '75 days' + INTERVAL '19 hours', false, false, 'INVITE_ONLY', 6, false, false),
+  ('10000000-0000-0000-0000-000000000019', '00000000-0000-0000-0000-000000000001', 'Sushi Dinner', 'Craving Ebizo sushi. Need reservations, let me know by noon.', 'Food', 'Ebizo Japanese', '{"lat": 48.4262, "lng": -123.3664}'::jsonb, date_trunc('day', NOW()) + INTERVAL '75 days' + INTERVAL '19 hours', false, false, 'INVITE_ONLY', 6, false, false),
   
   -- e20: Book Club: Dune (GROUPS: CLIMBERS + WORK) - multiple groups
-  ('10000000-0000-0000-0000-000000000020', '00000000-0000-0000-0000-000000000003', 'Book Club: Dune', 'Discussing the first half. Meeting at Russell Books reading nook.', 'Social', 'Russell Books', '{"lat": 48.4253, "lng": -123.3665}'::jsonb, NOW() + INTERVAL '40 days' + INTERVAL '18 hours', false, false, 'GROUPS', 8, true, false),
+  ('10000000-0000-0000-0000-000000000020', '00000000-0000-0000-0000-000000000003', 'Book Club: Dune', 'Discussing the first half. Meeting at Russell Books reading nook.', 'Social', 'Russell Books', '{"lat": 48.4253, "lng": -123.3665}'::jsonb, date_trunc('day', NOW()) + INTERVAL '40 days' + INTERVAL '18 hours', false, false, 'GROUPS', 8, true, false),
   
   -- e21: Airport Run (Pickup) (GROUPS: FAMILY)
-  ('10000000-0000-0000-0000-000000000021', '00000000-0000-0000-0000-000000000002', 'Airport Run (Pickup)', 'Picking up my brother. Anyone want a ride to Sidney?', 'Errand', 'Victoria Airport (YYJ)', '{"lat": 48.6469, "lng": -123.4258}'::jsonb, NOW() + INTERVAL '11 days' + INTERVAL '15 hours' + INTERVAL '30 minutes', true, false, 'GROUPS', 2, false, false),
+  ('10000000-0000-0000-0000-000000000021', '00000000-0000-0000-0000-000000000002', 'Airport Run (Pickup)', 'Picking up my brother. Anyone want a ride to Sidney?', 'Errand', 'Victoria Airport (YYJ)', '{"lat": 48.6469, "lng": -123.4258}'::jsonb, date_trunc('day', NOW()) + INTERVAL '11 days' + INTERVAL '15 hours' + INTERVAL '30 minutes', true, false, 'GROUPS', 2, false, false),
   
   -- e22: Tech Meetup Downtown (GROUPS: WORK)
-  ('10000000-0000-0000-0000-000000000022', '00000000-0000-0000-0000-000000000007', 'Tech Meetup Downtown', 'Networking event at Fort Tectoria.', 'Work', 'Fort Tectoria', '{"lat": 48.4243, "lng": -123.3630}'::jsonb, NOW() + INTERVAL '50 days' + INTERVAL '17 hours', false, true, 'GROUPS', 20, false, false),
+  ('10000000-0000-0000-0000-000000000022', '00000000-0000-0000-0000-000000000007', 'Tech Meetup Downtown', 'Networking event at Fort Tectoria.', 'Work', 'Fort Tectoria', '{"lat": 48.4243, "lng": -123.3630}'::jsonb, date_trunc('day', NOW()) + INTERVAL '50 days' + INTERVAL '17 hours', false, true, 'GROUPS', 20, false, false),
   
   -- e23: Squash Game (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000023', '00000000-0000-0000-0000-000000000005', 'Squash Game', 'Booked a court at Cedar Hill. Looking for an opponent.', 'Sport', 'Cedar Hill Rec', '{"lat": 48.4550, "lng": -123.3421}'::jsonb, NOW() + INTERVAL '85 days' + INTERVAL '16 hours', false, false, 'ALL_FRIENDS', 2, false, false),
+  ('10000000-0000-0000-0000-000000000023', '00000000-0000-0000-0000-000000000005', 'Squash Game', 'Booked a court at Cedar Hill. Looking for an opponent.', 'Sport', 'Cedar Hill Rec', '{"lat": 48.4550, "lng": -123.3421}'::jsonb, date_trunc('day', NOW()) + INTERVAL '85 days' + INTERVAL '16 hours', false, false, 'ALL_FRIENDS', 2, false, false),
   
   -- e24: Late Night Pho (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000024', '00000000-0000-0000-0000-000000000001', 'Late Night Pho', 'Comfort food after the gym. Pho Vy on Fort.', 'Food', 'Pho Vy', '{"lat": 48.4289, "lng": -123.3622}'::jsonb, NOW() + INTERVAL '13 days' + INTERVAL '21 hours', true, true, 'ALL_FRIENDS', 4, false, false),
+  ('10000000-0000-0000-0000-000000000024', '00000000-0000-0000-0000-000000000001', 'Late Night Pho', 'Comfort food after the gym. Pho Vy on Fort.', 'Food', 'Pho Vy', '{"lat": 48.4289, "lng": -123.3622}'::jsonb, date_trunc('day', NOW()) + INTERVAL '13 days' + INTERVAL '21 hours', true, true, 'ALL_FRIENDS', 4, false, false),
   
   -- e25: Christmas Shopping (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000025', '00000000-0000-0000-0000-000000000006', 'Christmas Shopping', 'Braving the mall for gifts. Strength in numbers.', 'Errand', 'Mayfair Mall', '{"lat": 48.4452, "lng": -123.3698}'::jsonb, NOW() + INTERVAL '5 days' + INTERVAL '10 hours', false, true, 'ALL_FRIENDS', 3, false, false),
+  ('10000000-0000-0000-0000-000000000025', '00000000-0000-0000-0000-000000000006', 'Christmas Shopping', 'Braving the mall for gifts. Strength in numbers.', 'Errand', 'Mayfair Mall', '{"lat": 48.4452, "lng": -123.3698}'::jsonb, date_trunc('day', NOW()) + INTERVAL '5 days' + INTERVAL '10 hours', false, true, 'ALL_FRIENDS', 3, false, false),
   
   -- e26: Weekend Trip Planning (INVITE_ONLY) - allow friend invites
-  ('10000000-0000-0000-0000-000000000026', '00000000-0000-0000-0000-000000000003', 'Weekend Trip Planning', 'Planning the Tofino trip over beers.', 'Travel', 'Swan''s Pub', '{"lat": 48.4295, "lng": -123.3704}'::jsonb, NOW() + INTERVAL '28 days' + INTERVAL '19 hours' + INTERVAL '30 minutes', true, false, 'INVITE_ONLY', 5, false, true),
+  ('10000000-0000-0000-0000-000000000026', '00000000-0000-0000-0000-000000000003', 'Weekend Trip Planning', 'Planning the Tofino trip over beers.', 'Travel', 'Swan''s Pub', '{"lat": 48.4295, "lng": -123.3704}'::jsonb, date_trunc('day', NOW()) + INTERVAL '28 days' + INTERVAL '19 hours' + INTERVAL '30 minutes', true, false, 'INVITE_ONLY', 5, false, true),
   
   -- e27: Movie Night: Sci-Fi (INVITE_ONLY)
-  ('10000000-0000-0000-0000-000000000027', '00000000-0000-0000-0000-000000000002', 'Movie Night: Sci-Fi', 'Catching the late show at Capitol 6.', 'Entertainment', 'Capitol 6 Theatres', '{"lat": 48.4239, "lng": -123.3661}'::jsonb, NOW() + INTERVAL '55 days' + INTERVAL '21 hours' + INTERVAL '15 minutes', false, false, 'INVITE_ONLY', 8, true, false),
+  ('10000000-0000-0000-0000-000000000027', '00000000-0000-0000-0000-000000000002', 'Movie Night: Sci-Fi', 'Catching the late show at Capitol 6.', 'Entertainment', 'Capitol 6 Theatres', '{"lat": 48.4239, "lng": -123.3661}'::jsonb, date_trunc('day', NOW()) + INTERVAL '55 days' + INTERVAL '21 hours' + INTERVAL '15 minutes', false, false, 'INVITE_ONLY', 8, true, false),
   
   -- e28: Morning Jog (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000028', '00000000-0000-0000-0000-000000000004', 'Morning Jog', 'Ogden Point breakwater run. Easy pace.', 'Sport', 'Ogden Point', '{"lat": 48.4147, "lng": -123.3853}'::jsonb, NOW() + INTERVAL '90 days' + INTERVAL '7 hours', false, false, 'ALL_FRIENDS', 4, false, false),
+  ('10000000-0000-0000-0000-000000000028', '00000000-0000-0000-0000-000000000004', 'Morning Jog', 'Ogden Point breakwater run. Easy pace.', 'Sport', 'Ogden Point', '{"lat": 48.4147, "lng": -123.3853}'::jsonb, date_trunc('day', NOW()) + INTERVAL '90 days' + INTERVAL '7 hours', false, false, 'ALL_FRIENDS', 4, false, false),
   
   -- e29: Brunch at Blue Fox (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000029', '00000000-0000-0000-0000-000000000007', 'Brunch at Blue Fox', 'Waiting in line but it''s worth it. Benny time.', 'Food', 'Blue Fox Cafe', '{"lat": 48.4265, "lng": -123.3619}'::jsonb, NOW() + INTERVAL '22 days' + INTERVAL '10 hours' + INTERVAL '30 minutes', true, false, 'ALL_FRIENDS', 6, false, false),
+  ('10000000-0000-0000-0000-000000000029', '00000000-0000-0000-0000-000000000007', 'Brunch at Blue Fox', 'Waiting in line but it''s worth it. Benny time.', 'Food', 'Blue Fox Cafe', '{"lat": 48.4265, "lng": -123.3619}'::jsonb, date_trunc('day', NOW()) + INTERVAL '22 days' + INTERVAL '10 hours' + INTERVAL '30 minutes', true, false, 'ALL_FRIENDS', 6, false, false),
   
   -- e30: New Year's Eve Prep (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000030', '00000000-0000-0000-0000-000000000001', 'New Year''s Eve Prep', 'Buying supplies for the party.', 'Errand', 'Market on Yates', '{"lat": 48.4263, "lng": -123.3616}'::jsonb, NOW() + INTERVAL '65 days' + INTERVAL '14 hours', true, true, 'ALL_FRIENDS', 3, false, false),
+  ('10000000-0000-0000-0000-000000000030', '00000000-0000-0000-0000-000000000001', 'New Year''s Eve Prep', 'Buying supplies for the party.', 'Errand', 'Market on Yates', '{"lat": 48.4263, "lng": -123.3616}'::jsonb, date_trunc('day', NOW()) + INTERVAL '65 days' + INTERVAL '14 hours', true, true, 'ALL_FRIENDS', 3, false, false),
   
   -- e31: Symphony: The Nutcracker (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000031', '00000000-0000-0000-0000-000000000002', 'Symphony: The Nutcracker', 'Ballet Victoria at the Royal Theatre. Dressing up nicely for this one!', 'Entertainment', 'Royal Theatre', '{"lat": 48.4237, "lng": -123.3644}'::jsonb, NOW() + INTERVAL '35 days' + INTERVAL '19 hours', false, false, 'ALL_FRIENDS', 4, true, false),
+  ('10000000-0000-0000-0000-000000000031', '00000000-0000-0000-0000-000000000002', 'Symphony: The Nutcracker', 'Ballet Victoria at the Royal Theatre. Dressing up nicely for this one!', 'Entertainment', 'Royal Theatre', '{"lat": 48.4237, "lng": -123.3644}'::jsonb, date_trunc('day', NOW()) + INTERVAL '35 days' + INTERVAL '19 hours', false, false, 'ALL_FRIENDS', 4, true, false),
   
   -- e32: Dune: Part Two (IMAX) (INVITE_ONLY)
-  ('10000000-0000-0000-0000-000000000032', '00000000-0000-0000-0000-000000000005', 'Dune: Part Two (IMAX)', 'Seeing it properly on the biggest screen possible. Museum IMAX.', 'Entertainment', 'IMAX Victoria', '{"lat": 48.4206, "lng": -123.3676}'::jsonb, NOW() + INTERVAL '10 days' + INTERVAL '18 hours' + INTERVAL '45 minutes', false, false, 'INVITE_ONLY', 6, true, false),
+  ('10000000-0000-0000-0000-000000000032', '00000000-0000-0000-0000-000000000005', 'Dune: Part Two (IMAX)', 'Seeing it properly on the biggest screen possible. Museum IMAX.', 'Entertainment', 'IMAX Victoria', '{"lat": 48.4206, "lng": -123.3676}'::jsonb, date_trunc('day', NOW()) + INTERVAL '10 days' + INTERVAL '18 hours' + INTERVAL '45 minutes', false, false, 'INVITE_ONLY', 6, true, false),
   
   -- e33: Jazz Night at Hermann's (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000033', '00000000-0000-0000-0000-000000000003', 'Jazz Night at Hermann''s', 'Live quartet playing standards. Cover is $20. Good food too.', 'Entertainment', 'Hermann''s Jazz Club', '{"lat": 48.4235, "lng": -123.3664}'::jsonb, NOW() + INTERVAL '70 days' + INTERVAL '20 hours', false, true, 'ALL_FRIENDS', 8, true, false),
+  ('10000000-0000-0000-0000-000000000033', '00000000-0000-0000-0000-000000000003', 'Jazz Night at Hermann''s', 'Live quartet playing standards. Cover is $20. Good food too.', 'Entertainment', 'Hermann''s Jazz Club', '{"lat": 48.4235, "lng": -123.3664}'::jsonb, date_trunc('day', NOW()) + INTERVAL '70 days' + INTERVAL '20 hours', false, true, 'ALL_FRIENDS', 8, true, false),
   
   -- e34: Comedy Night at Hecklers (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000034', '00000000-0000-0000-0000-000000000006', 'Comedy Night at Hecklers', 'Local stand-up showcase. Always good for a laugh.', 'Entertainment', 'Hecklers Bar', '{"lat": 48.4419, "lng": -123.3857}'::jsonb, NOW() + INTERVAL '42 days' + INTERVAL '20 hours' + INTERVAL '30 minutes', false, false, 'ALL_FRIENDS', 6, true, false),
+  ('10000000-0000-0000-0000-000000000034', '00000000-0000-0000-0000-000000000006', 'Comedy Night at Hecklers', 'Local stand-up showcase. Always good for a laugh.', 'Entertainment', 'Hecklers Bar', '{"lat": 48.4419, "lng": -123.3857}'::jsonb, date_trunc('day', NOW()) + INTERVAL '42 days' + INTERVAL '20 hours' + INTERVAL '30 minutes', false, false, 'ALL_FRIENDS', 6, true, false),
   
   -- e35: Arkells Concert (ALL_FRIENDS)
-  ('10000000-0000-0000-0000-000000000035', '00000000-0000-0000-0000-000000000004', 'Arkells Concert', 'Big show at Save-On. I have an extra ticket in the lower bowl!', 'Entertainment', 'Save-On-Foods Memorial Centre', '{"lat": 48.4367, "lng": -123.3607}'::jsonb, NOW() + INTERVAL '80 days' + INTERVAL '19 hours', false, false, 'ALL_FRIENDS', 2, false, false),
+  ('10000000-0000-0000-0000-000000000035', '00000000-0000-0000-0000-000000000004', 'Arkells Concert', 'Big show at Save-On. I have an extra ticket in the lower bowl!', 'Entertainment', 'Save-On-Foods Memorial Centre', '{"lat": 48.4367, "lng": -123.3607}'::jsonb, date_trunc('day', NOW()) + INTERVAL '80 days' + INTERVAL '19 hours', false, false, 'ALL_FRIENDS', 2, false, false),
   
   -- Past events that Alex attended
   -- e36: Past Bouldering Session (3 days ago)
-  ('10000000-0000-0000-0000-000000000036', '00000000-0000-0000-0000-000000000002', 'Bouldering Session', 'Great session at the gym. Sent some new routes!', 'Sport', 'Climbing Gym', '{"lat": 48.4293, "lng": -123.3635}'::jsonb, NOW() - INTERVAL '3 days' + INTERVAL '18 hours', false, true, 'ALL_FRIENDS', 6, false, false),
+  ('10000000-0000-0000-0000-000000000036', '00000000-0000-0000-0000-000000000002', 'Bouldering Session', 'Great session at the gym. Sent some new routes!', 'Sport', 'Climbing Gym', '{"lat": 48.4293, "lng": -123.3635}'::jsonb, date_trunc('day', NOW()) - INTERVAL '3 days' + INTERVAL '18 hours', false, true, 'ALL_FRIENDS', 6, false, false),
   
   -- e37: Past Coffee Meetup (1 week ago)
-  ('10000000-0000-0000-0000-000000000037', '00000000-0000-0000-0000-000000000003', 'Coffee & Catch-up', 'Morning coffee at Habit. Great conversation!', 'Food', 'Habit Coffee', '{"lat": 48.4286, "lng": -123.3644}'::jsonb, NOW() - INTERVAL '7 days' + INTERVAL '9 hours', true, true, 'ALL_FRIENDS', 4, false, false),
+  ('10000000-0000-0000-0000-000000000037', '00000000-0000-0000-0000-000000000003', 'Coffee & Catch-up', 'Morning coffee at Habit. Great conversation!', 'Food', 'Habit Coffee', '{"lat": 48.4286, "lng": -123.3644}'::jsonb, date_trunc('day', NOW()) - INTERVAL '7 days' + INTERVAL '9 hours', true, true, 'ALL_FRIENDS', 4, false, false),
   
   -- e38: Past Movie Night (2 weeks ago)
-  ('10000000-0000-0000-0000-000000000038', '00000000-0000-0000-0000-000000000004', 'Movie Night: Inception', 'Watched Inception at the IMAX. Mind-blowing!', 'Entertainment', 'IMAX Victoria', '{"lat": 48.4206, "lng": -123.3676}'::jsonb, NOW() - INTERVAL '14 days' + INTERVAL '19 hours', false, false, 'INVITE_ONLY', 4, true, false),
+  ('10000000-0000-0000-0000-000000000038', '00000000-0000-0000-0000-000000000004', 'Movie Night: Inception', 'Watched Inception at the IMAX. Mind-blowing!', 'Entertainment', 'IMAX Victoria', '{"lat": 48.4206, "lng": -123.3676}'::jsonb, date_trunc('day', NOW()) - INTERVAL '14 days' + INTERVAL '19 hours', false, false, 'INVITE_ONLY', 4, true, false),
   
   -- e39: Past Hiking Trip (1 month ago)
-  ('10000000-0000-0000-0000-000000000039', '00000000-0000-0000-0000-000000000005', 'East Sooke Park Hike', 'Beautiful coastal hike. Perfect weather!', 'Sport', 'East Sooke Park', '{"lat": 48.3500, "lng": -123.7000}'::jsonb, NOW() - INTERVAL '30 days' + INTERVAL '10 hours', false, false, 'ALL_FRIENDS', 5, false, false),
+  ('10000000-0000-0000-0000-000000000039', '00000000-0000-0000-0000-000000000005', 'East Sooke Park Hike', 'Beautiful coastal hike. Perfect weather!', 'Sport', 'East Sooke Park', '{"lat": 48.3500, "lng": -123.7000}'::jsonb, date_trunc('day', NOW()) - INTERVAL '30 days' + INTERVAL '10 hours', false, false, 'ALL_FRIENDS', 5, false, false),
   
   -- e40: Past Dinner Party (2 months ago) - Hidden event (INVITE_ONLY, past)
-  ('10000000-0000-0000-0000-000000000040', '00000000-0000-0000-0000-000000000006', 'Dinner Party', 'Intimate dinner with close friends. Amazing food!', 'Food', 'Private Residence', '{"lat": 48.4286, "lng": -123.3660}'::jsonb, NOW() - INTERVAL '60 days' + INTERVAL '19 hours', false, false, 'INVITE_ONLY', 6, false, false),
+  ('10000000-0000-0000-0000-000000000040', '00000000-0000-0000-0000-000000000006', 'Dinner Party', 'Intimate dinner with close friends. Amazing food!', 'Food', 'Private Residence', '{"lat": 48.4286, "lng": -123.3660}'::jsonb, date_trunc('day', NOW()) - INTERVAL '60 days' + INTERVAL '19 hours', false, false, 'INVITE_ONLY', 6, false, false),
   
   -- e41: Past Work Session (3 weeks ago)
-  ('10000000-0000-0000-0000-000000000041', '00000000-0000-0000-0000-000000000001', 'Coding Session', 'Productive afternoon working on side projects.', 'Work', 'Home Office', '{"lat": 48.4286, "lng": -123.3660}'::jsonb, NOW() - INTERVAL '21 days' + INTERVAL '14 hours', false, false, 'GROUPS', 3, true, false),
+  ('10000000-0000-0000-0000-000000000041', '00000000-0000-0000-0000-000000000001', 'Coding Session', 'Productive afternoon working on side projects.', 'Work', 'Home Office', '{"lat": 48.4286, "lng": -123.3660}'::jsonb, date_trunc('day', NOW()) - INTERVAL '21 days' + INTERVAL '14 hours', false, false, 'GROUPS', 3, true, false),
   
   -- e42: Past Beach Day (5 days ago)
-  ('10000000-0000-0000-0000-000000000042', '00000000-0000-0000-0000-000000000002', 'Beach Day at Willows', 'Sunny day at the beach. Brought snacks!', 'Social', 'Willows Beach', '{"lat": 48.4380, "lng": -123.3080}'::jsonb, NOW() - INTERVAL '5 days' + INTERVAL '14 hours', true, true, 'ALL_FRIENDS', 8, false, false)
+  ('10000000-0000-0000-0000-000000000042', '00000000-0000-0000-0000-000000000002', 'Beach Day at Willows', 'Sunny day at the beach. Brought snacks!', 'Social', 'Willows Beach', '{"lat": 48.4380, "lng": -123.3080}'::jsonb, date_trunc('day', NOW()) - INTERVAL '5 days' + INTERVAL '14 hours', true, true, 'ALL_FRIENDS', 8, false, false)
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert groups (user-created groups)
@@ -344,18 +384,24 @@ INSERT INTO public.event_invites (event_id, user_id, invited_by) VALUES
   ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000005', NULL),
   ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000007', NULL),
   ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001', NULL),
+  -- Add a couple of non-friends of u1 to the attendee list as well
+  ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000008', NULL),
+  ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000009', NULL),
   
   -- e11: Hackathon Prep (host: u3/Marcus) - invite attendees: u3, u1, u5
   -- All invitations from host (allow_friend_invites = false)
   ('10000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000003', NULL),
   ('10000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000001', NULL),
   ('10000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000005', NULL),
+  ('10000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000010', NULL),
   
   -- e19: Sushi Dinner (host: u1/Alex) - invite attendees: u1, u2, u7
   -- All invitations from host (allow_friend_invites = false)
   ('10000000-0000-0000-0000-000000000019', '00000000-0000-0000-0000-000000000001', NULL),
   ('10000000-0000-0000-0000-000000000019', '00000000-0000-0000-0000-000000000002', NULL),
   ('10000000-0000-0000-0000-000000000019', '00000000-0000-0000-0000-000000000007', NULL),
+  ('10000000-0000-0000-0000-000000000019', '00000000-0000-0000-0000-000000000011', NULL),
+  ('10000000-0000-0000-0000-000000000019', '00000000-0000-0000-0000-000000000012', NULL),
   
   -- e26: Weekend Trip Planning (host: u3/Marcus, allow_friend_invites = true) - invite attendees: u3, u1, u4, u5
   -- Mix of host and friend invitations to demonstrate the feature
@@ -365,30 +411,39 @@ INSERT INTO public.event_invites (event_id, user_id, invited_by) VALUES
   ('10000000-0000-0000-0000-000000000026', '00000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000001'),
   -- u4 (attending) invites u5
   ('10000000-0000-0000-0000-000000000026', '00000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000004'),
+  -- u1 (attending) invites u12 (not a friend of u1 in seed data)
+  ('10000000-0000-0000-0000-000000000026', '00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000001'),
   
   -- e27: Movie Night: Sci-Fi (host: u2/Sarah) - invite attendees: u2, u7, u1
   -- All invitations from host (allow_friend_invites = false)
   ('10000000-0000-0000-0000-000000000027', '00000000-0000-0000-0000-000000000002', NULL),
   ('10000000-0000-0000-0000-000000000027', '00000000-0000-0000-0000-000000000007', NULL),
   ('10000000-0000-0000-0000-000000000027', '00000000-0000-0000-0000-000000000001', NULL),
+  ('10000000-0000-0000-0000-000000000027', '00000000-0000-0000-0000-000000000008', NULL),
+  ('10000000-0000-0000-0000-000000000027', '00000000-0000-0000-0000-000000000009', NULL),
+  ('10000000-0000-0000-0000-000000000027', '00000000-0000-0000-0000-000000000010', NULL),
   
   -- e32: Dune: Part Two (IMAX) (host: u5/Raj) - invite attendees: u5, u4, u1
   -- All invitations from host (allow_friend_invites = false)
   ('10000000-0000-0000-0000-000000000032', '00000000-0000-0000-0000-000000000005', NULL),
   ('10000000-0000-0000-0000-000000000032', '00000000-0000-0000-0000-000000000004', NULL),
   ('10000000-0000-0000-0000-000000000032', '00000000-0000-0000-0000-000000000001', NULL),
+  ('10000000-0000-0000-0000-000000000032', '00000000-0000-0000-0000-000000000011', NULL),
+  ('10000000-0000-0000-0000-000000000032', '00000000-0000-0000-0000-000000000012', NULL),
   
   -- Past events: e38 and e40 (INVITE_ONLY)
   -- e38: Past Movie Night (host: u4/Elena) - invite attendees: u4, u1, u2
   ('10000000-0000-0000-0000-000000000038', '00000000-0000-0000-0000-000000000004', NULL),
   ('10000000-0000-0000-0000-000000000038', '00000000-0000-0000-0000-000000000001', NULL),
   ('10000000-0000-0000-0000-000000000038', '00000000-0000-0000-0000-000000000002', NULL),
+  ('10000000-0000-0000-0000-000000000038', '00000000-0000-0000-0000-000000000008', NULL),
   
   -- e40: Past Dinner Party (host: u6/Chloe) - invite attendees: u6, u1, u4, u7
   ('10000000-0000-0000-0000-000000000040', '00000000-0000-0000-0000-000000000006', NULL),
   ('10000000-0000-0000-0000-000000000040', '00000000-0000-0000-0000-000000000001', NULL),
   ('10000000-0000-0000-0000-000000000040', '00000000-0000-0000-0000-000000000004', NULL),
-  ('10000000-0000-0000-0000-000000000040', '00000000-0000-0000-0000-000000000007', NULL)
+  ('10000000-0000-0000-0000-000000000040', '00000000-0000-0000-0000-000000000007', NULL),
+  ('10000000-0000-0000-0000-000000000040', '00000000-0000-0000-0000-000000000012', NULL)
 ON CONFLICT (event_id, user_id) DO NOTHING;
 
 -- Insert event attendees
@@ -397,34 +452,46 @@ INSERT INTO public.event_attendees (event_id, user_id) VALUES
   ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002'),
   ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001'),
   ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000006'),
+  ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000008'),
+  ('10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000009'),
   
   -- e2: Costco Run - attendees: u3
   ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000003'),
+  ('10000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000008'),
   
   -- e3: Board Game Night - attendees: u4, u2, u5, u7
   ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000004'),
   ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000002'),
   ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000005'),
   ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000007'),
+  ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000008'),
+  ('10000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000009'),
   
   -- e4: Sunset Walk - attendees: u1, u6
   ('10000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000001'),
   ('10000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000006'),
+  ('10000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000010'),
+  ('10000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000011'),
   
   -- e5: Deep Focus Study - attendees: u5, u2
   ('10000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000005'),
   ('10000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000002'),
+  ('10000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000012'),
   
   -- e6: Morning Coffee @ Hey Happy - attendees: u7, u1, u3
   ('10000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000007'),
   ('10000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000001'),
   ('10000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000003'),
+  ('10000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000010'),
   
   -- e7: Spikeball in the Park - attendees: u6, u4, u5, u2
   ('10000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000006'),
   ('10000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000004'),
   ('10000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000005'),
   ('10000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000002'),
+  ('10000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000008'),
+  ('10000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000009'),
+  ('10000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000011'),
   
   -- e8: Friday Night Beers - attendees: u2, u1, u3, u4, u5, u6, u7
   ('10000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000002'),
@@ -434,58 +501,82 @@ INSERT INTO public.event_attendees (event_id, user_id) VALUES
   ('10000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000005'),
   ('10000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000006'),
   ('10000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000007'),
+  ('10000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000008'),
+  ('10000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000010'),
+  ('10000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000011'),
   
   -- e9: Mt Doug Hike - attendees: u4, u6
   ('10000000-0000-0000-0000-000000000009', '00000000-0000-0000-0000-000000000004'),
   ('10000000-0000-0000-0000-000000000009', '00000000-0000-0000-0000-000000000006'),
+  ('10000000-0000-0000-0000-000000000009', '00000000-0000-0000-0000-000000000011'),
   
   -- e10: Fish & Chips Lunch - attendees: u1, u5
   ('10000000-0000-0000-0000-000000000010', '00000000-0000-0000-0000-000000000001'),
   ('10000000-0000-0000-0000-000000000010', '00000000-0000-0000-0000-000000000005'),
+  ('10000000-0000-0000-0000-000000000010', '00000000-0000-0000-0000-000000000012'),
   
   -- e11: Hackathon Prep - attendees: u3, u1, u5
   ('10000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000003'),
   ('10000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000001'),
   ('10000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000005'),
+  ('10000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000010'),
   
   -- e12: Surfing Jordan River - attendees: u5
   ('10000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000005'),
+  ('10000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000008'),
+  ('10000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000009'),
   
   -- e13: Thrift Shopping - attendees: u6, u4
   ('10000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000006'),
   ('10000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000004'),
+  ('10000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000011'),
   
   -- e14: Trivia Night - attendees: u7, u1, u3, u2
   ('10000000-0000-0000-0000-000000000014', '00000000-0000-0000-0000-000000000007'),
   ('10000000-0000-0000-0000-000000000014', '00000000-0000-0000-0000-000000000001'),
   ('10000000-0000-0000-0000-000000000014', '00000000-0000-0000-0000-000000000003'),
   ('10000000-0000-0000-0000-000000000014', '00000000-0000-0000-0000-000000000002'),
+  ('10000000-0000-0000-0000-000000000014', '00000000-0000-0000-0000-000000000008'),
+  ('10000000-0000-0000-0000-000000000014', '00000000-0000-0000-0000-000000000009'),
   
   -- e15: Willows Beach Chill - attendees: u2, u6, u7
   ('10000000-0000-0000-0000-000000000015', '00000000-0000-0000-0000-000000000002'),
   ('10000000-0000-0000-0000-000000000015', '00000000-0000-0000-0000-000000000006'),
   ('10000000-0000-0000-0000-000000000015', '00000000-0000-0000-0000-000000000007'),
+  ('10000000-0000-0000-0000-000000000015', '00000000-0000-0000-0000-000000000012'),
   
   -- e16: Winter Market Walk - attendees: u4, u1
   ('10000000-0000-0000-0000-000000000016', '00000000-0000-0000-0000-000000000004'),
   ('10000000-0000-0000-0000-000000000016', '00000000-0000-0000-0000-000000000001'),
+  ('10000000-0000-0000-0000-000000000016', '00000000-0000-0000-0000-000000000008'),
+  ('10000000-0000-0000-0000-000000000016', '00000000-0000-0000-0000-000000000010'),
   
   -- e17: Code & Coffee - attendees: u5, u3
   ('10000000-0000-0000-0000-000000000017', '00000000-0000-0000-0000-000000000005'),
   ('10000000-0000-0000-0000-000000000017', '00000000-0000-0000-0000-000000000003'),
+  ('10000000-0000-0000-0000-000000000017', '00000000-0000-0000-0000-000000000011'),
+  ('10000000-0000-0000-0000-000000000017', '00000000-0000-0000-0000-000000000012'),
   
   -- e18: Badminton Drop-in - attendees: u6
   ('10000000-0000-0000-0000-000000000018', '00000000-0000-0000-0000-000000000006'),
+  ('10000000-0000-0000-0000-000000000018', '00000000-0000-0000-0000-000000000008'),
+  ('10000000-0000-0000-0000-000000000018', '00000000-0000-0000-0000-000000000009'),
+  ('10000000-0000-0000-0000-000000000018', '00000000-0000-0000-0000-000000000010'),
   
   -- e19: Sushi Dinner - attendees: u1, u2, u7
   ('10000000-0000-0000-0000-000000000019', '00000000-0000-0000-0000-000000000001'),
   ('10000000-0000-0000-0000-000000000019', '00000000-0000-0000-0000-000000000002'),
   ('10000000-0000-0000-0000-000000000019', '00000000-0000-0000-0000-000000000007'),
+  ('10000000-0000-0000-0000-000000000019', '00000000-0000-0000-0000-000000000011'),
+  ('10000000-0000-0000-0000-000000000019', '00000000-0000-0000-0000-000000000012'),
   
   -- e20: Book Club: Dune - attendees: u3, u4, u5
   ('10000000-0000-0000-0000-000000000020', '00000000-0000-0000-0000-000000000003'),
   ('10000000-0000-0000-0000-000000000020', '00000000-0000-0000-0000-000000000004'),
   ('10000000-0000-0000-0000-000000000020', '00000000-0000-0000-0000-000000000005'),
+  ('10000000-0000-0000-0000-000000000020', '00000000-0000-0000-0000-000000000010'),
+  ('10000000-0000-0000-0000-000000000020', '00000000-0000-0000-0000-000000000011'),
+  ('10000000-0000-0000-0000-000000000020', '00000000-0000-0000-0000-000000000012'),
   
   -- e21: Airport Run (Pickup) - attendees: u2
   ('10000000-0000-0000-0000-000000000021', '00000000-0000-0000-0000-000000000002'),
@@ -497,59 +588,81 @@ INSERT INTO public.event_attendees (event_id, user_id) VALUES
   
   -- e23: Squash Game - attendees: u5
   ('10000000-0000-0000-0000-000000000023', '00000000-0000-0000-0000-000000000005'),
+  ('10000000-0000-0000-0000-000000000023', '00000000-0000-0000-0000-000000000009'),
   
   -- e24: Late Night Pho - attendees: u1, u6
   ('10000000-0000-0000-0000-000000000024', '00000000-0000-0000-0000-000000000001'),
   ('10000000-0000-0000-0000-000000000024', '00000000-0000-0000-0000-000000000006'),
+  ('10000000-0000-0000-0000-000000000024', '00000000-0000-0000-0000-000000000010'),
   
   -- e25: Christmas Shopping - attendees: u6, u2
   ('10000000-0000-0000-0000-000000000025', '00000000-0000-0000-0000-000000000006'),
   ('10000000-0000-0000-0000-000000000025', '00000000-0000-0000-0000-000000000002'),
+  ('10000000-0000-0000-0000-000000000025', '00000000-0000-0000-0000-000000000011'),
   
   -- e26: Weekend Trip Planning - attendees: u3, u1, u4, u5
   ('10000000-0000-0000-0000-000000000026', '00000000-0000-0000-0000-000000000003'),
   ('10000000-0000-0000-0000-000000000026', '00000000-0000-0000-0000-000000000001'),
   ('10000000-0000-0000-0000-000000000026', '00000000-0000-0000-0000-000000000004'),
   ('10000000-0000-0000-0000-000000000026', '00000000-0000-0000-0000-000000000005'),
+  ('10000000-0000-0000-0000-000000000026', '00000000-0000-0000-0000-000000000012'),
   
   -- e27: Movie Night: Sci-Fi - attendees: u2, u7, u1
   ('10000000-0000-0000-0000-000000000027', '00000000-0000-0000-0000-000000000002'),
   ('10000000-0000-0000-0000-000000000027', '00000000-0000-0000-0000-000000000007'),
   ('10000000-0000-0000-0000-000000000027', '00000000-0000-0000-0000-000000000001'),
+  ('10000000-0000-0000-0000-000000000027', '00000000-0000-0000-0000-000000000008'),
+  ('10000000-0000-0000-0000-000000000027', '00000000-0000-0000-0000-000000000009'),
+  ('10000000-0000-0000-0000-000000000027', '00000000-0000-0000-0000-000000000010'),
   
   -- e28: Morning Jog - attendees: u4
   ('10000000-0000-0000-0000-000000000028', '00000000-0000-0000-0000-000000000004'),
+  ('10000000-0000-0000-0000-000000000028', '00000000-0000-0000-0000-000000000008'),
+  ('10000000-0000-0000-0000-000000000028', '00000000-0000-0000-0000-000000000009'),
+  ('10000000-0000-0000-0000-000000000028', '00000000-0000-0000-0000-000000000011'),
   
   -- e29: Brunch at Blue Fox - attendees: u7, u1, u2, u3
   ('10000000-0000-0000-0000-000000000029', '00000000-0000-0000-0000-000000000007'),
   ('10000000-0000-0000-0000-000000000029', '00000000-0000-0000-0000-000000000001'),
   ('10000000-0000-0000-0000-000000000029', '00000000-0000-0000-0000-000000000002'),
   ('10000000-0000-0000-0000-000000000029', '00000000-0000-0000-0000-000000000003'),
+  ('10000000-0000-0000-0000-000000000029', '00000000-0000-0000-0000-000000000010'),
+  ('10000000-0000-0000-0000-000000000029', '00000000-0000-0000-0000-000000000012'),
   
   -- e30: New Year's Eve Prep - attendees: u1
   ('10000000-0000-0000-0000-000000000030', '00000000-0000-0000-0000-000000000001'),
+  ('10000000-0000-0000-0000-000000000030', '00000000-0000-0000-0000-000000000008'),
+  ('10000000-0000-0000-0000-000000000030', '00000000-0000-0000-0000-000000000009'),
   
   -- e31: Symphony: The Nutcracker - attendees: u2, u1, u7
   ('10000000-0000-0000-0000-000000000031', '00000000-0000-0000-0000-000000000002'),
   ('10000000-0000-0000-0000-000000000031', '00000000-0000-0000-0000-000000000001'),
   ('10000000-0000-0000-0000-000000000031', '00000000-0000-0000-0000-000000000007'),
+  ('10000000-0000-0000-0000-000000000031', '00000000-0000-0000-0000-000000000010'),
   
   -- e32: Dune: Part Two (IMAX) - attendees: u5, u4, u1
   ('10000000-0000-0000-0000-000000000032', '00000000-0000-0000-0000-000000000005'),
   ('10000000-0000-0000-0000-000000000032', '00000000-0000-0000-0000-000000000004'),
   ('10000000-0000-0000-0000-000000000032', '00000000-0000-0000-0000-000000000001'),
+  ('10000000-0000-0000-0000-000000000032', '00000000-0000-0000-0000-000000000011'),
+  ('10000000-0000-0000-0000-000000000032', '00000000-0000-0000-0000-000000000012'),
   
   -- e33: Jazz Night at Hermann's - attendees: u3, u6
   ('10000000-0000-0000-0000-000000000033', '00000000-0000-0000-0000-000000000003'),
   ('10000000-0000-0000-0000-000000000033', '00000000-0000-0000-0000-000000000006'),
+  ('10000000-0000-0000-0000-000000000033', '00000000-0000-0000-0000-000000000009'),
   
   -- e34: Comedy Night at Hecklers - attendees: u6, u2, u1
   ('10000000-0000-0000-0000-000000000034', '00000000-0000-0000-0000-000000000006'),
   ('10000000-0000-0000-0000-000000000034', '00000000-0000-0000-0000-000000000002'),
   ('10000000-0000-0000-0000-000000000034', '00000000-0000-0000-0000-000000000001'),
+  ('10000000-0000-0000-0000-000000000034', '00000000-0000-0000-0000-000000000008'),
+  ('10000000-0000-0000-0000-000000000034', '00000000-0000-0000-0000-000000000009'),
+  ('10000000-0000-0000-0000-000000000034', '00000000-0000-0000-0000-000000000010'),
   
   -- e35: Arkells Concert - attendees: u4
   ('10000000-0000-0000-0000-000000000035', '00000000-0000-0000-0000-000000000004'),
+  ('10000000-0000-0000-0000-000000000035', '00000000-0000-0000-0000-000000000008'),
   
   -- Past events that Alex attended
   -- e36: Past Bouldering Session - attendees: u2, u1, u6
@@ -560,22 +673,27 @@ INSERT INTO public.event_attendees (event_id, user_id) VALUES
   -- e37: Past Coffee Meetup - attendees: u3, u1
   ('10000000-0000-0000-0000-000000000037', '00000000-0000-0000-0000-000000000003'),
   ('10000000-0000-0000-0000-000000000037', '00000000-0000-0000-0000-000000000001'),
+  ('10000000-0000-0000-0000-000000000037', '00000000-0000-0000-0000-000000000009'),
   
   -- e38: Past Movie Night - attendees: u4, u1, u2
   ('10000000-0000-0000-0000-000000000038', '00000000-0000-0000-0000-000000000004'),
   ('10000000-0000-0000-0000-000000000038', '00000000-0000-0000-0000-000000000001'),
   ('10000000-0000-0000-0000-000000000038', '00000000-0000-0000-0000-000000000002'),
+  ('10000000-0000-0000-0000-000000000038', '00000000-0000-0000-0000-000000000008'),
   
   -- e39: Past Hiking Trip - attendees: u5, u1, u3
   ('10000000-0000-0000-0000-000000000039', '00000000-0000-0000-0000-000000000005'),
   ('10000000-0000-0000-0000-000000000039', '00000000-0000-0000-0000-000000000001'),
   ('10000000-0000-0000-0000-000000000039', '00000000-0000-0000-0000-000000000003'),
+  ('10000000-0000-0000-0000-000000000039', '00000000-0000-0000-0000-000000000010'),
+  ('10000000-0000-0000-0000-000000000039', '00000000-0000-0000-0000-000000000011'),
   
   -- e40: Past Dinner Party (Hidden/INVITE_ONLY) - attendees: u6, u1, u4, u7
   ('10000000-0000-0000-0000-000000000040', '00000000-0000-0000-0000-000000000006'),
   ('10000000-0000-0000-0000-000000000040', '00000000-0000-0000-0000-000000000001'),
   ('10000000-0000-0000-0000-000000000040', '00000000-0000-0000-0000-000000000004'),
   ('10000000-0000-0000-0000-000000000040', '00000000-0000-0000-0000-000000000007'),
+  ('10000000-0000-0000-0000-000000000040', '00000000-0000-0000-0000-000000000012'),
   
   -- e41: Past Coding Session (hosted by Alex) - attendees: u1, u3, u5
   ('10000000-0000-0000-0000-000000000041', '00000000-0000-0000-0000-000000000001'),
@@ -586,16 +704,20 @@ INSERT INTO public.event_attendees (event_id, user_id) VALUES
   ('10000000-0000-0000-0000-000000000042', '00000000-0000-0000-0000-000000000002'),
   ('10000000-0000-0000-0000-000000000042', '00000000-0000-0000-0000-000000000001'),
   ('10000000-0000-0000-0000-000000000042', '00000000-0000-0000-0000-000000000006'),
-  ('10000000-0000-0000-0000-000000000042', '00000000-0000-0000-0000-000000000004')
+  ('10000000-0000-0000-0000-000000000042', '00000000-0000-0000-0000-000000000004'),
+  ('10000000-0000-0000-0000-000000000042', '00000000-0000-0000-0000-000000000008'),
+  ('10000000-0000-0000-0000-000000000042', '00000000-0000-0000-0000-000000000009'),
+  ('10000000-0000-0000-0000-000000000042', '00000000-0000-0000-0000-000000000010'),
+  ('10000000-0000-0000-0000-000000000042', '00000000-0000-0000-0000-000000000011')
 ON CONFLICT (event_id, user_id) DO NOTHING;
 
 -- Insert comments
 INSERT INTO public.comments (id, event_id, user_id, text, timestamp) VALUES
   -- e1: Comment from u3
-  ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000003', 'I might be 10 mins late', NOW() + INTERVAL '0 days' + INTERVAL '16 hours'),
+  ('20000000-0000-0000-0000-000000000001', '10000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000003', 'I might be 10 mins late', date_trunc('day', NOW()) + INTERVAL '0 days' + INTERVAL '16 hours'),
   
   -- e7: Comment from u2
-  ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000002', 'I am terrible at this but I am coming!', NOW() + INTERVAL '1 days' + INTERVAL '10 hours')
+  ('20000000-0000-0000-0000-000000000002', '10000000-0000-0000-0000-000000000007', '00000000-0000-0000-0000-000000000002', 'I am terrible at this but I am coming!', date_trunc('day', NOW()) + INTERVAL '1 days' + INTERVAL '10 hours')
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert reactions
@@ -731,19 +853,19 @@ ON CONFLICT (event_id, user_id, emoji) DO NOTHING;
 -- Note: Notifications are for user u1 (Alex) unless specified otherwise
 INSERT INTO public.notifications (id, user_id, type, title, message, timestamp, related_event_id, is_read, actor_id) VALUES
   -- n1: INVITE from Sarah for e8
-  ('30000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'INVITE', 'New Invite from Sarah', 'Sarah invited you to "Friday Night Beers"', NOW() + INTERVAL '0 days' + INTERVAL '14 hours' + INTERVAL '30 minutes', '10000000-0000-0000-0000-000000000008', false, '00000000-0000-0000-0000-000000000002'),
+  ('30000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000001', 'INVITE', 'New Invite from Sarah', 'Sarah invited you to "Friday Night Beers"', date_trunc('day', NOW()) + INTERVAL '0 days' + INTERVAL '14 hours' + INTERVAL '30 minutes', '10000000-0000-0000-0000-000000000008', false, '00000000-0000-0000-0000-000000000002'),
   
   -- n2: COMMENT from Marcus on e1
-  ('30000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 'COMMENT', 'New Comment', 'Marcus commented on "Bouldering at Crag X"', NOW() + INTERVAL '0 days' + INTERVAL '10 hours' + INTERVAL '15 minutes', '10000000-0000-0000-0000-000000000001', false, '00000000-0000-0000-0000-000000000003'),
+  ('30000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-000000000001', 'COMMENT', 'New Comment', 'Marcus commented on "Bouldering at Crag X"', date_trunc('day', NOW()) + INTERVAL '0 days' + INTERVAL '10 hours' + INTERVAL '15 minutes', '10000000-0000-0000-0000-000000000001', false, '00000000-0000-0000-0000-000000000003'),
   
   -- n3: REMINDER for e4
-  ('30000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001', 'REMINDER', 'Upcoming Event', 'Sunset Walk is starting in 1 hour', NOW() + INTERVAL '0 days' + INTERVAL '19 hours' + INTERVAL '15 minutes', '10000000-0000-0000-0000-000000000004', true, NULL),
+  ('30000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000001', 'REMINDER', 'Upcoming Event', 'Sunset Walk is starting in 1 hour', date_trunc('day', NOW()) + INTERVAL '0 days' + INTERVAL '15 hours' + INTERVAL '45 minutes', '10000000-0000-0000-0000-000000000004', true, NULL),
   
   -- n4: REACTION from Elena on e4
-  ('30000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000001', 'REACTION', 'Reaction Received', 'Elena reacted with 🔥 to your event', NOW() + INTERVAL '-1 days' + INTERVAL '9 hours', '10000000-0000-0000-0000-000000000004', true, '00000000-0000-0000-0000-000000000004'),
+  ('30000000-0000-0000-0000-000000000004', '00000000-0000-0000-0000-000000000001', 'REACTION', 'Reaction Received', 'Elena reacted with 🔥 to your event', date_trunc('day', NOW()) - INTERVAL '1 day' + INTERVAL '9 hours', '10000000-0000-0000-0000-000000000004', true, '00000000-0000-0000-0000-000000000004'),
   
   -- n5: SYSTEM notification
-  ('30000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000001', 'SYSTEM', 'Welcome to Open Invite!', 'Start by adding friends or creating your first event.', NOW() + INTERVAL '-5 days' + INTERVAL '12 hours', NULL, true, NULL)
+  ('30000000-0000-0000-0000-000000000005', '00000000-0000-0000-0000-000000000001', 'SYSTEM', 'Welcome to Open Invite!', 'Start by adding friends or creating your first event.', date_trunc('day', NOW()) - INTERVAL '5 days' + INTERVAL '12 hours', NULL, true, NULL)
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert user friendships
@@ -782,6 +904,15 @@ INSERT INTO public.user_friends (user_id, friend_id) VALUES
   
   -- u6 (Chloe) friends with u7
   ('00000000-0000-0000-0000-000000000006', '00000000-0000-0000-0000-000000000007')
+  ,
+  -- Additional users (u8-u12) are *not* friends with u1 (Alex), but may be friends with others.
+  ('00000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000002'),
+  ('00000000-0000-0000-0000-000000000008', '00000000-0000-0000-0000-000000000004'),
+  ('00000000-0000-0000-0000-000000000009', '00000000-0000-0000-0000-000000000002'),
+  ('00000000-0000-0000-0000-000000000009', '00000000-0000-0000-0000-000000000005'),
+  ('00000000-0000-0000-0000-000000000010', '00000000-0000-0000-0000-000000000003'),
+  ('00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000007'),
+  ('00000000-0000-0000-0000-000000000012', '00000000-0000-0000-0000-000000000006')
 ON CONFLICT (user_id, friend_id) DO NOTHING;
 
 -- Insert user groups

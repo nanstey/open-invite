@@ -16,6 +16,7 @@ import { Route as AlertsRouteImport } from './pages/alerts'
 import { Route as IndexRouteImport } from './pages/index'
 import { Route as EventsNewRouteImport } from './pages/events.new'
 import { Route as EventsEventIdRouteImport } from './pages/events.$eventId'
+import { Route as EEventIdRouteImport } from './pages/e.$eventId'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
@@ -52,6 +53,11 @@ const EventsEventIdRoute = EventsEventIdRouteImport.update({
   path: '/$eventId',
   getParentRoute: () => EventsRoute,
 } as any)
+const EEventIdRoute = EEventIdRouteImport.update({
+  id: '/e/$eventId',
+  path: '/e/$eventId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -59,6 +65,7 @@ export interface FileRoutesByFullPath {
   '/events': typeof EventsRouteWithChildren
   '/friends': typeof FriendsRoute
   '/profile': typeof ProfileRoute
+  '/e/$eventId': typeof EEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/events/new': typeof EventsNewRoute
 }
@@ -68,6 +75,7 @@ export interface FileRoutesByTo {
   '/events': typeof EventsRouteWithChildren
   '/friends': typeof FriendsRoute
   '/profile': typeof ProfileRoute
+  '/e/$eventId': typeof EEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/events/new': typeof EventsNewRoute
 }
@@ -78,6 +86,7 @@ export interface FileRoutesById {
   '/events': typeof EventsRouteWithChildren
   '/friends': typeof FriendsRoute
   '/profile': typeof ProfileRoute
+  '/e/$eventId': typeof EEventIdRoute
   '/events/$eventId': typeof EventsEventIdRoute
   '/events/new': typeof EventsNewRoute
 }
@@ -89,6 +98,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/friends'
     | '/profile'
+    | '/e/$eventId'
     | '/events/$eventId'
     | '/events/new'
   fileRoutesByTo: FileRoutesByTo
@@ -98,6 +108,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/friends'
     | '/profile'
+    | '/e/$eventId'
     | '/events/$eventId'
     | '/events/new'
   id:
@@ -107,6 +118,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/friends'
     | '/profile'
+    | '/e/$eventId'
     | '/events/$eventId'
     | '/events/new'
   fileRoutesById: FileRoutesById
@@ -117,6 +129,7 @@ export interface RootRouteChildren {
   EventsRoute: typeof EventsRouteWithChildren
   FriendsRoute: typeof FriendsRoute
   ProfileRoute: typeof ProfileRoute
+  EEventIdRoute: typeof EEventIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -170,6 +183,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsEventIdRouteImport
       parentRoute: typeof EventsRoute
     }
+    '/e/$eventId': {
+      id: '/e/$eventId'
+      path: '/e/$eventId'
+      fullPath: '/e/$eventId'
+      preLoaderRoute: typeof EEventIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -192,6 +212,7 @@ const rootRouteChildren: RootRouteChildren = {
   EventsRoute: EventsRouteWithChildren,
   FriendsRoute: FriendsRoute,
   ProfileRoute: ProfileRoute,
+  EEventIdRoute: EEventIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -8,13 +8,25 @@ import { TabGroup, type TabOption } from './TabGroup';
 
 interface EventDetailProps {
   event: SocialEvent;
-  currentUser: User;
-  onClose: () => void;
+  currentUser?: User | null;
+  onClose?: () => void;
   onUpdateEvent: (updated: SocialEvent) => void;
   onDismiss?: () => void;
+  onRequireAuth?: () => void;
+  showBackButton?: boolean;
+  layout?: 'shell' | 'public';
 }
 
-export const EventDetail: React.FC<EventDetailProps> = ({ event, currentUser, onClose, onUpdateEvent, onDismiss }) => {
+export const EventDetail: React.FC<EventDetailProps> = ({
+  event,
+  currentUser,
+  onClose,
+  onUpdateEvent,
+  onDismiss,
+  onRequireAuth,
+  showBackButton = true,
+  layout = 'shell',
+}) => {
   const [commentText, setCommentText] = useState('');
   const [host, setHost] = useState<User | null>(null);
   const [attendeesList, setAttendeesList] = useState<User[]>([]);
@@ -24,18 +36,20 @@ export const EventDetail: React.FC<EventDetailProps> = ({ event, currentUser, on
   const miniMapInstanceRef = useRef<any>(null);
   const miniMapMarkerRef = useRef<any>(null);
   const theme = getTheme(event.activityType);
+  const currentUserId = currentUser?.id;
+  const isGuest = !currentUserId;
   
   useEffect(() => {
     const loadUsers = async () => {
       // Fetch host
-      const fetchedHost = await fetchUser(event.hostId, currentUser.id);
+      const fetchedHost = await fetchUser(event.hostId, currentUserId);
       if (fetchedHost) {
         setHost(fetchedHost);
       }
 
       // Fetch attendees
       if (event.attendees.length > 0) {
-        const fetchedAttendees = await fetchUsers(event.attendees, currentUser.id);
+        const fetchedAttendees = await fetchUsers(event.attendees, currentUserId);
         setAttendeesList(fetchedAttendees);
       }
 
@@ -43,16 +57,16 @@ export const EventDetail: React.FC<EventDetailProps> = ({ event, currentUser, on
       const commentUserIds: string[] = event.comments.map(c => c.userId);
       if (commentUserIds.length > 0) {
         const uniqueCommentUserIds: string[] = [...new Set(commentUserIds)];
-        const fetchedCommentUsers = await fetchUsers(uniqueCommentUserIds, currentUser.id);
+        const fetchedCommentUsers = await fetchUsers(uniqueCommentUserIds, currentUserId);
         const usersMap = new Map(fetchedCommentUsers.map(u => [u.id, u]));
         setCommentUsers(usersMap);
       }
     };
     loadUsers();
-  }, [event.hostId, event.attendees, event.comments, currentUser.id]);
+  }, [event.hostId, event.attendees, event.comments, currentUserId]);
 
-  const isHost = event.hostId === currentUser.id;
-  const isAttending = event.attendees.includes(currentUser.id);
+  const isHost = !!currentUserId && event.hostId === currentUserId;
+  const isAttending = !!currentUserId && event.attendees.includes(currentUserId);
   const isInvolved = isHost || isAttending;
   const startDate = new Date(event.startTime);
   const dateLabel = startDate.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
@@ -73,6 +87,15 @@ export const EventDetail: React.FC<EventDetailProps> = ({ event, currentUser, on
 
     const url = `https://www.google.com/maps?q=${encodeURIComponent(`${lat},${lng}`)}`;
     window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+  const handleTabChange = (id: any) => {
+    const tabId = String(id) as 'details' | 'going' | 'discussion';
+    if (isGuest && (tabId === 'going' || tabId === 'discussion')) {
+      onRequireAuth?.();
+      return;
+    }
+    setActiveTab(tabId);
   };
 
   useEffect(() => {
@@ -153,23 +176,31 @@ export const EventDetail: React.FC<EventDetailProps> = ({ event, currentUser, on
   }, []);
 
   const handleJoin = () => {
+    if (isGuest) {
+      onRequireAuth?.();
+      return;
+    }
     let newAttendees;
     if (isAttending) {
-      newAttendees = event.attendees.filter(id => id !== currentUser.id);
+      newAttendees = event.attendees.filter(id => id !== currentUserId);
     } else {
       if (event.maxSeats && event.attendees.length >= event.maxSeats) return; // Full
-      newAttendees = [...event.attendees, currentUser.id];
+      newAttendees = [...event.attendees, currentUserId!];
     }
     onUpdateEvent({ ...event, attendees: newAttendees });
   };
 
   const handlePostComment = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isGuest) {
+      onRequireAuth?.();
+      return;
+    }
     if (!commentText.trim()) return;
 
     const newComment: Comment = {
       id: Date.now().toString(),
-      userId: currentUser.id,
+      userId: currentUserId!,
       text: commentText,
       timestamp: new Date().toISOString()
     };
@@ -179,7 +210,11 @@ export const EventDetail: React.FC<EventDetailProps> = ({ event, currentUser, on
   };
 
   return (
-    <div className="flex-1 overflow-y-auto custom-scrollbar bg-background text-slate-100 pb-44 md:pb-10">
+    <div
+      className={`flex-1 overflow-y-auto custom-scrollbar bg-background text-slate-100 ${
+        layout === 'shell' ? 'pb-44' : 'pb-28'
+      } md:pb-10`}
+    >
       {/* Hero / Header */}
       <div className="relative w-full h-56 md:h-72 bg-slate-800">
         <img
@@ -189,16 +224,18 @@ export const EventDetail: React.FC<EventDetailProps> = ({ event, currentUser, on
         />
         <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/45 to-transparent" />
 
-        <div className="absolute top-4 left-4">
-          <button
-            onClick={onClose}
-            className="bg-black/40 hover:bg-black/60 p-2 rounded-full text-white backdrop-blur transition-all border border-white/10"
-            type="button"
-            aria-label="Back"
-          >
-            <ArrowLeft className="w-5 h-5" />
-          </button>
-        </div>
+        {showBackButton && onClose ? (
+          <div className="absolute top-4 left-4">
+            <button
+              onClick={onClose}
+              className="bg-black/40 hover:bg-black/60 p-2 rounded-full text-white backdrop-blur transition-all border border-white/10"
+              type="button"
+              aria-label="Back"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          </div>
+        ) : null}
 
         <div className="absolute bottom-0 left-0 right-0">
           <div className="max-w-6xl mx-auto px-4 md:px-6 pb-5">
@@ -267,7 +304,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({ event, currentUser, on
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 grid grid-cols-1 md:grid-cols-[1fr_320px] lg:grid-cols-[1fr_360px] gap-6">
         {/* Left: tabbed content */}
         <div className="space-y-4 min-w-0">
-          <TabGroup tabs={tabs} activeTab={activeTab} onChange={setActiveTab} />
+          <TabGroup tabs={tabs} activeTab={activeTab} onChange={handleTabChange} />
 
           {activeTab === 'details' ? (
             <div className="space-y-4">
@@ -459,7 +496,11 @@ export const EventDetail: React.FC<EventDetailProps> = ({ event, currentUser, on
       </div>
 
       {/* Mobile action bar (fixed, above bottom nav) */}
-      <div className="md:hidden fixed left-0 right-0 bottom-16 p-4 border-t border-slate-800 bg-surface/95 backdrop-blur z-40 pb-safe-area">
+      <div
+        className={`md:hidden fixed left-0 right-0 ${
+          layout === 'shell' ? 'bottom-16' : 'bottom-0'
+        } p-4 border-t border-slate-800 bg-surface/95 backdrop-blur z-40 pb-safe-area`}
+      >
         <div className="max-w-6xl mx-auto flex gap-3">
           {onDismiss && !isInvolved && (
             <button
