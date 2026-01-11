@@ -15,8 +15,8 @@ import { Route as EventsRouteImport } from './pages/events'
 import { Route as AlertsRouteImport } from './pages/alerts'
 import { Route as IndexRouteImport } from './pages/index'
 import { Route as EventsNewRouteImport } from './pages/events.new'
-import { Route as EventsEventIdRouteImport } from './pages/events.$eventId'
-import { Route as EEventIdRouteImport } from './pages/e.$eventId'
+import { Route as EventsSlugRouteImport } from './pages/events.$slug'
+import { Route as ESlugRouteImport } from './pages/e.$slug'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
@@ -48,14 +48,14 @@ const EventsNewRoute = EventsNewRouteImport.update({
   path: '/new',
   getParentRoute: () => EventsRoute,
 } as any)
-const EventsEventIdRoute = EventsEventIdRouteImport.update({
-  id: '/$eventId',
-  path: '/$eventId',
+const EventsSlugRoute = EventsSlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
   getParentRoute: () => EventsRoute,
 } as any)
-const EEventIdRoute = EEventIdRouteImport.update({
-  id: '/e/$eventId',
-  path: '/e/$eventId',
+const ESlugRoute = ESlugRouteImport.update({
+  id: '/e/$slug',
+  path: '/e/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -65,8 +65,8 @@ export interface FileRoutesByFullPath {
   '/events': typeof EventsRouteWithChildren
   '/friends': typeof FriendsRoute
   '/profile': typeof ProfileRoute
-  '/e/$eventId': typeof EEventIdRoute
-  '/events/$eventId': typeof EventsEventIdRoute
+  '/e/$slug': typeof ESlugRoute
+  '/events/$slug': typeof EventsSlugRoute
   '/events/new': typeof EventsNewRoute
 }
 export interface FileRoutesByTo {
@@ -75,8 +75,8 @@ export interface FileRoutesByTo {
   '/events': typeof EventsRouteWithChildren
   '/friends': typeof FriendsRoute
   '/profile': typeof ProfileRoute
-  '/e/$eventId': typeof EEventIdRoute
-  '/events/$eventId': typeof EventsEventIdRoute
+  '/e/$slug': typeof ESlugRoute
+  '/events/$slug': typeof EventsSlugRoute
   '/events/new': typeof EventsNewRoute
 }
 export interface FileRoutesById {
@@ -86,8 +86,8 @@ export interface FileRoutesById {
   '/events': typeof EventsRouteWithChildren
   '/friends': typeof FriendsRoute
   '/profile': typeof ProfileRoute
-  '/e/$eventId': typeof EEventIdRoute
-  '/events/$eventId': typeof EventsEventIdRoute
+  '/e/$slug': typeof ESlugRoute
+  '/events/$slug': typeof EventsSlugRoute
   '/events/new': typeof EventsNewRoute
 }
 export interface FileRouteTypes {
@@ -98,8 +98,8 @@ export interface FileRouteTypes {
     | '/events'
     | '/friends'
     | '/profile'
-    | '/e/$eventId'
-    | '/events/$eventId'
+    | '/e/$slug'
+    | '/events/$slug'
     | '/events/new'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -108,8 +108,8 @@ export interface FileRouteTypes {
     | '/events'
     | '/friends'
     | '/profile'
-    | '/e/$eventId'
-    | '/events/$eventId'
+    | '/e/$slug'
+    | '/events/$slug'
     | '/events/new'
   id:
     | '__root__'
@@ -118,8 +118,8 @@ export interface FileRouteTypes {
     | '/events'
     | '/friends'
     | '/profile'
-    | '/e/$eventId'
-    | '/events/$eventId'
+    | '/e/$slug'
+    | '/events/$slug'
     | '/events/new'
   fileRoutesById: FileRoutesById
 }
@@ -129,7 +129,7 @@ export interface RootRouteChildren {
   EventsRoute: typeof EventsRouteWithChildren
   FriendsRoute: typeof FriendsRoute
   ProfileRoute: typeof ProfileRoute
-  EEventIdRoute: typeof EEventIdRoute
+  ESlugRoute: typeof ESlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -176,30 +176,30 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventsNewRouteImport
       parentRoute: typeof EventsRoute
     }
-    '/events/$eventId': {
-      id: '/events/$eventId'
-      path: '/$eventId'
-      fullPath: '/events/$eventId'
-      preLoaderRoute: typeof EventsEventIdRouteImport
+    '/events/$slug': {
+      id: '/events/$slug'
+      path: '/$slug'
+      fullPath: '/events/$slug'
+      preLoaderRoute: typeof EventsSlugRouteImport
       parentRoute: typeof EventsRoute
     }
-    '/e/$eventId': {
-      id: '/e/$eventId'
-      path: '/e/$eventId'
-      fullPath: '/e/$eventId'
-      preLoaderRoute: typeof EEventIdRouteImport
+    '/e/$slug': {
+      id: '/e/$slug'
+      path: '/e/$slug'
+      fullPath: '/e/$slug'
+      preLoaderRoute: typeof ESlugRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
 }
 
 interface EventsRouteChildren {
-  EventsEventIdRoute: typeof EventsEventIdRoute
+  EventsSlugRoute: typeof EventsSlugRoute
   EventsNewRoute: typeof EventsNewRoute
 }
 
 const EventsRouteChildren: EventsRouteChildren = {
-  EventsEventIdRoute: EventsEventIdRoute,
+  EventsSlugRoute: EventsSlugRoute,
   EventsNewRoute: EventsNewRoute,
 }
 
@@ -212,7 +212,7 @@ const rootRouteChildren: RootRouteChildren = {
   EventsRoute: EventsRouteWithChildren,
   FriendsRoute: FriendsRoute,
   ProfileRoute: ProfileRoute,
-  EEventIdRoute: EEventIdRoute,
+  ESlugRoute: ESlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

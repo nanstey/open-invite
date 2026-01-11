@@ -5,14 +5,18 @@ import { EventDetail } from '../components/EventDetail'
 import { LoginModal } from '../components/LoginModal'
 import { useAuth } from '../components/AuthProvider'
 import type { SocialEvent } from '../lib/types'
-import { fetchEventById } from '../services/eventService'
+import { fetchEventById, fetchEventBySlug } from '../services/eventService'
 import { realtimeService } from '../services/realtimeService'
 
-export const Route = createFileRoute('/e/$eventId')({
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
+export const Route = createFileRoute('/e/$slug')({
   component: function PublicEventDetailRouteComponent() {
     const { user } = useAuth()
     const navigate = useNavigate()
-    const { eventId } = Route.useParams()
+    const { slug } = Route.useParams()
 
     const [event, setEvent] = React.useState<SocialEvent | null>(null)
     const [showLoginModal, setShowLoginModal] = React.useState(false)
@@ -21,7 +25,7 @@ export const Route = createFileRoute('/e/$eventId')({
       let cancelled = false
 
       ;(async () => {
-        const fetched = await fetchEventById(eventId)
+        const fetched = isUuid(slug) ? await fetchEventById(slug) : await fetchEventBySlug(slug)
         if (cancelled) return
         setEvent(fetched)
       })()
@@ -29,21 +33,40 @@ export const Route = createFileRoute('/e/$eventId')({
       return () => {
         cancelled = true
       }
-    }, [eventId])
+    }, [slug])
+
+    // Canonicalize UUID URLs -> slug URLs
+    React.useEffect(() => {
+      if (!event) return
+      if (!isUuid(slug)) return
+      navigate({
+        to: '/e/$slug',
+        params: { slug: event.slug },
+        replace: true,
+      })
+    }, [event?.slug, navigate, slug])
 
     React.useEffect(() => {
-      const unsubscribe = realtimeService.subscribeToEvent(eventId, {
+      if (!event) return
+
+      const unsubscribe = realtimeService.subscribeToEvent(event.id, {
         onUpdate: (updatedEvent) => setEvent(updatedEvent),
         onDelete: () => setEvent(null),
       })
       return () => unsubscribe()
-    }, [eventId])
+    }, [event?.id])
 
     React.useEffect(() => {
       if (!user) return
       setShowLoginModal(false)
-      navigate({ to: '/events/$eventId', params: { eventId }, replace: true, search: { view: 'list' } })
-    }, [user, navigate, eventId])
+      navigate({
+        to: '/events/$slug',
+        params: { slug },
+        search: { view: undefined },
+        replace: true,
+        state: { fromEventsView: 'list' },
+      })
+    }, [user, navigate, slug])
 
     if (!event) {
       return (

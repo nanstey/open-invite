@@ -1,10 +1,10 @@
 import React from 'react'
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate, useRouterState } from '@tanstack/react-router'
 
 import type { SocialEvent } from '../lib/types'
 import { useAuth } from '../components/AuthProvider'
 import { EventDetail } from '../components/EventDetail'
-import { fetchEventById, updateEvent } from '../services/eventService'
+import { fetchEventById, fetchEventBySlug, updateEvent } from '../services/eventService'
 import { realtimeService } from '../services/realtimeService'
 
 type EventsView = 'list' | 'map' | 'calendar'
@@ -15,20 +15,29 @@ function parseEventsView(value: unknown): EventsView {
   return 'list'
 }
 
-export const Route = createFileRoute('/events/$eventId')({
-  validateSearch: (search: Record<string, unknown>) => ({
-    view: parseEventsView(search.view),
-  }),
-  beforeLoad: ({ context }) => {
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
+}
+
+export const Route = createFileRoute('/events/$slug')({
+  beforeLoad: ({ context, params }) => {
     if (!context.auth.loading && !context.auth.user) {
-      throw redirect({ to: '/' })
+      throw redirect({
+        to: '/e/$slug',
+        params: { slug: params.slug },
+      })
     }
   },
   component: function EventDetailRouteComponent() {
     const { user } = useAuth()
     const navigate = useNavigate()
-    const { eventId } = Route.useParams()
-    const { view } = Route.useSearch()
+    const { slug } = Route.useParams()
+    const { fromEventsView } = useRouterState({
+      select: (s) => ({
+        fromEventsView: s.location.state.fromEventsView,
+      }),
+    })
+    const view = parseEventsView(fromEventsView)
 
     const [event, setEvent] = React.useState<SocialEvent | null>(null)
 
@@ -36,7 +45,7 @@ export const Route = createFileRoute('/events/$eventId')({
       let cancelled = false
 
       ;(async () => {
-        const fetched = await fetchEventById(eventId)
+        const fetched = isUuid(slug) ? await fetchEventById(slug) : await fetchEventBySlug(slug)
         if (cancelled) return
         setEvent(fetched)
       })()
@@ -44,15 +53,31 @@ export const Route = createFileRoute('/events/$eventId')({
       return () => {
         cancelled = true
       }
-    }, [eventId])
+    }, [slug])
+
+    // Canonicalize UUID URLs -> slug URLs
+    React.useEffect(() => {
+      if (!event) return
+      if (!isUuid(slug)) return
+
+      navigate({
+        to: '/events/$slug',
+        params: { slug: event.slug },
+        search: { view: undefined },
+        replace: true,
+        state: { fromEventsView: view },
+      })
+    }, [event?.slug, navigate, slug, view])
 
     React.useEffect(() => {
-      const unsubscribe = realtimeService.subscribeToEvent(eventId, {
+      if (!event) return
+
+      const unsubscribe = realtimeService.subscribeToEvent(event.id, {
         onUpdate: (updatedEvent) => setEvent(updatedEvent),
         onDelete: () => navigate({ to: '/events', search: { view } }),
       })
       return () => unsubscribe()
-    }, [eventId, navigate, view])
+    }, [event?.id, navigate, view])
 
     if (!user) return null
     if (!event) return null
@@ -64,9 +89,7 @@ export const Route = createFileRoute('/events/$eventId')({
       if (result) setEvent(result)
     }
 
-    return (
-      <EventDetail event={event} currentUser={user} onClose={onClose} onUpdateEvent={onUpdateEvent} />
-    )
+    return <EventDetail event={event} currentUser={user} onClose={onClose} onUpdateEvent={onUpdateEvent} />
   },
 })
 

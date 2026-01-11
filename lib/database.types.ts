@@ -39,6 +39,7 @@ export interface Database {
         Row: {
           id: string
           host_id: string
+          slug: string
           title: string
           description: string
           activity_type: string
@@ -58,6 +59,7 @@ export interface Database {
         Insert: {
           id?: string
           host_id: string
+          slug?: string
           title: string
           description: string
           activity_type: string
@@ -77,6 +79,7 @@ export interface Database {
         Update: {
           id?: string
           host_id?: string
+          slug?: string
           title?: string
           description?: string
           activity_type?: string
