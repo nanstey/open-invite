@@ -1,6 +1,6 @@
 
 import React, { useState, useRef } from 'react';
-import { SocialEvent, User } from '../types';
+import { SocialEvent, User } from '../lib/types';
 import { getTheme } from '../lib/constants';
 import { ChevronLeft, ChevronRight, Clock, Crown, CheckCircle2 } from 'lucide-react';
 
