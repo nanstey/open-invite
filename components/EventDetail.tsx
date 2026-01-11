@@ -5,6 +5,7 @@ import { getTheme } from '../lib/constants';
 import { ArrowLeft, Calendar, Info, MapPin, MessageSquare, Send, Users, X, CheckCircle2, EyeOff } from 'lucide-react';
 import { fetchUser, fetchUsers } from '../services/userService';
 import { TabGroup, type TabOption } from './TabGroup';
+import { useRouterState } from '@tanstack/react-router';
 
 interface EventDetailProps {
   event: SocialEvent;
@@ -27,6 +28,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   showBackButton = true,
   layout = 'shell',
 }) => {
+  const { pathname } = useRouterState({ select: (s) => ({ pathname: s.location.pathname }) });
+  const reserveBottomNavSpace = layout === 'shell' && !(pathname.startsWith('/events/') && pathname !== '/events/new');
+
   const [commentText, setCommentText] = useState('');
   const [host, setHost] = useState<User | null>(null);
   const [attendeesList, setAttendeesList] = useState<User[]>([]);
@@ -69,8 +73,10 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const isAttending = !!currentUserId && event.attendees.includes(currentUserId);
   const isInvolved = isHost || isAttending;
   const startDate = new Date(event.startTime);
-  const dateLabel = startDate.toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' });
-  const timeLabel = startDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const dateLabel = startDate
+    .toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })
+    .replace(',', '');
+  const timeLabel = startDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
   const goingLabel = `${attendeesList.length}/${event.maxSeats || '∞'}`;
   const spotsLeft = event.maxSeats ? Math.max(event.maxSeats - attendeesList.length, 0) : null;
 
@@ -212,7 +218,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   return (
     <div
       className={`flex-1 overflow-y-auto custom-scrollbar bg-background text-slate-100 ${
-        layout === 'shell' ? 'pb-44' : 'pb-28'
+        layout === 'shell' && reserveBottomNavSpace ? 'pb-44' : 'pb-28'
       } md:pb-10`}
     >
       {/* Hero / Header */}
@@ -250,8 +256,35 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       {/* Key facts */}
       <div className="max-w-6xl mx-auto px-4 md:px-6 -mt-6 relative z-10">
         <div className="bg-surface/95 backdrop-blur border border-slate-800 rounded-2xl p-4 md:p-5 shadow-lg">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/40 border border-slate-800">
+          {/* Mobile: host (left) + datetime (right) */}
+          <div className="md:hidden flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              {host ? (
+                <img
+                  src={host.avatar}
+                  className="w-10 h-10 rounded-full border-2 border-slate-700 shrink-0"
+                  alt={host.name}
+                />
+              ) : (
+                <div className="w-10 h-10 rounded-full bg-slate-700 animate-pulse border-2 border-slate-700 shrink-0" />
+              )}
+              <div className="min-w-0">
+                <div className="text-xs text-slate-400">Hosted by</div>
+                <div className="font-bold text-white truncate">{host?.name || 'Loading...'}</div>
+              </div>
+            </div>
+
+            <div className="text-right shrink-0">
+              <div className="font-bold text-white leading-tight">{dateLabel}</div>
+              <div className="text-sm text-slate-400 leading-tight">
+                {timeLabel}
+                {event.isFlexibleStart && <span className="italic"> (Flexible)</span>}
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:mt-0 mt-3">
+            <div className="hidden md:flex items-start gap-3 p-3 rounded-xl bg-slate-900/40 border border-slate-800">
               <div className="p-2 bg-slate-800 rounded-lg shrink-0">
                 <Calendar className="w-5 h-5 text-secondary" />
               </div>
@@ -265,7 +298,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/40 border border-slate-800">
+            <div className="hidden md:flex items-start gap-3 p-3 rounded-xl bg-slate-900/40 border border-slate-800">
               <div className="p-2 bg-slate-800 rounded-lg shrink-0">
                 <MapPin className="w-5 h-5 text-accent" />
               </div>
@@ -282,7 +315,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               </div>
             </div>
 
-            <div className="flex items-start gap-3 p-3 rounded-xl bg-slate-900/40 border border-slate-800">
+            <div className="hidden md:flex items-start gap-3 p-3 rounded-xl bg-slate-900/40 border border-slate-800">
               <div className="p-2 bg-slate-800 rounded-lg shrink-0">
                 <Users className="w-5 h-5 text-slate-300" />
               </div>
@@ -498,8 +531,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       {/* Mobile action bar (fixed, above bottom nav) */}
       <div
         className={`md:hidden fixed left-0 right-0 ${
-          layout === 'shell' ? 'bottom-16' : 'bottom-0'
-        } p-4 border-t border-slate-800 bg-surface/95 backdrop-blur z-40 pb-safe-area`}
+          reserveBottomNavSpace ? 'bottom-16' : 'bottom-0'
+        } p-4 border-t border-slate-800 bg-surface/95 backdrop-blur z-[1200] pb-safe-area`}
       >
         <div className="max-w-6xl mx-auto flex gap-3">
           {onDismiss && !isInvolved && (

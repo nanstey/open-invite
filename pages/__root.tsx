@@ -73,7 +73,9 @@ function AppShellLayout() {
   const pageTitle = getPageTitle(pathname)
   const isEventsIndex = pathname === '/events'
   const isEventsChildRoute = pathname.startsWith('/events/') && !isEventsIndex
+  const isEventDetailRoute = pathname.startsWith('/events/') && pathname !== '/events/new'
   const hideShellHeaderForRoute = activeSection === 'EVENTS' && isEventsChildRoute
+  const hideMobileBottomNavForRoute = activeSection === 'EVENTS' && isEventDetailRoute
 
   const eventsView = React.useMemo<EventsView>(() => coerceEventsView((search as any)?.view), [search])
   const friendsTab = React.useMemo<FriendsTab>(() => coerceFriendsTab((search as any)?.tab), [search])
@@ -253,7 +255,7 @@ function AppShellLayout() {
       <main
         className={`flex-1 relative flex flex-col bg-background overflow-hidden ${
           hideShellHeaderForRoute ? 'pt-0' : 'pt-14'
-        } pb-16 md:pt-0 md:pb-0 h-screen md:h-auto`}
+        } ${hideMobileBottomNavForRoute ? 'pb-0' : 'pb-16'} md:pt-0 md:pb-0 h-screen md:h-auto`}
       >
         {/* Desktop Header */}
         {!hideShellHeaderForRoute ? (
@@ -272,66 +274,68 @@ function AppShellLayout() {
       </main>
 
       {/* Mobile Bottom Footer (Fixed) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-slate-900 border-t border-slate-800 z-50 flex justify-around items-center px-1 pb-safe-area shadow-[0_-5px_20px_rgba(0,0,0,0.3)]">
-        <Link
-          to="/events"
-          search={{ view: eventsView }}
-          className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
-            activeSection === 'EVENTS' ? 'text-primary' : 'text-slate-400'
-          }`}
-        >
-          <CalendarDays className="w-6 h-6" />
-          <span className="text-[10px] font-medium">Events</span>
-        </Link>
-
-        <Link
-          to="/friends"
-          search={{ tab: friendsTab }}
-          className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
-            activeSection === 'FRIENDS' ? 'text-primary' : 'text-slate-400'
-          }`}
-        >
-          <UsersIcon className="w-6 h-6" />
-          <span className="text-[10px] font-medium">Friends</span>
-        </Link>
-
-        <button
-          onClick={() => navigate({ to: '/events/new', search: { view: eventsView } })}
-          className="-mt-8 bg-primary text-white p-3 rounded-full shadow-lg shadow-primary/30 border-4 border-slate-900 transform transition-transform hover:scale-105 active:scale-95"
-          type="button"
-        >
-          <Plus className="w-7 h-7" />
-        </button>
-
-        <Link
-          to="/alerts"
-          className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
-            activeSection === 'ALERTS' ? 'text-primary' : 'text-slate-400'
-          }`}
-        >
-          <div className="relative">
-            <Bell className="w-6 h-6" />
-            <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-900"></span>
-          </div>
-          <span className="text-[10px] font-medium">Alerts</span>
-        </Link>
-
-        <Link
-          to="/profile"
-          className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
-            activeSection === 'PROFILE' ? 'text-primary' : 'text-slate-400'
-          }`}
-        >
-          <div
-            className={`w-6 h-6 rounded-full overflow-hidden border ${
-              activeSection === 'PROFILE' ? 'border-primary' : 'border-slate-500'
+      {!hideMobileBottomNavForRoute ? (
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-slate-900 border-t border-slate-800 z-50 flex justify-around items-center px-1 pb-safe-area shadow-[0_-5px_20px_rgba(0,0,0,0.3)]">
+          <Link
+            to="/events"
+            search={{ view: eventsView }}
+            className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
+              activeSection === 'EVENTS' ? 'text-primary' : 'text-slate-400'
             }`}
           >
-            <img src={user.avatar} alt="Me" className="w-full h-full object-cover" />
-          </div>
-          <span className="text-[10px] font-medium">Profile</span>
-        </Link>
-      </nav>
+            <CalendarDays className="w-6 h-6" />
+            <span className="text-[10px] font-medium">Events</span>
+          </Link>
+
+          <Link
+            to="/friends"
+            search={{ tab: friendsTab }}
+            className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
+              activeSection === 'FRIENDS' ? 'text-primary' : 'text-slate-400'
+            }`}
+          >
+            <UsersIcon className="w-6 h-6" />
+            <span className="text-[10px] font-medium">Friends</span>
+          </Link>
+
+          <button
+            onClick={() => navigate({ to: '/events/new', search: { view: eventsView } })}
+            className="-mt-8 bg-primary text-white p-3 rounded-full shadow-lg shadow-primary/30 border-4 border-slate-900 transform transition-transform hover:scale-105 active:scale-95"
+            type="button"
+          >
+            <Plus className="w-7 h-7" />
+          </button>
+
+          <Link
+            to="/alerts"
+            className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
+              activeSection === 'ALERTS' ? 'text-primary' : 'text-slate-400'
+            }`}
+          >
+            <div className="relative">
+              <Bell className="w-6 h-6" />
+              <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-900"></span>
+            </div>
+            <span className="text-[10px] font-medium">Alerts</span>
+          </Link>
+
+          <Link
+            to="/profile"
+            className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
+              activeSection === 'PROFILE' ? 'text-primary' : 'text-slate-400'
+            }`}
+          >
+            <div
+              className={`w-6 h-6 rounded-full overflow-hidden border ${
+                activeSection === 'PROFILE' ? 'border-primary' : 'border-slate-500'
+              }`}
+            >
+              <img src={user.avatar} alt="Me" className="w-full h-full object-cover" />
+            </div>
+            <span className="text-[10px] font-medium">Profile</span>
+          </Link>
+        </nav>
+      ) : null}
     </div>
   )
 }
