@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { User } from '../types';
+import type { User } from '../lib/types';
 
 // In-memory cache for user profiles (per browser tab)
 const userCache = new Map<string, Omit<User, 'isCurrentUser'>>();

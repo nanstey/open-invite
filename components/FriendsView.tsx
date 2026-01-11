@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { FriendsMode, Group, User } from '../types';
+import { FriendsMode, Group, User } from '../lib/types';
 import { UserPlus, Search, MoreHorizontal, Settings, MessageCircle, Plus } from 'lucide-react';
 import { fetchUserGroups, fetchGroupMembers } from '../services/friendService';
 import { fetchFriends } from '../services/friendService';

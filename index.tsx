@@ -1,6 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import App from './App';
+import { AuthProvider, useAuth } from './components/AuthProvider';
+import { AppRouterProvider } from './router';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
@@ -8,8 +9,16 @@ if (!rootElement) {
 }
 
 const root = ReactDOM.createRoot(rootElement);
+
+function Root() {
+  const auth = useAuth();
+  return <AppRouterProvider auth={auth} />;
+}
+
 root.render(
   <React.StrictMode>
-    <App />
+    <AuthProvider>
+      <Root />
+    </AuthProvider>
   </React.StrictMode>
 );

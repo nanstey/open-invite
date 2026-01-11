@@ -22,6 +22,8 @@ interface AuthContextType {
   signOut: () => Promise<void>;
 }
 
+export type { AuthContextType };
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {

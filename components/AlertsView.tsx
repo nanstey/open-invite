@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Notification, User } from '../types';
+import { Notification, User } from '../lib/types';
 import { MessageCircle, Bell, Calendar, Zap, Inbox, Check } from 'lucide-react';
 import { fetchNotifications, markAllNotificationsAsRead } from '../services/notificationService';
 import { fetchUsers } from '../services/userService';

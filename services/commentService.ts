@@ -1,22 +1,27 @@
 import { supabase } from '../lib/supabase';
-import type { Comment } from '../types';
+import type { Database } from '../lib/database.types';
+import type { Comment } from '../lib/types';
+
+type CommentRow = Database['public']['Tables']['comments']['Row'];
+type CommentInsert = Database['public']['Tables']['comments']['Insert'];
 
 /**
  * Fetch comments for an event
  */
 export async function fetchComments(eventId: string): Promise<Comment[]> {
-  const { data: comments, error } = await supabase
+  const result = await supabase
     .from('comments')
     .select('*')
     .eq('event_id', eventId)
     .order('timestamp', { ascending: true });
+  const { data, error } = result as unknown as { data: CommentRow[] | null; error: any };
 
-  if (error || !comments) {
+  if (error || !data) {
     console.error('Error fetching comments:', error);
     return [];
   }
 
-  return comments.map(c => ({
+  return data.map(c => ({
     id: c.id,
     userId: c.user_id,
     text: c.text,
@@ -33,15 +38,18 @@ export async function addComment(eventId: string, text: string): Promise<Comment
     return null;
   }
 
-  const { data: comment, error } = await supabase
+  const insertData: CommentInsert = {
+    event_id: eventId,
+    user_id: user.id,
+    text,
+  };
+
+  const result = await supabase
     .from('comments')
-    .insert({
-      event_id: eventId,
-      user_id: user.id,
-      text,
-    })
+    .insert(insertData as unknown as never)
     .select()
     .single();
+  const { data: comment, error } = result as unknown as { data: CommentRow | null; error: any };
 
   if (error || !comment) {
     console.error('Error adding comment:', error);

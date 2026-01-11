@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { Notification } from '../types';
+import type { Notification } from '../lib/types';
 
 /**
  * Fetch notifications for the current user
