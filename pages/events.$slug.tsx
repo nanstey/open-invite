@@ -5,7 +5,7 @@ import { ArrowLeft } from 'lucide-react'
 import type { SocialEvent } from '../lib/types'
 import { useAuth } from '../components/AuthProvider'
 import { EventDetail } from '../components/EventDetail'
-import { fetchEventById, fetchEventBySlug, updateEvent } from '../services/eventService'
+import { fetchEventById, fetchEventBySlug, markEventViewedFromRouteParam, updateEvent } from '../services/eventService'
 import { realtimeService } from '../services/realtimeService'
 
 type EventsView = 'list' | 'map' | 'calendar'
@@ -42,6 +42,12 @@ export const Route = createFileRoute('/events/$slug')({
 
     const [event, setEvent] = React.useState<SocialEvent | null>(null)
     const [isLoading, setIsLoading] = React.useState(true)
+
+    // Treat opening an event while authenticated as "invited by link" so it shows up in Pending/Going.
+    React.useEffect(() => {
+      if (!user) return
+      markEventViewedFromRouteParam(slug).catch((e) => console.warn('markEventViewedFromRouteParam failed:', e))
+    }, [slug, user?.id])
 
     React.useEffect(() => {
       let cancelled = false
