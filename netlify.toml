@@ -7,3 +7,11 @@
   to = "/index.html"
   status = 200
 
+[[edge_functions]]
+  function = "event-og"
+  path = "/e/*"
+
+[[edge_functions]]
+  function = "event-og"
+  path = "/events/*"
+

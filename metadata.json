@@ -1,7 +1,0 @@
-{
-  "name": "Open Invite",
-  "description": "A social calendar for spontaneous plans. Coordinate activities with friends, manage invites, and discover what your circle is up to.",
-  "requestFramePermissions": [
-    "geolocation"
-  ]
-}
