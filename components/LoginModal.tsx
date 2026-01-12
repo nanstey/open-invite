@@ -22,7 +22,14 @@ export function LoginModal({ onClose }: LoginModalProps) {
     setGoogleLoading(true);
 
     try {
-      const result = await signInWithGoogle();
+      const raw = window.location.pathname + window.location.search;
+      const redirectPath = raw.startsWith('/e/')
+        ? raw.replace(/^\/e\//, '/events/')
+        : raw === '/'
+          ? '/events?view=list'
+          : raw;
+
+      const result = await signInWithGoogle(redirectPath);
       if (result?.error) {
         setError(result.error.message || 'Google sign in failed');
         setGoogleLoading(false);

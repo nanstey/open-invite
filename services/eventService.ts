@@ -8,6 +8,60 @@ type CommentRow = Database['public']['Tables']['comments']['Row'];
 type ReactionRow = Database['public']['Tables']['reactions']['Row'];
 type EventGroupRow = Database['public']['Tables']['event_groups']['Row'];
 
+function isNoRowsError(error: any): boolean {
+  return error?.code === 'PGRST116' || error?.message?.includes('No rows');
+}
+
+function isUuid(value: string): boolean {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+async function markEventViewedById(eventId: string): Promise<boolean> {
+  try {
+    const result = await (supabase as any).rpc('mark_event_viewed', { event_id_param: eventId });
+    const { data, error } = result as { data: boolean | null; error: any };
+    if (error) {
+      console.error('Error marking event viewed by id:', error);
+      return false;
+    }
+    return !!data;
+  } catch (e) {
+    console.error('Error marking event viewed by id (exception):', e);
+    return false;
+  }
+}
+
+async function markEventViewedBySlug(slug: string): Promise<string | null> {
+  try {
+    const result = await (supabase as any).rpc('mark_event_viewed_by_slug', { slug_param: slug });
+    const { data, error } = result as { data: string | null; error: any };
+    if (error) {
+      console.error('Error marking event viewed by slug:', error);
+      return null;
+    }
+    return data ?? null;
+  } catch (e) {
+    console.error('Error marking event viewed by slug (exception):', e);
+    return null;
+  }
+}
+
+/**
+ * Treat "viewing an event" as "invited by link".
+ * Safe to call repeatedly (idempotent).
+ */
+export async function markEventViewedFromRouteParam(slugOrId: string): Promise<void> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  if (isUuid(slugOrId)) {
+    await markEventViewedById(slugOrId);
+    return;
+  }
+
+  await markEventViewedBySlug(slugOrId);
+}
+
 /**
  * Transform database event row to SocialEvent type
  */
@@ -153,16 +207,28 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
  * Fetch a single event by ID
  */
 export async function fetchEventById(eventId: string): Promise<SocialEvent | null> {
-  const { data: event, error } = await supabase
-    .from('events')
-    .select('*')
-    .eq('id', eventId)
-    .single();
+  const fetchOnce = async (): Promise<EventRow | null> => {
+    const { data: event, error } = await supabase.from('events').select('*').eq('id', eventId).single();
+    if (error || !event) {
+      console.error('Error fetching event:', error);
+      return null;
+    }
+    return event as EventRow;
+  };
 
-  if (error || !event) {
-    console.error('Error fetching event:', error);
-    return null;
+  let eventRow = await fetchOnce();
+  if (!eventRow) {
+    // If authenticated, treat "trying to view by id" as accepting/invited-by-link and retry once.
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const marked = await markEventViewedById(eventId);
+      if (marked) {
+        eventRow = await fetchOnce();
+      }
+    }
   }
+
+  if (!eventRow) return null;
 
   // Fetch related data
   const [attendeesResult, commentsResult, reactionsResult, eventGroupsResult] = await Promise.all([
@@ -207,7 +273,7 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
     });
   }
 
-  return transformEventRow(event as EventRow, attendees, comments, reactions, groupIds);
+  return transformEventRow(eventRow, attendees, comments, reactions, groupIds);
 }
 
 /**
@@ -216,19 +282,31 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
  */
 export async function fetchEventBySlug(slug: string): Promise<SocialEvent | null> {
   // Supabase select typing can fall back to `never` for narrow selects; cast to the row shape we need.
-  const result = await supabase
-    .from('events')
-    .select('id')
-    .eq('slug', slug)
-    .single();
-  const { data, error } = result as unknown as { data: Pick<EventRow, 'id'> | null; error: any };
+  const tryDirect = async (): Promise<string | null> => {
+    const result = await supabase.from('events').select('id').eq('slug', slug).single();
+    const { data, error } = result as unknown as { data: Pick<EventRow, 'id'> | null; error: any };
+    if (error) {
+      // This can be either "not found" OR "blocked by RLS (returns 0 rows)".
+      if (!isNoRowsError(error)) {
+        console.error('Error fetching event by slug:', error);
+      }
+      return null;
+    }
+    return data?.id ?? null;
+  };
 
-  if (error || !data?.id) {
-    console.error('Error fetching event by slug:', error);
-    return null;
+  let id = await tryDirect();
+
+  if (!id) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      // Treat "view by link" as invited-by-link and resolve via SECURITY DEFINER RPC.
+      id = await markEventViewedBySlug(slug);
+    }
   }
 
-  return fetchEventById(data.id);
+  if (!id) return null;
+  return fetchEventById(id);
 }
 
 /**

@@ -86,13 +86,14 @@ function buildUserFromProfile(userId: string, profile: any): User {
 
 async function getUserFromAuthSessionUser(authUser: AuthSessionUserLike): Promise<User | null> {
   if (!authUser?.id) return null;
+  const userId = authUser.id;
 
-  const cached = inFlightCurrentUser.get(authUser.id);
+  const cached = inFlightCurrentUser.get(userId);
   if (cached) return cached;
 
   const p = (async () => {
     try {
-      const { profile, profileError } = await fetchUserProfileWithTimeout(authUser.id);
+      const { profile, profileError } = await fetchUserProfileWithTimeout(userId);
 
       if (profileError) {
         devLog('getCurrentUser: Profile error:', profileError.code, profileError.message);
@@ -100,12 +101,12 @@ async function getUserFromAuthSessionUser(authUser: AuthSessionUserLike): Promis
         if (isNoRowsProfileError(profileError)) {
           devLog('getCurrentUser: Profile does not exist, creating default profile...');
           const fields = getDefaultProfileFields(authUser);
-          const createdProfile = await createDefaultUserProfile(authUser.id, fields);
+          const createdProfile = await createDefaultUserProfile(userId, fields);
           if (!createdProfile) {
             return buildDefaultUser(authUser);
           }
           devLog('getCurrentUser: Profile created successfully:', createdProfile);
-          return buildUserFromProfile(authUser.id, createdProfile);
+          return buildUserFromProfile(userId, createdProfile);
         }
 
         devError('getCurrentUser: Unexpected profile error:', profileError);
@@ -118,16 +119,16 @@ async function getUserFromAuthSessionUser(authUser: AuthSessionUserLike): Promis
       }
 
       devLog('getCurrentUser: Profile found:', profile);
-      return buildUserFromProfile(authUser.id, profile);
+      return buildUserFromProfile(userId, profile);
     } catch (timeoutError) {
       devError('getCurrentUser: Profile fetch timed out or failed:', timeoutError);
       return buildDefaultUser(authUser);
     }
   })().finally(() => {
-    inFlightCurrentUser.delete(authUser.id);
+    inFlightCurrentUser.delete(userId);
   });
 
-  inFlightCurrentUser.set(authUser.id, p);
+  inFlightCurrentUser.set(userId, p);
   return p;
 }
 
@@ -190,16 +191,29 @@ export async function signIn(email: string, password: string) {
 /**
  * Sign in with Google OAuth
  */
-export async function signInWithGoogle() {
-  const redirectUrl = `${window.location.origin}/auth/callback`;
-  devLog('Signing in with Google, redirect URL:', redirectUrl);
-  
+export async function signInWithGoogle(redirectPath?: string) {
+  const origin = window.location.origin
+
+  const safeRedirect =
+    redirectPath &&
+    redirectPath.startsWith('/') &&
+    !redirectPath.startsWith('//') &&
+    !redirectPath.includes('://')
+      ? redirectPath
+      : undefined
+
+  const redirectUrl = safeRedirect
+    ? `${origin}/auth/callback?redirect=${encodeURIComponent(safeRedirect)}`
+    : `${origin}/auth/callback`
+
+  devLog('Signing in with Google, redirect URL:', redirectUrl)
+
   return await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
       redirectTo: redirectUrl,
     },
-  });
+  })
 }
 
 /**
