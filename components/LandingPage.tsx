@@ -10,7 +10,7 @@ export function LandingPage({ onSignIn }: LandingPageProps) {
     {
       icon: <CalendarDays className="w-8 h-8" />,
       title: 'Social Calendar',
-      description: 'Coordinate spontaneous plans with friends. Never miss an event or opportunity to connect.',
+      description: 'Coordinate plans with friends. Never miss an event or opportunity to connect.',
       image: 'https://images.unsplash.com/photo-1633526543814-9718c8922b7a?w=800&h=600&fit=crop',
     },
     {
@@ -54,7 +54,7 @@ export function LandingPage({ onSignIn }: LandingPageProps) {
         <div className="relative z-10 max-w-5xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20 mb-6">
             <Sparkles className="w-4 h-4 text-primary" />
-            <span className="text-sm text-primary font-medium">A Social Calendar for Spontaneous Plans</span>
+            <span className="text-sm text-primary font-medium">A social calendar for friends</span>
           </div>
           
           <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-primary animate-gradient">
@@ -173,7 +173,7 @@ export function LandingPage({ onSignIn }: LandingPageProps) {
                 Discover Events Near You
               </h2>
               <p className="text-xl text-slate-400 mb-6 leading-relaxed">
-                See what's happening in your area. Find events by location and join spontaneous gatherings with friends nearby.
+                See what's happening in your area. Find events by location and join gatherings with friends nearby.
               </p>
               <ul className="space-y-3 text-slate-300">
                 <li className="flex items-center gap-3">
@@ -262,7 +262,7 @@ export function LandingPage({ onSignIn }: LandingPageProps) {
             Open Invite
           </div>
           <p className="text-slate-500 text-sm">
-            A social calendar for spontaneous plans
+            A social calendar for friends
           </p>
         </div>
       </footer>
