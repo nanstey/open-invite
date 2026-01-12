@@ -1,5 +1,6 @@
 import React from 'react'
 import { createFileRoute, redirect, useNavigate, useRouterState } from '@tanstack/react-router'
+import { ArrowLeft } from 'lucide-react'
 
 import type { SocialEvent } from '../lib/types'
 import { useAuth } from '../components/AuthProvider'
@@ -40,20 +41,35 @@ export const Route = createFileRoute('/events/$slug')({
     const view = parseEventsView(fromEventsView)
 
     const [event, setEvent] = React.useState<SocialEvent | null>(null)
+    const [isLoading, setIsLoading] = React.useState(true)
 
     React.useEffect(() => {
       let cancelled = false
 
       ;(async () => {
-        const fetched = isUuid(slug) ? await fetchEventById(slug) : await fetchEventBySlug(slug)
-        if (cancelled) return
-        setEvent(fetched)
+        const slugIsUuid = isUuid(slug)
+        const matchesCurrentEvent =
+          !!event && ((slugIsUuid && event.id === slug) || (!slugIsUuid && event.slug === slug))
+        if (matchesCurrentEvent) return
+
+        // Avoid flashing stale event data when navigating between slugs.
+        setEvent(null)
+        setIsLoading(true)
+
+        try {
+          const fetched = slugIsUuid ? await fetchEventById(slug) : await fetchEventBySlug(slug)
+          if (cancelled) return
+          setEvent(fetched)
+        } finally {
+          if (cancelled) return
+          setIsLoading(false)
+        }
       })()
 
       return () => {
         cancelled = true
       }
-    }, [slug])
+    }, [event?.id, event?.slug, slug])
 
     // Canonicalize UUID URLs -> slug URLs
     React.useEffect(() => {
@@ -80,9 +96,50 @@ export const Route = createFileRoute('/events/$slug')({
     }, [event?.id, navigate, view])
 
     if (!user) return null
-    if (!event) return null
 
     const onClose = () => navigate({ to: '/events', search: { view } })
+
+    if (isLoading) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-background text-slate-100">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-slate-400">Loading...</p>
+          </div>
+        </div>
+      )
+    }
+
+    if (!event) {
+      return (
+        <div className="min-h-screen w-full flex flex-col bg-background text-slate-100 relative">
+          <div className="absolute top-4 left-4">
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Back"
+              className="bg-black/40 hover:bg-black/60 p-2 rounded-full text-white backdrop-blur transition-all border border-white/10"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </button>
+          </div>
+
+          <div className="flex-1 flex items-center justify-center p-6">
+            <div className="text-center max-w-md">
+              <div className="text-xl font-bold text-white">Event not found</div>
+              <div className="text-slate-400 mt-2">This event may have been removed or is unavailable.</div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="mt-6 px-5 py-3 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition-colors"
+              >
+                Back to events
+              </button>
+            </div>
+          </div>
+        </div>
+      )
+    }
 
     const onUpdateEvent = async (updated: SocialEvent) => {
       const result = await updateEvent(updated.id, updated)
