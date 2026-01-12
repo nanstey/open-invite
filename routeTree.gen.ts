@@ -17,6 +17,7 @@ import { Route as IndexRouteImport } from './pages/index'
 import { Route as EventsNewRouteImport } from './pages/events.new'
 import { Route as EventsSlugRouteImport } from './pages/events.$slug'
 import { Route as ESlugRouteImport } from './pages/e.$slug'
+import { Route as AuthCallbackRouteImport } from './pages/auth.callback'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
@@ -58,6 +59,11 @@ const ESlugRoute = ESlugRouteImport.update({
   path: '/e/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthCallbackRoute = AuthCallbackRouteImport.update({
+  id: '/auth/callback',
+  path: '/auth/callback',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/events': typeof EventsRouteWithChildren
   '/friends': typeof FriendsRoute
   '/profile': typeof ProfileRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/e/$slug': typeof ESlugRoute
   '/events/$slug': typeof EventsSlugRoute
   '/events/new': typeof EventsNewRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/events': typeof EventsRouteWithChildren
   '/friends': typeof FriendsRoute
   '/profile': typeof ProfileRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/e/$slug': typeof ESlugRoute
   '/events/$slug': typeof EventsSlugRoute
   '/events/new': typeof EventsNewRoute
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/events': typeof EventsRouteWithChildren
   '/friends': typeof FriendsRoute
   '/profile': typeof ProfileRoute
+  '/auth/callback': typeof AuthCallbackRoute
   '/e/$slug': typeof ESlugRoute
   '/events/$slug': typeof EventsSlugRoute
   '/events/new': typeof EventsNewRoute
@@ -98,6 +107,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/friends'
     | '/profile'
+    | '/auth/callback'
     | '/e/$slug'
     | '/events/$slug'
     | '/events/new'
@@ -108,6 +118,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/friends'
     | '/profile'
+    | '/auth/callback'
     | '/e/$slug'
     | '/events/$slug'
     | '/events/new'
@@ -118,6 +129,7 @@ export interface FileRouteTypes {
     | '/events'
     | '/friends'
     | '/profile'
+    | '/auth/callback'
     | '/e/$slug'
     | '/events/$slug'
     | '/events/new'
@@ -129,6 +141,7 @@ export interface RootRouteChildren {
   EventsRoute: typeof EventsRouteWithChildren
   FriendsRoute: typeof FriendsRoute
   ProfileRoute: typeof ProfileRoute
+  AuthCallbackRoute: typeof AuthCallbackRoute
   ESlugRoute: typeof ESlugRoute
 }
 
@@ -190,6 +203,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ESlugRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/auth/callback': {
+      id: '/auth/callback'
+      path: '/auth/callback'
+      fullPath: '/auth/callback'
+      preLoaderRoute: typeof AuthCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -212,6 +232,7 @@ const rootRouteChildren: RootRouteChildren = {
   EventsRoute: EventsRouteWithChildren,
   FriendsRoute: FriendsRoute,
   ProfileRoute: ProfileRoute,
+  AuthCallbackRoute: AuthCallbackRoute,
   ESlugRoute: ESlugRoute,
 }
 export const routeTree = rootRouteImport
