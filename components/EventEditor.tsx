@@ -74,7 +74,7 @@ export function EventEditor(props: {
         isFlexibleStart: ev.isFlexibleStart,
         isFlexibleEnd: ev.isFlexibleEnd,
         noPhones: ev.noPhones,
-        maxSeats: ev.maxSeats ?? '',
+        maxSeats: ev.maxSeats && ev.maxSeats > 0 ? ev.maxSeats : '',
         visibilityType: ev.visibilityType,
         groupIds: ev.groupIds ?? [],
         allowFriendInvites: ev.allowFriendInvites,
@@ -118,21 +118,33 @@ export function EventEditor(props: {
 
   const onSubmit = React.useCallback(
     async ({ value }: { value: EventEditorValues }) => {
+      const title = value.title.trim()
+      const location = value.location.trim()
+      const description = value.description.trim()
+      const activityType = String(value.activityType ?? '').trim()
+      const startDateTimeLocal = value.startDateTimeLocal
+
+      if (!title || !location || !description || !activityType || !startDateTimeLocal) {
+        throw new Error('Missing required fields')
+      }
+
       const startTime = value.startDateTimeLocal
         ? new Date(value.startDateTimeLocal).toISOString()
         : defaultStartTimeIsoRef.current
+      const maxSeats = value.maxSeats === '' ? undefined : Number(value.maxSeats)
+      const normalizedMaxSeats = maxSeats && maxSeats > 0 ? maxSeats : undefined
 
       if (!isUpdate) {
         const created = await createEvent({
-          title: value.title,
-          location: value.location,
-          description: value.description,
+          title,
+          location,
+          description,
           startTime,
-          activityType: value.activityType,
+          activityType,
           isFlexibleStart: value.isFlexibleStart,
           isFlexibleEnd: value.isFlexibleEnd,
           noPhones: value.noPhones,
-          maxSeats: value.maxSeats === '' ? undefined : Number(value.maxSeats),
+          maxSeats: normalizedMaxSeats,
           visibilityType: value.visibilityType,
           groupIds: value.visibilityType === EventVisibility.GROUPS ? value.groupIds : [],
           allowFriendInvites: value.allowFriendInvites,
@@ -146,15 +158,15 @@ export function EventEditor(props: {
       if (!props.initialEvent) throw new Error('Missing initialEvent for update mode')
 
       const updated = await updateEvent(props.initialEvent.id, {
-        title: value.title,
-        location: value.location,
-        description: value.description,
+        title,
+        location,
+        description,
         startTime,
-        activityType: value.activityType,
+        activityType,
         isFlexibleStart: value.isFlexibleStart,
         isFlexibleEnd: value.isFlexibleEnd,
         noPhones: value.noPhones,
-        maxSeats: value.maxSeats === '' ? undefined : Number(value.maxSeats),
+        maxSeats: normalizedMaxSeats,
         visibilityType: value.visibilityType,
         groupIds: value.visibilityType === EventVisibility.GROUPS ? value.groupIds : [],
         allowFriendInvites: value.allowFriendInvites,
@@ -173,6 +185,25 @@ export function EventEditor(props: {
   })
 
   const values = useStore(form.store, (s) => s.values)
+
+  const detailErrors = React.useMemo(() => {
+    const title = values.title.trim()
+    const description = values.description.trim()
+    const location = values.location.trim()
+    const activityType = String(values.activityType ?? '').trim()
+    const startDateTimeLocal = values.startDateTimeLocal
+
+    return {
+      title: title ? undefined : 'Title is required',
+      activityType: activityType ? undefined : 'Category is required',
+      description: description ? undefined : 'About is required',
+      startTime: startDateTimeLocal ? undefined : 'Date & time is required',
+      location: location ? undefined : 'Location is required',
+    }
+  }, [values.activityType, values.description, values.location, values.startDateTimeLocal, values.title])
+
+  const canSubmit = Object.values(detailErrors).every((v) => !v)
+  const [showValidation, setShowValidation] = React.useState(false)
 
   const groupsQuery = useQuery({
     queryKey: ['groups', props.currentUser.id],
@@ -195,10 +226,10 @@ export function EventEditor(props: {
       id: isUpdate ? (props.initialEvent?.id ?? draftIdRef.current) : draftIdRef.current,
       slug: isUpdate ? (props.initialEvent?.slug ?? 'draft') : 'draft',
       hostId: props.currentUser.id,
-      title: values.title || 'Untitled invite',
-      description: values.description || '',
+      title: values.title,
+      description: values.description,
       activityType: values.activityType,
-      location: values.location || '',
+      location: values.location,
       coordinates: values.coordinates,
       startTime: startTimeIso,
       endTime: props.initialEvent?.endTime,
@@ -207,7 +238,12 @@ export function EventEditor(props: {
       visibilityType: values.visibilityType,
       groupIds: values.visibilityType === EventVisibility.GROUPS ? values.groupIds : EMPTY_STRING_ARR,
       allowFriendInvites: values.allowFriendInvites,
-      maxSeats: values.maxSeats === '' ? undefined : Number(values.maxSeats),
+      maxSeats:
+        values.maxSeats === ''
+          ? undefined
+          : Number(values.maxSeats) > 0
+            ? Number(values.maxSeats)
+            : undefined,
       attendees: props.initialEvent?.attendees ?? EMPTY_STRING_ARR,
       noPhones: values.noPhones,
       comments: props.initialEvent?.comments ?? EMPTY_COMMENTS,
@@ -248,7 +284,10 @@ export function EventEditor(props: {
     if (patch.isFlexibleStart !== undefined) form.setFieldValue('isFlexibleStart', patch.isFlexibleStart)
     if (patch.isFlexibleEnd !== undefined) form.setFieldValue('isFlexibleEnd', patch.isFlexibleEnd)
     if (patch.noPhones !== undefined) form.setFieldValue('noPhones', patch.noPhones)
-    if (patch.maxSeats !== undefined) form.setFieldValue('maxSeats', patch.maxSeats === undefined ? '' : Number(patch.maxSeats))
+    if ('maxSeats' in patch) {
+      const n = patch.maxSeats === undefined ? undefined : Number(patch.maxSeats)
+      form.setFieldValue('maxSeats', n && n > 0 ? n : '')
+    }
     if (patch.visibilityType !== undefined) form.setFieldValue('visibilityType', patch.visibilityType)
     if (patch.groupIds !== undefined) form.setFieldValue('groupIds', patch.groupIds)
     if (patch.allowFriendInvites !== undefined) form.setFieldValue('allowFriendInvites', patch.allowFriendInvites)
@@ -266,13 +305,21 @@ export function EventEditor(props: {
       layout="shell"
       mode="edit"
       edit={{
-        canEdit: true,
+        canEdit: canSubmit,
         isSaving: submitMutation.isPending,
         primaryLabel,
         groups: groupsQuery.data ?? [],
         groupsLoading: groupsQuery.isLoading,
+        errors: showValidation ? detailErrors : undefined,
+        startDateTimeLocal: values.startDateTimeLocal,
         onChange: applyPatch,
-        onSave: () => submitMutation.mutate(),
+        onSave: () => {
+          if (!canSubmit) {
+            setShowValidation(true)
+            return
+          }
+          submitMutation.mutate()
+        },
         onCancel: props.onCancel,
       }}
     />
