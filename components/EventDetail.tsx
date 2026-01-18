@@ -7,6 +7,7 @@ import { fetchUser, fetchUsers } from '../services/userService';
 import { TabGroup, type TabOption } from './TabGroup';
 import { useRouterState } from '@tanstack/react-router';
 import { FormSelect } from './FormControls';
+import { LocationAutocomplete } from './LocationAutocomplete'
 
 interface EventDetailProps {
   event: SocialEvent;
@@ -197,6 +198,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
+  const hasCoordinates = typeof event.coordinates?.lat === 'number' && typeof event.coordinates?.lng === 'number'
+
   const handleTabChange = (id: any) => {
     const tabId = String(id) as 'details' | 'going' | 'discussion';
     if (isGuest && (tabId === 'going' || tabId === 'discussion')) {
@@ -205,6 +208,48 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     }
     setActiveTab(tabId);
   };
+
+  function formatLocationForDisplay(raw: string): { primary: string; secondary?: string } {
+    const data = event.locationData
+    if (data?.display?.placeName) {
+      const primary = data.display.placeName
+      const secondary = [data.display.addressLine, data.display.localityLine].filter(Boolean).join(', ') || undefined
+      return { primary, secondary }
+    }
+
+    const value = String(raw ?? '').trim()
+    if (!value) return { primary: '' }
+
+    // Best-effort formatting for comma-separated address strings like:
+    // "Place Name, 123 Main St, City, State, Postal, Country"
+    const parts = value.split(',').map((p) => p.trim()).filter(Boolean)
+    if (parts.length <= 1) return { primary: value }
+
+    const primary = parts[0] ?? value
+    const secondaryParts = parts.slice(1, 3)
+    const secondary = secondaryParts.length ? secondaryParts.join(', ') : undefined
+    return { primary, secondary }
+  }
+
+  const destroyMiniMap = React.useCallback(() => {
+    if (miniMapInstanceRef.current) {
+      miniMapInstanceRef.current.remove();
+      miniMapInstanceRef.current = null;
+    }
+    miniMapMarkerRef.current = null;
+
+    // Leaflet can leave bookkeeping on the container element; clear it so re-init is reliable.
+    const el = miniMapContainerRef.current as any;
+    if (el) {
+      try {
+        delete el._leaflet_id;
+      } catch {
+        // ignore
+      }
+      // Ensure leftover panes/tiles don't linger.
+      if (typeof el.innerHTML === 'string') el.innerHTML = '';
+    }
+  }, []);
 
   useEffect(() => {
     if (activeTab !== 'details') return;
@@ -215,10 +260,26 @@ export const EventDetail: React.FC<EventDetailProps> = ({
 
     const lat = event.coordinates?.lat;
     const lng = event.coordinates?.lng;
-    if (typeof lat !== 'number' || typeof lng !== 'number') return;
+    if (typeof lat !== 'number' || typeof lng !== 'number') {
+      // If the mini map container is mounted but we no longer have coordinates,
+      // tear down any existing Leaflet instance so we don't keep a map bound to a dead element.
+      destroyMiniMap();
+      return;
+    }
 
     // Create once; update position on changes.
     if (!miniMapInstanceRef.current) {
+      // If a previous map was removed, Leaflet may still think this container is initialized.
+      const el = miniMapContainerRef.current as any;
+      if (el) {
+        try {
+          delete el._leaflet_id;
+        } catch {
+          // ignore
+        }
+        if (typeof el.innerHTML === 'string') el.innerHTML = '';
+      }
+
       const map = L.map(miniMapContainerRef.current, {
         zoomControl: false,
         attributionControl: false,
@@ -257,29 +318,34 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       fillOpacity: 0.9,
     }).addTo(miniMapInstanceRef.current);
 
+    // Leaflet sometimes needs a size invalidation when a map is created/updated as a result
+    // of dynamic UI changes (like selecting an autocomplete option).
+    const map = miniMapInstanceRef.current;
+    if (map?.invalidateSize) {
+      requestAnimationFrame(() => {
+        try {
+          map.invalidateSize(true);
+        } catch {
+          // ignore
+        }
+      });
+    }
+
     return () => {
       // Keep the map instance while tabbing around; cleanup happens on unmount below.
     };
-  }, [activeTab, event.coordinates?.lat, event.coordinates?.lng, theme.hex]);
+  }, [activeTab, destroyMiniMap, event.coordinates?.lat, event.coordinates?.lng, theme.hex]);
 
   // If the Details tab unmounts its DOM (tab switch), Leaflet stays bound to a dead element.
   // Tear down the map when leaving Details so it can be recreated cleanly when returning.
   useEffect(() => {
     if (activeTab === 'details') return;
-    if (miniMapInstanceRef.current) {
-      miniMapInstanceRef.current.remove();
-      miniMapInstanceRef.current = null;
-    }
-    miniMapMarkerRef.current = null;
+    destroyMiniMap();
   }, [activeTab]);
 
   useEffect(() => {
     return () => {
-      if (miniMapInstanceRef.current) {
-        miniMapInstanceRef.current.remove();
-        miniMapInstanceRef.current = null;
-      }
-      miniMapMarkerRef.current = null;
+      destroyMiniMap();
     };
   }, []);
 
@@ -451,14 +517,16 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               </div>
               <div className="min-w-0">
                 <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Where</div>
-                <div className="font-bold text-white truncate">{event.location}</div>
-                <button
-                  className="text-sm text-slate-500 underline decoration-slate-600 decoration-dashed hover:text-slate-300 transition-colors"
-                  type="button"
-                  onClick={openInMaps}
-                >
-                  View on map
-                </button>
+                <div className="font-bold text-white truncate">{formatLocationForDisplay(event.location).primary}</div>
+                {hasCoordinates ? (
+                  <button
+                    className="text-sm text-slate-500 underline decoration-slate-600 decoration-dashed hover:text-slate-300 transition-colors"
+                    type="button"
+                    onClick={openInMaps}
+                  >
+                    Open in maps
+                  </button>
+                ) : null}
               </div>
             </div>
 
@@ -781,11 +849,23 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   <div className="p-2 bg-slate-800 rounded-lg shrink-0">
                     <MapPin className="w-5 h-5 text-accent" />
                   </div>
-                  <div className="min-w-0">
+                  <div className="min-w-0 flex-1">
                     {isEditMode ? (
-                      <input
+                      <LocationAutocomplete
                         value={event.location}
-                        onChange={(e) => edit?.onChange({ location: e.target.value })}
+                        onChangeText={(text) =>
+                          edit?.onChange({ location: text, coordinates: undefined, locationData: undefined })
+                        }
+                        onSelect={(selection) =>
+                          edit?.onChange({
+                            location: selection.locationData.display.full,
+                            coordinates: {
+                              lat: selection.locationData.geo.lat,
+                              lng: selection.locationData.geo.lng,
+                            },
+                            locationData: selection.locationData,
+                          })
+                        }
                         placeholder="Location"
                         required
                         className={`w-full bg-slate-900 border rounded-lg py-2 px-3 text-white outline-none ${
@@ -795,34 +875,77 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                         }`}
                       />
                     ) : (
-                      <div className="font-bold text-white">{event.location}</div>
+                      (() => {
+                        const { primary, secondary } = formatLocationForDisplay(event.location)
+                        if (!secondary) {
+                          return <div className="font-bold text-white">{primary}</div>
+                        }
+                        return (
+                          <div className="min-w-0">
+                            <div className="font-bold text-white truncate">{primary}</div>
+                            <div className="text-sm text-slate-400 truncate">{secondary}</div>
+                          </div>
+                        )
+                      })()
                     )}
                     {isEditMode && edit?.errors?.location ? (
                       <div className="text-xs text-red-400 mt-1">{edit.errors.location}</div>
                     ) : null}
-                    <button
-                      className="text-sm text-slate-500 underline decoration-slate-600 decoration-dashed hover:text-slate-300 transition-colors"
-                      type="button"
-                      onClick={openInMaps}
-                    >
-                      Open in maps
-                    </button>
+                    {hasCoordinates ? (
+                      <button
+                        className="text-sm text-slate-500 underline decoration-slate-600 decoration-dashed hover:text-slate-300 transition-colors"
+                        type="button"
+                        onClick={openInMaps}
+                      >
+                        Open in maps
+                      </button>
+                    ) : null}
                   </div>
                 </div>
 
-                {/* Mini map preview */}
+                {/* Mini map preview (kept mounted to avoid page layout jumps) */}
                 <div className="mt-4 relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-900">
                   <div ref={miniMapContainerRef} className="w-full h-44 md:h-56" />
-                  <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/25 via-transparent to-transparent" />
-                  <div className="absolute bottom-3 right-3 pointer-events-auto">
-                    <button
+
+                  {/* Placeholder overlay (shown until a place is selected) */}
+                  {!hasCoordinates ? (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                      <div className="text-center px-4">
+                        <div className="text-sm font-semibold text-slate-300">Pick a place to preview the map</div>
+                        <div className="text-xs text-slate-500 mt-1">Type a location, then select a suggestion.</div>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {/* Click-to-open overlay */}
+                  {hasCoordinates ? (
+                    <div
+                      className="absolute inset-0 z-10 cursor-pointer"
+                      role="button"
+                      tabIndex={0}
+                      aria-label="Open in maps"
                       onClick={openInMaps}
-                      className="text-xs font-bold px-3 py-2 rounded-xl bg-slate-900/80 backdrop-blur border border-slate-700 text-white hover:bg-slate-800 transition-colors"
-                      type="button"
-                    >
-                      Open
-                    </button>
-                  </div>
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault()
+                          openInMaps()
+                        }
+                      }}
+                    />
+                  ) : null}
+
+                  <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/25 via-transparent to-transparent" />
+                  {hasCoordinates ? (
+                    <div className="absolute bottom-3 right-3 pointer-events-auto z-20">
+                      <button
+                        onClick={openInMaps}
+                        className="text-xs font-bold px-3 py-2 rounded-xl bg-slate-900/80 backdrop-blur border border-slate-700 text-white hover:bg-slate-800 transition-colors"
+                        type="button"
+                      >
+                        Open
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>

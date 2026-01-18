@@ -44,7 +44,8 @@ export interface Database {
           description: string
           activity_type: string
           location: string
-          coordinates: Json
+          coordinates: Json | null
+          location_data: Json | null
           start_time: string
           end_time: string | null
           is_flexible_start: boolean
@@ -64,7 +65,8 @@ export interface Database {
           description: string
           activity_type: string
           location: string
-          coordinates: Json
+          coordinates?: Json | null
+          location_data?: Json | null
           start_time: string
           end_time?: string | null
           is_flexible_start?: boolean
@@ -84,7 +86,8 @@ export interface Database {
           description?: string
           activity_type?: string
           location?: string
-          coordinates?: Json
+          coordinates?: Json | null
+          location_data?: Json | null
           start_time?: string
           end_time?: string | null
           is_flexible_start?: boolean

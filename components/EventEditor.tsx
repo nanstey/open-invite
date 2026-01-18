@@ -2,7 +2,7 @@ import React from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useForm, useStore } from '@tanstack/react-form'
 
-import type { SocialEvent, User } from '../lib/types'
+import type { LocationData, SocialEvent, User } from '../lib/types'
 import { EventVisibility } from '../lib/types'
 import { EventDetail } from './EventDetail'
 import { fetchGroups } from '../services/friendService'
@@ -28,7 +28,8 @@ type EventEditorValues = {
   visibilityType: EventVisibility
   groupIds: string[]
   allowFriendInvites: boolean
-  coordinates: { lat: number; lng: number }
+  coordinates: { lat: number; lng: number } | undefined
+  locationData: LocationData | undefined
 }
 
 function toLocalDateTimeInputValue(iso: string | undefined): string {
@@ -42,14 +43,6 @@ function toLocalDateTimeInputValue(iso: string | undefined): string {
   const hh = pad(d.getHours())
   const min = pad(d.getMinutes())
   return `${yyyy}-${mm}-${dd}T${hh}:${min}`
-}
-
-function randomVicBcCoords(): { lat: number; lng: number } {
-  const baseLat = 48.4284
-  const baseLng = -123.3656
-  const randomOffsetLat = (Math.random() - 0.5) * 0.05
-  const randomOffsetLng = (Math.random() - 0.5) * 0.05
-  return { lat: baseLat + randomOffsetLat, lng: baseLng + randomOffsetLng }
 }
 
 export function EventEditor(props: {
@@ -87,7 +80,8 @@ export function EventEditor(props: {
         visibilityType: ev.visibilityType,
         groupIds: ev.groupIds ?? [],
         allowFriendInvites: ev.allowFriendInvites,
-        coordinates: ev.coordinates ?? randomVicBcCoords(),
+        coordinates: ev.coordinates,
+        locationData: ev.locationData,
       }
     }
 
@@ -105,13 +99,15 @@ export function EventEditor(props: {
       visibilityType: EventVisibility.ALL_FRIENDS,
       groupIds: [],
       allowFriendInvites: false,
-      coordinates: randomVicBcCoords(),
+      coordinates: undefined,
+      locationData: undefined,
     }
   }, [
     props.initialEvent?.activityType,
     props.initialEvent?.allowFriendInvites,
     props.initialEvent?.coordinates?.lat,
     props.initialEvent?.coordinates?.lng,
+    props.initialEvent?.locationData,
     props.initialEvent?.description,
     props.initialEvent?.id,
     props.initialEvent?.isFlexibleEnd,
@@ -163,6 +159,7 @@ export function EventEditor(props: {
           groupIds: value.visibilityType === EventVisibility.GROUPS ? value.groupIds : [],
           allowFriendInvites: value.allowFriendInvites,
           coordinates: value.coordinates,
+          locationData: value.locationData,
         })
         if (!created) throw new Error('createEvent returned null')
         props.onSuccess(created)
@@ -186,6 +183,7 @@ export function EventEditor(props: {
         groupIds: value.visibilityType === EventVisibility.GROUPS ? value.groupIds : [],
         allowFriendInvites: value.allowFriendInvites,
         coordinates: value.coordinates,
+        locationData: value.locationData,
       })
 
       if (!updated) throw new Error('updateEvent returned null')
@@ -253,6 +251,7 @@ export function EventEditor(props: {
       activityType: values.activityType,
       location: values.location,
       coordinates: values.coordinates,
+      locationData: values.locationData,
       startTime: startTimeIso,
       endTime: endTimeIso ?? props.initialEvent?.endTime,
       isFlexibleStart: values.isFlexibleStart,
@@ -283,6 +282,7 @@ export function EventEditor(props: {
     values.activityType,
     values.allowFriendInvites,
     values.coordinates,
+    values.locationData,
     values.description,
     values.durationHours,
     values.groupIds,
@@ -314,7 +314,8 @@ export function EventEditor(props: {
     if (patch.visibilityType !== undefined) form.setFieldValue('visibilityType', patch.visibilityType)
     if (patch.groupIds !== undefined) form.setFieldValue('groupIds', patch.groupIds)
     if (patch.allowFriendInvites !== undefined) form.setFieldValue('allowFriendInvites', patch.allowFriendInvites)
-    if (patch.coordinates !== undefined) form.setFieldValue('coordinates', patch.coordinates)
+    if ('coordinates' in patch) form.setFieldValue('coordinates', patch.coordinates)
+    if ('locationData' in patch) form.setFieldValue('locationData', patch.locationData)
     if (patch.startTime !== undefined) form.setFieldValue('startDateTimeLocal', toLocalDateTimeInputValue(patch.startTime))
   }
 
