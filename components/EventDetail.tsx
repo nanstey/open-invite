@@ -123,11 +123,47 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const isHost = !!currentUserId && event.hostId === currentUserId;
   const isAttending = !!currentUserId && event.attendees.includes(currentUserId);
   const isInvolved = isHost || isAttending;
+  const formatDateLong = (date: Date) => {
+    // Format exactly like: "Fri Jan 16, 2026"
+    // (no comma after weekday; comma between day and year)
+    const parts = new Intl.DateTimeFormat('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+    }).formatToParts(date)
+
+    const get = (type: Intl.DateTimeFormatPartTypes) =>
+      parts.find((p) => p.type === type)?.value ?? ''
+
+    const weekday = get('weekday')
+    const month = get('month')
+    const day = get('day')
+    const year = get('year')
+
+    return `${weekday} ${month} ${day}, ${year}`.trim()
+  }
+
+  const formatTime = (date: Date) =>
+    new Intl.DateTimeFormat('en-US', {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    }).format(date)
+
   const startDate = new Date(event.startTime);
-  const dateLabel = startDate
-    .toLocaleDateString([], { weekday: 'long', month: 'short', day: 'numeric' })
-    .replace(',', '');
-  const timeLabel = startDate.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit', hour12: true });
+  const endDate = event.endTime ? new Date(event.endTime) : null
+  const durationMs = endDate ? endDate.getTime() - startDate.getTime() : null
+  // Display rule:
+  // - If duration < 24h: show single date line + time range (even if it crosses midnight)
+  // - If duration >= 24h: show multi-day (start date+time, end date+time)
+  const showMultiDay = !!endDate && typeof durationMs === 'number' && durationMs >= 24 * 60 * 60 * 1000
+
+  const startDateText = formatDateLong(startDate)
+  const startTimeText = formatTime(startDate)
+  const endDateText = endDate ? formatDateLong(endDate) : null
+  const endTimeText = endDate ? formatTime(endDate) : null
+  const timeRangeText = endTimeText ? `${startTimeText} - ${endTimeText}` : startTimeText
   const attendeeCount = attendeesList.length;
   const goingLabel = event.maxSeats ? `${attendeeCount}/${event.maxSeats}` : `${attendeeCount}`;
   const spotsLeft = event.maxSeats ? Math.max(event.maxSeats - attendeesList.length, 0) : null;
@@ -346,11 +382,31 @@ export const EventDetail: React.FC<EventDetailProps> = ({
             </div>
 
             <div className="text-right shrink-0">
-              <div className="font-bold text-white leading-tight">{dateLabel}</div>
-              <div className="text-sm text-slate-400 leading-tight">
-                {timeLabel}
-                {event.isFlexibleStart && <span className="italic"> (Flexible)</span>}
-              </div>
+              {showMultiDay ? (
+                <>
+                  <div className="leading-tight text-white">
+                    <span className="font-bold">{startDateText}</span>{' '}
+                    <span className="font-normal text-slate-400">{startTimeText} -</span>
+                  </div>
+                  {endDateText && endTimeText && (
+                    <div className="leading-tight text-white">
+                      <span className="font-bold">{endDateText}</span>{' '}
+                      <span className="font-normal text-slate-400">{endTimeText}</span>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="font-bold text-white leading-tight">{startDateText}</div>
+                  <div className="text-sm text-slate-400 leading-tight">
+                    {timeRangeText}
+                    {event.isFlexibleStart && <span className="italic"> (Flexible)</span>}
+                  </div>
+                </>
+              )}
+              {showMultiDay && event.isFlexibleStart && (
+                <div className="text-sm text-slate-400 leading-tight italic">(Flexible)</div>
+              )}
             </div>
           </div>
 
@@ -361,11 +417,31 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               </div>
               <div className="min-w-0">
                 <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">When</div>
-                <div className="font-bold text-white truncate">{dateLabel}</div>
-                <div className="text-sm text-slate-400">
-                  {timeLabel}
-                  {event.isFlexibleStart && <span className="italic"> (Flexible)</span>}
-                </div>
+                {showMultiDay ? (
+                  <>
+                    <div className="text-white leading-tight">
+                      <span className="font-bold">{startDateText}</span>{' '}
+                      <span className="font-normal text-slate-400">{startTimeText} -</span>
+                    </div>
+                    {endDateText && endTimeText && (
+                      <div className="text-white leading-tight">
+                        <span className="font-bold">{endDateText}</span>{' '}
+                        <span className="font-normal text-slate-400">{endTimeText}</span>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="font-bold text-white">{startDateText}</div>
+                    <div className="text-sm text-slate-400">
+                      {timeRangeText}
+                      {event.isFlexibleStart && <span className="italic"> (Flexible)</span>}
+                    </div>
+                  </>
+                )}
+                {showMultiDay && event.isFlexibleStart && (
+                  <div className="text-sm text-slate-400 italic">(Flexible)</div>
+                )}
               </div>
             </div>
 
@@ -670,11 +746,28 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   </div>
                 ) : (
                   <div className="text-slate-300">
-                    <div className="font-bold text-white">{dateLabel}</div>
-                    <div className="text-sm text-slate-400">
-                      {timeLabel}
-                      {event.isFlexibleStart && <span className="italic"> (Flexible)</span>}
-                    </div>
+                    {showMultiDay ? (
+                      <>
+                        <div className="leading-tight text-white">
+                          <span className="font-bold">{startDateText}</span>{' '}
+                          <span className="font-normal text-slate-400">{startTimeText} -</span>
+                        </div>
+                        {endDateText && endTimeText && (
+                          <div className="leading-tight text-white">
+                            <span className="font-bold">{endDateText}</span>{' '}
+                            <span className="font-normal text-slate-400">{endTimeText}</span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <div className="font-bold text-white">{startDateText}</div>
+                        <div className="text-sm text-slate-400">
+                          {timeRangeText}
+                          {event.isFlexibleStart && <span className="italic"> (Flexible)</span>}
+                        </div>
+                      </>
+                    )}
                   </div>
                 )}
                 {isEditMode && edit?.errors?.startTime ? (
