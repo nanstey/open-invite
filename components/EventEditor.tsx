@@ -19,6 +19,7 @@ type EventEditorValues = {
   location: string
   description: string
   startDateTimeLocal: string
+  durationHours: number | ''
   activityType: string
   isFlexibleStart: boolean
   isFlexibleEnd: boolean
@@ -65,11 +66,19 @@ export function EventEditor(props: {
   const defaultValues = React.useMemo<EventEditorValues>(() => {
     const ev = props.initialEvent
     if (ev) {
+      const durationHours =
+        ev.endTime
+          ? Math.max(
+              0,
+              Math.round(((new Date(ev.endTime).getTime() - new Date(ev.startTime).getTime()) / 3_600_000) * 4) / 4,
+            )
+          : ''
       return {
         title: ev.title,
         location: ev.location,
         description: ev.description,
         startDateTimeLocal: toLocalDateTimeInputValue(ev.startTime),
+        durationHours: durationHours === 0 ? '' : durationHours,
         activityType: ev.activityType,
         isFlexibleStart: ev.isFlexibleStart,
         isFlexibleEnd: ev.isFlexibleEnd,
@@ -87,6 +96,7 @@ export function EventEditor(props: {
       location: '',
       description: '',
       startDateTimeLocal: '',
+      durationHours: '',
       activityType: 'Social',
       isFlexibleStart: false,
       isFlexibleEnd: false,
@@ -123,14 +133,17 @@ export function EventEditor(props: {
       const description = value.description.trim()
       const activityType = String(value.activityType ?? '').trim()
       const startDateTimeLocal = value.startDateTimeLocal
+      const durationHours =
+        value.durationHours === '' ? undefined : Number(value.durationHours)
 
-      if (!title || !location || !description || !activityType || !startDateTimeLocal) {
+      if (!title || !location || !description || !activityType || !startDateTimeLocal || !durationHours || durationHours <= 0) {
         throw new Error('Missing required fields')
       }
 
       const startTime = value.startDateTimeLocal
         ? new Date(value.startDateTimeLocal).toISOString()
         : defaultStartTimeIsoRef.current
+      const endTime = new Date(new Date(value.startDateTimeLocal).getTime() + durationHours * 3_600_000).toISOString()
       const maxSeats = value.maxSeats === '' ? undefined : Number(value.maxSeats)
       const normalizedMaxSeats = maxSeats && maxSeats > 0 ? maxSeats : undefined
 
@@ -140,6 +153,7 @@ export function EventEditor(props: {
           location,
           description,
           startTime,
+          endTime,
           activityType,
           isFlexibleStart: value.isFlexibleStart,
           isFlexibleEnd: value.isFlexibleEnd,
@@ -162,6 +176,7 @@ export function EventEditor(props: {
         location,
         description,
         startTime,
+        endTime,
         activityType,
         isFlexibleStart: value.isFlexibleStart,
         isFlexibleEnd: value.isFlexibleEnd,
@@ -192,15 +207,17 @@ export function EventEditor(props: {
     const location = values.location.trim()
     const activityType = String(values.activityType ?? '').trim()
     const startDateTimeLocal = values.startDateTimeLocal
+    const durationHours = values.durationHours === '' ? undefined : Number(values.durationHours)
 
     return {
       title: title ? undefined : 'Title is required',
       activityType: activityType ? undefined : 'Category is required',
       description: description ? undefined : 'About is required',
       startTime: startDateTimeLocal ? undefined : 'Date & time is required',
+      durationHours: durationHours && durationHours > 0 ? undefined : 'Duration is required',
       location: location ? undefined : 'Location is required',
     }
-  }, [values.activityType, values.description, values.location, values.startDateTimeLocal, values.title])
+  }, [values.activityType, values.description, values.durationHours, values.location, values.startDateTimeLocal, values.title])
 
   const canSubmit = Object.values(detailErrors).every((v) => !v)
   const [showValidation, setShowValidation] = React.useState(false)
@@ -221,6 +238,11 @@ export function EventEditor(props: {
     const startTimeIso = values.startDateTimeLocal
       ? new Date(values.startDateTimeLocal).toISOString()
       : defaultStartTimeIsoRef.current
+    const durationHours = values.durationHours === '' ? undefined : Number(values.durationHours)
+    const endTimeIso =
+      values.startDateTimeLocal && durationHours && durationHours > 0
+        ? new Date(new Date(values.startDateTimeLocal).getTime() + durationHours * 3_600_000).toISOString()
+        : undefined
 
     return {
       id: isUpdate ? (props.initialEvent?.id ?? draftIdRef.current) : draftIdRef.current,
@@ -232,7 +254,7 @@ export function EventEditor(props: {
       location: values.location,
       coordinates: values.coordinates,
       startTime: startTimeIso,
-      endTime: props.initialEvent?.endTime,
+      endTime: endTimeIso ?? props.initialEvent?.endTime,
       isFlexibleStart: values.isFlexibleStart,
       isFlexibleEnd: values.isFlexibleEnd,
       visibilityType: values.visibilityType,
@@ -262,6 +284,7 @@ export function EventEditor(props: {
     values.allowFriendInvites,
     values.coordinates,
     values.description,
+    values.durationHours,
     values.groupIds,
     values.isFlexibleEnd,
     values.isFlexibleStart,
@@ -312,6 +335,9 @@ export function EventEditor(props: {
         groupsLoading: groupsQuery.isLoading,
         errors: showValidation ? detailErrors : undefined,
         startDateTimeLocal: values.startDateTimeLocal,
+        onChangeStartDateTimeLocal: (value) => form.setFieldValue('startDateTimeLocal', value),
+        durationHours: values.durationHours,
+        onChangeDurationHours: (value) => form.setFieldValue('durationHours', value),
         onChange: applyPatch,
         onSave: () => {
           if (!canSubmit) {

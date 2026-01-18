@@ -173,20 +173,13 @@ export const Route = createFileRoute('/events/$slug')({
     }
 
     return (
-      <div className="relative w-full h-full">
-        {isHost ? (
-          <div className="fixed top-4 right-4 z-[1400]">
-            <button
-              type="button"
-              onClick={() => setIsEditing(true)}
-              className="px-4 py-2 rounded-xl bg-slate-900/80 backdrop-blur border border-slate-700 text-white font-bold hover:bg-slate-800 transition-colors"
-            >
-              Edit
-            </button>
-          </div>
-        ) : null}
-        <EventDetail event={event} currentUser={user} onClose={onClose} onUpdateEvent={onUpdateEvent} />
-      </div>
+      <EventDetail
+        event={event}
+        currentUser={user}
+        onClose={onClose}
+        onUpdateEvent={onUpdateEvent}
+        onEditRequested={isHost ? () => setIsEditing(true) : undefined}
+      />
     )
   },
 })
