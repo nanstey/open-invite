@@ -6,6 +6,7 @@ import { ArrowLeft, Calendar, Info, MapPin, MessageSquare, Save, Send, Users, X,
 import { fetchUser, fetchUsers } from '../services/userService';
 import { TabGroup, type TabOption } from './TabGroup';
 import { useRouterState } from '@tanstack/react-router';
+import { FormSelect } from './FormControls';
 
 interface EventDetailProps {
   event: SocialEvent;
@@ -551,15 +552,13 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                       ) : null}
                     </div>
                     <div className="md:col-span-1">
-                      <select
+                      <FormSelect
                         value={event.activityType}
                         onChange={(e) => edit?.onChange({ activityType: e.target.value })}
                         required
-                        className={`w-full bg-slate-900 border rounded-lg py-3 px-4 text-white outline-none ${
-                          edit?.errors?.activityType
-                            ? 'border-red-500 focus:border-red-500'
-                            : 'border-slate-700 focus:border-primary'
-                        }`}
+                        size="lg"
+                        variant="surface"
+                        className={edit?.errors?.activityType ? 'border-red-500 focus:border-red-500' : ''}
                       >
                         <option value="Social">Social</option>
                         <option value="Sport">Sport</option>
@@ -567,7 +566,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                         <option value="Food">Food</option>
                         <option value="Work">Work</option>
                         <option value="Travel">Travel</option>
-                      </select>
+                      </FormSelect>
                       {edit?.errors?.activityType ? (
                         <div className="text-xs text-red-400 mt-1">{edit.errors.activityType}</div>
                       ) : null}
@@ -623,7 +622,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                     </div>
                     <div className="space-y-1">
                       <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Time</div>
-                      <select
+                      <FormSelect
                         value={draftTime}
                         onChange={(e) => {
                           const nextTime = e.target.value
@@ -632,11 +631,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                           edit?.onChangeStartDateTimeLocal?.(nextLocal)
                         }}
                         required
-                        className={`w-full bg-slate-900 border rounded-lg py-3 px-4 text-white outline-none ${
-                          edit?.errors?.startTime
-                            ? 'border-red-500 focus:border-red-500'
-                            : 'border-slate-700 focus:border-primary'
-                        }`}
+                        size="lg"
+                        variant="surface"
+                        className={edit?.errors?.startTime ? 'border-red-500 focus:border-red-500' : ''}
                       >
                         <option value="">Select time</option>
                         {timeOptions.map((t) => (
@@ -644,7 +641,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                             {t.label}
                           </option>
                         ))}
-                      </select>
+                      </FormSelect>
                     </div>
                     <div className="space-y-1">
                       <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Duration (hours)</div>
@@ -764,7 +761,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                     </div>
                     <div className="space-y-1">
                       <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Visibility</div>
-                      <select
+                      <FormSelect
                         value={event.visibilityType}
                         onChange={(e) => {
                           const next = e.target.value as EventVisibility;
@@ -774,12 +771,13 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                             allowFriendInvites: next === EventVisibility.INVITE_ONLY ? event.allowFriendInvites : false,
                           });
                         }}
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white focus:border-primary outline-none"
+                        size="md"
+                        variant="surface"
                       >
                         <option value={EventVisibility.ALL_FRIENDS}>All friends</option>
                         <option value={EventVisibility.GROUPS}>Groups</option>
                         <option value={EventVisibility.INVITE_ONLY}>Invite only</option>
-                      </select>
+                      </FormSelect>
                     </div>
                   </div>
 
