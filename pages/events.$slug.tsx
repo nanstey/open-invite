@@ -4,6 +4,7 @@ import { ArrowLeft } from 'lucide-react'
 
 import type { SocialEvent } from '../lib/types'
 import { useAuth } from '../components/AuthProvider'
+import { EventEditor } from '../components/EventEditor'
 import { EventDetail } from '../components/EventDetail'
 import { fetchEventById, fetchEventBySlug, markEventViewedFromRouteParam, updateEvent } from '../services/eventService'
 import { realtimeService } from '../services/realtimeService'
@@ -42,6 +43,7 @@ export const Route = createFileRoute('/events/$slug')({
 
     const [event, setEvent] = React.useState<SocialEvent | null>(null)
     const [isLoading, setIsLoading] = React.useState(true)
+    const [isEditing, setIsEditing] = React.useState(false)
 
     // Treat opening an event while authenticated as "invited by link" so it shows up in Pending/Going.
     React.useEffect(() => {
@@ -94,12 +96,13 @@ export const Route = createFileRoute('/events/$slug')({
     React.useEffect(() => {
       if (!event) return
 
+      if (isEditing) return
       const unsubscribe = realtimeService.subscribeToEvent(event.id, {
         onUpdate: (updatedEvent) => setEvent(updatedEvent),
         onDelete: () => navigate({ to: '/events', search: { view } }),
       })
       return () => unsubscribe()
-    }, [event?.id, navigate, view])
+    }, [event?.id, navigate, view, isEditing])
 
     if (!user) return null
 
@@ -152,7 +155,39 @@ export const Route = createFileRoute('/events/$slug')({
       if (result) setEvent(result)
     }
 
-    return <EventDetail event={event} currentUser={user} onClose={onClose} onUpdateEvent={onUpdateEvent} />
+    const isHost = event.hostId === user.id
+
+    if (isEditing && isHost) {
+      return (
+        <EventEditor
+          mode="update"
+          currentUser={user}
+          initialEvent={event}
+          onCancel={() => setIsEditing(false)}
+          onSuccess={(updated) => {
+            setEvent(updated)
+            setIsEditing(false)
+          }}
+        />
+      )
+    }
+
+    return (
+      <div className="relative w-full h-full">
+        {isHost ? (
+          <div className="fixed top-4 right-4 z-[1400]">
+            <button
+              type="button"
+              onClick={() => setIsEditing(true)}
+              className="px-4 py-2 rounded-xl bg-slate-900/80 backdrop-blur border border-slate-700 text-white font-bold hover:bg-slate-800 transition-colors"
+            >
+              Edit
+            </button>
+          </div>
+        ) : null}
+        <EventDetail event={event} currentUser={user} onClose={onClose} onUpdateEvent={onUpdateEvent} />
+      </div>
+    )
   },
 })
 

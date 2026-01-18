@@ -75,7 +75,7 @@ function AppShellLayout() {
   const isEventsChildRoute = pathname.startsWith('/events/') && !isEventsIndex
   const isEventDetailRoute = pathname.startsWith('/events/') && pathname !== '/events/new'
   const hideShellHeaderForRoute = activeSection === 'EVENTS' && isEventsChildRoute
-  const hideMobileBottomNavForRoute = activeSection === 'EVENTS' && isEventDetailRoute
+  const hideMobileBottomNavForRoute = activeSection === 'EVENTS' && isEventsChildRoute
 
   const eventsView = React.useMemo<EventsView>(() => coerceEventsView((search as any)?.view), [search])
   const friendsTab = React.useMemo<FriendsTab>(() => coerceFriendsTab((search as any)?.tab), [search])

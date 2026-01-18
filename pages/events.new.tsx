@@ -1,9 +1,8 @@
 import React from 'react'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 
-import type { SocialEvent } from '../lib/types'
-import { CreateEventModal } from '../components/CreateEventModal'
-import { createEvent } from '../services/eventService'
+import { useAuth } from '../components/AuthProvider'
+import { EventEditor } from '../components/EventEditor'
 
 type EventsView = 'list' | 'map' | 'calendar'
 
@@ -25,20 +24,27 @@ export const Route = createFileRoute('/events/new')({
   component: function EventsNewRouteComponent() {
     const navigate = useNavigate()
     const { view } = Route.useSearch()
+    const { user } = useAuth()
 
     const onClose = () => navigate({ to: '/events', search: { view } })
+    if (!user) return null
 
-    const onCreate = async (
-      newEventData: Omit<SocialEvent, 'id' | 'hostId' | 'attendees' | 'comments' | 'reactions'>,
-    ) => {
-      try {
-        await createEvent(newEventData)
-      } finally {
-        onClose()
-      }
-    }
-
-    return <CreateEventModal onClose={onClose} onCreate={onCreate} />
+    return (
+      <EventEditor
+        mode="create"
+        currentUser={user}
+        onCancel={onClose}
+        onSuccess={(created) =>
+          navigate({
+            to: '/events/$slug',
+            params: { slug: created.slug },
+            search: { view: undefined },
+            replace: true,
+            state: { fromEventsView: view },
+          })
+        }
+      />
+    )
   },
 })
 

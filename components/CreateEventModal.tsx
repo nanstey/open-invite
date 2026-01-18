@@ -8,7 +8,7 @@ import { supabase } from '../lib/supabase';
 
 interface CreateEventModalProps {
   onClose: () => void;
-  onCreate: (event: Omit<SocialEvent, 'id' | 'hostId' | 'attendees' | 'comments' | 'reactions'>) => void;
+  onCreate: (event: Omit<SocialEvent, 'id' | 'slug' | 'hostId' | 'attendees' | 'comments' | 'reactions'>) => void;
 }
 
 export const CreateEventModal: React.FC<CreateEventModalProps> = ({ onClose, onCreate }) => {

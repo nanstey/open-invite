@@ -1,8 +1,8 @@
 
 import React, { useRef, useState, useEffect } from 'react';
-import { SocialEvent, User, Comment } from '../lib/types';
+import { Comment, EventVisibility, Group, SocialEvent, User } from '../lib/types';
 import { getTheme } from '../lib/constants';
-import { ArrowLeft, Calendar, Info, MapPin, MessageSquare, Send, Users, X, CheckCircle2, EyeOff } from 'lucide-react';
+import { ArrowLeft, Calendar, Info, MapPin, MessageSquare, Save, Send, Users, X, CheckCircle2, EyeOff } from 'lucide-react';
 import { fetchUser, fetchUsers } from '../services/userService';
 import { TabGroup, type TabOption } from './TabGroup';
 import { useRouterState } from '@tanstack/react-router';
@@ -16,6 +16,29 @@ interface EventDetailProps {
   onRequireAuth?: () => void;
   showBackButton?: boolean;
   layout?: 'shell' | 'public';
+  mode?: 'view' | 'edit';
+  edit?: {
+    canEdit: boolean;
+    isSaving?: boolean;
+    primaryLabel?: string;
+    groups?: Group[];
+    groupsLoading?: boolean;
+    onChange: (patch: Partial<SocialEvent>) => void;
+    onSave: () => void;
+    onCancel: () => void;
+  };
+}
+
+function toLocalDateTimeInputValue(iso: string | undefined): string {
+  if (!iso) return '';
+  const d = new Date(iso);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const yyyy = d.getFullYear();
+  const mm = pad(d.getMonth() + 1);
+  const dd = pad(d.getDate());
+  const hh = pad(d.getHours());
+  const min = pad(d.getMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
 }
 
 export const EventDetail: React.FC<EventDetailProps> = ({
@@ -27,9 +50,13 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   onRequireAuth,
   showBackButton = true,
   layout = 'shell',
+  mode = 'view',
+  edit,
 }) => {
   const { pathname } = useRouterState({ select: (s) => ({ pathname: s.location.pathname }) });
-  const reserveBottomNavSpace = layout === 'shell' && !(pathname.startsWith('/events/') && pathname !== '/events/new');
+  const reserveBottomNavSpace = layout === 'shell' && !pathname.startsWith('/events/');
+  const isEditMode = mode === 'edit' && !!edit;
+  const canEdit = !!edit?.canEdit;
 
   const [commentText, setCommentText] = useState('');
   const [host, setHost] = useState<User | null>(null);
@@ -80,11 +107,13 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const goingLabel = `${attendeesList.length}/${event.maxSeats || '∞'}`;
   const spotsLeft = event.maxSeats ? Math.max(event.maxSeats - attendeesList.length, 0) : null;
 
-  const tabs: TabOption[] = [
-    { id: 'details', label: 'Details', icon: <Info className="w-4 h-4" /> },
-    { id: 'going', label: `Going (${goingLabel})`, icon: <Users className="w-4 h-4" /> },
-    { id: 'discussion', label: `Discussion (${event.comments.length})`, icon: <MessageSquare className="w-4 h-4" /> },
-  ];
+  const tabs: TabOption[] = isEditMode
+    ? [{ id: 'details', label: 'Details', icon: <Info className="w-4 h-4" /> }]
+    : [
+        { id: 'details', label: 'Details', icon: <Info className="w-4 h-4" /> },
+        { id: 'going', label: `Going (${goingLabel})`, icon: <Users className="w-4 h-4" /> },
+        { id: 'discussion', label: `Discussion (${event.comments.length})`, icon: <MessageSquare className="w-4 h-4" /> },
+      ];
 
   const openInMaps = () => {
     const lat = event.coordinates?.lat;
@@ -97,6 +126,10 @@ export const EventDetail: React.FC<EventDetailProps> = ({
 
   const handleTabChange = (id: any) => {
     const tabId = String(id) as 'details' | 'going' | 'discussion';
+    if (isEditMode) {
+      setActiveTab('details');
+      return;
+    }
     if (isGuest && (tabId === 'going' || tabId === 'discussion')) {
       onRequireAuth?.();
       return;
@@ -182,6 +215,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   }, []);
 
   const handleJoin = () => {
+    if (isEditMode) return;
     if (isGuest) {
       onRequireAuth?.();
       return;
@@ -198,6 +232,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
 
   const handlePostComment = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isEditMode) return;
     if (isGuest) {
       onRequireAuth?.();
       return;
@@ -245,10 +280,38 @@ export const EventDetail: React.FC<EventDetailProps> = ({
 
         <div className="absolute bottom-0 left-0 right-0">
           <div className="max-w-6xl mx-auto px-4 md:px-6 pb-5">
-            <div className={`inline-block px-2 py-0.5 rounded text-xs font-bold text-white ${theme.bg}`}>
-              {event.activityType}
-            </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mt-2 mb-4">{event.title}</h1>
+            {isEditMode && canEdit ? (
+              <div className="flex flex-col md:flex-row md:items-center gap-3">
+                <select
+                  value={event.activityType}
+                  onChange={(e) => edit?.onChange({ activityType: e.target.value })}
+                  className="w-full md:w-auto bg-black/40 border border-white/10 rounded-xl py-2 px-3 text-white focus:border-primary outline-none"
+                >
+                  <option value="Social">Social</option>
+                  <option value="Sport">Sport</option>
+                  <option value="Entertainment">Entertainment</option>
+                  <option value="Food">Food</option>
+                  <option value="Work">Work</option>
+                  <option value="Travel">Travel</option>
+                </select>
+                <div className="text-xs text-slate-300">Editing</div>
+              </div>
+            ) : (
+              <div className={`inline-block px-2 py-0.5 rounded text-xs font-bold text-white ${theme.bg}`}>
+                {event.activityType}
+              </div>
+            )}
+
+            {isEditMode && canEdit ? (
+              <input
+                value={event.title}
+                onChange={(e) => edit?.onChange({ title: e.target.value })}
+                placeholder="Invite title"
+                className="mt-2 mb-4 w-full text-3xl md:text-4xl font-bold text-white leading-tight bg-transparent border-b border-white/20 focus:border-primary outline-none"
+              />
+            ) : (
+              <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mt-2 mb-4">{event.title}</h1>
+            )}
           </div>
         </div>
       </div>
@@ -275,11 +338,26 @@ export const EventDetail: React.FC<EventDetailProps> = ({
             </div>
 
             <div className="text-right shrink-0">
-              <div className="font-bold text-white leading-tight">{dateLabel}</div>
-              <div className="text-sm text-slate-400 leading-tight">
-                {timeLabel}
-                {event.isFlexibleStart && <span className="italic"> (Flexible)</span>}
-              </div>
+              {isEditMode && canEdit ? (
+                <input
+                  type="datetime-local"
+                  value={toLocalDateTimeInputValue(event.startTime)}
+                  onChange={(e) =>
+                    edit?.onChange({
+                      startTime: e.target.value ? new Date(e.target.value).toISOString() : event.startTime,
+                    })
+                  }
+                  className="bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white focus:border-primary outline-none [color-scheme:dark]"
+                />
+              ) : (
+                <>
+                  <div className="font-bold text-white leading-tight">{dateLabel}</div>
+                  <div className="text-sm text-slate-400 leading-tight">
+                    {timeLabel}
+                    {event.isFlexibleStart && <span className="italic"> (Flexible)</span>}
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -290,11 +368,26 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               </div>
               <div className="min-w-0">
                 <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">When</div>
-                <div className="font-bold text-white truncate">{dateLabel}</div>
-                <div className="text-sm text-slate-400">
-                  {timeLabel}
-                  {event.isFlexibleStart && <span className="italic"> (Flexible)</span>}
-                </div>
+                {isEditMode && canEdit ? (
+                  <input
+                    type="datetime-local"
+                    value={toLocalDateTimeInputValue(event.startTime)}
+                    onChange={(e) =>
+                      edit?.onChange({
+                        startTime: e.target.value ? new Date(e.target.value).toISOString() : event.startTime,
+                      })
+                    }
+                    className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white focus:border-primary outline-none [color-scheme:dark]"
+                  />
+                ) : (
+                  <>
+                    <div className="font-bold text-white truncate">{dateLabel}</div>
+                    <div className="text-sm text-slate-400">
+                      {timeLabel}
+                      {event.isFlexibleStart && <span className="italic"> (Flexible)</span>}
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
@@ -304,7 +397,16 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               </div>
               <div className="min-w-0">
                 <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Where</div>
-                <div className="font-bold text-white truncate">{event.location}</div>
+                {isEditMode && canEdit ? (
+                  <input
+                    value={event.location}
+                    onChange={(e) => edit?.onChange({ location: e.target.value })}
+                    placeholder="Location"
+                    className="mt-1 w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white focus:border-primary outline-none"
+                  />
+                ) : (
+                  <div className="font-bold text-white truncate">{event.location}</div>
+                )}
                 <button
                   className="text-sm text-slate-500 underline decoration-slate-600 decoration-dashed hover:text-slate-300 transition-colors"
                   type="button"
@@ -321,11 +423,27 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               </div>
               <div className="min-w-0">
                 <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Seats</div>
-                <div className="font-bold text-white truncate">{goingLabel} going</div>
-                {spotsLeft !== null ? (
-                  <div className="text-sm text-slate-400">{spotsLeft} spots left</div>
+                {isEditMode && canEdit ? (
+                  <div className="mt-1">
+                    <input
+                      type="number"
+                      min={1}
+                      value={event.maxSeats ?? ''}
+                      onChange={(e) => edit?.onChange({ maxSeats: e.target.value === '' ? undefined : Number(e.target.value) })}
+                      placeholder="Unlimited"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white focus:border-primary outline-none"
+                    />
+                    <div className="text-xs text-slate-500 mt-1">Leave blank for unlimited.</div>
+                  </div>
                 ) : (
-                  <div className="text-sm text-slate-500">No limit</div>
+                  <>
+                    <div className="font-bold text-white truncate">{goingLabel} going</div>
+                    {spotsLeft !== null ? (
+                      <div className="text-sm text-slate-400">{spotsLeft} spots left</div>
+                    ) : (
+                      <div className="text-sm text-slate-500">No limit</div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -343,8 +461,126 @@ export const EventDetail: React.FC<EventDetailProps> = ({
             <div className="space-y-4">
               <div className="bg-surface border border-slate-700 rounded-2xl p-5">
                 <h2 className="text-lg font-bold text-white mb-3">About</h2>
-                <div className="text-slate-300 leading-relaxed text-base whitespace-pre-wrap">{event.description}</div>
+                {isEditMode && canEdit ? (
+                  <textarea
+                    value={event.description}
+                    onChange={(e) => edit?.onChange({ description: e.target.value })}
+                    placeholder="What’s the vibe?"
+                    className="w-full bg-slate-900 border border-slate-700 rounded-lg py-3 px-4 text-white focus:border-primary outline-none h-32 resize-none"
+                  />
+                ) : (
+                  <div className="text-slate-300 leading-relaxed text-base whitespace-pre-wrap">{event.description}</div>
+                )}
               </div>
+
+              {isEditMode && canEdit ? (
+                <div className="bg-surface border border-slate-700 rounded-2xl p-5 space-y-4">
+                  <h2 className="text-lg font-bold text-white">Settings</h2>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer bg-slate-800/40 p-3 rounded-xl border border-slate-800">
+                      <input
+                        type="checkbox"
+                        checked={event.isFlexibleStart}
+                        onChange={(e) => edit?.onChange({ isFlexibleStart: e.target.checked })}
+                        className="rounded bg-slate-800 border-slate-600 text-primary focus:ring-offset-slate-900"
+                      />
+                      Flexible start
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer bg-slate-800/40 p-3 rounded-xl border border-slate-800">
+                      <input
+                        type="checkbox"
+                        checked={event.isFlexibleEnd}
+                        onChange={(e) => edit?.onChange({ isFlexibleEnd: e.target.checked })}
+                        className="rounded bg-slate-800 border-slate-600 text-primary focus:ring-offset-slate-900"
+                      />
+                      Flexible end
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer bg-slate-800/40 p-3 rounded-xl border border-slate-800">
+                      <input
+                        type="checkbox"
+                        checked={event.noPhones}
+                        onChange={(e) => edit?.onChange({ noPhones: e.target.checked })}
+                        className="rounded bg-slate-800 border-slate-600 text-primary focus:ring-offset-slate-900"
+                      />
+                      No phones
+                    </label>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Visibility</div>
+                      <select
+                        value={event.visibilityType}
+                        onChange={(e) => {
+                          const next = e.target.value as EventVisibility;
+                          edit?.onChange({
+                            visibilityType: next,
+                            groupIds: next === EventVisibility.GROUPS ? event.groupIds : [],
+                            allowFriendInvites: next === EventVisibility.INVITE_ONLY ? event.allowFriendInvites : false,
+                          });
+                        }}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white focus:border-primary outline-none"
+                      >
+                        <option value={EventVisibility.ALL_FRIENDS}>All friends</option>
+                        <option value={EventVisibility.GROUPS}>Groups</option>
+                        <option value={EventVisibility.INVITE_ONLY}>Invite only</option>
+                      </select>
+                    </div>
+
+                    {event.visibilityType === EventVisibility.INVITE_ONLY ? (
+                      <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer bg-slate-800/40 p-3 rounded-xl border border-slate-800">
+                        <input
+                          type="checkbox"
+                          checked={event.allowFriendInvites}
+                          onChange={(e) => edit?.onChange({ allowFriendInvites: e.target.checked })}
+                          className="rounded bg-slate-800 border-slate-600 text-primary focus:ring-offset-slate-900"
+                        />
+                        Allow friends to invite others
+                      </label>
+                    ) : (
+                      <div className="text-sm text-slate-500 flex items-center"> </div>
+                    )}
+                  </div>
+
+                  {event.visibilityType === EventVisibility.GROUPS ? (
+                    <div className="space-y-2">
+                      <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Groups</div>
+                      <div className="bg-slate-900 border border-slate-700 rounded-xl p-2 max-h-44 overflow-y-auto custom-scrollbar space-y-1">
+                        {edit?.groupsLoading ? (
+                          <div className="text-sm text-slate-500 p-2">Loading groups…</div>
+                        ) : (edit?.groups?.length ?? 0) === 0 ? (
+                          <div className="text-sm text-slate-500 p-2">No groups found.</div>
+                        ) : (
+                          (edit?.groups ?? []).map((g) => {
+                            const checked = event.groupIds.includes(g.id);
+                            return (
+                              <label
+                                key={g.id}
+                                className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer p-2 hover:bg-slate-800 rounded"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={(e) => {
+                                    if (e.target.checked) {
+                                      edit?.onChange({ groupIds: [...event.groupIds, g.id] });
+                                    } else {
+                                      edit?.onChange({ groupIds: event.groupIds.filter((id) => id !== g.id) });
+                                    }
+                                  }}
+                                  className="rounded bg-slate-800 border-slate-600 text-primary focus:ring-offset-slate-900"
+                                />
+                                <span>{g.name}</span>
+                              </label>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              ) : null}
 
               <div className="bg-surface border border-slate-700 rounded-2xl p-5">
                 <h2 className="text-lg font-bold text-white mb-3">Location</h2>
@@ -493,7 +729,27 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               </div>
 
               <div className="mt-5 space-y-3">
-                {onDismiss && !isInvolved && (
+                {isEditMode ? (
+                  <div className="space-y-3">
+                    <button
+                      onClick={() => edit?.onSave()}
+                      disabled={!canEdit || !!edit?.isSaving}
+                      className="w-full py-3 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg bg-primary hover:bg-primary/90 text-white shadow-primary/25 disabled:opacity-60"
+                      type="button"
+                    >
+                      <Save className="w-5 h-5" /> {edit?.isSaving ? 'Saving…' : edit?.primaryLabel || 'Save'}
+                    </button>
+                    <button
+                      onClick={() => edit?.onCancel()}
+                      className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all border border-slate-700"
+                      type="button"
+                    >
+                      <X className="w-5 h-5" /> Cancel
+                    </button>
+                  </div>
+                ) : null}
+
+                {onDismiss && !isInvolved && !isEditMode && (
                   <button
                     onClick={onDismiss}
                     className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all border border-slate-700"
@@ -503,25 +759,27 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   </button>
                 )}
 
-                <button
-                  onClick={handleJoin}
-                  className={`w-full py-3 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg ${
-                    isAttending
-                      ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/50'
-                      : 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
-                  }`}
-                  type="button"
-                >
-                  {isAttending ? (
-                    <>
-                      <X className="w-5 h-5" /> Leave Event
-                    </>
-                  ) : (
-                    <>
-                      <CheckCircle2 className="w-5 h-5" /> I'm In!
-                    </>
-                  )}
-                </button>
+                {!isEditMode ? (
+                  <button
+                    onClick={handleJoin}
+                    className={`w-full py-3 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg ${
+                      isAttending
+                        ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/50'
+                        : 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
+                    }`}
+                    type="button"
+                  >
+                    {isAttending ? (
+                      <>
+                        <X className="w-5 h-5" /> Leave Event
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-5 h-5" /> I'm In!
+                      </>
+                    )}
+                  </button>
+                ) : null}
               </div>
             </div>
           </div>
@@ -535,7 +793,27 @@ export const EventDetail: React.FC<EventDetailProps> = ({
         } p-4 border-t border-slate-800 bg-surface/95 backdrop-blur z-[1200] pb-safe-area`}
       >
         <div className="max-w-6xl mx-auto flex gap-3">
-          {onDismiss && !isInvolved && (
+          {isEditMode ? (
+            <>
+              <button
+                onClick={() => edit?.onCancel()}
+                className="w-1/3 py-3.5 rounded-2xl font-bold text-base flex items-center justify-center gap-2 bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all border border-slate-700"
+                type="button"
+              >
+                <X className="w-5 h-5" /> Cancel
+              </button>
+              <button
+                onClick={() => edit?.onSave()}
+                disabled={!canEdit || !!edit?.isSaving}
+                className="flex-1 py-3.5 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg bg-primary hover:bg-primary/90 text-white shadow-primary/25 disabled:opacity-60"
+                type="button"
+              >
+                <Save className="w-5 h-5" /> {edit?.isSaving ? 'Saving…' : edit?.primaryLabel || 'Save'}
+              </button>
+            </>
+          ) : null}
+
+          {onDismiss && !isInvolved && !isEditMode && (
             <button
               onClick={onDismiss}
               className="w-1/3 py-3.5 rounded-2xl font-bold text-base flex items-center justify-center gap-2 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200 transition-all border border-slate-700 hover:border-slate-600"
@@ -545,25 +823,27 @@ export const EventDetail: React.FC<EventDetailProps> = ({
             </button>
           )}
 
-          <button
-            onClick={handleJoin}
-            className={`flex-1 py-3.5 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg ${
-              isAttending
-                ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/50'
-                : 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
-            }`}
-            type="button"
-          >
-            {isAttending ? (
-              <>
-                <X className="w-5 h-5" /> Leave Event
-              </>
-            ) : (
-              <>
-                <CheckCircle2 className="w-5 h-5" /> I'm In!
-              </>
-            )}
-          </button>
+          {!isEditMode ? (
+            <button
+              onClick={handleJoin}
+              className={`flex-1 py-3.5 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg ${
+                isAttending
+                  ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/50'
+                  : 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
+              }`}
+              type="button"
+            >
+              {isAttending ? (
+                <>
+                  <X className="w-5 h-5" /> Leave Event
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="w-5 h-5" /> I'm In!
+                </>
+              )}
+            </button>
+          ) : null}
         </div>
       </div>
     </div>

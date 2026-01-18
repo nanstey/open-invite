@@ -312,7 +312,9 @@ export async function fetchEventBySlug(slug: string): Promise<SocialEvent | null
 /**
  * Create a new event
  */
-export async function createEvent(eventData: Omit<SocialEvent, 'id' | 'hostId' | 'attendees' | 'comments' | 'reactions'>): Promise<SocialEvent | null> {
+export async function createEvent(
+  eventData: Omit<SocialEvent, 'id' | 'slug' | 'hostId' | 'attendees' | 'comments' | 'reactions'>,
+): Promise<SocialEvent | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     throw new Error('User must be authenticated to create events');
