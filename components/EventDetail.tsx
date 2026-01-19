@@ -15,6 +15,7 @@ interface EventDetailProps {
   currentUser?: User | null;
   onClose?: () => void;
   onUpdateEvent: (updated: SocialEvent) => void;
+  onPostComment?: (eventId: string, text: string) => Promise<void> | void;
   onJoin?: (eventId: string) => Promise<void> | void;
   onLeave?: (eventId: string) => Promise<void> | void;
   activeTab?: EventTab;
@@ -62,6 +63,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   currentUser,
   onClose,
   onUpdateEvent,
+  onPostComment,
   onJoin,
   onLeave,
   activeTab: activeTabProp,
@@ -402,20 +404,30 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     onUpdateEvent({ ...event, attendees: newAttendees });
   };
 
-  const handlePostComment = (e: React.FormEvent) => {
+  const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isEditMode) return;
     if (isGuest) {
       onRequireAuth?.();
       return;
     }
-    if (!commentText.trim()) return;
+    const text = commentText.trim();
+    if (!text) return;
 
+    // If the parent provides a persistence handler, use it.
+    // (This allows pages to optimistically update state + write to DB.)
+    if (onPostComment) {
+      setCommentText('');
+      await onPostComment(event.id, text);
+      return;
+    }
+
+    // Fallback: local-only (used in previews/public shells)
     const newComment: Comment = {
-      id: Date.now().toString(),
+      id: `optimistic-${Date.now().toString()}`,
       userId: currentUserId!,
-      text: commentText,
-      timestamp: new Date().toISOString()
+      text,
+      timestamp: new Date().toISOString(),
     };
 
     onUpdateEvent({ ...event, comments: [...event.comments, newComment] });
