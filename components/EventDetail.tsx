@@ -2,7 +2,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Comment, EventVisibility, Group, SocialEvent, User } from '../lib/types';
 import { getTheme } from '../lib/constants';
-import { ArrowLeft, Calendar, Info, MapPin, MessageSquare, Save, Send, Users, X, CheckCircle2, EyeOff, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Calendar, Info, Link, MapPin, MessageSquare, Save, Send, Users, X, CheckCircle2, EyeOff, Image as ImageIcon } from 'lucide-react';
 import { fetchUser, fetchUsers } from '../services/userService';
 import { fetchFriends } from '../services/friendService'
 import { TabGroup, type TabOption } from './TabGroup';
@@ -85,6 +85,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
 
   const [commentText, setCommentText] = useState('');
   const [isTogglingAttendance, setIsTogglingAttendance] = useState(false);
+  const [inviteCopied, setInviteCopied] = useState(false);
+  const inviteCopiedTimeoutRef = useRef<number | null>(null);
   const [host, setHost] = useState<User | null>(null);
   const [attendeesList, setAttendeesList] = useState<User[]>([]);
   const [commentUsers, setCommentUsers] = useState<Map<string, User>>(new Map());
@@ -136,6 +138,15 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     };
     loadUsers();
   }, [event.hostId, event.attendees, event.comments, currentUserId]);
+
+  useEffect(() => {
+    return () => {
+      if (inviteCopiedTimeoutRef.current) {
+        window.clearTimeout(inviteCopiedTimeoutRef.current);
+        inviteCopiedTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   const isHost = !!currentUserId && event.hostId === currentUserId;
   const isAttending = !!currentUserId && event.attendees.includes(currentUserId);
@@ -442,6 +453,69 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     onUpdateEvent({ ...event, attendees: newAttendees });
   };
 
+  const buildInviteUrl = () => {
+    const origin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : '';
+    const slugOrId = event.slug || event.id;
+    const path = `/e/${encodeURIComponent(slugOrId)}`;
+    return origin ? `${origin}${path}` : path;
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // Fallback for older browsers or permission issues.
+      try {
+        const el = document.createElement('textarea');
+        el.value = text;
+        el.setAttribute('readonly', '');
+        el.style.position = 'fixed';
+        el.style.top = '-9999px';
+        el.style.left = '-9999px';
+        document.body.appendChild(el);
+        el.select();
+        el.setSelectionRange(0, el.value.length);
+        const ok = document.execCommand('copy');
+        document.body.removeChild(el);
+        return ok;
+      } catch {
+        return false;
+      }
+    }
+  };
+
+  const pulseInviteCopied = () => {
+    setInviteCopied(true);
+    if (inviteCopiedTimeoutRef.current) window.clearTimeout(inviteCopiedTimeoutRef.current);
+    inviteCopiedTimeoutRef.current = window.setTimeout(() => {
+      setInviteCopied(false);
+      inviteCopiedTimeoutRef.current = null;
+    }, 2000);
+  };
+
+  const handleShareInvite = async () => {
+    const inviteUrl = buildInviteUrl();
+    const isCoarsePointer =
+      typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches;
+
+    if (isCoarsePointer && typeof navigator !== 'undefined' && typeof (navigator as any).share === 'function') {
+      try {
+        await (navigator as any).share({
+          title: event.title,
+          text: `Open Invite to ${event.title}`,
+          url: inviteUrl,
+        });
+        return;
+      } catch {
+        // User cancelled or share failed; fall back to copy.
+      }
+    }
+
+    const copied = await copyToClipboard(inviteUrl);
+    if (copied) pulseInviteCopied();
+  };
+
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isEditMode) return;
@@ -705,6 +779,15 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                 </>
               ) : (
                 <>
+                  <button
+                    onClick={handleShareInvite}
+                    className="py-3 px-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all border border-slate-700"
+                    type="button"
+                  >
+                    {inviteCopied ? <Link className="w-5 h-5" /> : <Send className="w-5 h-5" />}{' '}
+                    {inviteCopied ? 'URL Copied!' : 'Share Invite'}
+                  </button>
+
                   {onDismiss && !isInvolved ? (
                     <button
                       onClick={onDismiss}
@@ -1283,6 +1366,17 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   </div>
                 ) : null}
 
+                {!isEditMode ? (
+                  <button
+                    onClick={handleShareInvite}
+                    className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all border border-slate-700"
+                    type="button"
+                  >
+                    {inviteCopied ? <Link className="w-5 h-5" /> : <Send className="w-5 h-5" />}{' '}
+                    {inviteCopied ? 'URL Copied!' : 'Share Invite'}
+                  </button>
+                ) : null}
+
                 {onDismiss && !isInvolved && !isEditMode && (
                   <button
                     onClick={onDismiss}
@@ -1364,6 +1458,16 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                 <Save className="w-5 h-5" /> {edit?.isSaving ? 'Saving…' : edit?.primaryLabel || 'Save'}
               </button>
             </>
+          ) : null}
+
+          {!isEditMode ? (
+            <button
+              onClick={handleShareInvite}
+              className="w-1/3 py-3.5 rounded-2xl font-bold text-base flex items-center justify-center gap-2 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200 transition-all border border-slate-700 hover:border-slate-600"
+              type="button"
+            >
+              <Send className="w-5 h-5" /> {inviteCopied ? 'URL Copied!' : 'Share Invite'}
+            </button>
           ) : null}
 
           {onDismiss && !isInvolved && !isEditMode && (
