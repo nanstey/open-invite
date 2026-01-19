@@ -394,6 +394,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       className={`flex-1 overflow-y-auto custom-scrollbar bg-background text-slate-100 ${
         layout === 'shell' && reserveBottomNavSpace ? 'pb-44' : 'pb-28'
       } md:pb-10`}
+      style={{ WebkitOverflowScrolling: 'touch' }}
     >
       {/* Hero / Header */}
       <div className="relative w-full h-56 md:h-72 bg-slate-800">
