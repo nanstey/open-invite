@@ -5,6 +5,7 @@ import { Settings, LogOut, ChevronRight, MapPin, Link as LinkIcon, Edit2, Shield
 import { useAuth } from './AuthProvider';
 import { supabase } from '../lib/supabase';
 import { fetchFriends } from '../services/friendService';
+import { ComingSoonPopover, useComingSoonPopover } from './ComingSoonPopover';
 
 interface ProfileViewProps {
   currentUser: User;
@@ -12,6 +13,7 @@ interface ProfileViewProps {
 
 export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
   const auth = useAuth();
+  const comingSoon = useComingSoonPopover();
   const [hostedCount, setHostedCount] = useState(0);
   const [attendedCount, setAttendedCount] = useState(0);
   const [friendsCount, setFriendsCount] = useState(0);
@@ -125,44 +127,56 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
              <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider px-1">Settings</h3>
              
              <div className="bg-surface rounded-xl border border-slate-700 overflow-hidden divide-y divide-slate-700/50">
-                 <button className="w-full flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors">
+                 <button
+                     onClick={(e) => comingSoon.show(e, 'Coming Soon!')}
+                     className="w-full flex items-center justify-between p-4 transition-colors opacity-60 cursor-not-allowed"
+                 >
                      <div className="flex items-center gap-3">
-                         <div className="p-2 bg-blue-500/10 rounded-lg text-blue-500"><BellRing className="w-5 h-5" /></div>
+                         <div className="p-2 bg-blue-500/10 rounded-lg text-slate-400"><BellRing className="w-5 h-5" /></div>
                          <div className="text-left">
-                             <div className="text-sm font-bold text-white">Notifications</div>
+                             <div className="text-sm font-bold text-slate-300">Notifications</div>
                              <div className="text-xs text-slate-500">Manage push & email alerts</div>
                          </div>
                      </div>
                      <ChevronRight className="w-5 h-5 text-slate-600" />
                  </button>
                  
-                 <button className="w-full flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors">
+                 <button
+                     onClick={(e) => comingSoon.show(e, 'Coming Soon!')}
+                     className="w-full flex items-center justify-between p-4 transition-colors opacity-60 cursor-not-allowed"
+                 >
                      <div className="flex items-center gap-3">
-                         <div className="p-2 bg-purple-500/10 rounded-lg text-purple-500"><Shield className="w-5 h-5" /></div>
+                         <div className="p-2 bg-purple-500/10 rounded-lg text-slate-400"><Shield className="w-5 h-5" /></div>
                          <div className="text-left">
-                             <div className="text-sm font-bold text-white">Privacy</div>
+                             <div className="text-sm font-bold text-slate-300">Privacy</div>
                              <div className="text-xs text-slate-500">Who can see your events</div>
                          </div>
                      </div>
                      <ChevronRight className="w-5 h-5 text-slate-600" />
                  </button>
 
-                 <button className="w-full flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors">
+                 <button
+                     onClick={(e) => comingSoon.show(e, 'Coming Soon!')}
+                     className="w-full flex items-center justify-between p-4 transition-colors opacity-60 cursor-not-allowed"
+                 >
                      <div className="flex items-center gap-3">
-                         <div className="p-2 bg-yellow-500/10 rounded-lg text-yellow-500"><Moon className="w-5 h-5" /></div>
+                         <div className="p-2 bg-yellow-500/10 rounded-lg text-slate-400"><Moon className="w-5 h-5" /></div>
                          <div className="text-left">
-                             <div className="text-sm font-bold text-white">Appearance</div>
+                             <div className="text-sm font-bold text-slate-300">Appearance</div>
                              <div className="text-xs text-slate-500">Dark mode is on</div>
                          </div>
                      </div>
                      <ChevronRight className="w-5 h-5 text-slate-600" />
                  </button>
 
-                 <button className="w-full flex items-center justify-between p-4 hover:bg-slate-800/50 transition-colors group">
+                 <button
+                     onClick={(e) => comingSoon.show(e, 'Coming Soon!')}
+                     className="w-full flex items-center justify-between p-4 transition-colors opacity-60 cursor-not-allowed"
+                 >
                      <div className="flex items-center gap-3">
-                         <div className="p-2 bg-slate-700/50 rounded-lg text-slate-400 group-hover:text-white"><Settings className="w-5 h-5" /></div>
+                         <div className="p-2 bg-slate-700/50 rounded-lg text-slate-400"><Settings className="w-5 h-5" /></div>
                          <div className="text-left">
-                             <div className="text-sm font-bold text-white">Account</div>
+                             <div className="text-sm font-bold text-slate-300">Account</div>
                          </div>
                      </div>
                      <ChevronRight className="w-5 h-5 text-slate-600" />
@@ -176,6 +190,8 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
                  <LogOut className="w-5 h-5" /> Sign Out
              </button>
         </div>
+
+        <ComingSoonPopover state={comingSoon.state} />
     </div>
   );
 };
