@@ -15,6 +15,8 @@ interface EventDetailProps {
   currentUser?: User | null;
   onClose?: () => void;
   onUpdateEvent: (updated: SocialEvent) => void;
+  onJoin?: (eventId: string) => Promise<void> | void;
+  onLeave?: (eventId: string) => Promise<void> | void;
   activeTab?: EventTab;
   onTabChange?: (tab: EventTab) => void;
   onDismiss?: () => void;
@@ -60,6 +62,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   currentUser,
   onClose,
   onUpdateEvent,
+  onJoin,
+  onLeave,
   activeTab: activeTabProp,
   onTabChange,
   onDismiss,
@@ -76,6 +80,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const canSave = !!edit?.canEdit;
 
   const [commentText, setCommentText] = useState('');
+  const [isTogglingAttendance, setIsTogglingAttendance] = useState(false);
   const [host, setHost] = useState<User | null>(null);
   const [attendeesList, setAttendeesList] = useState<User[]>([]);
   const [commentUsers, setCommentUsers] = useState<Map<string, User>>(new Map());
@@ -360,14 +365,34 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     };
   }, []);
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     if (isEditMode) return;
     if (isHost) return;
     if (isGuest) {
       onRequireAuth?.();
       return;
     }
-    let newAttendees;
+
+    // If the parent provided join/leave handlers, use those (persist to DB).
+    if (onJoin && onLeave) {
+      if (isTogglingAttendance) return;
+      if (!isAttending && event.maxSeats && event.attendees.length >= event.maxSeats) return; // Full
+
+      setIsTogglingAttendance(true);
+      try {
+        if (isAttending) {
+          await onLeave(event.id);
+        } else {
+          await onJoin(event.id);
+        }
+      } finally {
+        setIsTogglingAttendance(false);
+      }
+      return;
+    }
+
+    // Fallback: local-only toggle (used in previews/public shells)
+    let newAttendees: string[];
     if (isAttending) {
       newAttendees = event.attendees.filter(id => id !== currentUserId);
     } else {
@@ -651,11 +676,13 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   ) : (
                     <button
                       onClick={handleJoin}
+                      disabled={isTogglingAttendance}
+                      aria-disabled={isTogglingAttendance}
                       className={`flex-1 py-3 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg ${
                         isAttending
                           ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/50'
                           : 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
-                      }`}
+                      } disabled:opacity-60 disabled:cursor-not-allowed`}
                       type="button"
                     >
                       {isAttending ? (
@@ -1217,11 +1244,13 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   ) : (
                     <button
                       onClick={handleJoin}
+                      disabled={isTogglingAttendance}
+                      aria-disabled={isTogglingAttendance}
                       className={`w-full py-3 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg ${
                         isAttending
                           ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/50'
                           : 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
-                      }`}
+                      } disabled:opacity-60 disabled:cursor-not-allowed`}
                       type="button"
                     >
                       {isAttending ? (
@@ -1294,11 +1323,13 @@ export const EventDetail: React.FC<EventDetailProps> = ({
             ) : (
               <button
                 onClick={handleJoin}
+                disabled={isTogglingAttendance}
+                aria-disabled={isTogglingAttendance}
                 className={`flex-1 py-3.5 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg ${
                   isAttending
                     ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/50'
                     : 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
-                }`}
+                } disabled:opacity-60 disabled:cursor-not-allowed`}
                 type="button"
               >
                 {isAttending ? (

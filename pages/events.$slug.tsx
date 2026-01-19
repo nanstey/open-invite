@@ -6,7 +6,7 @@ import type { SocialEvent } from '../lib/types'
 import { useAuth } from '../components/AuthProvider'
 import { EventEditor } from '../components/EventEditor'
 import { EventDetail } from '../components/EventDetail'
-import { fetchEventById, fetchEventBySlug, markEventViewedFromRouteParam, updateEvent } from '../services/eventService'
+import { fetchEventById, fetchEventBySlug, joinEvent, leaveEvent, markEventViewedFromRouteParam, updateEvent } from '../services/eventService'
 import { realtimeService } from '../services/realtimeService'
 
 type EventsView = 'list' | 'map' | 'calendar'
@@ -181,6 +181,30 @@ export const Route = createFileRoute('/events/$slug')({
       )
     }
 
+    const handleJoinEvent = async (eventId: string) => {
+      try {
+        const success = await joinEvent(eventId)
+        if (success) {
+          const refreshed = await fetchEventById(eventId)
+          if (refreshed) setEvent(refreshed)
+        }
+      } catch (error) {
+        console.error('Error joining event:', error)
+      }
+    }
+
+    const handleLeaveEvent = async (eventId: string) => {
+      try {
+        const success = await leaveEvent(eventId)
+        if (success) {
+          const refreshed = await fetchEventById(eventId)
+          if (refreshed) setEvent(refreshed)
+        }
+      } catch (error) {
+        console.error('Error leaving event:', error)
+      }
+    }
+
     const onUpdateEvent = async (updated: SocialEvent) => {
       const result = await updateEvent(updated.id, updated)
       if (result) setEvent(result)
@@ -211,6 +235,8 @@ export const Route = createFileRoute('/events/$slug')({
         currentUser={user}
         onClose={onClose}
         onUpdateEvent={onUpdateEvent}
+        onJoin={handleJoinEvent}
+        onLeave={handleLeaveEvent}
         onEditRequested={isHost ? () => setIsEditing(true) : undefined}
         activeTab={activeTab}
         onTabChange={handleTabChange}
