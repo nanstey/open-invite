@@ -20,6 +20,7 @@ import {
 
 import type { RouterContext } from '../routerContext'
 import { useAuth } from '../components/AuthProvider'
+import { ComingSoonPopover, useComingSoonPopover } from '../components/ComingSoonPopover'
 import { TabGroup, type TabOption } from '../components/TabGroup'
 
 function getPageTitle(pathname: string) {
@@ -65,6 +66,7 @@ function coerceFriendsTab(value: unknown): FriendsTab {
 function AppShellLayout() {
   const { user, loading } = useAuth()
   const navigate = useNavigate()
+  const comingSoon = useComingSoonPopover()
   const { pathname, search } = useRouterState({
     select: (s) => ({ pathname: s.location.pathname, search: s.location.search }),
   })
@@ -85,7 +87,7 @@ function AppShellLayout() {
       if (pathname.startsWith('/events/') && pathname !== '/events/new') {
         const eventId = pathname.slice('/events/'.length).split('/')[0]
         if (eventId) {
-          navigate({ to: '/e/$slug', params: { slug: eventId }, replace: true })
+          navigate({ to: '/e/$slug', params: { slug: eventId }, search: { tab: undefined }, replace: true })
           return
         }
       }
@@ -160,18 +162,16 @@ function AppShellLayout() {
               <span className="hidden lg:block font-medium">Events</span>
             </Link>
 
-            <Link
-              to="/friends"
-              search={{ tab: friendsTab }}
-              className={`p-3 rounded-xl transition-all flex items-center justify-start gap-3 w-full ${
-                activeSection === 'FRIENDS'
-                  ? 'bg-primary/10 text-primary'
-                  : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-              }`}
+            <button
+              type="button"
+              aria-disabled="true"
+              onClick={(e) => comingSoon.show(e, 'Coming Soon!')}
+              className="p-3 rounded-xl transition-all flex items-center justify-start gap-3 w-full text-slate-500 opacity-60 cursor-not-allowed"
+              title="Coming Soon!"
             >
               <UsersIcon className="w-6 h-6" />
               <span className="hidden lg:block font-medium">Friends</span>
-            </Link>
+            </button>
 
             <button
               onClick={() => navigate({ to: '/events/new', search: { view: eventsView } })}
@@ -185,20 +185,18 @@ function AppShellLayout() {
         </div>
 
         <div className="flex flex-col gap-4 w-full">
-          <Link
-            to="/alerts"
-            className={`p-3 rounded-xl transition-all flex items-center justify-start gap-3 w-full ${
-              activeSection === 'ALERTS'
-                ? 'bg-primary/10 text-primary'
-                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-            }`}
+          <button
+            type="button"
+            aria-disabled="true"
+            onClick={(e) => comingSoon.show(e, 'Coming Soon!')}
+            className="p-3 rounded-xl transition-all flex items-center justify-start gap-3 w-full text-slate-500 opacity-60 cursor-not-allowed"
+            title="Coming Soon!"
           >
             <div className="relative">
               <Bell className="w-6 h-6" />
-              <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-900"></span>
             </div>
             <span className="hidden lg:block font-medium">Notifications</span>
-          </Link>
+          </button>
 
           <Link
             to="/profile"
@@ -287,16 +285,16 @@ function AppShellLayout() {
             <span className="text-[10px] font-medium">Events</span>
           </Link>
 
-          <Link
-            to="/friends"
-            search={{ tab: friendsTab }}
-            className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
-              activeSection === 'FRIENDS' ? 'text-primary' : 'text-slate-400'
-            }`}
+          <button
+            type="button"
+            aria-disabled="true"
+            onClick={(e) => comingSoon.show(e, 'Coming Soon!')}
+            className="flex flex-col items-center gap-1 p-2 rounded-lg text-slate-500 opacity-60 cursor-not-allowed"
+            title="Coming Soon!"
           >
             <UsersIcon className="w-6 h-6" />
             <span className="text-[10px] font-medium">Friends</span>
-          </Link>
+          </button>
 
           <button
             onClick={() => navigate({ to: '/events/new', search: { view: eventsView } })}
@@ -306,18 +304,16 @@ function AppShellLayout() {
             <Plus className="w-7 h-7" />
           </button>
 
-          <Link
-            to="/alerts"
-            className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
-              activeSection === 'ALERTS' ? 'text-primary' : 'text-slate-400'
-            }`}
+          <button
+            type="button"
+            aria-disabled="true"
+            onClick={(e) => comingSoon.show(e, 'Coming Soon!')}
+            className="flex flex-col items-center gap-1 p-2 rounded-lg text-slate-500 opacity-60 cursor-not-allowed"
+            title="Coming Soon!"
           >
-            <div className="relative">
-              <Bell className="w-6 h-6" />
-              <span className="absolute top-0 right-0 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-slate-900"></span>
-            </div>
-            <span className="text-[10px] font-medium">Alerts</span>
-          </Link>
+            <Bell className="w-6 h-6" />
+            <span className="text-[10px] font-medium">Notifications</span>
+          </button>
 
           <Link
             to="/profile"
@@ -336,6 +332,8 @@ function AppShellLayout() {
           </Link>
         </nav>
       ) : null}
+
+      <ComingSoonPopover state={comingSoon.state} />
     </div>
   )
 }

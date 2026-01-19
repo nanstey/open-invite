@@ -38,7 +38,7 @@ export const Route = createFileRoute('/events/new')({
           navigate({
             to: '/events/$slug',
             params: { slug: created.slug },
-            search: { view: undefined },
+            search: { view: undefined, tab: undefined },
             replace: true,
             state: { fromEventsView: view },
           })
