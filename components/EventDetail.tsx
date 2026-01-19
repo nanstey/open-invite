@@ -552,35 +552,17 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               </div>
               <div className="min-w-0">
                 <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Seats</div>
-                {isEditMode ? (
-                  <div className="mt-1">
-                    <input
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={event.maxSeats ?? ''}
-                      onChange={(e) => {
-                        const raw = e.target.value
-                        const n = raw === '' ? undefined : Number(raw)
-                        edit?.onChange({ maxSeats: n && n > 0 ? n : undefined })
-                      }}
-                      placeholder="Unlimited"
-                      className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white focus:border-primary outline-none"
-                    />
-                    <div className="text-xs text-slate-500 mt-1">Leave blank for unlimited.</div>
+                {/* Seats are editable in the "Attendance & visibility" panel; keep the overview read-only even in edit mode. */}
+                <>
+                  <div className="font-bold text-white truncate">
+                    {event.maxSeats ? `${goingLabel} going` : `${attendeeCount} going`}
                   </div>
-                ) : (
-                  <>
-                    <div className="font-bold text-white truncate">
-                      {event.maxSeats ? `${goingLabel} going` : `${attendeeCount} going`}
-                    </div>
-                    {spotsLeft !== null ? (
-                      <div className="text-sm text-slate-400">{spotsLeft} spots left</div>
-                    ) : (
-                      <div className="text-sm text-slate-500">No limit</div>
-                    )}
-                  </>
-                )}
+                  {spotsLeft !== null ? (
+                    <div className="text-sm text-slate-400">{spotsLeft} spots left</div>
+                  ) : (
+                    <div className="text-sm text-slate-500">No limit</div>
+                  )}
+                </>
               </div>
             </div>
           </div>

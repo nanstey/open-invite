@@ -136,7 +136,8 @@ export function EventEditor(props: {
       const durationHours =
         value.durationHours === '' ? undefined : Number(value.durationHours)
 
-      if (!title || !location || !description || !activityType || !startDateTimeLocal || !durationHours || durationHours <= 0) {
+      // Description is optional; everything else is required.
+      if (!title || !location || !activityType || !startDateTimeLocal || !durationHours || durationHours <= 0) {
         throw new Error('Missing required fields')
       }
 
@@ -216,7 +217,8 @@ export function EventEditor(props: {
     return {
       title: title ? undefined : 'Title is required',
       activityType: activityType ? undefined : 'Category is required',
-      description: description ? undefined : 'About is required',
+      // Description is optional
+      description: undefined,
       startTime: startDateTimeLocal ? undefined : 'Date & time is required',
       durationHours: durationHours && durationHours > 0 ? undefined : 'Duration is required',
       location: location ? undefined : 'Location is required',
