@@ -43,8 +43,10 @@ export interface Database {
           title: string
           description: string
           activity_type: string
+          header_image_url: string | null
           location: string
-          coordinates: Json
+          coordinates: Json | null
+          location_data: Json | null
           start_time: string
           end_time: string | null
           is_flexible_start: boolean
@@ -63,8 +65,10 @@ export interface Database {
           title: string
           description: string
           activity_type: string
+          header_image_url?: string | null
           location: string
-          coordinates: Json
+          coordinates?: Json | null
+          location_data?: Json | null
           start_time: string
           end_time?: string | null
           is_flexible_start?: boolean
@@ -83,8 +87,10 @@ export interface Database {
           title?: string
           description?: string
           activity_type?: string
+          header_image_url?: string | null
           location?: string
-          coordinates?: Json
+          coordinates?: Json | null
+          location_data?: Json | null
           start_time?: string
           end_time?: string | null
           is_flexible_start?: boolean

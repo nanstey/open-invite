@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Search, CalendarClock, Users, Filter, XCircle, CheckCircle2, Crown, History, Inbox, Layout, ChevronUp, Tag } from 'lucide-react';
+import { FormSelect } from './FormControls';
 
 export type TimeFilter = 'ALL' | 'TODAY' | 'TOMORROW' | 'WEEK';
 export type StatusFilter = 'ALL' | 'PENDING' | 'ATTENDING' | 'HOSTING' | 'PAST' | 'DISMISSED';
@@ -145,33 +146,37 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                     {/* Category Select */}
                     <div className="relative flex-1 md:flex-none">
                         <Tag className="absolute left-3 top-2.5 w-4 h-4 text-slate-400 pointer-events-none" />
-                        <select 
+                        <FormSelect
                           value={selectedCategory}
                           onChange={(e) => onCategoryChange(e.target.value)}
-                          className="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-lg pl-9 pr-8 py-2 outline-none focus:border-primary appearance-none cursor-pointer hover:bg-slate-700 transition-colors shadow-sm min-w-[150px]"
+                          size="sm"
+                          variant="muted"
+                          wrapperClassName="w-full min-w-[150px]"
+                          className="pl-9 cursor-pointer hover:bg-slate-700 transition-colors shadow-sm"
                         >
                             {categories.map(cat => (
                               <option key={cat} value={cat}>{cat === 'ALL' ? 'All Activities' : cat}</option>
                             ))}
-                        </select>
-                        <div className="absolute right-3 top-3 w-2 h-2 border-r border-b border-slate-400 rotate-45 pointer-events-none"></div>
+                        </FormSelect>
                     </div>
 
                     {/* Time Select - Only show if not viewing Past */}
                     {statusFilter !== 'PAST' && (
                       <div className="relative flex-1 md:flex-none">
                           <CalendarClock className="absolute left-3 top-2.5 w-4 h-4 text-slate-400 pointer-events-none" />
-                          <select 
+                          <FormSelect
                             value={timeFilter}
                             onChange={(e) => onTimeFilterChange(e.target.value as TimeFilter)}
-                            className="w-full bg-slate-800 border border-slate-700 text-white text-sm rounded-lg pl-9 pr-8 py-2 outline-none focus:border-primary appearance-none cursor-pointer hover:bg-slate-700 transition-colors shadow-sm min-w-[140px]"
+                            size="sm"
+                            variant="muted"
+                            wrapperClassName="w-full min-w-[140px]"
+                            className="pl-9 cursor-pointer hover:bg-slate-700 transition-colors shadow-sm"
                           >
                               <option value="ALL">Any Time</option>
                               <option value="TODAY">Today</option>
                               <option value="TOMORROW">Tomorrow</option>
                               <option value="WEEK">This Week</option>
-                          </select>
-                          <div className="absolute right-3 top-3 w-2 h-2 border-r border-b border-slate-400 rotate-45 pointer-events-none"></div>
+                          </FormSelect>
                       </div>
                     )}
 

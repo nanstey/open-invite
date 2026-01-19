@@ -41,7 +41,7 @@ export default async (request: Request, context: any) => {
     const filter = byId ? `id=eq.${encodeURIComponent(slugOrId)}` : `slug=eq.${encodeURIComponent(slugOrId)}`
     const apiUrl =
       `${supabaseUrl}/rest/v1/events` +
-      `?select=id,slug,title,description,location,start_time` +
+      `?select=id,slug,title,description,location,start_time,header_image_url` +
       `&${filter}` +
       `&limit=1`
 
@@ -59,8 +59,7 @@ export default async (request: Request, context: any) => {
         const resolvedSlug = event.slug || slugOrId
         title = `${event.title} • Open Invite`
         description = (event.description || '').slice(0, 180) || `Join me at ${event.location || 'this event'}.`
-        // Cheap unique image without storing anything:
-        image = `https://picsum.photos/seed/${event.id}/1200/630`
+        image = event.header_image_url || `https://picsum.photos/seed/${event.id}/1200/630`
         canonical = `${url.origin}/${canonicalPrefix}/${resolvedSlug}`
       }
     }

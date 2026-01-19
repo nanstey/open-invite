@@ -5,10 +5,11 @@ import { EventVisibility, SocialEvent, Group } from '../lib/types';
 import { X, Calendar, MapPin, Type, AlignLeft } from 'lucide-react';
 import { fetchGroups } from '../services/friendService';
 import { supabase } from '../lib/supabase';
+import { FormInput, FormSelect } from './FormControls';
 
 interface CreateEventModalProps {
   onClose: () => void;
-  onCreate: (event: Omit<SocialEvent, 'id' | 'hostId' | 'attendees' | 'comments' | 'reactions'>) => void;
+  onCreate: (event: Omit<SocialEvent, 'id' | 'slug' | 'hostId' | 'attendees' | 'comments' | 'reactions'>) => void;
 }
 
 export const CreateEventModal: React.FC<CreateEventModalProps> = ({ onClose, onCreate }) => {
@@ -130,18 +131,26 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ onClose, onC
               <div className="grid grid-cols-2 gap-4">
                  <div>
                     <label className="text-xs font-semibold text-slate-400 uppercase block mb-1">Seats Available</label>
-                    <input type="number" min="1" value={maxSeats} onChange={e => setMaxSeats(e.target.value === '' ? '' : Number(e.target.value))} placeholder="Unlimited" className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white focus:border-primary outline-none" />
+                    <FormInput
+                      type="number"
+                      min="1"
+                      value={maxSeats}
+                      onChange={e => setMaxSeats(e.target.value === '' ? '' : Number(e.target.value))}
+                      placeholder="Unlimited"
+                      size="md"
+                      variant="surface"
+                    />
                  </div>
                  <div>
                     <label className="text-xs font-semibold text-slate-400 uppercase block mb-1">Activity Type</label>
-                    <select value={activityType} onChange={e => setActivityType(e.target.value)} className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white focus:border-primary outline-none">
+                    <FormSelect value={activityType} onChange={e => setActivityType(e.target.value)} size="md" variant="surface">
                       <option value="Social">Social</option>
                       <option value="Sport">Sport</option>
                       <option value="Entertainment">Entertainment</option>
                       <option value="Food">Food</option>
                       <option value="Work">Work</option>
                       <option value="Travel">Travel</option>
-                    </select>
+                    </FormSelect>
                  </div>
               </div>
 
@@ -152,7 +161,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ onClose, onC
                   </label>
                   
                   <div className="space-y-2">
-                    <select 
+                    <FormSelect 
                       value={visibilityType} 
                       onChange={e => {
                         setVisibilityType(e.target.value as EventVisibility);
@@ -160,12 +169,14 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ onClose, onC
                           setSelectedGroupIds([]);
                         }
                       }} 
-                      className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white text-sm focus:border-primary outline-none"
+                      size="md"
+                      variant="surface"
+                      className="text-sm"
                     >
                       <option value={EventVisibility.ALL_FRIENDS}>All Friends</option>
                       <option value={EventVisibility.GROUPS}>Groups</option>
                       <option value={EventVisibility.INVITE_ONLY}>Invite Only</option>
-                    </select>
+                    </FormSelect>
                     
                     {visibilityType === EventVisibility.GROUPS && (
                       <div className="space-y-2">

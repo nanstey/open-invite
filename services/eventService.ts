@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { SocialEvent, Comment, Reaction, EventVisibility } from '../lib/types';
+import type { SocialEvent, Comment, Reaction, EventVisibility, LocationData } from '../lib/types';
 import type { Database } from '../lib/database.types';
 
 type EventRow = Database['public']['Tables']['events']['Row'];
@@ -71,10 +71,12 @@ function transformEventRow(row: any, attendees: string[], comments: Comment[], r
     slug: row.slug,
     hostId: row.host_id,
     title: row.title,
+    headerImageUrl: row.header_image_url || undefined,
     description: row.description,
     activityType: row.activity_type,
     location: row.location,
-    coordinates: row.coordinates as { lat: number; lng: number },
+    coordinates: row.coordinates ? (row.coordinates as { lat: number; lng: number }) : undefined,
+    locationData: row.location_data ? (row.location_data as LocationData) : undefined,
     startTime: row.start_time,
     endTime: row.end_time || undefined,
     isFlexibleStart: row.is_flexible_start,
@@ -312,7 +314,9 @@ export async function fetchEventBySlug(slug: string): Promise<SocialEvent | null
 /**
  * Create a new event
  */
-export async function createEvent(eventData: Omit<SocialEvent, 'id' | 'hostId' | 'attendees' | 'comments' | 'reactions'>): Promise<SocialEvent | null> {
+export async function createEvent(
+  eventData: Omit<SocialEvent, 'id' | 'slug' | 'hostId' | 'attendees' | 'comments' | 'reactions'>,
+): Promise<SocialEvent | null> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     throw new Error('User must be authenticated to create events');
@@ -325,8 +329,10 @@ export async function createEvent(eventData: Omit<SocialEvent, 'id' | 'hostId' |
     title: eventData.title,
     description: eventData.description,
     activity_type: eventData.activityType,
+    header_image_url: eventData.headerImageUrl ?? null,
     location: eventData.location,
-    coordinates: eventData.coordinates as any,
+    coordinates: (eventData.coordinates ?? null) as any,
+    location_data: (eventData.locationData ?? null) as any,
     start_time: eventData.startTime,
     end_time: eventData.endTime || null,
     is_flexible_start: eventData.isFlexibleStart,
@@ -381,8 +387,10 @@ export async function updateEvent(eventId: string, updates: Partial<SocialEvent>
   if (updates.title !== undefined) updateData.title = updates.title;
   if (updates.description !== undefined) updateData.description = updates.description;
   if (updates.activityType !== undefined) updateData.activity_type = updates.activityType;
+  if (updates.headerImageUrl !== undefined) updateData.header_image_url = updates.headerImageUrl;
   if (updates.location !== undefined) updateData.location = updates.location;
   if (updates.coordinates !== undefined) updateData.coordinates = updates.coordinates;
+  if (updates.locationData !== undefined) updateData.location_data = updates.locationData;
   if (updates.startTime !== undefined) updateData.start_time = updates.startTime;
   if (updates.endTime !== undefined) updateData.end_time = updates.endTime;
   if (updates.isFlexibleStart !== undefined) updateData.is_flexible_start = updates.isFlexibleStart;

@@ -33,15 +33,35 @@ export interface Group {
   deletedAt?: string;
 }
 
+export type LocationData = {
+  provider: 'photon'
+  providerId?: {
+    osm_id?: number
+    osm_type?: string
+  }
+  display: {
+    full: string
+    placeName?: string
+    addressLine?: string
+    localityLine?: string
+    postcode?: string
+    country?: string
+  }
+  geo: { lat: number; lng: number }
+  raw?: Record<string, unknown>
+}
+
 export interface SocialEvent {
   id: string;
   slug: string;
   hostId: string;
   title: string;
+  headerImageUrl?: string;
   description: string;
   activityType: string; // e.g., "Dining", "Sport", "Travel"
   location: string;
-  coordinates: { lat: number; lng: number }; // Real coordinates
+  coordinates?: { lat: number; lng: number }; // Optional until a place is selected
+  locationData?: LocationData;
   startTime: string; // ISO String
   endTime?: string;
   isFlexibleStart: boolean;

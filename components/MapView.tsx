@@ -81,6 +81,7 @@ export const MapView: React.FC<MapViewProps> = ({ events, onEventClick, currentU
     events.forEach(event => {
        const host = hostsMap.get(event.hostId);
        if (!host) return; // Skip if host not loaded yet
+       if (typeof event.coordinates?.lat !== 'number' || typeof event.coordinates?.lng !== 'number') return; // No pin
        
        const theme = getTheme(event.activityType);
        const isHost = event.hostId === currentUser.id;
