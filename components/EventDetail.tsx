@@ -136,6 +136,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const isHost = !!currentUserId && event.hostId === currentUserId;
   const isAttending = !!currentUserId && event.attendees.includes(currentUserId);
   const isInvolved = isHost || isAttending;
+  const hasSeatLimit = typeof event.maxSeats === 'number' && event.maxSeats > 0
+  const isFull = hasSeatLimit && event.attendees.length >= event.maxSeats
+  const isJoinDisabled = isTogglingAttendance || (!isAttending && isFull)
   const headerImageSrc = event.headerImageUrl || `https://picsum.photos/seed/${event.id}/1200/800`
   const formatDateLong = (date: Date) => {
     // Format exactly like: "Fri Jan 16, 2026"
@@ -688,12 +691,14 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   ) : (
                     <button
                       onClick={handleJoin}
-                      disabled={isTogglingAttendance}
-                      aria-disabled={isTogglingAttendance}
+                      disabled={isJoinDisabled}
+                      aria-disabled={isJoinDisabled}
                       className={`flex-1 py-3 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg ${
                         isAttending
                           ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/50'
-                          : 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
+                          : isFull
+                            ? 'bg-slate-700/60 text-slate-300 border border-slate-600'
+                            : 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
                       } disabled:opacity-60 disabled:cursor-not-allowed`}
                       type="button"
                     >
@@ -701,6 +706,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                         <>
                           <X className="w-5 h-5" /> Leave Event
                         </>
+                      ) : isFull ? (
+                        <>No Spots Left</>
                       ) : (
                         <>
                           <CheckCircle2 className="w-5 h-5" /> I'm In!
@@ -1017,80 +1024,22 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                           edit?.onChange({ maxSeats: n && n > 0 ? n : undefined })
                         }}
                         placeholder="Unlimited"
-                        className="w-full bg-slate-900 border border-slate-700 rounded-lg py-2 px-3 text-white focus:border-primary outline-none"
+                        className="w-full bg-slate-900 border rounded-lg py-3 px-4 text-white outline-none border-slate-700 focus:border-primary"
                       />
                       <div className="text-xs text-slate-500 mt-1">Leave blank for unlimited.</div>
                     </div>
                     <div className="space-y-1">
                       <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Visibility</div>
                       <FormSelect
-                        value={event.visibilityType}
-                        onChange={(e) => {
-                          const next = e.target.value as EventVisibility;
-                          edit?.onChange({
-                            visibilityType: next,
-                            groupIds: next === EventVisibility.GROUPS ? event.groupIds : [],
-                            allowFriendInvites: next === EventVisibility.INVITE_ONLY ? event.allowFriendInvites : false,
-                          });
-                        }}
-                        size="md"
-                        variant="surface"
+                        value={EventVisibility.INVITE_ONLY}
+                        size="lg"
+                        disabled
                       >
-                        <option value={EventVisibility.ALL_FRIENDS}>All friends</option>
-                        <option value={EventVisibility.GROUPS}>Groups</option>
                         <option value={EventVisibility.INVITE_ONLY}>Invite only</option>
                       </FormSelect>
                     </div>
                   </div>
 
-                  {event.visibilityType === EventVisibility.INVITE_ONLY ? (
-                    <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer bg-slate-800/40 p-3 rounded-xl border border-slate-800">
-                      <input
-                        type="checkbox"
-                        checked={event.allowFriendInvites}
-                        onChange={(e) => edit?.onChange({ allowFriendInvites: e.target.checked })}
-                        className="rounded bg-slate-800 border-slate-600 text-primary focus:ring-offset-slate-900"
-                      />
-                      Allow friends to invite others
-                    </label>
-                  ) : null}
-
-                  {event.visibilityType === EventVisibility.GROUPS ? (
-                    <div className="space-y-2">
-                      <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Groups</div>
-                      <div className="bg-slate-900 border border-slate-700 rounded-xl p-2 max-h-44 overflow-y-auto custom-scrollbar space-y-1">
-                        {edit?.groupsLoading ? (
-                          <div className="text-sm text-slate-500 p-2">Loading groups…</div>
-                        ) : (edit?.groups?.length ?? 0) === 0 ? (
-                          <div className="text-sm text-slate-500 p-2">No groups found.</div>
-                        ) : (
-                          (edit?.groups ?? []).map((g) => {
-                            const checked = event.groupIds.includes(g.id);
-                            return (
-                              <label
-                                key={g.id}
-                                className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer p-2 hover:bg-slate-800 rounded"
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={(e) => {
-                                    if (e.target.checked) {
-                                      edit?.onChange({ groupIds: [...event.groupIds, g.id] });
-                                    } else {
-                                      edit?.onChange({ groupIds: event.groupIds.filter((id) => id !== g.id) });
-                                    }
-                                  }}
-                                  className="rounded bg-slate-800 border-slate-600 text-primary focus:ring-offset-slate-900"
-                                />
-                                <span>{g.name}</span>
-                              </label>
-                            );
-                          })
-                        )}
-                      </div>
-                    </div>
-                  ) : null}
                 </div>
               ) : null}
 
@@ -1256,12 +1205,14 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   ) : (
                     <button
                       onClick={handleJoin}
-                      disabled={isTogglingAttendance}
-                      aria-disabled={isTogglingAttendance}
+                      disabled={isJoinDisabled}
+                      aria-disabled={isJoinDisabled}
                       className={`w-full py-3 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg ${
                         isAttending
                           ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/50'
-                          : 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
+                          : isFull
+                            ? 'bg-slate-700/60 text-slate-300 border border-slate-600'
+                            : 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
                       } disabled:opacity-60 disabled:cursor-not-allowed`}
                       type="button"
                     >
@@ -1269,6 +1220,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                         <>
                           <X className="w-5 h-5" /> Leave Event
                         </>
+                      ) : isFull ? (
+                        <>No Spots Left</>
                       ) : (
                         <>
                           <CheckCircle2 className="w-5 h-5" /> I'm In!
@@ -1335,12 +1288,14 @@ export const EventDetail: React.FC<EventDetailProps> = ({
             ) : (
               <button
                 onClick={handleJoin}
-                disabled={isTogglingAttendance}
-                aria-disabled={isTogglingAttendance}
+                disabled={isJoinDisabled}
+                aria-disabled={isJoinDisabled}
                 className={`flex-1 py-3.5 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg ${
                   isAttending
                     ? 'bg-red-500/10 text-red-400 hover:bg-red-500/20 border border-red-500/50'
-                    : 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
+                    : isFull
+                      ? 'bg-slate-700/60 text-slate-300 border border-slate-600'
+                      : 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
                 } disabled:opacity-60 disabled:cursor-not-allowed`}
                 type="button"
               >
@@ -1348,6 +1303,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   <>
                     <X className="w-5 h-5" /> Leave Event
                   </>
+                ) : isFull ? (
+                  <>No Spots Left</>
                 ) : (
                   <>
                     <CheckCircle2 className="w-5 h-5" /> I'm In!

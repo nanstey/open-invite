@@ -1,10 +1,8 @@
 
 
-import React, { useState, useEffect } from 'react';
-import { EventVisibility, SocialEvent, Group } from '../lib/types';
+import React, { useState } from 'react';
+import { EventVisibility, SocialEvent } from '../lib/types';
 import { X, Calendar, MapPin, Type, AlignLeft } from 'lucide-react';
-import { fetchGroups } from '../services/friendService';
-import { supabase } from '../lib/supabase';
 import { FormInput, FormSelect } from './FormControls';
 
 interface CreateEventModalProps {
@@ -23,22 +21,8 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ onClose, onC
   const [isFlexibleEnd, setIsFlexibleEnd] = useState(false);
   const [noPhones, setNoPhones] = useState(false);
   const [maxSeats, setMaxSeats] = useState<number | ''>('');
-  const [visibilityType, setVisibilityType] = useState<EventVisibility>(EventVisibility.ALL_FRIENDS);
-  const [selectedGroupIds, setSelectedGroupIds] = useState<string[]>([]);
-  const [allowFriendInvites, setAllowFriendInvites] = useState(false);
-  const [availableGroups, setAvailableGroups] = useState<Group[]>([]);
-
-  // Fetch groups when visibility type is GROUPS
-  useEffect(() => {
-    const loadGroups = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user && visibilityType === EventVisibility.GROUPS) {
-        const groups = await fetchGroups(user.id);
-        setAvailableGroups(groups);
-      }
-    };
-    loadGroups();
-  }, [visibilityType]);
+  // Sharing is URL-based right now; lock to INVITE_ONLY for consistent behavior.
+  const [visibilityType] = useState<EventVisibility>(EventVisibility.INVITE_ONLY);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,8 +45,8 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ onClose, onC
       noPhones,
       maxSeats: maxSeats === '' ? undefined : Number(maxSeats),
       visibilityType,
-      groupIds: visibilityType === EventVisibility.GROUPS ? selectedGroupIds : [],
-      allowFriendInvites,
+      groupIds: [],
+      allowFriendInvites: false,
       coordinates: { lat: baseLat + randomOffsetLat, lng: baseLng + randomOffsetLng }
     });
   };
@@ -161,63 +145,15 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ onClose, onC
                   </label>
                   
                   <div className="space-y-2">
+                    <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Visibility</div>
                     <FormSelect 
                       value={visibilityType} 
-                      onChange={e => {
-                        setVisibilityType(e.target.value as EventVisibility);
-                        if (e.target.value !== EventVisibility.GROUPS) {
-                          setSelectedGroupIds([]);
-                        }
-                      }} 
+                      disabled
                       size="md"
                       variant="surface"
-                      className="text-sm"
                     >
-                      <option value={EventVisibility.ALL_FRIENDS}>All Friends</option>
-                      <option value={EventVisibility.GROUPS}>Groups</option>
-                      <option value={EventVisibility.INVITE_ONLY}>Invite Only</option>
+                      <option value={EventVisibility.INVITE_ONLY}>Invite only</option>
                     </FormSelect>
-                    
-                    {visibilityType === EventVisibility.GROUPS && (
-                      <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-400 uppercase block">Select Groups</label>
-                        <div className="max-h-32 overflow-y-auto bg-slate-900 border border-slate-700 rounded-lg p-2 space-y-1">
-                          {availableGroups.length === 0 ? (
-                            <p className="text-sm text-slate-500 p-2">No groups available. Create groups in the Friends view.</p>
-                          ) : (
-                            availableGroups.map(group => (
-                              <label key={group.id} className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer p-2 hover:bg-slate-800 rounded">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedGroupIds.includes(group.id)}
-                                  onChange={e => {
-                                    if (e.target.checked) {
-                                      setSelectedGroupIds([...selectedGroupIds, group.id]);
-                                    } else {
-                                      setSelectedGroupIds(selectedGroupIds.filter(id => id !== group.id));
-                                    }
-                                  }}
-                                  className="rounded bg-slate-800 border-slate-600 text-primary focus:ring-offset-slate-900"
-                                />
-                                <span>{group.name}</span>
-                              </label>
-                            ))
-                          )}
-                        </div>
-                      </div>
-                    )}
-                    
-                    {visibilityType === EventVisibility.INVITE_ONLY && (
-                      <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer bg-slate-800/50 p-2 rounded-lg border border-slate-800">
-                        <input 
-                          type="checkbox" 
-                          checked={allowFriendInvites} 
-                          onChange={e => setAllowFriendInvites(e.target.checked)} 
-                          className="rounded bg-slate-800 border-slate-600 text-primary focus:ring-offset-slate-900" 
-                        />
-                        <span>Allow friends to invite others</span>
-                      </label>
-                    )}
                   </div>
               </div>
 
