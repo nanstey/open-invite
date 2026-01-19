@@ -4,7 +4,7 @@ import { useForm, useStore } from '@tanstack/react-form'
 
 import type { LocationData, SocialEvent, User } from '../lib/types'
 import { EventVisibility } from '../lib/types'
-import { EventDetail } from './EventDetail'
+import { EventDetail, type EventTab } from './EventDetail'
 import { fetchGroups } from '../services/friendService'
 import { createEvent, updateEvent } from '../services/eventService'
 
@@ -50,6 +50,8 @@ export function EventEditor(props: {
   mode: EditorMode
   currentUser: User
   initialEvent?: SocialEvent
+  activeTab?: EventTab
+  onTabChange?: (tab: EventTab) => void
   onCancel: () => void
   onSuccess: (event: SocialEvent) => void
 }) {
@@ -339,6 +341,8 @@ export function EventEditor(props: {
       showBackButton
       layout="shell"
       mode="edit"
+      activeTab={props.activeTab}
+      onTabChange={props.onTabChange}
       edit={{
         canEdit: canSubmit,
         isSaving: submitMutation.isPending,

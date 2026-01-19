@@ -12,11 +12,32 @@ function isUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
 }
 
+type EventTab = 'details' | 'guests' | 'chat'
+
+function parseEventTabSearch(value: unknown): EventTab | undefined {
+  if (typeof value !== 'string') return undefined
+  const tab = value.toLowerCase()
+  if (tab === 'details' || tab === 'guests' || tab === 'chat') return tab
+  return undefined
+}
+
 export const Route = createFileRoute('/e/$slug')({
+  validateSearch: (search: Record<string, unknown>) => ({
+    tab: parseEventTabSearch(search.tab),
+  }),
   component: function PublicEventDetailRouteComponent() {
     const { user } = useAuth()
     const navigate = useNavigate()
     const { slug } = Route.useParams()
+    const search = Route.useSearch()
+    const tab = search.tab ?? 'details'
+    const handleTabChange = (next: EventTab) =>
+      navigate({
+        to: '/e/$slug',
+        params: { slug },
+        search: { ...search, tab: next },
+        replace: true,
+      })
 
     const [event, setEvent] = React.useState<SocialEvent | null>(null)
     const [isLoading, setIsLoading] = React.useState(true)
@@ -57,9 +78,10 @@ export const Route = createFileRoute('/e/$slug')({
       navigate({
         to: '/e/$slug',
         params: { slug: event.slug },
+        search: { tab },
         replace: true,
       })
-    }, [event?.slug, navigate, slug])
+    }, [event?.slug, navigate, slug, tab])
 
     React.useEffect(() => {
       if (!event) return
@@ -77,11 +99,11 @@ export const Route = createFileRoute('/e/$slug')({
       navigate({
         to: '/events/$slug',
         params: { slug },
-        search: { view: undefined },
+        search: { view: undefined, tab },
         replace: true,
         state: { fromEventsView: 'list' },
       })
-    }, [user, navigate, slug])
+    }, [user, navigate, slug, tab])
 
     if (isLoading) {
       return (
@@ -123,6 +145,8 @@ export const Route = createFileRoute('/e/$slug')({
           showBackButton={false}
           layout="public"
           onRequireAuth={() => setShowLoginModal(true)}
+          activeTab={tab}
+          onTabChange={handleTabChange}
         />
         {showLoginModal ? <LoginModal onClose={() => setShowLoginModal(false)} /> : null}
       </div>

@@ -15,6 +15,8 @@ interface EventDetailProps {
   currentUser?: User | null;
   onClose?: () => void;
   onUpdateEvent: (updated: SocialEvent) => void;
+  activeTab?: EventTab;
+  onTabChange?: (tab: EventTab) => void;
   onDismiss?: () => void;
   onRequireAuth?: () => void;
   onEditRequested?: () => void;
@@ -38,22 +40,19 @@ interface EventDetailProps {
   };
 }
 
-function toLocalDateTimeInputValue(iso: string | undefined): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const yyyy = d.getFullYear();
-  const mm = pad(d.getMonth() + 1);
-  const dd = pad(d.getDate());
-  const hh = pad(d.getHours());
-  const min = pad(d.getMinutes());
-  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
-}
-
 function splitLocalDateTime(value: string | undefined): { date: string; time: string } {
   if (!value) return { date: '', time: '' }
   const [date, time] = value.split('T')
   return { date: date ?? '', time: time ?? '' }
+}
+
+export type EventTab = 'details' | 'guests' | 'chat'
+
+function parseEventTab(value: unknown): EventTab {
+  if (typeof value !== 'string') return 'details'
+  const tab = value.toLowerCase()
+  if (tab === 'details' || tab === 'guests' || tab === 'chat') return tab
+  return 'details'
 }
 
 export const EventDetail: React.FC<EventDetailProps> = ({
@@ -61,6 +60,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   currentUser,
   onClose,
   onUpdateEvent,
+  activeTab: activeTabProp,
+  onTabChange,
   onDismiss,
   onRequireAuth,
   onEditRequested,
@@ -78,7 +79,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const [host, setHost] = useState<User | null>(null);
   const [attendeesList, setAttendeesList] = useState<User[]>([]);
   const [commentUsers, setCommentUsers] = useState<Map<string, User>>(new Map());
-  const [activeTab, setActiveTab] = useState<'details' | 'going' | 'discussion'>('details');
+  const [uncontrolledActiveTab, setUncontrolledActiveTab] = useState<EventTab>('details')
   const [showHeaderImageModal, setShowHeaderImageModal] = useState(false)
   const miniMapContainerRef = useRef<HTMLDivElement>(null);
   const miniMapInstanceRef = useRef<any>(null);
@@ -86,6 +87,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const theme = getTheme(event.activityType);
   const currentUserId = currentUser?.id;
   const isGuest = !currentUserId;
+  const requestedTab = activeTabProp ?? uncontrolledActiveTab
+  const activeTab: EventTab = isGuest ? 'details' : requestedTab
 
   const [draftDate, setDraftDate] = useState<string>('')
   const [draftTime, setDraftTime] = useState<string>('')
@@ -188,8 +191,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
 
   const tabs: TabOption[] = [
     { id: 'details', label: 'Details', icon: <Info className="w-4 h-4" /> },
-    { id: 'going', label: `Going (${goingLabel})`, icon: <Users className="w-4 h-4" /> },
-    { id: 'discussion', label: `Discussion (${event.comments.length})`, icon: <MessageSquare className="w-4 h-4" /> },
+    { id: 'guests', label: 'Guests', icon: <Users className="w-4 h-4" /> },
+    { id: 'chat', label: 'Chat', icon: <MessageSquare className="w-4 h-4" /> },
   ];
 
   const openInMaps = () => {
@@ -204,12 +207,17 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const hasCoordinates = typeof event.coordinates?.lat === 'number' && typeof event.coordinates?.lng === 'number'
 
   const handleTabChange = (id: any) => {
-    const tabId = String(id) as 'details' | 'going' | 'discussion';
-    if (isGuest && (tabId === 'going' || tabId === 'discussion')) {
+    const tabId = parseEventTab(id)
+    if (isGuest && tabId !== 'details') {
       onRequireAuth?.();
       return;
     }
-    setActiveTab(tabId);
+    if (tabId === activeTab) return
+    if (onTabChange) {
+      onTabChange(tabId)
+      return
+    }
+    setUncontrolledActiveTab(tabId)
   };
 
   function formatLocationForDisplay(raw: string): { primary: string; secondary?: string } {
@@ -423,7 +431,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
             <div className={`inline-block px-2 py-0.5 rounded text-xs font-bold text-white ${theme.bg}`}>
               {event.activityType}
             </div>
-            <div className="flex items-end justify-between gap-4 mt-2 mb-4">
+            <div className="flex items-end justify-between gap-4 mt-2 mb-4 h-12">
               <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight min-w-0">
                 {event.title || 'Untitled invite'}
               </h1>
@@ -950,7 +958,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
             </div>
           ) : null}
 
-          {activeTab === 'going' ? (
+          {activeTab === 'guests' ? (
             <div className="space-y-4">
               {isEditMode ? (
                 <div className="bg-surface border border-slate-700 rounded-2xl p-5 space-y-4">
@@ -1050,7 +1058,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               <div className="bg-surface border border-slate-700 rounded-2xl p-5">
                 <div className="flex items-center justify-between mb-4">
                   <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                    <Users className="w-5 h-5 text-slate-400" /> Going
+                    <Users className="w-5 h-5 text-slate-400" /> Guests
                   </h2>
                   <div className="text-sm text-slate-400 font-medium">{event.maxSeats ? goingLabel : `${attendeeCount}`}</div>
                 </div>
@@ -1076,9 +1084,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
             </div>
           ) : null}
 
-          {activeTab === 'discussion' ? (
+          {activeTab === 'chat' ? (
             <div className="bg-surface border border-slate-700 rounded-2xl p-5">
-              <h2 className="text-lg font-bold text-white mb-4">Discussion</h2>
+              <h2 className="text-lg font-bold text-white mb-4">Chat</h2>
 
               <div className="space-y-6 mb-6">
                 {event.comments.length === 0 && (
@@ -1112,7 +1120,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
 
               {isEditMode ? (
                 <div className="mt-4 text-sm text-slate-400 bg-slate-900/40 border border-slate-800 rounded-xl p-4">
-                  Discussion is read-only while editing. Save your changes to return to normal interaction.
+                  Chat is read-only while editing. Save your changes to return to normal interaction.
                 </div>
               ) : (
                 <form onSubmit={handlePostComment} className="relative">
