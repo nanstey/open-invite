@@ -10,6 +10,7 @@ import { fetchEventById, fetchEventBySlug, markEventViewedFromRouteParam, update
 import { realtimeService } from '../services/realtimeService'
 
 type EventsView = 'list' | 'map' | 'calendar'
+type EventTab = 'details' | 'guests' | 'chat'
 
 function parseEventsView(value: unknown): EventsView {
   const view = typeof value === 'string' ? value.toLowerCase() : 'list'
@@ -17,16 +18,35 @@ function parseEventsView(value: unknown): EventsView {
   return 'list'
 }
 
+function parseEventsViewSearch(value: unknown): EventsView | undefined {
+  if (typeof value !== 'string') return undefined
+  const view = value.toLowerCase()
+  if (view === 'map' || view === 'calendar' || view === 'list') return view
+  return undefined
+}
+
+function parseEventTabSearch(value: unknown): EventTab | undefined {
+  if (typeof value !== 'string') return undefined
+  const tab = value.toLowerCase()
+  if (tab === 'details' || tab === 'guests' || tab === 'chat') return tab
+  return undefined
+}
+
 function isUuid(value: string): boolean {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value)
 }
 
 export const Route = createFileRoute('/events/$slug')({
+  validateSearch: (search: Record<string, unknown>) => ({
+    view: parseEventsViewSearch(search.view),
+    tab: parseEventTabSearch(search.tab),
+  }),
   beforeLoad: ({ context, params }) => {
     if (!context.auth.loading && !context.auth.user) {
       throw redirect({
         to: '/e/$slug',
         params: { slug: params.slug },
+        search: { tab: undefined },
       })
     }
   },
@@ -34,12 +54,23 @@ export const Route = createFileRoute('/events/$slug')({
     const { user } = useAuth()
     const navigate = useNavigate()
     const { slug } = Route.useParams()
+    const search = Route.useSearch()
+    const { tab } = search
+    const activeTab = tab ?? 'details'
     const { fromEventsView } = useRouterState({
       select: (s) => ({
         fromEventsView: s.location.state.fromEventsView,
       }),
     })
     const view = parseEventsView(fromEventsView)
+    const handleTabChange = (next: EventTab) =>
+      navigate({
+        to: '/events/$slug',
+        params: { slug },
+        search: { ...search, tab: next },
+        replace: true,
+        state: { fromEventsView },
+      })
 
     const [event, setEvent] = React.useState<SocialEvent | null>(null)
     const [isLoading, setIsLoading] = React.useState(true)
@@ -87,11 +118,11 @@ export const Route = createFileRoute('/events/$slug')({
       navigate({
         to: '/events/$slug',
         params: { slug: event.slug },
-        search: { view: undefined },
+        search: { view: undefined, tab: activeTab },
         replace: true,
         state: { fromEventsView: view },
       })
-    }, [event?.slug, navigate, slug, view])
+    }, [event?.slug, navigate, slug, view, activeTab])
 
     React.useEffect(() => {
       if (!event) return
@@ -163,6 +194,8 @@ export const Route = createFileRoute('/events/$slug')({
           mode="update"
           currentUser={user}
           initialEvent={event}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
           onCancel={() => setIsEditing(false)}
           onSuccess={(updated) => {
             setEvent(updated)
@@ -179,6 +212,8 @@ export const Route = createFileRoute('/events/$slug')({
         onClose={onClose}
         onUpdateEvent={onUpdateEvent}
         onEditRequested={isHost ? () => setIsEditing(true) : undefined}
+        activeTab={activeTab}
+        onTabChange={handleTabChange}
       />
     )
   },
