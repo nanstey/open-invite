@@ -134,7 +134,7 @@ function AppShellLayout() {
     ) : null
 
   return (
-    <div className="min-h-screen w-full flex flex-col md:flex-row overflow-hidden h-screen text-slate-100 bg-background">
+    <div className="min-h-screen min-h-0 w-full flex flex-col md:flex-row overflow-hidden h-screen text-slate-100 bg-background">
       {/* Desktop Sidebar */}
       <nav className="hidden md:flex w-20 lg:w-64 bg-slate-900 border-r border-slate-800 flex-col justify-between items-center p-4 z-20 shrink-0">
         <div className="flex flex-col items-center gap-8 w-full">
@@ -253,7 +253,7 @@ function AppShellLayout() {
 
       {/* Main Content Area */}
       <main
-        className={`flex-1 relative flex flex-col bg-background overflow-hidden ${
+        className={`flex-1 min-h-0 relative flex flex-col bg-background overflow-hidden ${
           hideShellHeaderForRoute ? 'pt-0' : 'pt-14'
         } ${hideMobileBottomNavForRoute ? 'pb-0' : 'pb-16'} md:pt-0 md:pb-0 h-screen md:h-auto`}
       >
@@ -268,7 +268,7 @@ function AppShellLayout() {
         ) : null}
 
         {/* Page Content */}
-        <div className="flex-1 flex flex-col overflow-hidden relative">
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden relative">
           <Outlet />
         </div>
       </main>
