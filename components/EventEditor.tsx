@@ -1,11 +1,10 @@
 import React from 'react'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { useForm, useStore } from '@tanstack/react-form'
 
 import type { LocationData, SocialEvent, User } from '../lib/types'
 import { EventVisibility } from '../lib/types'
 import { EventDetail, type EventTab } from './EventDetail'
-import { fetchGroups } from '../services/friendService'
 import { createEvent, updateEvent } from '../services/eventService'
 
 type EditorMode = 'create' | 'update'
@@ -26,9 +25,6 @@ type EventEditorValues = {
   isFlexibleEnd: boolean
   noPhones: boolean
   maxSeats: number | ''
-  visibilityType: EventVisibility
-  groupIds: string[]
-  allowFriendInvites: boolean
   coordinates: { lat: number; lng: number } | undefined
   locationData: LocationData | undefined
 }
@@ -81,9 +77,6 @@ export function EventEditor(props: {
         isFlexibleEnd: ev.isFlexibleEnd,
         noPhones: ev.noPhones,
         maxSeats: ev.maxSeats && ev.maxSeats > 0 ? ev.maxSeats : '',
-        visibilityType: ev.visibilityType,
-        groupIds: ev.groupIds ?? [],
-        allowFriendInvites: ev.allowFriendInvites,
         coordinates: ev.coordinates,
         locationData: ev.locationData,
       }
@@ -101,15 +94,11 @@ export function EventEditor(props: {
       isFlexibleEnd: false,
       noPhones: false,
       maxSeats: '',
-      visibilityType: EventVisibility.ALL_FRIENDS,
-      groupIds: [],
-      allowFriendInvites: false,
       coordinates: undefined,
       locationData: undefined,
     }
   }, [
     props.initialEvent?.activityType,
-    props.initialEvent?.allowFriendInvites,
     props.initialEvent?.coordinates?.lat,
     props.initialEvent?.coordinates?.lng,
     props.initialEvent?.locationData,
@@ -123,9 +112,6 @@ export function EventEditor(props: {
     props.initialEvent?.noPhones,
     props.initialEvent?.startTime,
     props.initialEvent?.title,
-    props.initialEvent?.visibilityType,
-    // Note: groupIds is an array; depend on id + joined values to keep memo stable across ref changes.
-    props.initialEvent?.groupIds?.join('|'),
   ])
 
   const onSubmit = React.useCallback(
@@ -163,9 +149,9 @@ export function EventEditor(props: {
           isFlexibleEnd: value.isFlexibleEnd,
           noPhones: value.noPhones,
           maxSeats: normalizedMaxSeats,
-          visibilityType: value.visibilityType,
-          groupIds: value.visibilityType === EventVisibility.GROUPS ? value.groupIds : [],
-          allowFriendInvites: value.allowFriendInvites,
+          visibilityType: EventVisibility.INVITE_ONLY,
+          groupIds: [],
+          allowFriendInvites: false,
           coordinates: value.coordinates,
           locationData: value.locationData,
         })
@@ -188,9 +174,9 @@ export function EventEditor(props: {
         isFlexibleEnd: value.isFlexibleEnd,
         noPhones: value.noPhones,
         maxSeats: normalizedMaxSeats,
-        visibilityType: value.visibilityType,
-        groupIds: value.visibilityType === EventVisibility.GROUPS ? value.groupIds : [],
-        allowFriendInvites: value.allowFriendInvites,
+        visibilityType: EventVisibility.INVITE_ONLY,
+        groupIds: [],
+        allowFriendInvites: false,
         coordinates: value.coordinates,
         locationData: value.locationData,
       })
@@ -230,12 +216,6 @@ export function EventEditor(props: {
   const canSubmit = Object.values(detailErrors).every((v) => !v)
   const [showValidation, setShowValidation] = React.useState(false)
 
-  const groupsQuery = useQuery({
-    queryKey: ['groups', props.currentUser.id],
-    queryFn: () => fetchGroups(props.currentUser.id),
-    enabled: values.visibilityType === EventVisibility.GROUPS,
-  })
-
   const submitMutation = useMutation({
     mutationFn: async () => {
       await form.handleSubmit()
@@ -267,9 +247,9 @@ export function EventEditor(props: {
       endTime: endTimeIso ?? props.initialEvent?.endTime,
       isFlexibleStart: values.isFlexibleStart,
       isFlexibleEnd: values.isFlexibleEnd,
-      visibilityType: values.visibilityType,
-      groupIds: values.visibilityType === EventVisibility.GROUPS ? values.groupIds : EMPTY_STRING_ARR,
-      allowFriendInvites: values.allowFriendInvites,
+      visibilityType: EventVisibility.INVITE_ONLY,
+      groupIds: EMPTY_STRING_ARR,
+      allowFriendInvites: false,
       maxSeats:
         values.maxSeats === ''
           ? undefined
@@ -291,13 +271,11 @@ export function EventEditor(props: {
     props.initialEvent?.reactions,
     props.initialEvent?.slug,
     values.activityType,
-    values.allowFriendInvites,
     values.coordinates,
     values.headerImageUrl,
     values.locationData,
     values.description,
     values.durationHours,
-    values.groupIds,
     values.isFlexibleEnd,
     values.isFlexibleStart,
     values.location,
@@ -305,7 +283,6 @@ export function EventEditor(props: {
     values.noPhones,
     values.startDateTimeLocal,
     values.title,
-    values.visibilityType,
   ])
 
   const title = isUpdate ? 'Edit invite' : 'New invite'
@@ -324,9 +301,6 @@ export function EventEditor(props: {
       const n = patch.maxSeats === undefined ? undefined : Number(patch.maxSeats)
       form.setFieldValue('maxSeats', n && n > 0 ? n : '')
     }
-    if (patch.visibilityType !== undefined) form.setFieldValue('visibilityType', patch.visibilityType)
-    if (patch.groupIds !== undefined) form.setFieldValue('groupIds', patch.groupIds)
-    if (patch.allowFriendInvites !== undefined) form.setFieldValue('allowFriendInvites', patch.allowFriendInvites)
     if ('coordinates' in patch) form.setFieldValue('coordinates', patch.coordinates)
     if ('locationData' in patch) form.setFieldValue('locationData', patch.locationData)
     if (patch.startTime !== undefined) form.setFieldValue('startDateTimeLocal', toLocalDateTimeInputValue(patch.startTime))
@@ -347,8 +321,6 @@ export function EventEditor(props: {
         canEdit: canSubmit,
         isSaving: submitMutation.isPending,
         primaryLabel,
-        groups: groupsQuery.data ?? [],
-        groupsLoading: groupsQuery.isLoading,
         errors: showValidation ? detailErrors : undefined,
         startDateTimeLocal: values.startDateTimeLocal,
         onChangeStartDateTimeLocal: (value) => form.setFieldValue('startDateTimeLocal', value),

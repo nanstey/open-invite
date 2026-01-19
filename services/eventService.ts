@@ -435,8 +435,12 @@ export async function updateEvent(eventId: string, updates: Partial<SocialEvent>
  * Join an event
  */
 export async function joinEvent(eventId: string): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
+  // Prefer session (no network) vs auth.getUser() (network). This also avoids
+  // transient "no user" cases where the app has user state but getUser fails.
+  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  const user = session?.user;
   if (!user) {
+    console.warn('joinEvent: no session user:', sessionError);
     return false;
   }
 
@@ -445,12 +449,18 @@ export async function joinEvent(eventId: string): Promise<boolean> {
     event_id: eventId,
     user_id: user.id,
   };
+  // Make join idempotent: if the row already exists, treat it as success.
+  // (The table has UNIQUE(event_id, user_id).)
   const result = await supabase
     .from('event_attendees')
-    .insert(attendeeData as unknown as never);
+    .upsert(attendeeData as any, { onConflict: 'event_id,user_id' });
   const { error } = result as unknown as { error: any };
+  if (error) {
+    console.error('Error joining event:', error);
+    return false;
+  }
 
-  return !error;
+  return true;
 }
 
 /**

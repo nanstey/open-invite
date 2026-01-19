@@ -6,7 +6,7 @@ import type { SocialEvent } from '../lib/types'
 import { useAuth } from '../components/AuthProvider'
 import { EventEditor } from '../components/EventEditor'
 import { EventDetail } from '../components/EventDetail'
-import { fetchEventById, fetchEventBySlug, markEventViewedFromRouteParam, updateEvent } from '../services/eventService'
+import { addComment, fetchEventById, fetchEventBySlug, joinEvent, leaveEvent, markEventViewedFromRouteParam } from '../services/eventService'
 import { realtimeService } from '../services/realtimeService'
 
 type EventsView = 'list' | 'map' | 'calendar'
@@ -181,9 +181,112 @@ export const Route = createFileRoute('/events/$slug')({
       )
     }
 
-    const onUpdateEvent = async (updated: SocialEvent) => {
-      const result = await updateEvent(updated.id, updated)
-      if (result) setEvent(result)
+    const handleJoinEvent = async (eventId: string) => {
+      // Optimistic UI: update immediately so the user sees the join.
+      setEvent((prev) => {
+        if (!prev) return prev
+        if (prev.id !== eventId) return prev
+        if (prev.attendees.includes(user.id)) return prev
+        return { ...prev, attendees: [...prev.attendees, user.id] }
+      })
+
+      try {
+        const success = await joinEvent(eventId)
+        if (success) {
+          const refreshed = await fetchEventById(eventId)
+          if (refreshed) setEvent(refreshed)
+        } else {
+          // Roll back optimistic update on failure.
+          setEvent((prev) => {
+            if (!prev) return prev
+            if (prev.id !== eventId) return prev
+            return { ...prev, attendees: prev.attendees.filter((id) => id !== user.id) }
+          })
+        }
+      } catch (error) {
+        console.error('Error joining event:', error)
+        // Roll back optimistic update on exception.
+        setEvent((prev) => {
+          if (!prev) return prev
+          if (prev.id !== eventId) return prev
+          return { ...prev, attendees: prev.attendees.filter((id) => id !== user.id) }
+        })
+      }
+    }
+
+    const handleLeaveEvent = async (eventId: string) => {
+      // Optimistic UI.
+      setEvent((prev) => {
+        if (!prev) return prev
+        if (prev.id !== eventId) return prev
+        return { ...prev, attendees: prev.attendees.filter((id) => id !== user.id) }
+      })
+
+      try {
+        const success = await leaveEvent(eventId)
+        if (success) {
+          const refreshed = await fetchEventById(eventId)
+          if (refreshed) setEvent(refreshed)
+        } else {
+          // Roll back (re-add self) on failure.
+          setEvent((prev) => {
+            if (!prev) return prev
+            if (prev.id !== eventId) return prev
+            if (prev.attendees.includes(user.id)) return prev
+            return { ...prev, attendees: [...prev.attendees, user.id] }
+          })
+        }
+      } catch (error) {
+        console.error('Error leaving event:', error)
+        // Roll back (re-add self) on exception.
+        setEvent((prev) => {
+          if (!prev) return prev
+          if (prev.id !== eventId) return prev
+          if (prev.attendees.includes(user.id)) return prev
+          return { ...prev, attendees: [...prev.attendees, user.id] }
+        })
+      }
+    }
+
+    // Local-only updates for the in-memory event object shown on this page.
+    // (Persistence is handled by dedicated handlers like join/leave/postComment.)
+    const onUpdateEvent = (updated: SocialEvent) => {
+      setEvent(updated)
+    }
+
+    const handlePostComment = async (eventId: string, text: string) => {
+      const optimisticId = `optimistic-${Date.now().toString()}`
+      const optimistic = {
+        id: optimisticId,
+        userId: user.id,
+        text,
+        timestamp: new Date().toISOString(),
+      }
+
+      setEvent((prev) => {
+        if (!prev) return prev
+        if (prev.id !== eventId) return prev
+        return { ...prev, comments: [...prev.comments, optimistic] }
+      })
+
+      const inserted = await addComment(eventId, text)
+      if (!inserted) {
+        // Roll back optimistic comment on failure.
+        setEvent((prev) => {
+          if (!prev) return prev
+          if (prev.id !== eventId) return prev
+          return { ...prev, comments: prev.comments.filter((c) => c.id !== optimisticId) }
+        })
+        return
+      }
+
+      // Replace optimistic comment with the real one (real id + server timestamp).
+      setEvent((prev) => {
+        if (!prev) return prev
+        if (prev.id !== eventId) return prev
+        const withoutOptimistic = prev.comments.filter((c) => c.id !== optimisticId)
+        return { ...prev, comments: [...withoutOptimistic, inserted] }
+      })
     }
 
     const isHost = event.hostId === user.id
@@ -211,6 +314,9 @@ export const Route = createFileRoute('/events/$slug')({
         currentUser={user}
         onClose={onClose}
         onUpdateEvent={onUpdateEvent}
+        onPostComment={handlePostComment}
+        onJoin={handleJoinEvent}
+        onLeave={handleLeaveEvent}
         onEditRequested={isHost ? () => setIsEditing(true) : undefined}
         activeTab={activeTab}
         onTabChange={handleTabChange}
