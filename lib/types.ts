@@ -56,6 +56,7 @@ export interface SocialEvent {
   slug: string;
   hostId: string;
   title: string;
+  headerImageUrl?: string;
   description: string;
   activityType: string; // e.g., "Dining", "Sport", "Travel"
   location: string;

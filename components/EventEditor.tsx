@@ -16,6 +16,7 @@ const EMPTY_COMMENTS: SocialEvent['comments'] = []
 
 type EventEditorValues = {
   title: string
+  headerImageUrl: string
   location: string
   description: string
   startDateTimeLocal: string
@@ -68,6 +69,7 @@ export function EventEditor(props: {
           : ''
       return {
         title: ev.title,
+        headerImageUrl: ev.headerImageUrl ?? '',
         location: ev.location,
         description: ev.description,
         startDateTimeLocal: toLocalDateTimeInputValue(ev.startTime),
@@ -87,6 +89,7 @@ export function EventEditor(props: {
 
     return {
       title: '',
+      headerImageUrl: '',
       location: '',
       description: '',
       startDateTimeLocal: '',
@@ -109,6 +112,7 @@ export function EventEditor(props: {
     props.initialEvent?.coordinates?.lng,
     props.initialEvent?.locationData,
     props.initialEvent?.description,
+    props.initialEvent?.headerImageUrl,
     props.initialEvent?.id,
     props.initialEvent?.isFlexibleEnd,
     props.initialEvent?.isFlexibleStart,
@@ -146,6 +150,7 @@ export function EventEditor(props: {
       if (!isUpdate) {
         const created = await createEvent({
           title,
+          headerImageUrl: value.headerImageUrl.trim() || undefined,
           location,
           description,
           startTime,
@@ -170,6 +175,7 @@ export function EventEditor(props: {
 
       const updated = await updateEvent(props.initialEvent.id, {
         title,
+        headerImageUrl: value.headerImageUrl.trim() || undefined,
         location,
         description,
         startTime,
@@ -247,6 +253,7 @@ export function EventEditor(props: {
       slug: isUpdate ? (props.initialEvent?.slug ?? 'draft') : 'draft',
       hostId: props.currentUser.id,
       title: values.title,
+      headerImageUrl: values.headerImageUrl,
       description: values.description,
       activityType: values.activityType,
       location: values.location,
@@ -282,6 +289,7 @@ export function EventEditor(props: {
     values.activityType,
     values.allowFriendInvites,
     values.coordinates,
+    values.headerImageUrl,
     values.locationData,
     values.description,
     values.durationHours,
@@ -301,6 +309,7 @@ export function EventEditor(props: {
 
   const applyPatch = (patch: Partial<SocialEvent>) => {
     if (patch.title !== undefined) form.setFieldValue('title', patch.title)
+    if (patch.headerImageUrl !== undefined) form.setFieldValue('headerImageUrl', patch.headerImageUrl ?? '')
     if (patch.location !== undefined) form.setFieldValue('location', patch.location)
     if (patch.description !== undefined) form.setFieldValue('description', patch.description)
     if (patch.activityType !== undefined) form.setFieldValue('activityType', patch.activityType)

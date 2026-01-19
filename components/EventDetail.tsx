@@ -2,12 +2,13 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { Comment, EventVisibility, Group, SocialEvent, User } from '../lib/types';
 import { getTheme } from '../lib/constants';
-import { ArrowLeft, Calendar, Info, MapPin, MessageSquare, Save, Send, Users, X, CheckCircle2, EyeOff } from 'lucide-react';
+import { ArrowLeft, Calendar, Info, MapPin, MessageSquare, Save, Send, Users, X, CheckCircle2, EyeOff, Image as ImageIcon } from 'lucide-react';
 import { fetchUser, fetchUsers } from '../services/userService';
 import { TabGroup, type TabOption } from './TabGroup';
 import { useRouterState } from '@tanstack/react-router';
 import { FormSelect } from './FormControls';
 import { LocationAutocomplete } from './LocationAutocomplete'
+import { HeaderImageModal } from './HeaderImageModal'
 
 interface EventDetailProps {
   event: SocialEvent;
@@ -78,6 +79,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const [attendeesList, setAttendeesList] = useState<User[]>([]);
   const [commentUsers, setCommentUsers] = useState<Map<string, User>>(new Map());
   const [activeTab, setActiveTab] = useState<'details' | 'going' | 'discussion'>('details');
+  const [showHeaderImageModal, setShowHeaderImageModal] = useState(false)
   const miniMapContainerRef = useRef<HTMLDivElement>(null);
   const miniMapInstanceRef = useRef<any>(null);
   const miniMapMarkerRef = useRef<any>(null);
@@ -124,6 +126,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const isHost = !!currentUserId && event.hostId === currentUserId;
   const isAttending = !!currentUserId && event.attendees.includes(currentUserId);
   const isInvolved = isHost || isAttending;
+  const headerImageSrc = event.headerImageUrl || `https://picsum.photos/seed/${event.id}/1200/800`
   const formatDateLong = (date: Date) => {
     // Format exactly like: "Fri Jan 16, 2026"
     // (no comma after weekday; comma between day and year)
@@ -395,7 +398,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       {/* Hero / Header */}
       <div className="relative w-full h-56 md:h-72 bg-slate-800">
         <img
-          src={`https://picsum.photos/seed/${event.id}/1200/800`}
+          src={headerImageSrc}
           className="w-full h-full object-cover"
           alt="cover"
         />
@@ -419,9 +422,22 @@ export const EventDetail: React.FC<EventDetailProps> = ({
             <div className={`inline-block px-2 py-0.5 rounded text-xs font-bold text-white ${theme.bg}`}>
               {event.activityType}
             </div>
-            <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight mt-2 mb-4">
-              {event.title || 'Untitled invite'}
-            </h1>
+            <div className="flex items-end justify-between gap-4 mt-2 mb-4">
+              <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight min-w-0">
+                {event.title || 'Untitled invite'}
+              </h1>
+              {isEditMode && isHost ? (
+                <button
+                  type="button"
+                  onClick={() => setShowHeaderImageModal(true)}
+                  className="shrink-0 bg-black/30 hover:bg-black/50 p-3 rounded-xl text-white backdrop-blur transition-all border border-white/10"
+                  aria-label="Choose header image"
+                  title="Choose header image"
+                >
+                  <ImageIcon className="w-6 h-6 md:w-5 md:h-5" />
+                </button>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
@@ -1308,6 +1324,21 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           ) : null}
         </div>
       </div>
+
+      {showHeaderImageModal ? (
+        <HeaderImageModal
+          defaultQuery={event.title || ''}
+          initialSelectedUrl={event.headerImageUrl}
+          onClose={() => setShowHeaderImageModal(false)}
+          onUpdate={(imageUrl) => {
+            if (isEditMode) {
+              edit?.onChange({ headerImageUrl: imageUrl })
+              return
+            }
+            onUpdateEvent({ ...event, headerImageUrl: imageUrl })
+          }}
+        />
+      ) : null}
     </div>
   );
 };

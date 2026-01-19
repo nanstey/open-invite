@@ -43,6 +43,7 @@ export interface Database {
           title: string
           description: string
           activity_type: string
+          header_image_url: string | null
           location: string
           coordinates: Json | null
           location_data: Json | null
@@ -64,6 +65,7 @@ export interface Database {
           title: string
           description: string
           activity_type: string
+          header_image_url?: string | null
           location: string
           coordinates?: Json | null
           location_data?: Json | null
@@ -85,6 +87,7 @@ export interface Database {
           title?: string
           description?: string
           activity_type?: string
+          header_image_url?: string | null
           location?: string
           coordinates?: Json | null
           location_data?: Json | null

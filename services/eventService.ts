@@ -71,6 +71,7 @@ function transformEventRow(row: any, attendees: string[], comments: Comment[], r
     slug: row.slug,
     hostId: row.host_id,
     title: row.title,
+    headerImageUrl: row.header_image_url || undefined,
     description: row.description,
     activityType: row.activity_type,
     location: row.location,
@@ -328,6 +329,7 @@ export async function createEvent(
     title: eventData.title,
     description: eventData.description,
     activity_type: eventData.activityType,
+    header_image_url: eventData.headerImageUrl ?? null,
     location: eventData.location,
     coordinates: (eventData.coordinates ?? null) as any,
     location_data: (eventData.locationData ?? null) as any,
@@ -385,6 +387,7 @@ export async function updateEvent(eventId: string, updates: Partial<SocialEvent>
   if (updates.title !== undefined) updateData.title = updates.title;
   if (updates.description !== undefined) updateData.description = updates.description;
   if (updates.activityType !== undefined) updateData.activity_type = updates.activityType;
+  if (updates.headerImageUrl !== undefined) updateData.header_image_url = updates.headerImageUrl;
   if (updates.location !== undefined) updateData.location = updates.location;
   if (updates.coordinates !== undefined) updateData.coordinates = updates.coordinates;
   if (updates.locationData !== undefined) updateData.location_data = updates.locationData;
