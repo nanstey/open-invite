@@ -4,11 +4,13 @@ import { Comment, EventVisibility, Group, SocialEvent, User } from '../lib/types
 import { getTheme } from '../lib/constants';
 import { ArrowLeft, Calendar, Info, MapPin, MessageSquare, Save, Send, Users, X, CheckCircle2, EyeOff, Image as ImageIcon } from 'lucide-react';
 import { fetchUser, fetchUsers } from '../services/userService';
+import { fetchFriends } from '../services/friendService'
 import { TabGroup, type TabOption } from './TabGroup';
 import { useRouterState } from '@tanstack/react-router';
 import { FormSelect } from './FormControls';
 import { LocationAutocomplete } from './LocationAutocomplete'
 import { HeaderImageModal } from './HeaderImageModal'
+import { ComingSoonPopover, useComingSoonPopover } from './ComingSoonPopover'
 
 interface EventDetailProps {
   event: SocialEvent;
@@ -88,9 +90,11 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const [commentUsers, setCommentUsers] = useState<Map<string, User>>(new Map());
   const [uncontrolledActiveTab, setUncontrolledActiveTab] = useState<EventTab>('details')
   const [showHeaderImageModal, setShowHeaderImageModal] = useState(false)
+  const [friendIds, setFriendIds] = useState<Set<string>>(new Set())
   const miniMapContainerRef = useRef<HTMLDivElement>(null);
   const miniMapInstanceRef = useRef<any>(null);
   const miniMapMarkerRef = useRef<any>(null);
+  const comingSoon = useComingSoonPopover()
   const theme = getTheme(event.activityType);
   const currentUserId = currentUser?.id;
   const isGuest = !currentUserId;
@@ -215,6 +219,37 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   };
 
   const hasCoordinates = typeof event.coordinates?.lat === 'number' && typeof event.coordinates?.lng === 'number'
+
+  useEffect(() => {
+    if (isGuest) return
+    if (isEditMode) return
+    if (activeTab !== 'guests') return
+    let cancelled = false
+
+    ;(async () => {
+      try {
+        const friends = await fetchFriends()
+        if (cancelled) return
+        setFriendIds(new Set(friends.map((f) => f.id)))
+      } catch (err) {
+        console.error('Error loading friends:', err)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeTab, isEditMode, isGuest])
+
+  const handleRemoveAttendee = (attendeeId: string) => {
+    if (!isEditMode) return
+    if (!attendeeId) return
+    if (attendeeId === event.hostId) return
+
+    const nextAttendees = event.attendees.filter((id) => id !== attendeeId)
+    edit?.onChange({ attendees: nextAttendees })
+    setAttendeesList((prev) => prev.filter((u) => u.id !== attendeeId))
+  }
 
   const handleTabChange = (id: any) => {
     const tabId = parseEventTab(id)
@@ -1051,23 +1086,88 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   <div className="text-sm text-slate-400 font-medium">{event.maxSeats ? goingLabel : `${attendeeCount}`}</div>
                 </div>
 
-                <div className="flex flex-wrap gap-3">
-                  {attendeesList.map((u) => (
-                    <div key={u.id} className="relative group cursor-pointer" title={u.name}>
-                      <img src={u.avatar} className="w-12 h-12 rounded-full border-2 border-surface" alt={u.name} />
-                      {host && u.id === host.id && (
-                        <div className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold border border-surface">
-                          ★
+                {attendeesList.length === 0 ? (
+                  <div className="text-sm text-slate-500 italic">No guests yet.</div>
+                ) : (
+                  <div className="space-y-2">
+                    {attendeesList.map((u) => {
+                      const isThisHost = u.id === event.hostId
+                      const isMe = !!currentUserId && u.id === currentUserId
+                      const isFriend = friendIds.has(u.id)
+                      const canRemove = isEditMode && !isThisHost
+
+                      return (
+                        <div
+                          key={u.id}
+                          className="flex items-center justify-between gap-3 p-3 rounded-xl border border-slate-800 bg-slate-900/30 hover:border-slate-700 transition-colors"
+                        >
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="relative shrink-0">
+                              <img
+                                src={u.avatar}
+                                className="w-10 h-10 rounded-full border-2 border-slate-700 bg-slate-800"
+                                alt={u.name}
+                              />
+                              {isThisHost ? (
+                                <div className="absolute -top-1 -right-1 bg-yellow-500 text-black text-[10px] w-5 h-5 flex items-center justify-center rounded-full font-bold border border-surface">
+                                  ★
+                                </div>
+                              ) : null}
+                            </div>
+                            <div className="min-w-0">
+                              <div className="text-sm font-bold text-white truncate">{u.name}</div>
+                              {isThisHost ? (
+                                <div className="text-xs text-yellow-400 font-semibold">Host</div>
+                              ) : isMe ? (
+                                <div className="text-xs text-slate-500 font-semibold">You</div>
+                              ) : null}
+                            </div>
+                          </div>
+
+                          <div className="shrink-0">
+                            {isEditMode ? (
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveAttendee(u.id)}
+                                disabled={!canRemove}
+                                className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${
+                                  canRemove
+                                    ? 'bg-red-500/10 text-red-300 border-red-500/40 hover:bg-red-500/20'
+                                    : 'bg-slate-800 text-slate-500 border-slate-700'
+                                }`}
+                              >
+                                Remove
+                              </button>
+                            ) : isMe ? null : isFriend ? (
+                              <button
+                                type="button"
+                                disabled
+                                className="px-3 py-2 rounded-xl text-xs font-bold border bg-slate-800 text-slate-300 border-slate-700"
+                              >
+                                Friends
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                aria-disabled="true"
+                                onClick={(e) => comingSoon.show(e, 'Coming Soon!')}
+                                className="px-3 py-2 rounded-xl text-xs font-bold border bg-slate-900 text-slate-500 border-slate-700 opacity-60 cursor-not-allowed"
+                              >
+                                Add Friend
+                              </button>
+                            )}
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  ))}
-                  {event.maxSeats && attendeesList.length < event.maxSeats && (
-                    <div className="w-12 h-12 rounded-full border-2 border-dashed border-slate-700 flex items-center justify-center text-slate-500 bg-slate-800/50">
-                      <div className="text-xs font-medium">+{event.maxSeats - attendeesList.length}</div>
-                    </div>
-                  )}
-                </div>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {event.maxSeats && attendeesList.length < event.maxSeats ? (
+                  <div className="mt-3 text-xs text-slate-500">
+                    {event.maxSeats - attendeesList.length} spot{event.maxSeats - attendeesList.length === 1 ? '' : 's'} open
+                  </div>
+                ) : null}
               </div>
             </div>
           ) : null}
@@ -1330,6 +1430,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           }}
         />
       ) : null}
+
+      <ComingSoonPopover state={comingSoon.state} />
     </div>
   );
 };
