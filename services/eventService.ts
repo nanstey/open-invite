@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import type { SocialEvent, Comment, Reaction, EventVisibility, LocationData } from '../lib/types';
 import type { Database } from '../lib/database.types';
+import { fetchItineraryItems } from './itineraryService'
 
 type EventRow = Database['public']['Tables']['events']['Row'];
 type EventAttendeeRow = Database['public']['Tables']['event_attendees']['Row'];
@@ -65,7 +66,14 @@ export async function markEventViewedFromRouteParam(slugOrId: string): Promise<v
 /**
  * Transform database event row to SocialEvent type
  */
-function transformEventRow(row: any, attendees: string[], comments: Comment[], reactions: Record<string, Reaction>, groupIds: string[]): SocialEvent {
+function transformEventRow(
+  row: any,
+  attendees: string[],
+  comments: Comment[],
+  reactions: Record<string, Reaction>,
+  groupIds: string[],
+  itineraryItems?: SocialEvent['itineraryItems'],
+): SocialEvent {
   return {
     id: row.id,
     slug: row.slug,
@@ -89,6 +97,7 @@ function transformEventRow(row: any, attendees: string[], comments: Comment[], r
     noPhones: row.no_phones,
     comments,
     reactions,
+    itineraryItems,
   };
 }
 
@@ -233,11 +242,12 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
   if (!eventRow) return null;
 
   // Fetch related data
-  const [attendeesResult, commentsResult, reactionsResult, eventGroupsResult] = await Promise.all([
+  const [attendeesResult, commentsResult, reactionsResult, eventGroupsResult, itineraryItems] = await Promise.all([
     supabase.from('event_attendees').select('*').eq('event_id', eventId),
     supabase.from('comments').select('*').eq('event_id', eventId).order('timestamp', { ascending: true }),
     supabase.from('reactions').select('*').eq('event_id', eventId),
     supabase.from('event_groups').select('*').eq('event_id', eventId),
+    fetchItineraryItems(eventId),
   ]);
 
   const attendeesData = attendeesResult.data as EventAttendeeRow[] | null;
@@ -275,7 +285,7 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
     });
   }
 
-  return transformEventRow(eventRow, attendees, comments, reactions, groupIds);
+  return transformEventRow(eventRow, attendees, comments, reactions, groupIds, itineraryItems);
 }
 
 /**

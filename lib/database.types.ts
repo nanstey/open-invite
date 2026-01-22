@@ -334,6 +334,41 @@ export interface Database {
           created_at?: string
         }
       }
+      event_itinerary_items: {
+        Row: {
+          id: string
+          event_id: string
+          title: string
+          start_time: string
+          duration_minutes: number
+          location: string | null
+          description: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          event_id: string
+          title: string
+          start_time: string
+          duration_minutes: number
+          location?: string | null
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          event_id?: string
+          title?: string
+          start_time?: string
+          duration_minutes?: number
+          location?: string | null
+          description?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
