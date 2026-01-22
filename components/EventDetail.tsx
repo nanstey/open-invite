@@ -138,6 +138,10 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const miniMapContainerRef = useRef<HTMLDivElement>(null);
   const miniMapInstanceRef = useRef<any>(null);
   const miniMapMarkerRef = useRef<any>(null);
+  const miniMapMarkerLayerRef = useRef<any>(null);
+  const miniMapPolylineRef = useRef<any>(null);
+  const [itineraryGeo, setItineraryGeo] = useState<Record<string, { lat: number; lng: number }>>({})
+  const [itineraryGeoLoading, setItineraryGeoLoading] = useState(false)
   const comingSoon = useComingSoonPopover()
   const theme = getTheme(event.activityType);
   const currentUserId = currentUser?.id;
@@ -258,6 +262,32 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     (isEditMode ? edit?.itinerary?.items : event.itineraryItems) ?? []
   const hasItinerary = itineraryItems.length > 0
 
+  const orderedItineraryItems = React.useMemo(() => {
+    return itineraryItems
+      .slice()
+      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+  }, [itineraryItems])
+
+  const itineraryLocationList = React.useMemo(() => {
+    // Only include explicit itinerary item locations; if an item has no location, skip it.
+    return orderedItineraryItems
+      .map((item) => String(item.location ?? '').trim())
+      .filter(Boolean)
+  }, [orderedItineraryItems])
+
+  const uniqueItineraryLocations = React.useMemo(() => {
+    const seen = new Set<string>()
+    const out: string[] = []
+    for (const loc of itineraryLocationList) {
+      const q = String(loc ?? '').trim()
+      if (!q) continue
+      if (seen.has(q)) continue
+      seen.add(q)
+      out.push(q)
+    }
+    return out
+  }, [itineraryLocationList])
+
   const derivedRange = hasItinerary ? deriveEventRangeFromItinerary(itineraryItems) : null
   const startDate = derivedRange?.start ?? new Date(event.startTime)
   const endDate = derivedRange?.end ?? (event.endTime ? new Date(event.endTime) : null)
@@ -308,6 +338,95 @@ export const EventDetail: React.FC<EventDetailProps> = ({
 
   const hasCoordinates = typeof event.coordinates?.lat === 'number' && typeof event.coordinates?.lng === 'number'
   const showItineraryBuilder = isEditMode && edit?.itinerary && (hasItinerary || showCreateItinerary)
+
+  const openPrimaryLocationInMaps = React.useCallback(() => {
+    if (hasItinerary) {
+      const q = uniqueItineraryLocations[0]
+      if (q) {
+        openItineraryLocationInMaps(q)
+        return
+      }
+    }
+    openInMaps()
+  }, [hasItinerary, uniqueItineraryLocations, event.coordinates?.lat, event.coordinates?.lng])
+
+  useEffect(() => {
+    if (!hasItinerary) {
+      setItineraryGeo({})
+      setItineraryGeoLoading(false)
+      return
+    }
+
+    const controller = new AbortController()
+    let cancelled = false
+
+    ;(async () => {
+      try {
+        setItineraryGeoLoading(true)
+
+        const next: Record<string, { lat: number; lng: number }> = {}
+
+        // Prefer the event's stored coordinates when a location matches the event location.
+        const eventLoc = String(event.location ?? '').trim()
+        if (eventLoc && hasCoordinates) {
+          next[eventLoc] = { lat: event.coordinates!.lat, lng: event.coordinates!.lng }
+        }
+
+        // Geocode itinerary location strings via Photon.
+        for (const q of uniqueItineraryLocations) {
+          if (cancelled) return
+          if (next[q]) continue
+
+          try {
+            const url = new URL('https://photon.komoot.io/api/')
+            url.searchParams.set('q', q)
+            url.searchParams.set('limit', '1')
+            const resp = await fetch(url.toString(), { signal: controller.signal })
+            if (!resp.ok) continue
+            const json = (await resp.json()) as { features?: Array<{ geometry?: { coordinates?: [number, number] } }> }
+            const coords = json.features?.[0]?.geometry?.coordinates
+            if (!coords || coords.length < 2) continue
+            const [lng, lat] = coords
+            if (typeof lat !== 'number' || typeof lng !== 'number') continue
+            next[q] = { lat, lng }
+          } catch (e) {
+            if ((e as any)?.name === 'AbortError') return
+          }
+        }
+
+        if (cancelled) return
+        setItineraryGeo(next)
+      } finally {
+        if (!cancelled) setItineraryGeoLoading(false)
+      }
+    })()
+
+    return () => {
+      cancelled = true
+      controller.abort()
+    }
+  }, [hasItinerary, uniqueItineraryLocations, event.location, event.coordinates?.lat, event.coordinates?.lng, hasCoordinates])
+
+  const miniMapPoints = React.useMemo(() => {
+    if (hasItinerary) {
+      const pts: Array<[number, number]> = []
+      for (const loc of itineraryLocationList) {
+        const q = String(loc ?? '').trim()
+        if (!q) continue
+        const p = itineraryGeo[q]
+        if (!p) continue
+        pts.push([p.lat, p.lng])
+      }
+      return pts
+    }
+
+    const lat = event.coordinates?.lat
+    const lng = event.coordinates?.lng
+    if (typeof lat === 'number' && typeof lng === 'number') return [[lat, lng] as [number, number]]
+    return []
+  }, [hasItinerary, itineraryLocationList, itineraryGeo, event.coordinates?.lat, event.coordinates?.lng])
+
+  const hasMiniMapPoints = miniMapPoints.length > 0
 
   useEffect(() => {
     if (!isEditMode) return
@@ -391,12 +510,27 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     return { primary, secondary }
   }
 
+  function formatRawLocationForDisplay(raw: string): { primary: string; secondary?: string } {
+    const value = String(raw ?? '').trim()
+    if (!value) return { primary: '' }
+
+    const parts = value.split(',').map((p) => p.trim()).filter(Boolean)
+    if (parts.length <= 1) return { primary: value }
+
+    const primary = parts[0] ?? value
+    const secondaryParts = parts.slice(1, 3)
+    const secondary = secondaryParts.length ? secondaryParts.join(', ') : undefined
+    return { primary, secondary }
+  }
+
   const destroyMiniMap = React.useCallback(() => {
     if (miniMapInstanceRef.current) {
       miniMapInstanceRef.current.remove();
       miniMapInstanceRef.current = null;
     }
     miniMapMarkerRef.current = null;
+    miniMapMarkerLayerRef.current = null;
+    miniMapPolylineRef.current = null;
 
     // Leaflet can leave bookkeeping on the container element; clear it so re-init is reliable.
     const el = miniMapContainerRef.current as any;
@@ -418,14 +552,14 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     const L = (window as any)?.L;
     if (!L) return;
 
-    const lat = event.coordinates?.lat;
-    const lng = event.coordinates?.lng;
-    if (typeof lat !== 'number' || typeof lng !== 'number') {
+    if (!hasMiniMapPoints) {
       // If the mini map container is mounted but we no longer have coordinates,
       // tear down any existing Leaflet instance so we don't keep a map bound to a dead element.
       destroyMiniMap();
       return;
     }
+
+    const [lat0, lng0] = miniMapPoints[0]!
 
     // Create once; update position on changes.
     if (!miniMapInstanceRef.current) {
@@ -450,7 +584,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
         keyboard: false,
         tap: false,
         touchZoom: false,
-      }).setView([lat, lng], 15);
+      }).setView([lat0, lng0], 13);
 
       // Use a lighter basemap for clarity (CartoDB Voyager)
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
@@ -460,27 +594,87 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       }).addTo(map);
 
       miniMapInstanceRef.current = map;
-    } else {
-      miniMapInstanceRef.current.setView([lat, lng], 15);
     }
 
-    // Marker (recreate on changes)
+    const map = miniMapInstanceRef.current
+
+    // Clear old layers
     if (miniMapMarkerRef.current) {
-      miniMapMarkerRef.current.remove();
-      miniMapMarkerRef.current = null;
+      miniMapMarkerRef.current.remove()
+      miniMapMarkerRef.current = null
+    }
+    if (miniMapMarkerLayerRef.current) {
+      miniMapMarkerLayerRef.current.remove()
+      miniMapMarkerLayerRef.current = null
+    }
+    if (miniMapPolylineRef.current) {
+      miniMapPolylineRef.current.remove()
+      miniMapPolylineRef.current = null
     }
 
-    miniMapMarkerRef.current = L.circleMarker([lat, lng], {
-      radius: 8,
-      weight: 2,
-      color: '#ffffff',
-      fillColor: theme.hex,
-      fillOpacity: 0.9,
-    }).addTo(miniMapInstanceRef.current);
+    if (miniMapPoints.length === 1) {
+      const [lat, lng] = miniMapPoints[0]!
+      map.setView([lat, lng], 15)
+      const icon = L.divIcon({
+        className: '',
+        iconSize: [26, 26],
+        iconAnchor: [13, 13],
+        html: `
+          <div style="
+            width:26px;height:26px;border-radius:9999px;
+            background:${theme.hex};
+            border:2px solid #ffffff;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+            display:flex;align-items:center;justify-content:center;
+            font-weight:800;font-size:12px;line-height:1;
+            color:#0b1020;
+          ">1</div>
+        `,
+      })
+      miniMapMarkerRef.current = L.marker([lat, lng], { icon }).addTo(map)
+    } else {
+      const layer = L.featureGroup()
+      for (let i = 0; i < miniMapPoints.length; i++) {
+        const [lat, lng] = miniMapPoints[i]!
+        const icon = L.divIcon({
+          className: '',
+          iconSize: [26, 26],
+          iconAnchor: [13, 13],
+          html: `
+            <div style="
+              width:26px;height:26px;border-radius:9999px;
+              background:${theme.hex};
+              border:2px solid #ffffff;
+              box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+              display:flex;align-items:center;justify-content:center;
+              font-weight:800;font-size:12px;line-height:1;
+              color:#0b1020;
+            ">${i + 1}</div>
+          `,
+        })
+        L.marker([lat, lng], { icon }).addTo(layer)
+      }
+      layer.addTo(map)
+      miniMapMarkerLayerRef.current = layer
+
+      miniMapPolylineRef.current = L.polyline(miniMapPoints, {
+        color: theme.hex,
+        weight: 3,
+        opacity: 0.55,
+      }).addTo(map)
+
+      const bounds = layer.getBounds?.()
+      if (bounds && bounds.isValid?.()) {
+        try {
+          map.fitBounds(bounds, { padding: [18, 18], maxZoom: 15, animate: false })
+        } catch {
+          // ignore
+        }
+      }
+    }
 
     // Leaflet sometimes needs a size invalidation when a map is created/updated as a result
     // of dynamic UI changes (like selecting an autocomplete option).
-    const map = miniMapInstanceRef.current;
     if (map?.invalidateSize) {
       requestAnimationFrame(() => {
         try {
@@ -494,7 +688,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     return () => {
       // Keep the map instance while tabbing around; cleanup happens on unmount below.
     };
-  }, [activeTab, destroyMiniMap, event.coordinates?.lat, event.coordinates?.lng, theme.hex]);
+  }, [activeTab, destroyMiniMap, hasMiniMapPoints, miniMapPoints, theme.hex]);
 
   // If the Details tab unmounts its DOM (tab switch), Leaflet stays bound to a dead element.
   // Tear down the map when leaving Details so it can be recreated cleanly when returning.
@@ -1453,7 +1647,41 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                     <MapPin className="w-5 h-5 text-accent" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    {isEditMode ? (
+                    {hasItinerary ? (
+                      itineraryLocationList.length > 0 ? (
+                        <ol className="space-y-2">
+                          {itineraryLocationList.map((raw, idx) => {
+                            const { primary, secondary } = formatRawLocationForDisplay(raw)
+                            const loc = formatItineraryLocationForDisplay(raw)
+
+                            return (
+                              <li key={`${idx}-${raw}`} className="min-w-0">
+                                <button
+                                  type="button"
+                                  onClick={() => openItineraryLocationInMaps(loc.full)}
+                                  className="w-full text-left min-w-0 group"
+                                  aria-label="Open location in maps"
+                                >
+                                  <div className="flex items-start gap-2 min-w-0">
+                                    <div className="text-xs font-bold text-slate-500 mt-[2px] shrink-0">{idx + 1}</div>
+                                    <div className="min-w-0">
+                                      <div className="font-bold text-white truncate group-hover:underline decoration-slate-600 decoration-dashed">
+                                        {primary}
+                                      </div>
+                                      {secondary ? (
+                                        <div className="text-sm text-slate-400 truncate">{secondary}</div>
+                                      ) : null}
+                                    </div>
+                                  </div>
+                                </button>
+                              </li>
+                            )
+                          })}
+                        </ol>
+                      ) : (
+                        <div className="text-sm text-slate-500 italic">No itinerary locations yet.</div>
+                      )
+                    ) : isEditMode ? (
                       <LocationAutocomplete
                         value={event.location}
                         onChangeText={(text) =>
@@ -1491,14 +1719,14 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                         )
                       })()
                     )}
-                    {isEditMode && edit?.errors?.location ? (
+                    {!hasItinerary && isEditMode && edit?.errors?.location ? (
                       <div className="text-xs text-red-400 mt-1">{edit.errors.location}</div>
                     ) : null}
-                    {hasCoordinates ? (
+                    {!hasItinerary && hasMiniMapPoints ? (
                       <button
                         className="text-sm text-slate-500 underline decoration-slate-600 decoration-dashed hover:text-slate-300 transition-colors"
                         type="button"
-                        onClick={openInMaps}
+                        onClick={openPrimaryLocationInMaps}
                       >
                         Open in maps
                       </button>
@@ -1511,37 +1739,45 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   <div ref={miniMapContainerRef} className="w-full h-44 md:h-56" />
 
                   {/* Placeholder overlay (shown until a place is selected) */}
-                  {!hasCoordinates ? (
+                  {!hasMiniMapPoints ? (
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <div className="text-center px-4">
-                        <div className="text-sm font-semibold text-slate-300">Pick a place to preview the map</div>
-                        <div className="text-xs text-slate-500 mt-1">Type a location, then select a suggestion.</div>
+                        <div className="text-sm font-semibold text-slate-300">
+                          {hasItinerary ? 'Add itinerary locations to preview the map' : 'Pick a place to preview the map'}
+                        </div>
+                        <div className="text-xs text-slate-500 mt-1">
+                          {hasItinerary
+                            ? itineraryGeoLoading
+                              ? 'Finding places…'
+                              : 'Set a location on each itinerary item.'
+                            : 'Type a location, then select a suggestion.'}
+                        </div>
                       </div>
                     </div>
                   ) : null}
 
                   {/* Click-to-open overlay */}
-                  {hasCoordinates ? (
+                  {hasMiniMapPoints ? (
                     <div
                       className="absolute inset-0 z-10 cursor-pointer"
                       role="button"
                       tabIndex={0}
                       aria-label="Open in maps"
-                      onClick={openInMaps}
+                      onClick={openPrimaryLocationInMaps}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault()
-                          openInMaps()
+                          openPrimaryLocationInMaps()
                         }
                       }}
                     />
                   ) : null}
 
                   <div className="absolute inset-0 pointer-events-none bg-gradient-to-t from-black/25 via-transparent to-transparent" />
-                  {hasCoordinates ? (
+                  {hasMiniMapPoints ? (
                     <div className="absolute bottom-3 right-3 pointer-events-auto z-20">
                       <button
-                        onClick={openInMaps}
+                        onClick={openPrimaryLocationInMaps}
                         className="text-xs font-bold px-3 py-2 rounded-xl bg-slate-900/80 backdrop-blur border border-slate-700 text-white hover:bg-slate-800 transition-colors"
                         type="button"
                       >
