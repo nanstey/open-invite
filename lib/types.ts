@@ -19,6 +19,16 @@ export interface Reaction {
   userReacted: boolean;
 }
 
+export interface ItineraryItem {
+  id: string;
+  eventId: string;
+  title: string;
+  startTime: string; // ISO
+  durationMinutes: number;
+  location?: string; // defaults to event.location when omitted
+  description?: string;
+}
+
 export enum EventVisibility {
   ALL_FRIENDS = 'ALL_FRIENDS',
   GROUPS = 'GROUPS',
@@ -74,6 +84,7 @@ export interface SocialEvent {
   noPhones: boolean;
   comments: Comment[];
   reactions: Record<string, Reaction>; // key is emoji
+  itineraryItems?: ItineraryItem[]; // optional to keep list fetch lightweight
 }
 
 export interface Notification {

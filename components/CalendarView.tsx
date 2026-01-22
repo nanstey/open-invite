@@ -337,7 +337,10 @@ export const CalendarView: React.FC<CalendarViewProps> = ({ events, onEventClick
                      {dayEvents.map(event => {
                        const start = new Date(event.startTime);
                        const startMinutes = start.getHours() * 60 + start.getMinutes();
-                       const duration = 60; // simplified for this demo
+                       const end = event.endTime ? new Date(event.endTime) : null
+                       const duration = end
+                         ? Math.max(30, Math.round((end.getTime() - start.getTime()) / 60_000))
+                         : 60
                        const { classes, icon, isInvolved, theme } = getEventStyles(event);
 
                        return (

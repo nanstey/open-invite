@@ -1,8 +1,8 @@
 
 import React, { useRef, useState, useEffect } from 'react';
-import { Comment, EventVisibility, Group, SocialEvent, User } from '../lib/types';
+import { Comment, EventVisibility, Group, ItineraryItem, SocialEvent, User } from '../lib/types';
 import { getTheme } from '../lib/constants';
-import { ArrowLeft, Calendar, Info, Link, MapPin, MessageSquare, Save, Send, Users, X, CheckCircle2, EyeOff, Image as ImageIcon } from 'lucide-react';
+import { ArrowLeft, Calendar, Info, Link, MapPin, Map as MapIcon, MessageSquare, Save, Send, Users, X, CheckCircle2, EyeOff, Image as ImageIcon, ChevronDown, ChevronUp, MoreVertical, Trash2 } from 'lucide-react';
 import { fetchUser, fetchUsers } from '../services/userService';
 import { fetchFriends } from '../services/friendService'
 import { TabGroup, type TabOption } from './TabGroup';
@@ -40,6 +40,27 @@ interface EventDetailProps {
     durationHours?: number | '';
     onChangeDurationHours?: (value: number | '') => void;
     onChange: (patch: Partial<SocialEvent>) => void;
+    itinerary?: {
+      items: ItineraryItem[];
+      onAdd: (input: {
+        title: string
+        startTime: string
+        durationMinutes: number
+        location?: string
+        description?: string
+      }) => Promise<string> | string
+      onUpdate: (
+        id: string,
+        patch: Partial<{
+          title: string
+          startTime: string
+          durationMinutes: number
+          location?: string
+          description?: string
+        }>,
+      ) => Promise<void> | void
+      onDelete: (id: string) => Promise<void> | void
+    }
     onSave: () => void;
     onCancel: () => void;
   };
@@ -49,6 +70,27 @@ function splitLocalDateTime(value: string | undefined): { date: string; time: st
   if (!value) return { date: '', time: '' }
   const [date, time] = value.split('T')
   return { date: date ?? '', time: time ?? '' }
+}
+
+function toLocalDateTimeInputValue(iso: string | undefined): string {
+  if (!iso) return ''
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  const yyyy = d.getFullYear()
+  const mm = pad(d.getMonth() + 1)
+  const dd = pad(d.getDate())
+  const hh = pad(d.getHours())
+  const min = pad(d.getMinutes())
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`
+}
+
+function formatItineraryLocationForDisplay(location: string | undefined): { full: string; label: string; isReal: boolean } {
+  const full = String(location ?? '').trim()
+  if (!full) return { full: '', label: '', isReal: false }
+  // Heuristic: locations selected from autocomplete tend to include a comma-separated full address.
+  const isReal = full.includes(',')
+  const label = isReal ? full.split(',')[0]?.trim() || full : full
+  return { full, label, isReal }
 }
 
 export type EventTab = 'details' | 'guests' | 'chat'
@@ -105,6 +147,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
 
   const [draftDate, setDraftDate] = useState<string>('')
   const [draftTime, setDraftTime] = useState<string>('')
+  const [showCreateItinerary, setShowCreateItinerary] = useState(false)
+  const [expandedItineraryItemId, setExpandedItineraryItemId] = useState<string | null>(null)
+  const [openItineraryMenuItemId, setOpenItineraryMenuItemId] = useState<string | null>(null)
 
   useEffect(() => {
     if (!isEditMode) return
@@ -138,6 +183,13 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     };
     loadUsers();
   }, [event.hostId, event.attendees, event.comments, currentUserId]);
+
+  useEffect(() => {
+    if (!openItineraryMenuItemId) return
+    const onDocClick = () => setOpenItineraryMenuItemId(null)
+    document.addEventListener('click', onDocClick)
+    return () => document.removeEventListener('click', onDocClick)
+  }, [openItineraryMenuItemId])
 
   useEffect(() => {
     return () => {
@@ -190,6 +242,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   // - If duration < 24h: show single date line + time range (even if it crosses midnight)
   // - If duration >= 24h: show multi-day (start date+time, end date+time)
   const showMultiDay = !!endDate && typeof durationMs === 'number' && durationMs >= 24 * 60 * 60 * 1000
+  const showItineraryTimesOnly = !!endDate && typeof durationMs === 'number' && durationMs <= 24 * 60 * 60 * 1000
 
   const startDateText = formatDateLong(startDate)
   const startTimeText = formatTime(startDate)
@@ -230,6 +283,18 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   };
 
   const hasCoordinates = typeof event.coordinates?.lat === 'number' && typeof event.coordinates?.lng === 'number'
+  const itineraryItems: ItineraryItem[] =
+    (isEditMode ? edit?.itinerary?.items : event.itineraryItems) ?? []
+  const hasItinerary = itineraryItems.length > 0
+  const showItineraryBuilder = isEditMode && edit?.itinerary && (hasItinerary || showCreateItinerary)
+
+  useEffect(() => {
+    if (!isEditMode) return
+    if (itineraryItems.length !== 0) return
+    setShowCreateItinerary(false)
+    setExpandedItineraryItemId(null)
+    setOpenItineraryMenuItemId(null)
+  }, [isEditMode, itineraryItems.length])
 
   useEffect(() => {
     if (isGuest) return
@@ -260,6 +325,13 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     const nextAttendees = event.attendees.filter((id) => id !== attendeeId)
     edit?.onChange({ attendees: nextAttendees })
     setAttendeesList((prev) => prev.filter((u) => u.id !== attendeeId))
+  }
+
+  const openItineraryLocationInMaps = (locationFull: string) => {
+    const q = String(locationFull ?? '').trim()
+    if (!q) return
+    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`
+    window.open(url, '_blank', 'noopener,noreferrer')
   }
 
   const handleTabChange = (id: any) => {
@@ -915,74 +987,80 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               <div className="bg-surface border border-slate-700 rounded-2xl p-5">
                 <h2 className="text-lg font-bold text-white mb-3">Date &amp; Time</h2>
                 {isEditMode ? (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                      <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Date</div>
-                      <input
-                        type="date"
-                        value={draftDate}
-                        onChange={(e) => {
-                          const nextDate = e.target.value
-                          setDraftDate(nextDate)
-                          const nextLocal = nextDate && draftTime ? `${nextDate}T${draftTime}` : ''
-                          edit?.onChangeStartDateTimeLocal?.(nextLocal)
-                        }}
-                        required
-                        className={`w-full bg-slate-900 border rounded-lg py-3 px-4 text-white outline-none [color-scheme:dark] ${
-                          edit?.errors?.startTime
-                            ? 'border-red-500 focus:border-red-500'
-                            : 'border-slate-700 focus:border-primary'
-                        }`}
-                      />
+                  hasItinerary ? (
+                    <div className="text-sm text-slate-400 bg-slate-900/40 border border-slate-800 rounded-xl p-4">
+                      Event time is derived from itinerary items. Edit the itinerary below to change the overall time.
                     </div>
-                    <div className="space-y-1">
-                      <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Time</div>
-                      <FormSelect
-                        value={draftTime}
-                        onChange={(e) => {
-                          const nextTime = e.target.value
-                          setDraftTime(nextTime)
-                          const nextLocal = draftDate && nextTime ? `${draftDate}T${nextTime}` : ''
-                          edit?.onChangeStartDateTimeLocal?.(nextLocal)
-                        }}
-                        required
-                        size="lg"
-                        variant="surface"
-                        className={edit?.errors?.startTime ? 'border-red-500 focus:border-red-500' : ''}
-                      >
-                        <option value="">Select time</option>
-                        {timeOptions.map((t) => (
-                          <option key={t.value} value={t.value}>
-                            {t.label}
-                          </option>
-                        ))}
-                      </FormSelect>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Date</div>
+                        <input
+                          type="date"
+                          value={draftDate}
+                          onChange={(e) => {
+                            const nextDate = e.target.value
+                            setDraftDate(nextDate)
+                            const nextLocal = nextDate && draftTime ? `${nextDate}T${draftTime}` : ''
+                            edit?.onChangeStartDateTimeLocal?.(nextLocal)
+                          }}
+                          required
+                          className={`w-full bg-slate-900 border rounded-lg py-3 px-4 text-white outline-none [color-scheme:dark] ${
+                            edit?.errors?.startTime
+                              ? 'border-red-500 focus:border-red-500'
+                              : 'border-slate-700 focus:border-primary'
+                          }`}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Time</div>
+                        <FormSelect
+                          value={draftTime}
+                          onChange={(e) => {
+                            const nextTime = e.target.value
+                            setDraftTime(nextTime)
+                            const nextLocal = draftDate && nextTime ? `${draftDate}T${nextTime}` : ''
+                            edit?.onChangeStartDateTimeLocal?.(nextLocal)
+                          }}
+                          required
+                          size="lg"
+                          variant="surface"
+                          className={edit?.errors?.startTime ? 'border-red-500 focus:border-red-500' : ''}
+                        >
+                          <option value="">Select time</option>
+                          {timeOptions.map((t) => (
+                            <option key={t.value} value={t.value}>
+                              {t.label}
+                            </option>
+                          ))}
+                        </FormSelect>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Duration (hours)</div>
+                        <input
+                          type="number"
+                          min={0}
+                          step={0.25}
+                          value={edit?.durationHours ?? ''}
+                          onChange={(e) => {
+                            const raw = e.target.value
+                            const next = raw === '' ? '' : Number(raw)
+                            edit?.onChangeDurationHours?.(next === '' ? '' : next)
+                          }}
+                          placeholder="e.g. 2"
+                          required
+                          className={`w-full bg-slate-900 border rounded-lg py-3 px-4 text-white outline-none ${
+                            edit?.errors?.durationHours
+                              ? 'border-red-500 focus:border-red-500'
+                              : 'border-slate-700 focus:border-primary'
+                          }`}
+                        />
+                        {edit?.errors?.durationHours ? (
+                          <div className="text-xs text-red-400 mt-1">{edit.errors.durationHours}</div>
+                        ) : null}
+                      </div>
                     </div>
-                    <div className="space-y-1">
-                      <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Duration (hours)</div>
-                      <input
-                        type="number"
-                        min={0}
-                        step={0.25}
-                        value={edit?.durationHours ?? ''}
-                        onChange={(e) => {
-                          const raw = e.target.value
-                          const next = raw === '' ? '' : Number(raw)
-                          edit?.onChangeDurationHours?.(next === '' ? '' : next)
-                        }}
-                        placeholder="e.g. 2"
-                        required
-                        className={`w-full bg-slate-900 border rounded-lg py-3 px-4 text-white outline-none ${
-                          edit?.errors?.durationHours
-                            ? 'border-red-500 focus:border-red-500'
-                            : 'border-slate-700 focus:border-primary'
-                        }`}
-                      />
-                      {edit?.errors?.durationHours ? (
-                        <div className="text-xs text-red-400 mt-1">{edit.errors.durationHours}</div>
-                      ) : null}
-                    </div>
-                  </div>
+                  )
                 ) : (
                   <div className="text-slate-300">
                     {showMultiDay ? (
@@ -1012,6 +1090,332 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                 {isEditMode && edit?.errors?.startTime ? (
                   <div className="text-xs text-red-400 mt-2">{edit.errors.startTime}</div>
                 ) : null}
+              </div>
+
+              <div className="bg-surface border border-slate-700 rounded-2xl p-5">
+                <h2 className="text-lg font-bold text-white mb-3">Itinerary</h2>
+
+                {isEditMode ? (
+                  edit?.itinerary ? (
+                    <div className="space-y-4">
+                      {!showItineraryBuilder ? (
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            setShowCreateItinerary(true)
+                            if (itineraryItems.length > 0) return
+
+                            const startIso =
+                              draftDate && draftTime ? new Date(`${draftDate}T${draftTime}`).toISOString() : event.startTime
+
+                            const durationMinutes = (() => {
+                              const h = edit?.durationHours
+                              if (typeof h === 'number' && Number.isFinite(h) && h > 0) return Math.max(1, Math.round(h * 60))
+                              return 60
+                            })()
+
+                            const newId = await edit.itinerary?.onAdd({
+                              title: '',
+                              startTime: startIso,
+                              durationMinutes,
+                              location: undefined,
+                              description: undefined,
+                            })
+
+                            if (typeof newId === 'string') {
+                              setExpandedItineraryItemId(newId)
+                            }
+                          }}
+                          className="w-full py-3 rounded-xl font-bold text-sm bg-slate-800 text-white hover:bg-slate-700 transition-colors border border-slate-700"
+                        >
+                          Create Itinerary
+                        </button>
+                      ) : (
+                        <>
+                          <div className="space-y-3">
+                            {itineraryItems.length === 0 ? (
+                              <div className="text-sm text-slate-500 italic">No itinerary items yet.</div>
+                            ) : null}
+
+                            {itineraryItems
+                              .slice()
+                              .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                              .map((item) => {
+                                const start = new Date(item.startTime)
+                                const end = new Date(start.getTime() + item.durationMinutes * 60_000)
+                                const time = `${formatTime(start)} - ${formatTime(end)}`
+                                const date = formatDateLong(start)
+                                const loc = formatItineraryLocationForDisplay(item.location)
+                                const isExpanded = expandedItineraryItemId === item.id
+
+                                const { date: itemDate, time: itemTime } = splitLocalDateTime(
+                                  toLocalDateTimeInputValue(item.startTime),
+                                )
+                                const durationHours = Math.round(((item.durationMinutes ?? 0) / 60) * 4) / 4
+
+                                return (
+                                  <div key={item.id} className="rounded-xl border border-slate-800 bg-slate-900/30">
+                                    <div className="p-4">
+                                      <div className="flex items-start justify-between gap-3">
+                                        <button
+                                          type="button"
+                                          onClick={() => setExpandedItineraryItemId(isExpanded ? null : item.id)}
+                                          className="min-w-0 flex-1 text-left"
+                                        >
+                                          <div className="font-bold text-white truncate">{item.title || 'Untitled item'}</div>
+                                          <div className="text-sm text-slate-400">
+                                            {showItineraryTimesOnly ? time : `${date} • ${time}`}
+                                          </div>
+                                          {loc.label ? (
+                                            loc.isReal && loc.full ? (
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.stopPropagation()
+                                                  openItineraryLocationInMaps(loc.full)
+                                                }}
+                                                className="text-sm text-slate-400 truncate underline decoration-slate-600 decoration-dashed hover:text-slate-200 transition-colors text-left"
+                                                aria-label="Open location in maps"
+                                              >
+                                                {loc.label}
+                                              </button>
+                                            ) : (
+                                              <div className="text-sm text-slate-400 truncate">{loc.label}</div>
+                                            )
+                                          ) : null}
+                                        </button>
+
+                                        <div className="flex items-center gap-2 shrink-0">
+                                          <div className="relative">
+                                            <button
+                                              type="button"
+                                              onClick={(e) => {
+                                                e.stopPropagation()
+                                                setOpenItineraryMenuItemId((prev) => (prev === item.id ? null : item.id))
+                                              }}
+                                              className="p-2 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 transition-colors"
+                                              aria-label="Itinerary item menu"
+                                            >
+                                              <MoreVertical className="w-4 h-4" />
+                                            </button>
+
+                                            {openItineraryMenuItemId === item.id ? (
+                                              <div
+                                                className="absolute right-0 mt-2 w-44 rounded-xl border border-slate-700 bg-slate-900 shadow-lg z-[2000] overflow-hidden"
+                                                onClick={(e) => e.stopPropagation()}
+                                              >
+                                                <button
+                                                  type="button"
+                                                  onClick={() => {
+                                                    setOpenItineraryMenuItemId(null)
+                                                    if (expandedItineraryItemId === item.id) setExpandedItineraryItemId(null)
+                                                    edit.itinerary?.onDelete(item.id)
+                                                  }}
+                                                  className="w-full px-3 py-2 text-sm font-semibold text-red-300 hover:bg-red-500/10 flex items-center gap-2"
+                                                >
+                                                  <Trash2 className="w-4 h-4" /> Delete
+                                                </button>
+                                              </div>
+                                            ) : null}
+                                          </div>
+
+                                          <button
+                                            type="button"
+                                            onClick={() => setExpandedItineraryItemId(isExpanded ? null : item.id)}
+                                            className="p-2 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 transition-colors"
+                                            aria-label={isExpanded ? 'Collapse item' : 'Expand item'}
+                                          >
+                                            {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+
+                                    {isExpanded ? (
+                                      <div className="border-t border-slate-800 p-4 space-y-3">
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                          <div className="space-y-1">
+                                            <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Date</div>
+                                            <input
+                                              type="date"
+                                              value={itemDate}
+                                              onChange={(e) => {
+                                                const nextDate = e.target.value
+                                                if (!nextDate || !itemTime) return
+                                                edit.itinerary?.onUpdate(item.id, {
+                                                  startTime: new Date(`${nextDate}T${itemTime}`).toISOString(),
+                                                })
+                                              }}
+                                              className="w-full bg-slate-900 border rounded-lg py-2.5 px-3 text-white outline-none [color-scheme:dark] border-slate-700 focus:border-primary"
+                                            />
+                                          </div>
+                                          <div className="space-y-1">
+                                            <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Time</div>
+                                            <FormSelect
+                                              value={itemTime}
+                                              onChange={(e) => {
+                                                const nextTime = e.target.value
+                                                if (!itemDate || !nextTime) return
+                                                edit.itinerary?.onUpdate(item.id, {
+                                                  startTime: new Date(`${itemDate}T${nextTime}`).toISOString(),
+                                                })
+                                              }}
+                                              required
+                                              size="lg"
+                                              variant="surface"
+                                            >
+                                              <option value="">Select time</option>
+                                              {timeOptions.map((t) => (
+                                                <option key={t.value} value={t.value}>
+                                                  {t.label}
+                                                </option>
+                                              ))}
+                                            </FormSelect>
+                                          </div>
+                                          <div className="space-y-1">
+                                            <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">
+                                              Duration (hours)
+                                            </div>
+                                            <input
+                                              type="number"
+                                              min={0.25}
+                                              step={0.25}
+                                              value={durationHours}
+                                              onChange={(e) =>
+                                                edit.itinerary?.onUpdate(item.id, {
+                                                  durationMinutes: Math.max(1, Math.round(Number(e.target.value || 0) * 60)),
+                                                })
+                                              }
+                                              className="w-full bg-slate-900 border rounded-lg py-2.5 px-3 text-white outline-none border-slate-700 focus:border-primary"
+                                              placeholder="e.g. 1.5"
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                          <div className="space-y-1">
+                                            <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Title</div>
+                                            <input
+                                              value={item.title}
+                                              onChange={(e) => edit.itinerary?.onUpdate(item.id, { title: e.target.value })}
+                                              className="w-full bg-slate-900 border rounded-lg py-2.5 px-3 text-white outline-none border-slate-700 focus:border-primary"
+                                              placeholder="e.g. Meet up"
+                                            />
+                                          </div>
+                                          <div className="space-y-1">
+                                            <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">
+                                              Location (optional)
+                                            </div>
+                                            <LocationAutocomplete
+                                              value={item.location ?? ''}
+                                              onChangeText={(text) => edit.itinerary?.onUpdate(item.id, { location: text || undefined })}
+                                              onSelect={(selection) =>
+                                                edit.itinerary?.onUpdate(item.id, { location: selection.locationData.display.full })
+                                              }
+                                              placeholder="Location (optional)"
+                                              className="w-full bg-slate-900 border rounded-lg py-2.5 px-3 text-white outline-none border-slate-700 focus:border-primary"
+                                            />
+                                          </div>
+                                        </div>
+
+                                        <div className="space-y-1">
+                                          <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">
+                                            Description (optional)
+                                          </div>
+                                          <textarea
+                                            value={item.description ?? ''}
+                                            onChange={(e) =>
+                                              edit.itinerary?.onUpdate(item.id, { description: e.target.value || undefined })
+                                            }
+                                            className="w-full bg-slate-900 border rounded-lg py-2.5 px-3 text-white outline-none border-slate-700 focus:border-primary h-20 resize-none"
+                                            placeholder="Notes, links, what to bring..."
+                                          />
+                                        </div>
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                )
+                              })}
+
+                            <button
+                              type="button"
+                              onClick={async () => {
+                                const sorted = itineraryItems
+                                  .slice()
+                                  .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                                const last = sorted[sorted.length - 1]
+                                const defaultStartIso = last
+                                  ? new Date(new Date(last.startTime).getTime() + last.durationMinutes * 60_000).toISOString()
+                                  : new Date().toISOString()
+
+                                const newId = await edit.itinerary?.onAdd({
+                                  title: '',
+                                  startTime: defaultStartIso,
+                                  durationMinutes: 60,
+                                  location: undefined,
+                                  description: undefined,
+                                })
+
+                                if (typeof newId === 'string') {
+                                  setExpandedItineraryItemId(newId)
+                                }
+                              }}
+                              className="w-full py-3 rounded-xl font-bold text-sm bg-slate-800 text-white hover:bg-slate-700 transition-colors border border-slate-700"
+                            >
+                              Add Item
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="text-sm text-slate-500 italic">Itinerary editing is unavailable.</div>
+                  )
+                ) : itineraryItems.length === 0 ? (
+                  <div className="text-sm text-slate-500 italic">No itinerary items.</div>
+                ) : (
+                  <div className="space-y-3">
+                    {itineraryItems
+                      .slice()
+                      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                      .map((item) => {
+                        const start = new Date(item.startTime)
+                        const end = new Date(start.getTime() + item.durationMinutes * 60_000)
+                        const time = `${formatTime(start)} - ${formatTime(end)}`
+                        const date = formatDateLong(start)
+                        const loc = formatItineraryLocationForDisplay(item.location)
+                        return (
+                          <div key={item.id} className="rounded-xl border border-slate-800 bg-slate-900/30 p-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <div className="font-bold text-white truncate">{item.title}</div>
+                                <div className="text-sm text-slate-400">
+                                  {showItineraryTimesOnly ? time : `${date} • ${time}`}
+                                </div>
+                                {loc.label ? (
+                                  loc.isReal && loc.full ? (
+                                    <button
+                                      type="button"
+                                      onClick={() => openItineraryLocationInMaps(loc.full)}
+                                      className="text-sm text-slate-400 truncate underline decoration-slate-600 decoration-dashed hover:text-slate-200 transition-colors text-left"
+                                      aria-label="Open location in maps"
+                                    >
+                                      {loc.label}
+                                    </button>
+                                  ) : (
+                                    <div className="text-sm text-slate-400 truncate">{loc.label}</div>
+                                  )
+                                ) : null}
+                              </div>
+                            </div>
+                            {item.description ? (
+                              <div className="text-sm text-slate-300 mt-3 whitespace-pre-wrap">{item.description}</div>
+                            ) : null}
+                          </div>
+                        )
+                      })}
+                  </div>
+                )}
               </div>
 
               <div className="bg-surface border border-slate-700 rounded-2xl p-5">
@@ -1539,3 +1943,106 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     </div>
   );
 };
+
+function AddItineraryItemForm(props: {
+  defaultLocation: string
+  timeOptions: { value: string; label: string }[]
+  onAdd: (input: {
+    title: string
+    startTime: string
+    durationMinutes: number
+    location?: string
+    description?: string
+  }) => Promise<void> | void
+}) {
+  const [title, setTitle] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [startTime, setStartTime] = useState('')
+  const [durationHours, setDurationHours] = useState<number>(1)
+  const [location, setLocation] = useState<string>('')
+  const [description, setDescription] = useState<string>('')
+
+  const canAdd = title.trim() && startDate && startTime && durationHours > 0
+
+  return (
+    <div className="rounded-xl border border-slate-800 bg-slate-900/30 p-4 space-y-3">
+      <div className="text-sm font-bold text-white">Add item</div>
+      {/* Date / Time / Duration in one row (matches main Date & Time layout) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <input
+          type="date"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+          className="w-full bg-slate-900 border rounded-lg py-2.5 px-3 text-white outline-none [color-scheme:dark] border-slate-700 focus:border-primary"
+        />
+        <FormSelect value={startTime} onChange={(e) => setStartTime(e.target.value)} required size="lg" variant="surface">
+          <option value="">Select time</option>
+          {props.timeOptions.map((t) => (
+            <option key={t.value} value={t.value}>
+              {t.label}
+            </option>
+          ))}
+        </FormSelect>
+        <input
+          type="number"
+          min={0.25}
+          step={0.25}
+          value={durationHours}
+          onChange={(e) => setDurationHours(Number(e.target.value || 0))}
+          className="w-full bg-slate-900 border rounded-lg py-2.5 px-3 text-white outline-none border-slate-700 focus:border-primary"
+          placeholder="Duration (hours)"
+        />
+      </div>
+
+      <div className="space-y-3">
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full bg-slate-900 border rounded-lg py-2.5 px-3 text-white outline-none border-slate-700 focus:border-primary"
+          placeholder="Title"
+        />
+      </div>
+      <div className="space-y-1">
+        <input
+          value={location}
+          onChange={(e) => setLocation(e.target.value)}
+          className="w-full bg-slate-900 border rounded-lg py-2.5 px-3 text-white outline-none border-slate-700 focus:border-primary"
+          placeholder={`Location (optional, defaults to: ${props.defaultLocation})`}
+        />
+      </div>
+
+      <textarea
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        className="w-full bg-slate-900 border rounded-lg py-2.5 px-3 text-white outline-none border-slate-700 focus:border-primary h-20 resize-none"
+        placeholder="Description (optional)"
+      />
+
+      <div className="flex justify-end">
+        <button
+          type="button"
+          disabled={!canAdd}
+          onClick={() => {
+            if (!canAdd) return
+            props.onAdd({
+              title: title.trim(),
+              startTime: new Date(`${startDate}T${startTime}`).toISOString(),
+              durationMinutes: Math.max(1, Math.round(durationHours * 60)),
+              location: location.trim() ? location.trim() : undefined,
+              description: description.trim() ? description.trim() : undefined,
+            })
+            setTitle('')
+            setStartDate('')
+            setStartTime('')
+            setDurationHours(1)
+            setLocation('')
+            setDescription('')
+          }}
+          className="px-4 py-2 rounded-xl text-sm font-bold transition-colors border border-slate-700 bg-slate-800 text-white hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          Add
+        </button>
+      </div>
+    </div>
+  )
+}
