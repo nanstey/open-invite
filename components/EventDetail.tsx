@@ -11,6 +11,7 @@ import { FormSelect } from './FormControls';
 import { LocationAutocomplete } from './LocationAutocomplete'
 import { HeaderImageModal } from './HeaderImageModal'
 import { ComingSoonPopover, useComingSoonPopover } from './ComingSoonPopover'
+import { FullScreenMapModal } from './FullScreenMapModal'
 
 interface EventDetailProps {
   event: SocialEvent;
@@ -134,6 +135,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const [commentUsers, setCommentUsers] = useState<Map<string, User>>(new Map());
   const [uncontrolledActiveTab, setUncontrolledActiveTab] = useState<EventTab>('details')
   const [showHeaderImageModal, setShowHeaderImageModal] = useState(false)
+  const [showMapModal, setShowMapModal] = useState(false)
   const [friendIds, setFriendIds] = useState<Set<string>>(new Set())
   const miniMapContainerRef = useRef<HTMLDivElement>(null);
   const miniMapInstanceRef = useRef<any>(null);
@@ -327,28 +329,47 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     { id: 'chat', label: 'Chat', icon: <MessageSquare className="w-4 h-4" /> },
   ];
 
+  const buildGoogleMapsLatLngUrl = React.useCallback(
+    (lat: number, lng: number) => `https://www.google.com/maps?q=${encodeURIComponent(`${lat},${lng}`)}`,
+    [],
+  )
+
+  const buildGoogleMapsSearchUrl = React.useCallback(
+    (q: string) => `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`,
+    [],
+  )
+
   const openInMaps = () => {
     const lat = event.coordinates?.lat;
     const lng = event.coordinates?.lng;
     if (typeof lat !== 'number' || typeof lng !== 'number') return;
 
-    const url = `https://www.google.com/maps?q=${encodeURIComponent(`${lat},${lng}`)}`;
+    const url = buildGoogleMapsLatLngUrl(lat, lng);
     window.open(url, '_blank', 'noopener,noreferrer');
   };
 
   const hasCoordinates = typeof event.coordinates?.lat === 'number' && typeof event.coordinates?.lng === 'number'
   const showItineraryBuilder = isEditMode && edit?.itinerary && (hasItinerary || showCreateItinerary)
 
-  const openPrimaryLocationInMaps = React.useCallback(() => {
+  const primaryGoogleMapsUrl = React.useMemo(() => {
     if (hasItinerary) {
       const q = uniqueItineraryLocations[0]
-      if (q) {
-        openItineraryLocationInMaps(q)
-        return
-      }
+      if (q) return buildGoogleMapsSearchUrl(q)
+      return null
     }
-    openInMaps()
-  }, [hasItinerary, uniqueItineraryLocations, event.coordinates?.lat, event.coordinates?.lng])
+
+    const lat = event.coordinates?.lat
+    const lng = event.coordinates?.lng
+    if (typeof lat === 'number' && typeof lng === 'number') return buildGoogleMapsLatLngUrl(lat, lng)
+    return null
+  }, [
+    buildGoogleMapsLatLngUrl,
+    buildGoogleMapsSearchUrl,
+    hasItinerary,
+    uniqueItineraryLocations,
+    event.coordinates?.lat,
+    event.coordinates?.lng,
+  ])
 
   useEffect(() => {
     if (!hasItinerary) {
@@ -428,6 +449,11 @@ export const EventDetail: React.FC<EventDetailProps> = ({
 
   const hasMiniMapPoints = miniMapPoints.length > 0
 
+  const openPrimaryLocationInMaps = React.useCallback(() => {
+    if (!hasMiniMapPoints) return
+    setShowMapModal(true)
+  }, [hasMiniMapPoints])
+
   useEffect(() => {
     if (!isEditMode) return
     if (itineraryItems.length !== 0) return
@@ -470,7 +496,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const openItineraryLocationInMaps = (locationFull: string) => {
     const q = String(locationFull ?? '').trim()
     if (!q) return
-    const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`
+    const url = buildGoogleMapsSearchUrl(q)
     window.open(url, '_blank', 'noopener,noreferrer')
   }
 
@@ -1728,7 +1754,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                         type="button"
                         onClick={openPrimaryLocationInMaps}
                       >
-                        Open in maps
+                        Open map
                       </button>
                     ) : null}
                   </div>
@@ -1762,7 +1788,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                       className="absolute inset-0 z-10 cursor-pointer"
                       role="button"
                       tabIndex={0}
-                      aria-label="Open in maps"
+                      aria-label="Open map"
                       onClick={openPrimaryLocationInMaps}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
@@ -1781,7 +1807,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                         className="text-xs font-bold px-3 py-2 rounded-xl bg-slate-900/80 backdrop-blur border border-slate-700 text-white hover:bg-slate-800 transition-colors"
                         type="button"
                       >
-                        Open
+                        Open map
                       </button>
                     </div>
                   ) : null}
@@ -2200,6 +2226,15 @@ export const EventDetail: React.FC<EventDetailProps> = ({
             }
             onUpdateEvent({ ...event, headerImageUrl: imageUrl })
           }}
+        />
+      ) : null}
+
+      {showMapModal ? (
+        <FullScreenMapModal
+          points={miniMapPoints}
+          themeHex={theme.hex}
+          title={event.title || 'Map'}
+          onClose={() => setShowMapModal(false)}
         />
       ) : null}
 
