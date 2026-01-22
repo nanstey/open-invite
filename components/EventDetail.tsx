@@ -235,8 +235,32 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       hour12: true,
     }).format(date)
 
-  const startDate = new Date(event.startTime);
-  const endDate = event.endTime ? new Date(event.endTime) : null
+  const deriveEventRangeFromItinerary = React.useCallback((items: ItineraryItem[]) => {
+    if (!items || items.length === 0) return null
+
+    let minStart: Date | null = null
+    let maxEnd: Date | null = null
+
+    for (const item of items) {
+      const start = new Date(item.startTime)
+      if (Number.isNaN(start.getTime())) continue
+      const end = new Date(start.getTime() + item.durationMinutes * 60 * 1000)
+
+      if (!minStart || start.getTime() < minStart.getTime()) minStart = start
+      if (!maxEnd || end.getTime() > maxEnd.getTime()) maxEnd = end
+    }
+
+    if (!minStart || !maxEnd) return null
+    return { start: minStart, end: maxEnd }
+  }, [])
+
+  const itineraryItems: ItineraryItem[] =
+    (isEditMode ? edit?.itinerary?.items : event.itineraryItems) ?? []
+  const hasItinerary = itineraryItems.length > 0
+
+  const derivedRange = hasItinerary ? deriveEventRangeFromItinerary(itineraryItems) : null
+  const startDate = derivedRange?.start ?? new Date(event.startTime)
+  const endDate = derivedRange?.end ?? (event.endTime ? new Date(event.endTime) : null)
   const durationMs = endDate ? endDate.getTime() - startDate.getTime() : null
   // Display rule:
   // - If duration < 24h: show single date line + time range (even if it crosses midnight)
@@ -283,9 +307,6 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   };
 
   const hasCoordinates = typeof event.coordinates?.lat === 'number' && typeof event.coordinates?.lng === 'number'
-  const itineraryItems: ItineraryItem[] =
-    (isEditMode ? edit?.itinerary?.items : event.itineraryItems) ?? []
-  const hasItinerary = itineraryItems.length > 0
   const showItineraryBuilder = isEditMode && edit?.itinerary && (hasItinerary || showCreateItinerary)
 
   useEffect(() => {
