@@ -1,7 +1,22 @@
 import * as React from 'react'
 
 import type { SocialEvent } from '../types'
-import { addComment, fetchEventById, joinEvent, leaveEvent } from '../../services/eventService'
+import { addComment, fetchEventById, joinEvent, leaveEvent } from '../../../services/eventService'
+
+type SetEvent = React.Dispatch<React.SetStateAction<SocialEvent | null>>
+
+function updateEventById(setEvent: SetEvent, eventId: string, updater: (event: SocialEvent) => SocialEvent) {
+  setEvent((prev) => {
+    if (!prev) return prev
+    if (prev.id !== eventId) return prev
+    return updater(prev)
+  })
+}
+
+async function refreshEventById(setEvent: SetEvent, eventId: string) {
+  const refreshed = await fetchEventById(eventId)
+  if (refreshed) setEvent(refreshed)
+}
 
 export function useEventDetailActions(args: {
   userId: string
@@ -13,115 +28,104 @@ export function useEventDetailActions(args: {
     setEvent(updated)
   }, [setEvent])
 
+  const addSelfAsAttendee = React.useCallback((event: SocialEvent) => {
+    if (event.attendees.includes(userId)) return event
+    return { ...event, attendees: [...event.attendees, userId] }
+  }, [userId])
+
+  const removeSelfAsAttendee = React.useCallback((event: SocialEvent) => {
+    return { ...event, attendees: event.attendees.filter((id) => id !== userId) }
+  }, [userId])
+
+  const runOptimisticAttendanceChange = React.useCallback(async (args: {
+    eventId: string
+    actionLabel: 'joining' | 'leaving'
+    optimisticUpdate: (event: SocialEvent) => SocialEvent
+    rollbackUpdate: (event: SocialEvent) => SocialEvent
+    apiCall: (eventId: string) => Promise<boolean>
+  }) => {
+    const { eventId, actionLabel, optimisticUpdate, rollbackUpdate, apiCall } = args
+
+    updateEventById(setEvent, eventId, optimisticUpdate)
+
+    try {
+      const success = await apiCall(eventId)
+      if (success) {
+        await refreshEventById(setEvent, eventId)
+        return
+      }
+
+      updateEventById(setEvent, eventId, rollbackUpdate)
+    } catch (error) {
+      console.error(`Error ${actionLabel} event:`, error)
+      updateEventById(setEvent, eventId, rollbackUpdate)
+    }
+  }, [setEvent])
+
+  const updateEventComments = React.useCallback(
+    (eventId: string, updateComments: (comments: SocialEvent['comments']) => SocialEvent['comments']) => {
+      updateEventById(setEvent, eventId, (event) => ({ ...event, comments: updateComments(event.comments) }))
+    },
+    [setEvent],
+  )
+
   const handleJoinEvent = React.useCallback(
     async (eventId: string) => {
-      // Optimistic UI: update immediately so the user sees the join.
-      setEvent((prev) => {
-        if (!prev) return prev
-        if (prev.id !== eventId) return prev
-        if (prev.attendees.includes(userId)) return prev
-        return { ...prev, attendees: [...prev.attendees, userId] }
+      await runOptimisticAttendanceChange({
+        eventId,
+        actionLabel: 'joining',
+        optimisticUpdate: addSelfAsAttendee,
+        rollbackUpdate: removeSelfAsAttendee,
+        apiCall: joinEvent,
       })
-
-      try {
-        const success = await joinEvent(eventId)
-        if (success) {
-          const refreshed = await fetchEventById(eventId)
-          if (refreshed) setEvent(refreshed)
-        } else {
-          // Roll back optimistic update on failure.
-          setEvent((prev) => {
-            if (!prev) return prev
-            if (prev.id !== eventId) return prev
-            return { ...prev, attendees: prev.attendees.filter((id) => id !== userId) }
-          })
-        }
-      } catch (error) {
-        console.error('Error joining event:', error)
-        // Roll back optimistic update on exception.
-        setEvent((prev) => {
-          if (!prev) return prev
-          if (prev.id !== eventId) return prev
-          return { ...prev, attendees: prev.attendees.filter((id) => id !== userId) }
-        })
-      }
     },
-    [setEvent, userId],
+    [addSelfAsAttendee, removeSelfAsAttendee, runOptimisticAttendanceChange],
   )
 
   const handleLeaveEvent = React.useCallback(
     async (eventId: string) => {
-      // Optimistic UI.
-      setEvent((prev) => {
-        if (!prev) return prev
-        if (prev.id !== eventId) return prev
-        return { ...prev, attendees: prev.attendees.filter((id) => id !== userId) }
+      await runOptimisticAttendanceChange({
+        eventId,
+        actionLabel: 'leaving',
+        optimisticUpdate: removeSelfAsAttendee,
+        rollbackUpdate: addSelfAsAttendee,
+        apiCall: leaveEvent,
       })
-
-      try {
-        const success = await leaveEvent(eventId)
-        if (success) {
-          const refreshed = await fetchEventById(eventId)
-          if (refreshed) setEvent(refreshed)
-        } else {
-          // Roll back (re-add self) on failure.
-          setEvent((prev) => {
-            if (!prev) return prev
-            if (prev.id !== eventId) return prev
-            if (prev.attendees.includes(userId)) return prev
-            return { ...prev, attendees: [...prev.attendees, userId] }
-          })
-        }
-      } catch (error) {
-        console.error('Error leaving event:', error)
-        // Roll back (re-add self) on exception.
-        setEvent((prev) => {
-          if (!prev) return prev
-          if (prev.id !== eventId) return prev
-          if (prev.attendees.includes(userId)) return prev
-          return { ...prev, attendees: [...prev.attendees, userId] }
-        })
-      }
     },
-    [setEvent, userId],
+    [addSelfAsAttendee, removeSelfAsAttendee, runOptimisticAttendanceChange],
   )
 
   const handlePostComment = React.useCallback(
     async (eventId: string, text: string) => {
       const optimisticId = `optimistic-${Date.now().toString()}`
-      const optimistic = {
+      const optimistic: SocialEvent['comments'][number] = {
         id: optimisticId,
         userId,
         text,
         timestamp: new Date().toISOString(),
       }
 
-      setEvent((prev) => {
-        if (!prev) return prev
-        if (prev.id !== eventId) return prev
-        return { ...prev, comments: [...prev.comments, optimistic] }
-      })
+      updateEventComments(eventId, (comments) => [...comments, optimistic])
 
-      const inserted = await addComment(eventId, text)
-      if (!inserted) {
-        // Roll back optimistic comment on failure.
-        setEvent((prev) => {
-          if (!prev) return prev
-          if (prev.id !== eventId) return prev
-          return { ...prev, comments: prev.comments.filter((c) => c.id !== optimisticId) }
+      try {
+        const inserted = await addComment(eventId, text)
+        if (!inserted) {
+          // Roll back optimistic comment on failure.
+          updateEventComments(eventId, (comments) => comments.filter((c) => c.id !== optimisticId))
+          return
+        }
+
+        // Replace optimistic comment with the real one (real id + server timestamp).
+        updateEventComments(eventId, (comments) => {
+          const withoutOptimistic = comments.filter((c) => c.id !== optimisticId)
+          return [...withoutOptimistic, inserted]
         })
-        return
+      } catch (error) {
+        console.error('Error posting comment:', error)
+        updateEventComments(eventId, (comments) => comments.filter((c) => c.id !== optimisticId))
       }
-
-      // Replace optimistic comment with the real one (real id + server timestamp).
-      setEvent((prev) => {
-        if (!prev) return prev
-        if (prev.id !== eventId) return prev
-        const withoutOptimistic = prev.comments.filter((c) => c.id !== optimisticId)
-        return { ...prev, comments: [...withoutOptimistic, inserted] }
-      })
     },
-    [setEvent, userId],
+    [updateEventComments, userId],
   )
 
   return { onUpdateEvent, handleJoinEvent, handleLeaveEvent, handlePostComment }
