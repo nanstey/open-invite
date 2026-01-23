@@ -20,8 +20,8 @@ import {
 
 import type { RouterContext } from '../routerContext'
 import { useAuth } from '../domains/auth/AuthProvider'
-import { ComingSoonPopover, useComingSoonPopover } from '../lib/ui/ComingSoonPopover'
-import { TabGroup, type TabOption } from '../lib/ui/TabGroup'
+import { ComingSoonPopover, useComingSoonPopover } from '../lib/ui/components/ComingSoonPopover'
+import { TabGroup, type TabOption } from '../lib/ui/components/TabGroup'
 
 function getPageTitle(pathname: string) {
   if (pathname.startsWith('/friends')) return 'Friends'

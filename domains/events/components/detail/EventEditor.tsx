@@ -5,9 +5,12 @@ import { useForm, useStore } from '@tanstack/react-form'
 import type { User } from '../../../../lib/types'
 import type { ItineraryItem, LocationData, SocialEvent } from '../../types'
 import { EventVisibility } from '../../types'
-import { EventDetail, type EventTab } from './EventDetail'
+import { EventDetail } from './EventDetail'
+import type { EventTab } from './route/routing'
 import { createEvent, fetchEventById, updateEvent } from '../../../../services/eventService'
 import { createItineraryItem, deleteItineraryItem, updateItineraryItem } from '../../../../services/itineraryService'
+import { toLocalDateTimeInputValue } from '../../../../lib/ui/utils/datetime'
+import { deriveEventTimesFromItinerary } from './itineraries/itinerary'
 
 type EditorMode = 'create' | 'update'
 
@@ -40,19 +43,6 @@ type EventEditorValues = {
   locationData: LocationData | undefined
 }
 
-function toLocalDateTimeInputValue(iso: string | undefined): string {
-  if (!iso) return ''
-  const d = new Date(iso)
-  // yyyy-MM-ddTHH:mm (local)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  const yyyy = d.getFullYear()
-  const mm = pad(d.getMonth() + 1)
-  const dd = pad(d.getDate())
-  const hh = pad(d.getHours())
-  const min = pad(d.getMinutes())
-  return `${yyyy}-${mm}-${dd}T${hh}:${min}`
-}
-
 export function EventEditor(props: {
   mode: EditorMode
   currentUser: User
@@ -81,20 +71,7 @@ export function EventEditor(props: {
   const hasItinerary = itineraryItems.length > 0
 
   const deriveEventTimeFromItinerary = React.useCallback((items: DraftItineraryItem[]) => {
-    if (!items.length) return null
-    const sorted = [...items].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-    const start = sorted[0]?.startTime
-    if (!start) return null
-
-    let maxEndMs = -Infinity
-    for (const item of sorted) {
-      const startMs = new Date(item.startTime).getTime()
-      const durMs = Math.max(0, Number(item.durationMinutes) || 0) * 60_000
-      maxEndMs = Math.max(maxEndMs, startMs + durMs)
-    }
-
-    if (!Number.isFinite(maxEndMs)) return null
-    return { startTime: new Date(start).toISOString(), endTime: new Date(maxEndMs).toISOString() }
+    return deriveEventTimesFromItinerary(items)
   }, [])
 
   const defaultValues = React.useMemo<EventEditorValues>(() => {

@@ -1,5 +1,6 @@
 import * as React from 'react'
-import type { LocationData } from '../../domains/events/types'
+import type { LocationData } from '../../../domains/events/types'
+import { photonSearch } from '../utils/photon'
 
 type PhotonFeature = {
   geometry?: { coordinates?: [number, number] }
@@ -124,15 +125,8 @@ export function LocationAutocomplete(props: LocationAutocompleteProps) {
       const controller = new AbortController()
       abortRef.current = controller
       try {
-        const url = new URL('https://photon.komoot.io/api/')
-        url.searchParams.set('q', q)
-        url.searchParams.set('limit', '6')
-
-        const resp = await fetch(url.toString(), { signal: controller.signal })
-        if (!resp.ok) throw new Error(`Photon error: ${resp.status}`)
-        const json = (await resp.json()) as { features?: PhotonFeature[] }
-
-        const next = (json.features ?? [])
+        const features = (await photonSearch(q, { limit: 6, signal: controller.signal })) as unknown as PhotonFeature[]
+        const next = features
           .map(toSuggestion)
           .filter((v): v is LocationSuggestion => !!v)
 

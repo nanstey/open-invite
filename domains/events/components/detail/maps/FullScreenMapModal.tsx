@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, ChevronUp, ExternalLink, X } from 'lucide-react'
 
+import { buildGoogleMapsLatLngUrl } from './maps'
+import { photonReverseOne } from '../../../../../lib/ui/utils/photon'
+
 type LatLng = [number, number]
 
 type FullScreenMapModalProps = {
@@ -31,11 +34,6 @@ export const FullScreenMapModal: React.FC<FullScreenMapModalProps> = ({
 
   const hasPoints = points.length > 0
   const firstPoint = points[0] ?? null
-
-  const buildGoogleMapsLatLngUrl = useCallback(
-    (lat: number, lng: number) => `https://www.google.com/maps?q=${encodeURIComponent(`${lat},${lng}`)}`,
-    [],
-  )
 
   const navigateToStop = useCallback(
     (idx: number) => {
@@ -178,32 +176,10 @@ export const FullScreenMapModal: React.FC<FullScreenMapModalProps> = ({
 
     ;(async () => {
       try {
-        const url = new URL('https://photon.komoot.io/reverse')
-        url.searchParams.set('lat', String(selectedPoint.lat))
-        url.searchParams.set('lon', String(selectedPoint.lng))
-        url.searchParams.set('limit', '1')
-
-        const resp = await fetch(url.toString(), { signal: controller.signal })
-        if (!resp.ok) throw new Error('Reverse geocode failed')
-        const json = (await resp.json()) as any
-        const props = json?.features?.[0]?.properties ?? null
-
-        const title =
-          String(props?.name ?? props?.street ?? props?.housenumber ?? props?.city ?? props?.locality ?? '').trim() ||
-          undefined
-
-        const subtitleParts = [
-          props?.housenumber && props?.street ? `${props.housenumber} ${props.street}` : props?.street,
-          props?.city,
-          props?.state,
-          props?.postcode,
-          props?.country,
-        ]
-          .map((p: any) => String(p ?? '').trim())
-          .filter(Boolean)
-
-        const subtitle = subtitleParts.length ? subtitleParts.join(', ') : undefined
-        const info = { title, subtitle }
+        const info = (await photonReverseOne(selectedPoint.lat, selectedPoint.lng, { signal: controller.signal })) ?? {
+          title: undefined,
+          subtitle: undefined,
+        }
         reverseCacheRef.current.set(key, info)
         setSelectedInfo(info)
       } catch (e: any) {

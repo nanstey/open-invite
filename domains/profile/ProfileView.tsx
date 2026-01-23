@@ -5,7 +5,7 @@ import { Settings, LogOut, ChevronRight, MapPin, Link as LinkIcon, Edit2, Shield
 import { useAuth } from '../auth/AuthProvider';
 import { supabase } from '../../lib/supabase';
 import { fetchFriends } from '../../services/friendService';
-import { ComingSoonPopover, useComingSoonPopover } from '../../lib/ui/ComingSoonPopover';
+import { ComingSoonPopover, useComingSoonPopover } from '../../lib/ui/components/ComingSoonPopover';
 
 interface ProfileViewProps {
   currentUser: User;

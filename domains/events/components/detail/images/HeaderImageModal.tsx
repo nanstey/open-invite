@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import { ExternalLink, Search, X } from 'lucide-react'
-import { searchPexelsImages, type PexelsImage } from '../../../../services/pexelsService'
+import { searchPexelsImages, type PexelsImage } from '../../../../../services/pexelsService'
 
 type HeaderImageModalProps = {
   defaultQuery: string

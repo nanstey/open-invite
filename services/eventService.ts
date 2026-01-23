@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import type { SocialEvent, Comment, Reaction, EventVisibility, LocationData } from '../domains/events/types';
 import type { Database } from '../lib/database.types';
 import { fetchItineraryItems } from './itineraryService'
+import { isUuid } from '../domains/events/components/detail/route/routing'
 
 type EventRow = Database['public']['Tables']['events']['Row'];
 type EventAttendeeRow = Database['public']['Tables']['event_attendees']['Row'];
@@ -11,10 +12,6 @@ type EventGroupRow = Database['public']['Tables']['event_groups']['Row'];
 
 function isNoRowsError(error: any): boolean {
   return error?.code === 'PGRST116' || error?.message?.includes('No rows');
-}
-
-function isUuid(value: string): boolean {
-  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
 async function markEventViewedById(eventId: string): Promise<boolean> {

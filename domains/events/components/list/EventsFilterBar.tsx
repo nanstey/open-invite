@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { Search, CalendarClock, Users, Filter, XCircle, CheckCircle2, Crown, History, Inbox, Layout, ChevronUp, Tag } from 'lucide-react';
-import { FormSelect } from '../../../../lib/ui/FormControls';
+import { FormSelect } from '../../../../lib/ui/components/FormControls';
 
 export type TimeFilter = 'ALL' | 'TODAY' | 'TOMORROW' | 'WEEK';
 export type StatusFilter = 'ALL' | 'PENDING' | 'ATTENDING' | 'HOSTING' | 'PAST' | 'DISMISSED';
