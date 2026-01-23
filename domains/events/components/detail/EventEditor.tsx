@@ -11,6 +11,7 @@ import { createEvent, fetchEventById, updateEvent } from '../../../../services/e
 import { createItineraryItem, deleteItineraryItem, updateItineraryItem } from '../../../../services/itineraryService'
 import { toLocalDateTimeInputValue } from '../../../../lib/ui/utils/datetime'
 import { deriveEventTimesFromItinerary } from './itineraries/itinerary'
+import { validateEventEditor } from './utils/validateEventEditor'
 
 type EditorMode = 'create' | 'update'
 
@@ -143,11 +144,8 @@ export function EventEditor(props: {
       const durationHours =
         value.durationHours === '' ? undefined : Number(value.durationHours)
 
-      // Description is optional; everything else is required.
-      // If itinerary has items, event time is derived from itinerary and the base date+duration inputs are optional/ignored.
-      if (!title || !location || !activityType) {
-        throw new Error('Missing required fields')
-      }
+      const errors = validateEventEditor(value, hasItinerary)
+      if (Object.values(errors).some(Boolean)) throw new Error('Missing required fields')
 
       let startTime = defaultStartTimeIsoRef.current
       let endTime: string | undefined = undefined
@@ -158,9 +156,7 @@ export function EventEditor(props: {
         startTime = derived.startTime
         endTime = derived.endTime
       } else {
-        if (!startDateTimeLocal || !durationHours || durationHours <= 0) {
-          throw new Error('Missing required fields')
-        }
+        if (!startDateTimeLocal || !durationHours || durationHours <= 0) throw new Error('Missing required fields')
         startTime = new Date(value.startDateTimeLocal).toISOString()
         endTime = new Date(new Date(value.startDateTimeLocal).getTime() + durationHours * 3_600_000).toISOString()
       }
@@ -302,24 +298,8 @@ export function EventEditor(props: {
   const values = useStore(form.store, (s) => s.values)
 
   const detailErrors = React.useMemo(() => {
-    const title = values.title.trim()
-    const description = values.description.trim()
-    const location = values.location.trim()
-    const activityType = String(values.activityType ?? '').trim()
-    const startDateTimeLocal = values.startDateTimeLocal
-    const durationHours = values.durationHours === '' ? undefined : Number(values.durationHours)
-
     const hasItinerary = itineraryItems.length > 0
-
-    return {
-      title: title ? undefined : 'Title is required',
-      activityType: activityType ? undefined : 'Category is required',
-      // Description is optional
-      description: undefined,
-      startTime: hasItinerary ? undefined : startDateTimeLocal ? undefined : 'Date & time is required',
-      durationHours: hasItinerary ? undefined : durationHours && durationHours > 0 ? undefined : 'Duration is required',
-      location: location ? undefined : 'Location is required',
-    }
+    return validateEventEditor(values, hasItinerary)
   }, [itineraryItems.length, values.activityType, values.description, values.durationHours, values.location, values.startDateTimeLocal, values.title])
 
   const canSubmit = Object.values(detailErrors).every((v) => !v)

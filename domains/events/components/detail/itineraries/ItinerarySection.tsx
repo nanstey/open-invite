@@ -2,6 +2,7 @@ import * as React from 'react'
 
 import type { ItineraryItem } from '../../../types'
 import { formatDateLongEnUS, formatTime12h } from '../../../../../lib/ui/utils/datetime'
+import { sortByStartTime } from './itinerary'
 
 export function ItinerarySection(props: {
   items: ItineraryItem[]
@@ -10,13 +11,11 @@ export function ItinerarySection(props: {
   openItineraryLocationInMaps: (locationFull: string) => void
 }) {
   const { items, showItineraryTimesOnly, formatItineraryLocationForDisplay, openItineraryLocationInMaps } = props
+  const orderedItems = React.useMemo(() => sortByStartTime(items), [items])
 
   return (
     <div className="space-y-3">
-      {items
-        .slice()
-        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-        .map((item) => {
+      {orderedItems.map((item) => {
           const start = new Date(item.startTime)
           const end = new Date(start.getTime() + item.durationMinutes * 60_000)
           const time = `${formatTime12h(start)} - ${formatTime12h(end)}`

@@ -4,22 +4,17 @@ import { ChevronDown, ChevronUp, MoreVertical, Trash2 } from 'lucide-react'
 import type { ItineraryItem, SocialEvent } from '../../../types'
 import { LocationAutocomplete } from '../../../../../lib/ui/components/LocationAutocomplete'
 import { FormSelect } from '../../../../../lib/ui/components/FormControls'
+import { buildQuarterHourTimeOptions } from '../../../../../lib/ui/utils/datetime'
 import { formatDateLongEnUS, formatTime12h, splitLocalDateTime, toLocalDateTimeInputValue } from '../../../../../lib/ui/utils/datetime'
+import { sortByStartTime } from './itinerary'
+import { useOutsideClick } from '../hooks/useOutsideClick'
 
 export function ItineraryEditor(props: {
   event: SocialEvent
   itineraryItems: ItineraryItem[]
-  timeOptions: { value: string; label: string }[]
   showItineraryTimesOnly: boolean
   hasItinerary: boolean
-  showCreateItinerary: boolean
-  setShowCreateItinerary: (next: boolean) => void
-  expandedItineraryItemId: string | null
-  setExpandedItineraryItemId: (next: string | null) => void
-  openItineraryMenuItemId: string | null
-  setOpenItineraryMenuItemId: (next: string | null) => void
-  draftDate: string
-  draftTime: string
+  draftStartIso: string | null
   durationHours?: number | ''
   formatItineraryLocationForDisplay: (location: string | undefined) => { full: string; label: string; isReal: boolean }
   openItineraryLocationInMaps: (locationFull: string) => void
@@ -47,24 +42,36 @@ export function ItineraryEditor(props: {
   const {
     event,
     itineraryItems,
-    timeOptions,
     showItineraryTimesOnly,
     hasItinerary,
-    showCreateItinerary,
-    setShowCreateItinerary,
-    expandedItineraryItemId,
-    setExpandedItineraryItemId,
-    openItineraryMenuItemId,
-    setOpenItineraryMenuItemId,
-    draftDate,
-    draftTime,
+    draftStartIso,
     durationHours,
     formatItineraryLocationForDisplay,
     openItineraryLocationInMaps,
     itineraryApi,
   } = props
 
+  const timeOptions = React.useMemo(() => buildQuarterHourTimeOptions(), [])
+
+  const [showCreateItinerary, setShowCreateItinerary] = React.useState(false)
+  const [expandedItineraryItemId, setExpandedItineraryItemId] = React.useState<string | null>(null)
+  const [openItineraryMenuItemId, setOpenItineraryMenuItemId] = React.useState<string | null>(null)
+
+  useOutsideClick({
+    enabled: !!openItineraryMenuItemId,
+    onOutsideClick: () => setOpenItineraryMenuItemId(null),
+  })
+
+  // If the parent clears the itinerary list, reset local UI state.
+  React.useEffect(() => {
+    if (itineraryItems.length !== 0) return
+    setShowCreateItinerary(false)
+    setExpandedItineraryItemId(null)
+    setOpenItineraryMenuItemId(null)
+  }, [itineraryItems.length])
+
   const showItineraryBuilder = hasItinerary || showCreateItinerary
+  const orderedItems = React.useMemo(() => sortByStartTime(itineraryItems), [itineraryItems])
 
   return (
     <div className="space-y-4">
@@ -75,7 +82,7 @@ export function ItineraryEditor(props: {
             setShowCreateItinerary(true)
             if (itineraryItems.length > 0) return
 
-            const startIso = draftDate && draftTime ? new Date(`${draftDate}T${draftTime}`).toISOString() : event.startTime
+            const startIso = draftStartIso ?? event.startTime
 
             const durationMinutes = (() => {
               const h = durationHours
@@ -101,10 +108,7 @@ export function ItineraryEditor(props: {
         <div className="space-y-3">
           {itineraryItems.length === 0 ? <div className="text-sm text-slate-500 italic">No itinerary items yet.</div> : null}
 
-          {itineraryItems
-            .slice()
-            .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-            .map((item) => {
+          {orderedItems.map((item) => {
               const start = new Date(item.startTime)
               const end = new Date(start.getTime() + item.durationMinutes * 60_000)
               const time = `${formatTime12h(start)} - ${formatTime12h(end)}`
@@ -286,10 +290,7 @@ export function ItineraryEditor(props: {
           <button
             type="button"
             onClick={async () => {
-              const sorted = itineraryItems
-                .slice()
-                .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-              const last = sorted[sorted.length - 1]
+              const last = orderedItems[orderedItems.length - 1]
               const defaultStartIso = last
                 ? new Date(new Date(last.startTime).getTime() + last.durationMinutes * 60_000).toISOString()
                 : new Date().toISOString()

@@ -6,6 +6,8 @@ import type { User } from '../../../../../lib/types'
 import type { SocialEvent } from '../../../types'
 import { EventVisibility } from '../../../types'
 import { FormSelect } from '../../../../../lib/ui/components/FormControls'
+import { ComingSoonPopover, useComingSoonPopover } from '../../../../../lib/ui/components/ComingSoonPopover'
+import { useGuestsEditActions } from '../hooks/useGuestsEditActions'
 
 export function GuestsTab(props: {
   event: SocialEvent
@@ -13,14 +15,19 @@ export function GuestsTab(props: {
   friendIds: Set<string>
   currentUserId?: string
   isEditMode: boolean
-  comingSoon: { show: (e: any, message: string) => void }
-  onRemoveAttendee?: (attendeeId: string) => void
+  onChangeAttendees?: (nextAttendees: string[]) => void
   onChangeMaxSeats?: (next: number | undefined) => void
 }) {
-  const { event, attendeesList, friendIds, currentUserId, isEditMode, comingSoon, onRemoveAttendee, onChangeMaxSeats } =
-    props
+  const { event, attendeesList, friendIds, currentUserId, isEditMode, onChangeAttendees, onChangeMaxSeats } = props
+  const comingSoon = useComingSoonPopover()
+  const guestsEdit = useGuestsEditActions({
+    enabled: isEditMode,
+    event,
+    attendeesList,
+    onChangeAttendees,
+  })
 
-  const attendeeCount = attendeesList.length
+  const attendeeCount = guestsEdit.visibleAttendeesList.length
   const goingLabel = event.maxSeats ? `${attendeeCount}/${event.maxSeats}` : `${attendeeCount}`
 
   return (
@@ -65,11 +72,11 @@ export function GuestsTab(props: {
           <div className="text-sm text-slate-400 font-medium">{event.maxSeats ? goingLabel : `${attendeeCount}`}</div>
         </div>
 
-        {attendeesList.length === 0 ? (
+        {guestsEdit.visibleAttendeesList.length === 0 ? (
           <div className="text-sm text-slate-500 italic">No guests yet.</div>
         ) : (
           <div className="space-y-2">
-            {attendeesList.map((u) => {
+            {guestsEdit.visibleAttendeesList.map((u) => {
               const isThisHost = u.id === event.hostId
               const isMe = !!currentUserId && u.id === currentUserId
               const isFriend = friendIds.has(u.id)
@@ -107,7 +114,7 @@ export function GuestsTab(props: {
                     {isEditMode ? (
                       <button
                         type="button"
-                        onClick={() => onRemoveAttendee?.(u.id)}
+                        onClick={() => guestsEdit.onRemoveAttendee(u.id)}
                         disabled={!canRemove}
                         className={`px-3 py-2 rounded-xl text-xs font-bold border transition-colors ${
                           canRemove
@@ -138,12 +145,15 @@ export function GuestsTab(props: {
           </div>
         )}
 
-        {event.maxSeats && attendeesList.length < event.maxSeats ? (
+        {event.maxSeats && guestsEdit.visibleAttendeesList.length < event.maxSeats ? (
           <div className="mt-3 text-xs text-slate-500">
-            {event.maxSeats - attendeesList.length} spot{event.maxSeats - attendeesList.length === 1 ? '' : 's'} open
+            {event.maxSeats - guestsEdit.visibleAttendeesList.length} spot
+            {event.maxSeats - guestsEdit.visibleAttendeesList.length === 1 ? '' : 's'} open
           </div>
         ) : null}
       </div>
+
+      <ComingSoonPopover state={comingSoon.state} />
     </div>
   )
 }
