@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChange, getCurrentUser } from '../lib/supabaseClient';
-import type { User } from '../lib/types';
+import { onAuthStateChange, getCurrentUser } from '../../lib/supabaseClient';
+import type { User } from '../../lib/types';
 
 const isDev = (import.meta as any).env?.DEV ?? false;
 const devLog = (...args: any[]) => {
@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     devLog('Signing in...');
-    const { signIn } = await import('../lib/supabaseClient');
+    const { signIn } = await import('../../lib/supabaseClient');
     const result = await signIn(email, password);
     if (result.error) {
       devError('Sign in error:', result.error);
@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, name: string, avatar: string) => {
-    const { signUp } = await import('../lib/supabaseClient');
+    const { signUp } = await import('../../lib/supabaseClient');
     const result = await signUp(email, password, name, avatar);
     if (result.error) {
       return { error: result.error };
@@ -97,7 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signInWithGoogle = async (redirectPath?: string) => {
     devLog('Signing in with Google...');
-    const { signInWithGoogle } = await import('../lib/supabaseClient');
+    const { signInWithGoogle } = await import('../../lib/supabaseClient');
     const result = await signInWithGoogle(redirectPath);
     if (result.error) {
       devError('Google sign in error:', result.error);
@@ -109,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    const { signOut } = await import('../lib/supabaseClient');
+    const { signOut } = await import('../../lib/supabaseClient');
     await signOut();
     setUser(null);
   };

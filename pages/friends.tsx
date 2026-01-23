@@ -2,7 +2,7 @@ import React from 'react'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 
 import type { FriendsMode } from '../lib/types'
-import { FriendsView } from '../components/FriendsView'
+import { FriendsView } from '../domains/friends/FriendsView'
 
 type FriendsTab = 'friends' | 'groups'
 

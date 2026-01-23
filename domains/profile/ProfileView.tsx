@@ -1,11 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { User } from '../lib/types';
+import { User } from '../../lib/types';
 import { Settings, LogOut, ChevronRight, MapPin, Link as LinkIcon, Edit2, Shield, BellRing, Moon } from 'lucide-react';
-import { useAuth } from './AuthProvider';
-import { supabase } from '../lib/supabase';
-import { fetchFriends } from '../services/friendService';
-import { ComingSoonPopover, useComingSoonPopover } from './ComingSoonPopover';
+import { useAuth } from '../auth/AuthProvider';
+import { supabase } from '../../lib/supabase';
+import { fetchFriends } from '../../services/friendService';
+import { ComingSoonPopover, useComingSoonPopover } from '../../lib/ui/ComingSoonPopover';
 
 interface ProfileViewProps {
   currentUser: User;

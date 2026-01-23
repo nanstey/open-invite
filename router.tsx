@@ -1,7 +1,7 @@
 import React from 'react'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 
-import type { AuthContextType } from './components/AuthProvider'
+import type { AuthContextType } from './domains/auth/AuthProvider'
 import type { RouterContext } from './routerContext'
 import { routeTree } from './routeTree.gen'
 

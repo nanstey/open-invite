@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase';
 import type { Database } from '../lib/database.types';
-import type { Comment } from '../lib/types';
+import type { Comment } from '../domains/events/types';
 
 type CommentRow = Database['public']['Tables']['comments']['Row'];
 type CommentInsert = Database['public']['Tables']['comments']['Insert'];

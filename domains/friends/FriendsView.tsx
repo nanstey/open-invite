@@ -1,10 +1,10 @@
 
 import React, { useState, useEffect } from 'react';
-import { FriendsMode, Group, User } from '../lib/types';
+import { FriendsMode, Group, User } from '../../lib/types';
 import { UserPlus, Search, MoreHorizontal, Settings, MessageCircle, Plus } from 'lucide-react';
-import { fetchUserGroups, fetchGroupMembers } from '../services/friendService';
-import { fetchFriends } from '../services/friendService';
-import { supabase } from '../lib/supabase';
+import { fetchUserGroups, fetchGroupMembers } from '../../services/friendService';
+import { fetchFriends } from '../../services/friendService';
+import { supabase } from '../../lib/supabase';
 
 interface FriendsViewProps {
   activeTab: FriendsMode;

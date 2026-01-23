@@ -2,11 +2,12 @@ import React from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useForm, useStore } from '@tanstack/react-form'
 
-import type { ItineraryItem, LocationData, SocialEvent, User } from '../lib/types'
-import { EventVisibility } from '../lib/types'
+import type { User } from '../../../../lib/types'
+import type { ItineraryItem, LocationData, SocialEvent } from '../../types'
+import { EventVisibility } from '../../types'
 import { EventDetail, type EventTab } from './EventDetail'
-import { createEvent, fetchEventById, updateEvent } from '../services/eventService'
-import { createItineraryItem, deleteItineraryItem, updateItineraryItem } from '../services/itineraryService'
+import { createEvent, fetchEventById, updateEvent } from '../../../../services/eventService'
+import { createItineraryItem, deleteItineraryItem, updateItineraryItem } from '../../../../services/itineraryService'
 
 type EditorMode = 'create' | 'update'
 

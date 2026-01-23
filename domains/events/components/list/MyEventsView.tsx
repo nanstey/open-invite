@@ -1,6 +1,7 @@
 
 import React from 'react';
-import { SocialEvent, User, MyEventsMode } from '../lib/types';
+import type { User } from '../../../../lib/types';
+import type { SocialEvent, MyEventsMode } from '../../types';
 import { EventCard } from './EventCard';
 import { CalendarX2 } from 'lucide-react';
 

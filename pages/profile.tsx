@@ -1,8 +1,8 @@
 import React from 'react'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 
-import { useAuth } from '../components/AuthProvider'
-import { ProfileView } from '../components/ProfileView'
+import { useAuth } from '../domains/auth/AuthProvider'
+import { ProfileView } from '../domains/profile/ProfileView'
 
 export const Route = createFileRoute('/profile')({
   beforeLoad: ({ context }) => {

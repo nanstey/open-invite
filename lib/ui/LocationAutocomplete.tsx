@@ -1,5 +1,5 @@
 import * as React from 'react'
-import type { LocationData } from '../lib/types'
+import type { LocationData } from '../../domains/events/types'
 
 type PhotonFeature = {
   geometry?: { coordinates?: [number, number] }

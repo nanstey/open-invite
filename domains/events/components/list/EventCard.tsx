@@ -1,10 +1,12 @@
 
 import React, { useState, useRef, useEffect } from 'react';
-import { SocialEvent, User } from '../lib/types';
-import { getTheme } from '../lib/constants';
+import type { User } from '../../../../lib/types';
+import type { SocialEvent } from '../../types';
+import { getTheme } from '../../../../lib/constants';
 import { Calendar, MapPin, Users, PhoneOff, MessageSquare, Crown, CheckCircle2, X, LogOut } from 'lucide-react';
-import { StatusFilter } from './FilterBar';
-import { fetchUser } from '../services/userService';
+import type { LucideIcon } from 'lucide-react';
+import { StatusFilter } from './EventsFilterBar';
+import { fetchUser } from '../../../../services/userService';
 
 // Helper for color interpolation
 const hexToRgb = (hex: string) => {
@@ -195,7 +197,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   
   // Gradients based on Swipe Direction
   let gradientStyle = {};
-  let ActionIcon = null;
+  let ActionIcon: LucideIcon | null = null;
   let actionText = '';
 
   if (offsetX > 0 || (isExiting && offsetX > 0)) {

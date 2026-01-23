@@ -1,7 +1,8 @@
 
 import React, { useState, useRef } from 'react';
-import { SocialEvent, User } from '../lib/types';
-import { getTheme } from '../lib/constants';
+import type { User } from '../../../../lib/types';
+import type { SocialEvent } from '../../types';
+import { getTheme } from '../../../../lib/constants';
 import { ChevronLeft, ChevronRight, Clock, Crown, CheckCircle2 } from 'lucide-react';
 
 interface CalendarViewProps {

@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { SocialEvent, Comment, Reaction, EventVisibility, LocationData } from '../lib/types';
+import type { SocialEvent, Comment, Reaction, EventVisibility, LocationData } from '../domains/events/types';
 import type { Database } from '../lib/database.types';
 import { fetchItineraryItems } from './itineraryService'
 

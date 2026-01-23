@@ -84,3 +84,4 @@ CREATE POLICY "Hosts can delete itinerary items"
 COMMIT;
 
 
+

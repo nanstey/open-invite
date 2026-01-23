@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { Reaction } from '../lib/types';
+import type { Reaction } from '../domains/events/types';
 
 /**
  * Fetch reactions for an event

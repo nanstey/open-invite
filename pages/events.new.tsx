@@ -1,8 +1,8 @@
 import React from 'react'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 
-import { useAuth } from '../components/AuthProvider'
-import { EventEditor } from '../components/EventEditor'
+import { useAuth } from '../domains/auth/AuthProvider'
+import { EventEditor } from '../domains/events/components/detail/EventEditor'
 
 type EventsView = 'list' | 'map' | 'calendar'
 

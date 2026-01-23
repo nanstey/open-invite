@@ -1,17 +1,19 @@
 
 import React, { useRef, useState, useEffect } from 'react';
-import { Comment, EventVisibility, Group, ItineraryItem, SocialEvent, User } from '../lib/types';
-import { getTheme } from '../lib/constants';
+import type { Group, User } from '../../../../lib/types';
+import type { Comment, ItineraryItem, SocialEvent } from '../../types';
+import { EventVisibility } from '../../types';
+import { getTheme } from '../../../../lib/constants';
 import { ArrowLeft, Calendar, Info, Link, MapPin, Map as MapIcon, MessageSquare, Save, Send, Users, X, CheckCircle2, EyeOff, Image as ImageIcon, ChevronDown, ChevronUp, MoreVertical, Trash2 } from 'lucide-react';
-import { fetchUser, fetchUsers } from '../services/userService';
-import { fetchFriends } from '../services/friendService'
-import { TabGroup, type TabOption } from './TabGroup';
+import { fetchUser, fetchUsers } from '../../../../services/userService';
+import { fetchFriends } from '../../../../services/friendService'
+import { TabGroup, type TabOption } from '../../../../lib/ui/TabGroup';
 import { useRouterState } from '@tanstack/react-router';
-import { FormSelect } from './FormControls';
-import { LocationAutocomplete } from './LocationAutocomplete'
+import { FormSelect } from '../../../../lib/ui/FormControls';
+import { LocationAutocomplete } from '../../../../lib/ui/LocationAutocomplete'
 import { HeaderImageModal } from './HeaderImageModal'
-import { ComingSoonPopover, useComingSoonPopover } from './ComingSoonPopover'
-import { FullScreenMapModal } from './FullScreenMapModal'
+import { ComingSoonPopover, useComingSoonPopover } from '../../../../lib/ui/ComingSoonPopover'
+import { FullScreenMapModal } from '../../../../components/FullScreenMapModal'
 
 interface EventDetailProps {
   event: SocialEvent;

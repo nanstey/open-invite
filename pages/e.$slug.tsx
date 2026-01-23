@@ -1,10 +1,10 @@
 import React from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 
-import { EventDetail } from '../components/EventDetail'
-import { LoginModal } from '../components/LoginModal'
-import { useAuth } from '../components/AuthProvider'
-import type { SocialEvent } from '../lib/types'
+import { EventDetail } from '../domains/events/components/detail/EventDetail'
+import { LoginModal } from '../domains/auth/LoginModal'
+import { useAuth } from '../domains/auth/AuthProvider'
+import type { SocialEvent } from '../domains/events/types'
 import { fetchEventById, fetchEventBySlug } from '../services/eventService'
 import { realtimeService } from '../services/realtimeService'
 

@@ -1,4 +1,4 @@
-import type { AuthContextType } from './components/AuthProvider'
+import type { AuthContextType } from './domains/auth/AuthProvider'
 
 export type RouterContext = {
   auth: AuthContextType

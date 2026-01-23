@@ -1,8 +1,9 @@
 
 import React, { useEffect, useRef, useState } from 'react';
-import { SocialEvent, User } from '../lib/types';
-import { getTheme } from '../lib/constants';
-import { fetchUsers } from '../services/userService';
+import type { User } from '../../../../lib/types';
+import type { SocialEvent } from '../../types';
+import { getTheme } from '../../../../lib/constants';
+import { fetchUsers } from '../../../../services/userService';
 
 // Add declaration for Leaflet on window object
 declare global {

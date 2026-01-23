@@ -19,9 +19,9 @@ import {
 } from 'lucide-react'
 
 import type { RouterContext } from '../routerContext'
-import { useAuth } from '../components/AuthProvider'
-import { ComingSoonPopover, useComingSoonPopover } from '../components/ComingSoonPopover'
-import { TabGroup, type TabOption } from '../components/TabGroup'
+import { useAuth } from '../domains/auth/AuthProvider'
+import { ComingSoonPopover, useComingSoonPopover } from '../lib/ui/ComingSoonPopover'
+import { TabGroup, type TabOption } from '../lib/ui/TabGroup'
 
 function getPageTitle(pathname: string) {
   if (pathname.startsWith('/friends')) return 'Friends'
