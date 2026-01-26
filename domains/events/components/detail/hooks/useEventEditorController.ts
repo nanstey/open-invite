@@ -3,10 +3,11 @@ import { useMutation } from '@tanstack/react-query'
 import { useForm, useStore } from '@tanstack/react-form'
 
 import type { User } from '../../../../../lib/types'
-import type { ItineraryItem, LocationData, SocialEvent } from '../../../types'
+import type { EventExpense, ItineraryItem, LocationData, SocialEvent } from '../../../types'
 import { EventVisibility } from '../../../types'
 import { createEvent, fetchEventById, updateEvent } from '../../../../../services/eventService'
 import { createItineraryItem, deleteItineraryItem, updateItineraryItem } from '../../../../../services/itineraryService'
+import { createEventExpense, deleteEventExpense, updateEventExpense } from '../../../../../services/expenseService'
 import { toLocalDateTimeInputValue } from '../../../../../lib/ui/utils/datetime'
 import { validateEventEditor } from '../utils/validateEventEditor'
 import { computeEventTimes, diffItineraryItems, mapDraftItineraryItems, type DraftItineraryItem } from '../utils/eventEditorUtils'
@@ -33,6 +34,8 @@ type EventEditorValues = {
   locationData: LocationData | undefined
 }
 
+type DraftExpense = Omit<EventExpense, 'eventId'>
+
 async function persistItineraryChanges(args: {
   eventId: string
   initialItems: ItineraryItem[]
@@ -51,6 +54,77 @@ async function persistItineraryChanges(args: {
         durationMinutes: c.durationMinutes,
         location: c.location,
         description: c.description,
+      }),
+    ),
+  ])
+}
+
+function mapDraftExpenses(drafts: DraftExpense[], eventId: string): EventExpense[] {
+  return drafts.map((e) => ({ ...e, eventId }))
+}
+
+type ExpenseCreate = Omit<EventExpense, 'id'>
+type ExpenseUpdate = { id: string; patch: Partial<Omit<EventExpense, 'id' | 'eventId'>> }
+
+export function diffExpenses(initial: EventExpense[], current: DraftExpense[]): {
+  deletes: string[]
+  creates: ExpenseCreate[]
+  updates: ExpenseUpdate[]
+} {
+  const initialById = new Map(initial.map((e) => [e.id, e] as const))
+  const currentById = new Map(current.map((e) => [e.id, e] as const))
+
+  const deletes = initial.filter((e) => !currentById.has(e.id)).map((e) => e.id)
+
+  const creates: ExpenseCreate[] = current
+    .filter((e) => !initialById.has(e.id))
+    .map((e) => ({
+      eventId: '', // filled by caller
+      title: e.title,
+      appliesTo: e.appliesTo,
+      splitType: e.splitType,
+      timing: e.timing,
+      settledKind: e.settledKind,
+      amountCents: e.amountCents,
+      currency: e.currency,
+      participantIds: e.participantIds,
+    }))
+
+  const updates: ExpenseUpdate[] = []
+  for (const cur of current) {
+    const prev = initialById.get(cur.id)
+    if (!prev) continue
+
+    const patch: Partial<Omit<EventExpense, 'id' | 'eventId'>> = {}
+    if (prev.title !== cur.title) patch.title = cur.title
+    if (prev.appliesTo !== cur.appliesTo) patch.appliesTo = cur.appliesTo
+    if (prev.splitType !== cur.splitType) patch.splitType = cur.splitType
+    if (prev.timing !== cur.timing) patch.timing = cur.timing
+    if (prev.settledKind !== cur.settledKind) patch.settledKind = cur.settledKind
+    if (prev.amountCents !== cur.amountCents) patch.amountCents = cur.amountCents
+    if (prev.currency !== cur.currency) patch.currency = cur.currency
+    if (prev.participantIds.join(',') !== cur.participantIds.join(',')) patch.participantIds = cur.participantIds
+
+    if (Object.keys(patch).length > 0) updates.push({ id: cur.id, patch })
+  }
+
+  return { deletes, creates, updates }
+}
+
+async function persistExpenseChanges(args: {
+  eventId: string
+  initialItems: EventExpense[]
+  currentDrafts: DraftExpense[]
+}): Promise<void> {
+  const { deletes, creates, updates } = diffExpenses(args.initialItems, args.currentDrafts)
+
+  await Promise.all([
+    ...deletes.map((id) => deleteEventExpense(id)),
+    ...updates.map((u) => updateEventExpense(u.id, u.patch)),
+    ...creates.map((c) =>
+      createEventExpense({
+        ...c,
+        eventId: args.eventId,
       }),
     ),
   ])
@@ -76,6 +150,21 @@ export function useEventEditorController(props: {
       durationMinutes: i.durationMinutes,
       location: i.location,
       description: i.description,
+    }))
+  })
+
+  const [expenseItems, setExpenseItems] = React.useState<DraftExpense[]>(() => {
+    const existing = props.initialEvent?.expenses ?? []
+    return existing.map((e) => ({
+      id: e.id,
+      title: e.title,
+      appliesTo: e.appliesTo,
+      splitType: e.splitType,
+      timing: e.timing,
+      settledKind: e.settledKind,
+      amountCents: e.amountCents,
+      currency: e.currency,
+      participantIds: e.participantIds,
     }))
   })
 
@@ -187,18 +276,25 @@ export function useEventEditorController(props: {
         })
         if (!created) throw new Error('createEvent returned null')
 
-        if (hasItinerary) {
-          await persistItineraryChanges({
-            eventId: created.id,
-            initialItems: [],
-            currentDrafts: itineraryItems,
-          })
-          const refreshed = await fetchEventById(created.id)
-          props.onSuccess(refreshed ?? created)
-          return
-        }
+        await Promise.all([
+          hasItinerary
+            ? persistItineraryChanges({
+                eventId: created.id,
+                initialItems: [],
+                currentDrafts: itineraryItems,
+              })
+            : Promise.resolve(),
+          expenseItems.length > 0
+            ? persistExpenseChanges({
+                eventId: created.id,
+                initialItems: [],
+                currentDrafts: expenseItems,
+              })
+            : Promise.resolve(),
+        ])
 
-        props.onSuccess(created)
+        const refreshed = await fetchEventById(created.id)
+        props.onSuccess(refreshed ?? created)
         return
       }
 
@@ -224,11 +320,18 @@ export function useEventEditorController(props: {
 
       if (!updated) throw new Error('updateEvent returned null')
 
-      await persistItineraryChanges({
-        eventId: props.initialEvent.id,
-        initialItems: props.initialEvent.itineraryItems ?? [],
-        currentDrafts: itineraryItems,
-      })
+      await Promise.all([
+        persistItineraryChanges({
+          eventId: props.initialEvent.id,
+          initialItems: props.initialEvent.itineraryItems ?? [],
+          currentDrafts: itineraryItems,
+        }),
+        persistExpenseChanges({
+          eventId: props.initialEvent.id,
+          initialItems: props.initialEvent.expenses ?? [],
+          currentDrafts: expenseItems,
+        }),
+      ])
 
       const refreshed = await fetchEventById(props.initialEvent.id)
       props.onSuccess(refreshed ?? updated)
@@ -237,6 +340,7 @@ export function useEventEditorController(props: {
       hasItinerary,
       isUpdate,
       itineraryItems,
+      expenseItems,
       props.initialEvent,
       props.onSuccess,
     ],
@@ -304,9 +408,11 @@ export function useEventEditorController(props: {
       comments: props.initialEvent?.comments ?? EMPTY_COMMENTS,
       reactions: props.initialEvent?.reactions ?? EMPTY_REACTIONS,
       itineraryItems: mapDraftItineraryItems(itineraryItems, editingEventId),
+      expenses: mapDraftExpenses(expenseItems, editingEventId),
     }
   }, [
     editingEventId,
+    expenseItems,
     hasItinerary,
     isUpdate,
     itineraryItems,
@@ -366,6 +472,10 @@ export function useEventEditorController(props: {
     return mapDraftItineraryItems(itineraryItems, editingEventId)
   }, [editingEventId, itineraryItems])
 
+  const expenseEditItems = React.useMemo(() => {
+    return mapDraftExpenses(expenseItems, editingEventId)
+  }, [editingEventId, expenseItems])
+
   const onAddItineraryItem = React.useCallback(
     (input: { title: string; startTime: string; durationMinutes: number; location?: string; description?: string }) => {
       const id = globalThis.crypto?.randomUUID?.() ?? String(Date.now())
@@ -389,6 +499,20 @@ export function useEventEditorController(props: {
     setItineraryItems((prev) => prev.filter((i) => i.id !== id))
   }, [])
 
+  const onAddExpense = React.useCallback((input: Omit<DraftExpense, 'id'>) => {
+    const id = globalThis.crypto?.randomUUID?.() ?? String(Date.now())
+    setExpenseItems((prev) => [...prev, { id, ...input }])
+    return id
+  }, [])
+
+  const onUpdateExpense = React.useCallback((id: string, patch: Partial<Omit<DraftExpense, 'id'>>) => {
+    setExpenseItems((prev) => prev.map((e) => (e.id === id ? { ...e, ...patch } : e)))
+  }, [])
+
+  const onDeleteExpense = React.useCallback((id: string) => {
+    setExpenseItems((prev) => prev.filter((e) => e.id !== id))
+  }, [])
+
   const itineraryApi = React.useMemo(() => {
     return {
       items: itineraryEditItems,
@@ -397,6 +521,15 @@ export function useEventEditorController(props: {
       onDelete: onDeleteItineraryItem,
     }
   }, [itineraryEditItems, onAddItineraryItem, onDeleteItineraryItem, onUpdateItineraryItem])
+
+  const expenseApi = React.useMemo(() => {
+    return {
+      items: expenseEditItems,
+      onAdd: onAddExpense,
+      onUpdate: onUpdateExpense,
+      onDelete: onDeleteExpense,
+    }
+  }, [expenseEditItems, onAddExpense, onDeleteExpense, onUpdateExpense])
 
   const primaryLabel = isUpdate ? 'Save changes' : 'Publish invite'
 
@@ -420,6 +553,7 @@ export function useEventEditorController(props: {
       onChangeDurationHours,
       onChange: applyPatch,
       itinerary: itineraryApi,
+      expenses: expenseApi,
       onSave,
       onCancel: props.onCancel,
     }
@@ -427,6 +561,7 @@ export function useEventEditorController(props: {
     applyPatch,
     canSubmit,
     detailErrors,
+    expenseApi,
     itineraryApi,
     onChangeDurationHours,
     onChangeStartDateTimeLocal,

@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import type { Group, User } from '../../../../lib/types';
 import type { ItineraryItem, SocialEvent } from '../../types';
+import type { EventExpense } from './expenses/types'
 import { Info, MessageSquare, Users } from 'lucide-react';
 import { TabGroup, type TabOption } from '../../../../lib/ui/components/TabGroup';
 import { useRouterState } from '@tanstack/react-router';
@@ -28,6 +29,7 @@ import { AboutCard } from './details/AboutCard'
 import { DateTimeCard } from './details/DateTimeCard'
 import { ItineraryCard } from './details/ItineraryCard'
 import { LocationCard } from './details/LocationCard'
+import { ExpensesCard } from './expenses/ExpensesCard'
 import { HeroHeader } from './header/HeroHeader'
 import { KeyFactsCard } from './header/KeyFactsCard'
 import { formatItineraryLocationForDisplay, formatRawLocationForDisplay } from './utils/locationDisplay'
@@ -80,6 +82,15 @@ interface EventDetailProps {
           location?: string
           description?: string
         }>,
+      ) => Promise<void> | void
+      onDelete: (id: string) => Promise<void> | void
+    }
+    expenses?: {
+      items: EventExpense[];
+      onAdd: (input: Omit<EventExpense, 'id' | 'eventId'>) => Promise<string> | string
+      onUpdate: (
+        id: string,
+        patch: Partial<Omit<EventExpense, 'id' | 'eventId'>>,
       ) => Promise<void> | void
       onDelete: (id: string) => Promise<void> | void
     }
@@ -143,6 +154,15 @@ export const EventDetail: React.FC<EventDetailProps> = ({
 
   // --- People / social data ---
   const { host, attendeesList, commentUsers } = useEventPeople({ event, currentUserId: currentUserId ?? undefined })
+
+  const expensePeople = React.useMemo(() => {
+    const all: Array<{ id: string; name: string }> = []
+    if (currentUser) all.push({ id: currentUser.id, name: currentUser.name })
+    if (host) all.push({ id: host.id, name: host.name })
+    for (const u of attendeesList) all.push({ id: u.id, name: u.name })
+    const uniq = new Map(all.map((p) => [p.id, p] as const))
+    return Array.from(uniq.values())
+  }, [attendeesList, currentUser, host])
 
   // --- Edit form draft state ---
   const draftStart = useDraftStartDateTimeLocal({
@@ -355,6 +375,25 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   })
                 }
                 locationError={isEditMode ? edit?.errors?.location : undefined}
+              />
+
+              <ExpensesCard
+                isEditMode={isEditMode}
+                isGuest={isGuest}
+                onRequireAuth={onRequireAuth}
+                currentUserId={currentUser?.id}
+                hostId={event.hostId}
+                expenses={(isEditMode ? edit?.expenses?.items : event.expenses) ?? []}
+                expenseApi={
+                  isEditMode && edit?.expenses
+                    ? {
+                        onAdd: edit.expenses.onAdd,
+                        onUpdate: edit.expenses.onUpdate,
+                        onDelete: edit.expenses.onDelete,
+                      }
+                    : undefined
+                }
+                people={expensePeople}
               />
             </div>
           ) : null}

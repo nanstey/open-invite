@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 import type { SocialEvent, Comment, Reaction, EventVisibility, LocationData } from '../domains/events/types';
 import type { Database } from '../lib/database.types';
 import { fetchItineraryItems } from './itineraryService'
+import { fetchEventExpenses } from './expenseService'
 import { isUuid } from '../domains/events/components/detail/route/routing'
 
 type EventRow = Database['public']['Tables']['events']['Row'];
@@ -70,6 +71,7 @@ function transformEventRow(
   reactions: Record<string, Reaction>,
   groupIds: string[],
   itineraryItems?: SocialEvent['itineraryItems'],
+  expenses?: SocialEvent['expenses'],
 ): SocialEvent {
   return {
     id: row.id,
@@ -95,6 +97,7 @@ function transformEventRow(
     comments,
     reactions,
     itineraryItems,
+    expenses,
   };
 }
 
@@ -239,12 +242,13 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
   if (!eventRow) return null;
 
   // Fetch related data
-  const [attendeesResult, commentsResult, reactionsResult, eventGroupsResult, itineraryItems] = await Promise.all([
+  const [attendeesResult, commentsResult, reactionsResult, eventGroupsResult, itineraryItems, expenses] = await Promise.all([
     supabase.from('event_attendees').select('*').eq('event_id', eventId),
     supabase.from('comments').select('*').eq('event_id', eventId).order('timestamp', { ascending: true }),
     supabase.from('reactions').select('*').eq('event_id', eventId),
     supabase.from('event_groups').select('*').eq('event_id', eventId),
     fetchItineraryItems(eventId),
+    fetchEventExpenses(eventId),
   ]);
 
   const attendeesData = attendeesResult.data as EventAttendeeRow[] | null;
@@ -282,7 +286,7 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
     });
   }
 
-  return transformEventRow(eventRow, attendees, comments, reactions, groupIds, itineraryItems);
+  return transformEventRow(eventRow, attendees, comments, reactions, groupIds, itineraryItems, expenses);
 }
 
 /**
@@ -456,11 +460,11 @@ export async function joinEvent(eventId: string): Promise<boolean> {
     event_id: eventId,
     user_id: user.id,
   };
-  // Make join idempotent: if the row already exists, treat it as success.
-  // (The table has UNIQUE(event_id, user_id).)
+  // Make join idempotent: if the row already exists, do nothing and treat it as success.
+  // (This avoids requiring UPDATE permissions/policies for the conflict path.)
   const result = await supabase
     .from('event_attendees')
-    .upsert(attendeeData as any, { onConflict: 'event_id,user_id' });
+    .upsert(attendeeData as any, { onConflict: 'event_id,user_id', ignoreDuplicates: true });
   const { error } = result as unknown as { error: any };
   if (error) {
     console.error('Error joining event:', error);

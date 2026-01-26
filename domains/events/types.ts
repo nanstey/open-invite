@@ -21,6 +21,33 @@ export interface ItineraryItem {
   description?: string
 }
 
+export type ExpenseSplitType = 'GROUP' | 'PER_PERSON'
+export type ExpenseTiming = 'UP_FRONT' | 'SETTLED_LATER'
+export type ExpenseSettledKind = 'EXACT' | 'ESTIMATE'
+export type ExpenseAppliesTo = 'EVERYONE' | 'HOST_ONLY' | 'GUESTS_ONLY' | 'CUSTOM'
+
+export interface EventExpense {
+  id: string
+  eventId: string
+  title: string
+  appliesTo: ExpenseAppliesTo
+  splitType: ExpenseSplitType
+  timing: ExpenseTiming
+  /**
+   * Only present when `timing === 'SETTLED_LATER'`.
+   */
+  settledKind?: ExpenseSettledKind
+  /**
+   * Stored value for the expense:
+   * - UP_FRONT
+   * - SETTLED_LATER + EXACT
+   * - SETTLED_LATER + ESTIMATE (displayed with a "~" prefix)
+   */
+  amountCents?: number
+  currency: string
+  participantIds: string[]
+}
+
 export enum EventVisibility {
   ALL_FRIENDS = 'ALL_FRIENDS',
   GROUPS = 'GROUPS',
@@ -69,6 +96,7 @@ export interface SocialEvent {
   comments: Comment[]
   reactions: Record<string, Reaction> // key is emoji
   itineraryItems?: ItineraryItem[] // optional to keep list fetch lightweight
+  expenses?: EventExpense[] // optional to keep list fetch lightweight
 }
 
 // UI-only modes used within events domain
