@@ -9,6 +9,11 @@ export type ExpenseAppliesTo = 'EVERYONE' | 'HOST_ONLY' | 'GUESTS_ONLY' | 'CUSTO
 export type EventExpense = {
   id: string
   eventId: string
+  /**
+   * Stable ordering field for display + drag/drop reordering.
+   * Lower numbers appear first.
+   */
+  sortOrder?: number
   title: string
   appliesTo: ExpenseAppliesTo
   splitType: ExpenseSplitType
@@ -23,6 +28,7 @@ export type ExpenseApi = {
   onAdd: (input: Omit<EventExpense, 'id' | 'eventId'>) => Promise<string> | string
   onUpdate: (id: string, patch: Partial<Omit<EventExpense, 'id' | 'eventId'>>) => Promise<void> | void
   onDelete: (id: string) => Promise<void> | void
+  onReorder?: (orderedExpenseIds: string[]) => Promise<void> | void
 }
 
 export type AmountDraftsByExpenseId = Record<

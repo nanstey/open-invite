@@ -29,6 +29,7 @@ export type ExpenseAppliesTo = 'EVERYONE' | 'HOST_ONLY' | 'GUESTS_ONLY' | 'CUSTO
 export interface EventExpense {
   id: string
   eventId: string
+  sortOrder?: number
   title: string
   appliesTo: ExpenseAppliesTo
   splitType: ExpenseSplitType

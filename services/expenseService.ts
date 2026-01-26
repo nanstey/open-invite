@@ -8,6 +8,7 @@ function transformRow(row: ExpenseRow): EventExpense {
   return {
     id: row.id,
     eventId: row.event_id,
+    sortOrder: row.sort_order ?? undefined,
     title: row.title,
     appliesTo: row.applies_to as ExpenseAppliesTo,
     splitType: row.split_type as ExpenseSplitType,
@@ -24,6 +25,7 @@ export async function fetchEventExpenses(eventId: string): Promise<EventExpense[
     .from('event_expenses')
     .select('*')
     .eq('event_id', eventId)
+    .order('sort_order', { ascending: true })
     .order('created_at', { ascending: true })
 
   const { data, error } = result as unknown as { data: ExpenseRow[] | null; error: any }
@@ -47,6 +49,7 @@ export async function createEventExpense(input: Omit<EventExpense, 'id'>): Promi
     amount_cents: input.amountCents ?? null,
     currency: input.currency,
     participant_ids: input.participantIds,
+    sort_order: input.sortOrder,
   }
 
   const result = await supabase.from('event_expenses').insert(insert as unknown as never).select().single()
@@ -71,6 +74,7 @@ export async function updateEventExpense(
   if ('amountCents' in patch) update.amount_cents = patch.amountCents ?? null
   if (patch.currency !== undefined) update.currency = patch.currency
   if (patch.participantIds !== undefined) update.participant_ids = patch.participantIds
+  if (patch.sortOrder !== undefined) update.sort_order = patch.sortOrder
 
   const result = await supabase.from('event_expenses').update(update as unknown as never).eq('id', expenseId).select().single()
   const { data, error } = result as unknown as { data: ExpenseRow | null; error: any }

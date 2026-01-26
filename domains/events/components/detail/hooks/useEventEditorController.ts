@@ -80,6 +80,7 @@ export function diffExpenses(initial: EventExpense[], current: DraftExpense[]): 
     .filter((e) => !initialById.has(e.id))
     .map((e) => ({
       eventId: '', // filled by caller
+      sortOrder: e.sortOrder,
       title: e.title,
       appliesTo: e.appliesTo,
       splitType: e.splitType,
@@ -96,6 +97,7 @@ export function diffExpenses(initial: EventExpense[], current: DraftExpense[]): 
     if (!prev) continue
 
     const patch: Partial<Omit<EventExpense, 'id' | 'eventId'>> = {}
+    if (prev.sortOrder !== cur.sortOrder) patch.sortOrder = cur.sortOrder
     if (prev.title !== cur.title) patch.title = cur.title
     if (prev.appliesTo !== cur.appliesTo) patch.appliesTo = cur.appliesTo
     if (prev.splitType !== cur.splitType) patch.splitType = cur.splitType
@@ -155,8 +157,9 @@ export function useEventEditorController(props: {
 
   const [expenseItems, setExpenseItems] = React.useState<DraftExpense[]>(() => {
     const existing = props.initialEvent?.expenses ?? []
-    return existing.map((e) => ({
+    return existing.map((e, idx) => ({
       id: e.id,
+      sortOrder: e.sortOrder ?? idx + 1,
       title: e.title,
       appliesTo: e.appliesTo,
       splitType: e.splitType,
@@ -501,7 +504,11 @@ export function useEventEditorController(props: {
 
   const onAddExpense = React.useCallback((input: Omit<DraftExpense, 'id'>) => {
     const id = globalThis.crypto?.randomUUID?.() ?? String(Date.now())
-    setExpenseItems((prev) => [...prev, { id, ...input }])
+    setExpenseItems((prev) => {
+      const maxSortOrder = prev.reduce((max, e) => Math.max(max, e.sortOrder ?? 0), 0)
+      const sortOrder = input.sortOrder ?? maxSortOrder + 1
+      return [...prev, { id, ...input, sortOrder }]
+    })
     return id
   }, [])
 
@@ -511,6 +518,29 @@ export function useEventEditorController(props: {
 
   const onDeleteExpense = React.useCallback((id: string) => {
     setExpenseItems((prev) => prev.filter((e) => e.id !== id))
+  }, [])
+
+  const onReorderExpenses = React.useCallback((orderedExpenseIds: string[]) => {
+    setExpenseItems((prev) => {
+      if (!Array.isArray(orderedExpenseIds) || orderedExpenseIds.length === 0) return prev
+
+      const prevById = new Map(prev.map((e) => [e.id, e] as const))
+      const orderedSet = new Set(orderedExpenseIds)
+
+      const nextOrdered: DraftExpense[] = []
+      for (const id of orderedExpenseIds) {
+        const item = prevById.get(id)
+        if (item) nextOrdered.push(item)
+      }
+
+      // Append any expenses not included (e.g. new ones added since the list was built).
+      for (const item of prev) {
+        if (!orderedSet.has(item.id)) nextOrdered.push(item)
+      }
+
+      // Normalize sort order to the new display order.
+      return nextOrdered.map((e, idx) => ({ ...e, sortOrder: idx + 1 }))
+    })
   }, [])
 
   const itineraryApi = React.useMemo(() => {
@@ -528,8 +558,9 @@ export function useEventEditorController(props: {
       onAdd: onAddExpense,
       onUpdate: onUpdateExpense,
       onDelete: onDeleteExpense,
+      onReorder: onReorderExpenses,
     }
-  }, [expenseEditItems, onAddExpense, onDeleteExpense, onUpdateExpense])
+  }, [expenseEditItems, onAddExpense, onDeleteExpense, onReorderExpenses, onUpdateExpense])
 
   const primaryLabel = isUpdate ? 'Save changes' : 'Publish invite'
 

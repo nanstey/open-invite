@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS public.event_expenses (
   applies_to TEXT NOT NULL DEFAULT 'EVERYONE'
     CHECK (applies_to IN ('EVERYONE', 'HOST_ONLY', 'GUESTS_ONLY', 'CUSTOM')),
   participant_ids UUID[] NOT NULL,
+  -- Stable ordering for UI reordering.
+  sort_order BIGINT NOT NULL DEFAULT (extract(epoch from now()) * 1000)::bigint,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   -- Business rule: group expenses are always settled later.
@@ -51,6 +53,26 @@ CREATE TABLE IF NOT EXISTS public.event_expenses (
 
 CREATE INDEX IF NOT EXISTS idx_event_expenses_event_id_created_at
   ON public.event_expenses(event_id, created_at);
+
+-- Backwards-compatible: if the table existed before sort_order, add it.
+ALTER TABLE public.event_expenses
+ADD COLUMN IF NOT EXISTS sort_order BIGINT NOT NULL DEFAULT (extract(epoch from now()) * 1000)::bigint;
+
+-- Backfill deterministic order for existing rows (per-event, oldest first).
+-- Safe because this column is introduced specifically for ordering and has no prior meaning.
+WITH ranked AS (
+  SELECT
+    id,
+    row_number() OVER (PARTITION BY event_id ORDER BY created_at ASC, id ASC)::bigint AS rn
+  FROM public.event_expenses
+)
+UPDATE public.event_expenses ee
+SET sort_order = ranked.rn
+FROM ranked
+WHERE ee.id = ranked.id;
+
+CREATE INDEX IF NOT EXISTS idx_event_expenses_event_id_sort_order
+  ON public.event_expenses(event_id, sort_order, created_at);
 
 -- updated_at trigger (re-use handle_updated_at from initial schema)
 DROP TRIGGER IF EXISTS set_updated_at_event_expenses ON public.event_expenses;
@@ -245,5 +267,3 @@ CREATE POLICY "Hosts can delete expenses"
   );
 
 COMMIT;
-
-

@@ -390,6 +390,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                         onAdd: edit.expenses.onAdd,
                         onUpdate: edit.expenses.onUpdate,
                         onDelete: edit.expenses.onDelete,
+                        onReorder: edit.expenses.onReorder,
                       }
                     : undefined
                 }

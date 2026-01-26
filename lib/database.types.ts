@@ -381,6 +381,7 @@ export interface Database {
           amount_cents: number | null
           currency: string
           participant_ids: string[]
+          sort_order: number
           created_at: string
           updated_at: string
         }
@@ -395,6 +396,7 @@ export interface Database {
           amount_cents?: number | null
           currency?: string
           participant_ids: string[]
+          sort_order?: number
           created_at?: string
           updated_at?: string
         }
@@ -409,6 +411,7 @@ export interface Database {
           amount_cents?: number | null
           currency?: string
           participant_ids?: string[]
+          sort_order?: number
           created_at?: string
           updated_at?: string
         }
