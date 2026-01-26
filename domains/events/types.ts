@@ -24,11 +24,13 @@ export interface ItineraryItem {
 export type ExpenseSplitType = 'GROUP' | 'PER_PERSON'
 export type ExpenseTiming = 'UP_FRONT' | 'SETTLED_LATER'
 export type ExpenseSettledKind = 'EXACT' | 'ESTIMATE'
+export type ExpenseAppliesTo = 'EVERYONE' | 'HOST_ONLY' | 'GUESTS_ONLY' | 'CUSTOM'
 
 export interface EventExpense {
   id: string
   eventId: string
   title: string
+  appliesTo: ExpenseAppliesTo
   splitType: ExpenseSplitType
   timing: ExpenseTiming
   /**

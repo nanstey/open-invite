@@ -81,6 +81,7 @@ export function diffExpenses(initial: EventExpense[], current: DraftExpense[]): 
     .map((e) => ({
       eventId: '', // filled by caller
       title: e.title,
+      appliesTo: e.appliesTo,
       splitType: e.splitType,
       timing: e.timing,
       settledKind: e.settledKind,
@@ -96,6 +97,7 @@ export function diffExpenses(initial: EventExpense[], current: DraftExpense[]): 
 
     const patch: Partial<Omit<EventExpense, 'id' | 'eventId'>> = {}
     if (prev.title !== cur.title) patch.title = cur.title
+    if (prev.appliesTo !== cur.appliesTo) patch.appliesTo = cur.appliesTo
     if (prev.splitType !== cur.splitType) patch.splitType = cur.splitType
     if (prev.timing !== cur.timing) patch.timing = cur.timing
     if (prev.settledKind !== cur.settledKind) patch.settledKind = cur.settledKind
@@ -156,6 +158,7 @@ export function useEventEditorController(props: {
     return existing.map((e) => ({
       id: e.id,
       title: e.title,
+      appliesTo: e.appliesTo,
       splitType: e.splitType,
       timing: e.timing,
       settledKind: e.settledKind,

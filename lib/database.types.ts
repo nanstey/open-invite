@@ -374,6 +374,7 @@ export interface Database {
           id: string
           event_id: string
           title: string
+          applies_to: string
           split_type: string
           timing: string
           settled_kind: string | null
@@ -387,6 +388,7 @@ export interface Database {
           id?: string
           event_id: string
           title: string
+          applies_to?: string
           split_type: string
           timing: string
           settled_kind?: string | null
@@ -400,6 +402,7 @@ export interface Database {
           id?: string
           event_id?: string
           title?: string
+          applies_to?: string
           split_type?: string
           timing?: string
           settled_kind?: string | null

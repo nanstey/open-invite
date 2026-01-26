@@ -381,6 +381,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                 isGuest={isGuest}
                 onRequireAuth={onRequireAuth}
                 currentUserId={currentUser?.id}
+                hostId={event.hostId}
                 expenses={(isEditMode ? edit?.expenses?.items : event.expenses) ?? []}
                 expenseApi={
                   isEditMode && edit?.expenses

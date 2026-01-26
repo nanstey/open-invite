@@ -12,10 +12,13 @@ type ExpenseSplitType = 'GROUP' | 'PER_PERSON'
 type ExpenseTiming = 'UP_FRONT' | 'SETTLED_LATER'
 type ExpenseSettledKind = 'EXACT' | 'ESTIMATE'
 
+type ExpenseAppliesTo = 'EVERYONE' | 'HOST_ONLY' | 'GUESTS_ONLY' | 'CUSTOM'
+
 type EventExpense = {
   id: string
   eventId: string
   title: string
+  appliesTo: ExpenseAppliesTo
   splitType: ExpenseSplitType
   timing: ExpenseTiming
   settledKind?: ExpenseSettledKind
@@ -36,6 +39,21 @@ type AmountDraftsByExpenseId = Record<
     amount: string
   }>
 >
+
+function computeParticipantIdsForAppliesTo(args: {
+  appliesTo: ExpenseAppliesTo
+  peopleIds: string[]
+  hostId?: string
+  currentUserId?: string
+}): string[] {
+  const { appliesTo, peopleIds, hostId, currentUserId } = args
+  const hostParticipantId = hostId && peopleIds.includes(hostId) ? hostId : currentUserId && peopleIds.includes(currentUserId) ? currentUserId : peopleIds[0]
+
+  if (appliesTo === 'HOST_ONLY') return hostParticipantId ? [hostParticipantId] : peopleIds.slice(0, 1)
+  if (appliesTo === 'GUESTS_ONLY') return hostParticipantId ? peopleIds.filter((id) => id !== hostParticipantId) : peopleIds
+  // EVERYONE
+  return peopleIds
+}
 
 function canCommitMoneyInput(s: string): boolean {
   const v = String(s ?? '').trim()
@@ -72,7 +90,7 @@ function formatSummaryCents(cents: number, opts: { currency: string; isEstimate:
 }
 
 function computeTotalCents(expense: EventExpense): number {
-  const participantCount = Math.max(1, expense.participantIds.length)
+  const participantCount = expense.participantIds.length
   const base = expense.amountCents ?? 0
 
   if (expense.splitType === 'PER_PERSON') {
@@ -82,7 +100,8 @@ function computeTotalCents(expense: EventExpense): number {
 }
 
 function computePerPersonCents(expense: EventExpense): number {
-  const participantCount = Math.max(1, expense.participantIds.length)
+  const participantCount = expense.participantIds.length
+  if (participantCount === 0) return 0
   const total = computeTotalCents(expense)
 
   if (expense.splitType === 'PER_PERSON') {
@@ -137,32 +156,36 @@ export function ExpensesCard(props: {
   isGuest: boolean
   onRequireAuth?: () => void
   currentUserId?: string
+  hostId?: string
 
   expenses: EventExpense[]
   people: Person[]
   expenseApi?: ExpenseApi
 }) {
-  const { isEditMode, isGuest, onRequireAuth, currentUserId, expenses, people, expenseApi } = props
+  const { isEditMode, isGuest, onRequireAuth, currentUserId, hostId, expenses, people, expenseApi } = props
   const [expanded, setExpanded] = React.useState(false)
   const [amountDrafts, setAmountDrafts] = React.useState<AmountDraftsByExpenseId>({})
   const [expandedExpenseId, setExpandedExpenseId] = React.useState<string | null>(null)
   const [openMenuExpenseId, setOpenMenuExpenseId] = React.useState<string | null>(null)
 
   const peopleById = React.useMemo(() => new Map(people.map((p) => [p.id, p])), [people])
+  const allPeopleIds = React.useMemo(() => people.map((p) => p.id), [people])
 
   const expenseParticipantIdsForViewer = React.useCallback(
     (expense: EventExpense) => {
       if (!currentUserId) return expense.participantIds
       if (expense.participantIds.includes(currentUserId)) return expense.participantIds
-      // Viewer is authenticated but not participating yet; estimate as if they joined.
-      return [...expense.participantIds, currentUserId]
+      if (expense.appliesTo === 'EVERYONE') return [...expense.participantIds, currentUserId]
+      if (expense.appliesTo === 'GUESTS_ONLY' && currentUserId !== hostId) return [...expense.participantIds, currentUserId]
+      return expense.participantIds
     },
-    [currentUserId],
+    [currentUserId, hostId],
   )
 
   const perPersonCentsForViewer = React.useCallback(
     (expense: EventExpense) => {
-      const participantCount = Math.max(1, expenseParticipantIdsForViewer(expense).length)
+      const participantCount = expenseParticipantIdsForViewer(expense).length
+      if (participantCount === 0) return 0
       const total = computeTotalCents(expense) // group: fixed total; per-person: total isn't used for per-person figure
 
       if (expense.splitType === 'PER_PERSON') return expense.amountCents ?? 0
@@ -247,9 +270,10 @@ export function ExpensesCard(props: {
 
   const handleAdd = () => {
     if (!expenseApi) return
-    const participantIds = people.map((p) => p.id)
+    const participantIds = people.map((p) => p.id) // default: Everyone
     const created = expenseApi.onAdd({
       title: 'New expense',
+      appliesTo: 'EVERYONE',
       splitType: 'GROUP',
       timing: 'SETTLED_LATER',
       settledKind: 'EXACT',
@@ -496,31 +520,70 @@ export function ExpensesCard(props: {
 
                     <div className="border-t border-slate-800 pt-3">
                       <div className="text-sm text-white font-bold mb-2">Participants</div>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                        <FormSelect
+                          value={e.appliesTo}
+                          onChange={(ev) => {
+                            const appliesTo = ev.target.value as ExpenseAppliesTo
+                            if (appliesTo === 'CUSTOM') {
+                              expenseApi?.onUpdate(e.id, { appliesTo })
+                              return
+                            }
+                            const participantIds = computeParticipantIdsForAppliesTo({
+                              appliesTo,
+                              peopleIds: allPeopleIds,
+                              hostId,
+                              currentUserId,
+                            })
+                            expenseApi?.onUpdate(e.id, { appliesTo, participantIds })
+                          }}
+                          variant="surface"
+                          size="md"
+                        >
+                          <option value="EVERYONE">Everyone</option>
+                          <option value="HOST_ONLY">Host Only</option>
+                          <option value="GUESTS_ONLY">Guests Only</option>
+                          <option value="CUSTOM">Custom</option>
+                        </FormSelect>
+                        <div className="md:col-span-2 text-xs text-slate-500 flex items-center">
+                          Pick a preset to quickly set participants. Choose Custom to fine-tune below.
+                        </div>
+                      </div>
                       {people.length === 0 ? (
                         <div className="text-sm text-slate-500 italic">No participants available.</div>
                       ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                          {people.map((p) => {
-                            const checked = e.participantIds.includes(p.id)
-                            return (
-                              <label key={p.id} className="flex items-center gap-2 text-sm text-slate-200">
-                                <input
-                                  type="checkbox"
-                                  checked={checked}
-                                  onChange={(ev) => {
-                                    const next = ev.target.checked
-                                      ? Array.from(new Set([...e.participantIds, p.id]))
-                                      : e.participantIds.filter((id) => id !== p.id)
-                                    expenseApi?.onUpdate(e.id, { participantIds: next })
-                                  }}
-                                />
-                                <span className="truncate">{p.name}</span>
-                              </label>
-                            )
-                          })}
-                        </div>
+                        <>
+                          {e.appliesTo === 'CUSTOM' ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                              {people.map((p) => {
+                                const checked = e.participantIds.includes(p.id)
+                                return (
+                                  <label key={p.id} className="flex items-center gap-2 text-sm text-slate-200">
+                                    <input
+                                      type="checkbox"
+                                      checked={checked}
+                                      onChange={(ev) => {
+                                        const nextRaw = ev.target.checked
+                                          ? Array.from(new Set([...e.participantIds, p.id]))
+                                          : e.participantIds.filter((id) => id !== p.id)
+                                        expenseApi?.onUpdate(e.id, { appliesTo: 'CUSTOM', participantIds: nextRaw })
+                                      }}
+                                    />
+                                    <span className="truncate">{p.name}</span>
+                                  </label>
+                                )
+                              })}
+                            </div>
+                          ) : (
+                            <div className="text-sm text-slate-400">
+                              {e.participantIds.length} selected
+                            </div>
+                          )}
+                        </>
                       )}
-                      <div className="mt-2 text-xs text-slate-500">{e.participantIds.length} selected</div>
+                      {e.appliesTo === 'CUSTOM' ? (
+                        <div className="mt-2 text-xs text-slate-500">{e.participantIds.length} selected</div>
+                      ) : null}
                     </div>
                   </div>
                 ) : null}

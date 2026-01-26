@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 import type { Database } from '../lib/database.types'
-import type { EventExpense, ExpenseSettledKind, ExpenseSplitType, ExpenseTiming } from '../domains/events/types'
+import type { EventExpense, ExpenseAppliesTo, ExpenseSettledKind, ExpenseSplitType, ExpenseTiming } from '../domains/events/types'
 
 type ExpenseRow = Database['public']['Tables']['event_expenses']['Row']
 
@@ -9,6 +9,7 @@ function transformRow(row: ExpenseRow): EventExpense {
     id: row.id,
     eventId: row.event_id,
     title: row.title,
+    appliesTo: row.applies_to as ExpenseAppliesTo,
     splitType: row.split_type as ExpenseSplitType,
     timing: row.timing as ExpenseTiming,
     settledKind: (row.settled_kind ?? undefined) as ExpenseSettledKind | undefined,
@@ -39,6 +40,7 @@ export async function createEventExpense(input: Omit<EventExpense, 'id'>): Promi
   const insert: Insert = {
     event_id: input.eventId,
     title: input.title,
+    applies_to: input.appliesTo,
     split_type: input.splitType,
     timing: input.timing,
     settled_kind: input.settledKind ?? null,
@@ -62,6 +64,7 @@ export async function updateEventExpense(
 ): Promise<EventExpense | null> {
   const update: any = {}
   if (patch.title !== undefined) update.title = patch.title
+  if ('appliesTo' in patch) update.applies_to = patch.appliesTo
   if (patch.splitType !== undefined) update.split_type = patch.splitType
   if (patch.timing !== undefined) update.timing = patch.timing
   if ('settledKind' in patch) update.settled_kind = patch.settledKind ?? null
