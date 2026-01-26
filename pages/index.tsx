@@ -1,7 +1,7 @@
 import React from 'react'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 
-import { LandingPage } from '../components/LandingPage'
+import { LandingPage } from '../domains/home/LandingPage'
 import { LoginModal } from '../domains/auth/LoginModal'
 import { useAuth } from '../domains/auth/AuthProvider'
 

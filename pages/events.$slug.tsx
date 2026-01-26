@@ -88,6 +88,13 @@ export const Route = createFileRoute('/events/$slug')({
       onDelete: () => navigate({ to: '/events', search: { view } }),
     })
 
+    // IMPORTANT: Call hooks unconditionally to preserve hook ordering across renders.
+    // `user` may be null briefly while auth is initializing, or `event` may be null while loading.
+    const { onUpdateEvent, handleJoinEvent, handleLeaveEvent, handlePostComment } = useEventDetailActions({
+      userId: user?.id ?? '',
+      setEvent,
+    })
+
     if (!user) return null
 
     const onClose = () => navigate({ to: '/events', search: { view } })
@@ -106,11 +113,6 @@ export const Route = createFileRoute('/events/$slug')({
         />
       )
     }
-
-    const { onUpdateEvent, handleJoinEvent, handleLeaveEvent, handlePostComment } = useEventDetailActions({
-      userId: user.id,
-      setEvent,
-    })
 
     const isHost = event.hostId === user.id
 
