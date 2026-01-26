@@ -2,6 +2,7 @@ import * as React from 'react'
 import { ChevronDown, ChevronUp, MoreVertical, Trash2 } from 'lucide-react'
 
 import type { ItineraryItem, SocialEvent } from '../../../types'
+import { DateTimeFields } from '../../../../../lib/ui/components/DateTimeFields'
 import { LocationAutocomplete } from '../../../../../lib/ui/components/LocationAutocomplete'
 import { FormSelect } from '../../../../../lib/ui/components/FormControls'
 import { buildQuarterHourTimeOptions } from '../../../../../lib/ui/utils/datetime'
@@ -485,58 +486,29 @@ function ItineraryItemFields(props: {
 
   return (
     <div className="border-t border-slate-800 p-4 space-y-3">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <div className="space-y-1">
-          <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Date</div>
-          <input
-            type="date"
-            value={itemDate}
-            onChange={(e) => {
-              const nextDate = e.target.value
-              if (!nextDate || !itemTime) return
-              onUpdate({ startTime: new Date(`${nextDate}T${itemTime}`).toISOString() })
-            }}
-            className="w-full bg-slate-900 border rounded-lg py-2.5 px-3 text-white outline-none [color-scheme:dark] border-slate-700 focus:border-primary"
-          />
-        </div>
-        <div className="space-y-1">
-          <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Time</div>
-          <FormSelect
-            value={itemTime}
-            onChange={(e) => {
-              const nextTime = e.target.value
-              if (!itemDate || !nextTime) return
-              onUpdate({ startTime: new Date(`${itemDate}T${nextTime}`).toISOString() })
-            }}
-            required
-            size="lg"
-            variant="surface"
-          >
-            <option value="">Select time</option>
-            {timeOptions.map((t) => (
-              <option key={t.value} value={t.value}>
-                {t.label}
-              </option>
-            ))}
-          </FormSelect>
-        </div>
-        <div className="space-y-1">
-          <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Duration (hours)</div>
-          <input
-            type="number"
-            min={0.25}
-            step={0.25}
-            value={itemDurationHours}
-            onChange={(e) =>
-              onUpdate({
-                durationMinutes: Math.max(1, Math.round(Number(e.target.value || 0) * 60)),
-              })
-            }
-            className="w-full bg-slate-900 border rounded-lg py-2.5 px-3 text-white outline-none border-slate-700 focus:border-primary"
-            placeholder="e.g. 1.5"
-          />
-        </div>
-      </div>
+      <DateTimeFields
+        date={itemDate}
+        time={itemTime}
+        durationHours={itemDurationHours}
+        timeOptions={timeOptions}
+        size="compact"
+        minDurationHours={0.25}
+        durationStepHours={0.25}
+        durationPlaceholder="e.g. 1.5"
+        onChangeDate={(nextDate) => {
+          if (!nextDate || !itemTime) return
+          onUpdate({ startTime: new Date(`${nextDate}T${itemTime}`).toISOString() })
+        }}
+        onChangeTime={(nextTime) => {
+          if (!itemDate || !nextTime) return
+          onUpdate({ startTime: new Date(`${itemDate}T${nextTime}`).toISOString() })
+        }}
+        onChangeDurationHours={(next) =>
+          onUpdate({
+            durationMinutes: Math.max(1, Math.round(Number(next || 0) * 60)),
+          })
+        }
+      />
 
       <div className="space-y-3">
         <div className="space-y-1">
