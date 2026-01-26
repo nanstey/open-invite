@@ -1,0 +1,76 @@
+export interface Comment {
+  id: string
+  userId: string
+  text: string
+  timestamp: string
+}
+
+export interface Reaction {
+  emoji: string
+  count: number
+  userReacted: boolean
+}
+
+export interface ItineraryItem {
+  id: string
+  eventId: string
+  title: string
+  startTime: string // ISO
+  durationMinutes: number
+  location?: string // defaults to event.location when omitted
+  description?: string
+}
+
+export enum EventVisibility {
+  ALL_FRIENDS = 'ALL_FRIENDS',
+  GROUPS = 'GROUPS',
+  INVITE_ONLY = 'INVITE_ONLY',
+}
+
+export type LocationData = {
+  provider: 'photon'
+  providerId?: {
+    osm_id?: number
+    osm_type?: string
+  }
+  display: {
+    full: string
+    placeName?: string
+    addressLine?: string
+    localityLine?: string
+    postcode?: string
+    country?: string
+  }
+  geo: { lat: number; lng: number }
+  raw?: Record<string, unknown>
+}
+
+export interface SocialEvent {
+  id: string
+  slug: string
+  hostId: string
+  title: string
+  headerImageUrl?: string
+  description: string
+  activityType: string // e.g., "Dining", "Sport", "Travel"
+  location: string
+  coordinates?: { lat: number; lng: number } // Optional until a place is selected
+  locationData?: LocationData
+  startTime: string // ISO String
+  endTime?: string
+  isFlexibleStart: boolean
+  isFlexibleEnd: boolean
+  visibilityType: EventVisibility
+  groupIds: string[] // Array of group UUIDs (for GROUPS visibility)
+  allowFriendInvites: boolean
+  maxSeats?: number
+  attendees: string[] // User IDs
+  noPhones: boolean
+  comments: Comment[]
+  reactions: Record<string, Reaction> // key is emoji
+  itineraryItems?: ItineraryItem[] // optional to keep list fetch lightweight
+}
+
+// UI-only modes used within events domain
+export type InvitesMode = 'LIST' | 'MAP' | 'CALENDAR'
+export type MyEventsMode = 'HOSTING' | 'ATTENDING'

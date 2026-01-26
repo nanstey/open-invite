@@ -1,5 +1,6 @@
 import { supabase } from '../lib/supabase';
-import type { SocialEvent, Comment, Reaction, Notification } from '../lib/types';
+import type { Notification } from '../lib/types';
+import type { SocialEvent, Comment, Reaction } from '../domains/events/types';
 import { fetchEventById, fetchEvents } from './eventService';
 import { fetchNotifications } from './notificationService';
 

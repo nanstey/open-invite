@@ -71,3 +71,4 @@ CREATE TRIGGER trg_itinerary_items_changed
 COMMIT;
 
 
+

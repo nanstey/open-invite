@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 import type { Database } from '../lib/database.types'
-import type { ItineraryItem } from '../lib/types'
+import type { ItineraryItem } from '../domains/events/types'
 
 type ItineraryRow = Database['public']['Tables']['event_itinerary_items']['Row']
 
@@ -80,5 +80,6 @@ export async function deleteItineraryItem(itemId: string): Promise<boolean> {
   }
   return true
 }
+
 
 
