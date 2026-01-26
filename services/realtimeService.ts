@@ -51,6 +51,21 @@ class RealtimeService {
           }
         }
       )
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'event_expenses',
+          filter: `event_id=eq.${eventId}`,
+        },
+        async () => {
+          const updatedEvent = await fetchEventById(eventId);
+          if (updatedEvent && callbacks.onUpdate) {
+            callbacks.onUpdate(updatedEvent);
+          }
+        }
+      )
       .subscribe();
 
     this.eventSubscriptions.set(eventId, subscription);

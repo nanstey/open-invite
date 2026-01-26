@@ -369,6 +369,47 @@ export interface Database {
           updated_at?: string
         }
       }
+      event_expenses: {
+        Row: {
+          id: string
+          event_id: string
+          title: string
+          split_type: string
+          timing: string
+          settled_kind: string | null
+          amount_cents: number | null
+          currency: string
+          participant_ids: string[]
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          event_id: string
+          title: string
+          split_type: string
+          timing: string
+          settled_kind?: string | null
+          amount_cents?: number | null
+          currency?: string
+          participant_ids: string[]
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          event_id?: string
+          title?: string
+          split_type?: string
+          timing?: string
+          settled_kind?: string | null
+          amount_cents?: number | null
+          currency?: string
+          participant_ids?: string[]
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

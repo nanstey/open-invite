@@ -358,6 +358,7 @@ function ItineraryItemHeader(props: {
         showItineraryTimesOnly={showItineraryTimesOnly}
         location={location}
         openItineraryLocationInMaps={openItineraryLocationInMaps}
+        isExpanded={isExpanded}
         onToggleExpanded={onToggleExpanded}
       />
 
@@ -380,13 +381,34 @@ function ItineraryItemSummary(props: {
   showItineraryTimesOnly: boolean
   location: { full: string; label: string; isReal: boolean }
   openItineraryLocationInMaps: (locationFull: string) => void
+  isExpanded: boolean
   onToggleExpanded: () => void
 }) {
-  const { title, dateLabel, timeLabel, showItineraryTimesOnly, location, openItineraryLocationInMaps, onToggleExpanded } =
-    props
+  const {
+    title,
+    dateLabel,
+    timeLabel,
+    showItineraryTimesOnly,
+    location,
+    openItineraryLocationInMaps,
+    isExpanded,
+    onToggleExpanded,
+  } = props
 
   return (
-    <button type="button" onClick={onToggleExpanded} className="min-w-0 flex-1 text-left">
+    <div
+      className="min-w-0 flex-1 text-left cursor-pointer"
+      role="button"
+      tabIndex={0}
+      aria-expanded={isExpanded}
+      onClick={onToggleExpanded}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          onToggleExpanded()
+        }
+      }}
+    >
       <div className="font-bold text-white truncate">{title || 'Untitled item'}</div>
       <div className="text-sm text-slate-400">{showItineraryTimesOnly ? timeLabel : `${dateLabel} • ${timeLabel}`}</div>
       {location.label ? (
@@ -406,7 +428,7 @@ function ItineraryItemSummary(props: {
           <div className="text-sm text-slate-400 truncate">{location.label}</div>
         )
       ) : null}
-    </button>
+    </div>
   )
 }
 
