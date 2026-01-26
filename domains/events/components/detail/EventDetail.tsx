@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import type { Group, User } from '../../../../lib/types';
 import type { ItineraryItem, SocialEvent } from '../../types';
+import type { EventExpense } from './expenses/types'
 import { Info, MessageSquare, Users } from 'lucide-react';
 import { TabGroup, type TabOption } from '../../../../lib/ui/components/TabGroup';
 import { useRouterState } from '@tanstack/react-router';
@@ -28,7 +29,7 @@ import { AboutCard } from './details/AboutCard'
 import { DateTimeCard } from './details/DateTimeCard'
 import { ItineraryCard } from './details/ItineraryCard'
 import { LocationCard } from './details/LocationCard'
-import { ExpensesCard } from './details/ExpensesCard'
+import { ExpensesCard } from './expenses/ExpensesCard'
 import { HeroHeader } from './header/HeroHeader'
 import { KeyFactsCard } from './header/KeyFactsCard'
 import { formatItineraryLocationForDisplay, formatRawLocationForDisplay } from './utils/locationDisplay'
@@ -85,11 +86,11 @@ interface EventDetailProps {
       onDelete: (id: string) => Promise<void> | void
     }
     expenses?: {
-      items: NonNullable<SocialEvent['expenses']>;
-      onAdd: (input: Omit<NonNullable<SocialEvent['expenses']>[number], 'id' | 'eventId'>) => Promise<string> | string
+      items: EventExpense[];
+      onAdd: (input: Omit<EventExpense, 'id' | 'eventId'>) => Promise<string> | string
       onUpdate: (
         id: string,
-        patch: Partial<Omit<NonNullable<SocialEvent['expenses']>[number], 'id' | 'eventId'>>,
+        patch: Partial<Omit<EventExpense, 'id' | 'eventId'>>,
       ) => Promise<void> | void
       onDelete: (id: string) => Promise<void> | void
     }

@@ -460,11 +460,11 @@ export async function joinEvent(eventId: string): Promise<boolean> {
     event_id: eventId,
     user_id: user.id,
   };
-  // Make join idempotent: if the row already exists, treat it as success.
-  // (The table has UNIQUE(event_id, user_id).)
+  // Make join idempotent: if the row already exists, do nothing and treat it as success.
+  // (This avoids requiring UPDATE permissions/policies for the conflict path.)
   const result = await supabase
     .from('event_attendees')
-    .upsert(attendeeData as any, { onConflict: 'event_id,user_id' });
+    .upsert(attendeeData as any, { onConflict: 'event_id,user_id', ignoreDuplicates: true });
   const { error } = result as unknown as { error: any };
   if (error) {
     console.error('Error joining event:', error);
