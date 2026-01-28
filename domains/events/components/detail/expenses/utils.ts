@@ -32,17 +32,6 @@ export function canCommitMoneyInput(s: string): boolean {
   return /^-?\d+(\.\d{0,2})?$/.test(v)
 }
 
-export function kindLine(expense: EventExpense): string {
-  const split = expense.splitType === 'PER_PERSON' ? 'Per person' : 'Group'
-  const timing =
-    expense.timing === 'UP_FRONT'
-      ? 'Up front'
-      : expense.settledKind === 'ESTIMATE'
-        ? 'Settled later (estimate)'
-        : 'Settled later'
-  return `${split} • ${timing}`
-}
-
 export function isEstimateExpense(expense: EventExpense): boolean {
   return expense.timing === 'SETTLED_LATER' && expense.settledKind === 'ESTIMATE'
 }

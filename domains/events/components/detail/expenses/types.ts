@@ -38,4 +38,28 @@ export type AmountDraftsByExpenseId = Record<
   }>
 >
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Expense Calculator Types
+// ─────────────────────────────────────────────────────────────────────────────
+
+export type ExpenseDetails = {
+  expense: EventExpense
+  /** True if the current user is explicitly listed in participantIds */
+  isParticipant: boolean
+  /** True if the current user is included in the effective participant list (explicit or inferred from appliesTo) */
+  isEffectiveParticipant: boolean
+  /** Participant IDs adjusted for the current viewer (includes user when appliesTo matches) */
+  effectiveParticipantIds: string[]
+  totalCents: number
+  perPersonCents: number
+  isEstimate: boolean
+}
+
+export type ExpenseSummary = {
+  upFrontCents: number
+  settledAfterCents: number
+  totalCents: number
+  hasEstimate: boolean
+}
+
 

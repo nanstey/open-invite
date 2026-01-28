@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { ChevronDown, ChevronUp, GripVertical } from 'lucide-react'
+import { ChevronUp, GripVertical } from 'lucide-react'
 import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type DragEndEvent, type DragStartEvent } from '@dnd-kit/core'
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -8,10 +8,10 @@ import { CSS } from '@dnd-kit/utilities'
 import { useOutsideClick } from '../hooks/useOutsideClick'
 
 import type { EventExpense, Person } from './types'
-import { computePerPersonCents, computeTotalCents, formatCentsMaybeEstimate, formatSummaryCents, isEstimateExpense } from './utils'
 import { ExpenseEditRow } from './components/ExpenseEditRow'
 import { ExpenseReadOnlyRow } from './components/ExpenseReadOnlyRow'
-import { useExpenseAmountDrafts } from './useExpenseAmountDrafts'
+import { ExpensesSummarySection } from './components/ExpensesSummarySection'
+import { useExpenseCalculator } from './useExpenseCalculator'
 
 function SortableExpenseItem(props: {
   id: string
@@ -63,57 +63,21 @@ export function ExpensesCard(props: {
   const [orderedExpenseIds, setOrderedExpenseIds] = React.useState<string[]>(() => expenses.map((e) => e.id))
   const [activeExpenseId, setActiveExpenseId] = React.useState<string | null>(null)
 
-  const { getDraftValue, setDraftValue, normalizeDraftValue } = useExpenseAmountDrafts()
+  const expenseCalculator = useExpenseCalculator({
+    expenses,
+    currentUserId,
+    hostId,
+  })
+
+  const { getDraftValue, setDraftValue, normalizeDraftValue } = expenseCalculator
 
   const peopleById = React.useMemo(() => new Map(people.map((p) => [p.id, p])), [people])
   const allPeopleIds = React.useMemo(() => people.map((p) => p.id), [people])
-
-  const expenseParticipantIdsForViewer = React.useCallback(
-    (expense: EventExpense) => {
-      if (!currentUserId) return expense.participantIds
-      if (expense.participantIds.includes(currentUserId)) return expense.participantIds
-      if (expense.appliesTo === 'EVERYONE') return [...expense.participantIds, currentUserId]
-      if (expense.appliesTo === 'GUESTS_ONLY' && currentUserId !== hostId) return [...expense.participantIds, currentUserId]
-      return expense.participantIds
-    },
-    [currentUserId, hostId],
-  )
-
-  const perPersonCentsForViewer = React.useCallback(
-    (expense: EventExpense) => {
-      const participantCount = expenseParticipantIdsForViewer(expense).length
-      if (participantCount === 0) return 0
-      const total = computeTotalCents(expense) // group: fixed total; per-person: total isn't used for per-person figure
-
-      if (expense.splitType === 'PER_PERSON') return expense.amountCents ?? 0
-      return Math.round(total / participantCount)
-    },
-    [expenseParticipantIdsForViewer],
-  )
 
   useOutsideClick({
     enabled: !!openMenuExpenseId,
     onOutsideClick: () => setOpenMenuExpenseId(null),
   })
-
-  const summary = React.useMemo(() => {
-    let upFrontCents = 0
-    let settledAfterCents = 0
-    let hasEstimate = false
-
-    for (const e of expenses) {
-      // Per-person summary for the current viewer, estimated as if they're participating when authenticated.
-      const perCents = perPersonCentsForViewer(e)
-      if (e.timing === 'UP_FRONT') {
-        upFrontCents += perCents
-      } else {
-        if (isEstimateExpense(e)) hasEstimate = true
-        settledAfterCents += perCents
-      }
-    }
-
-    return { upFrontCents, settledAfterCents, hasEstimate }
-  }, [expenses, perPersonCentsForViewer])
 
   if (isGuest) {
     return (
@@ -334,51 +298,18 @@ export function ExpensesCard(props: {
             </DndContext>
           ) : (
             expensesForList.map((e) => {
-            const totalCents = computeTotalCents(e)
-            const perCentsForView = canEditExpenses ? computePerPersonCents(e) : perPersonCentsForViewer(e)
-            const participantIdsForView = canEditExpenses ? e.participantIds : expenseParticipantIdsForViewer(e)
-            const isEstimate = isEstimateExpense(e)
-
-            if (!canEditExpenses) {
+              const details = expenseCalculator.getExpenseDetails(e.id)
+              if (!details) return null
               return (
                 <React.Fragment key={e.id}>
                   <ExpenseReadOnlyRow
                     expense={e}
+                    expenseDetails={details}
                     peopleById={peopleById}
-                    participantIdsForView={participantIdsForView}
-                    perCentsForView={perCentsForView}
-                    totalCents={totalCents}
-                    isEstimate={isEstimate}
                   />
                 </React.Fragment>
               )
-            }
-
-            const isExpanded = expandedExpenseId === e.id
-            const isMenuOpen = openMenuExpenseId === e.id
-
-            return (
-              <React.Fragment key={e.id}>
-                <ExpenseEditRow
-                  expense={e}
-                  people={people}
-                  allPeopleIds={allPeopleIds}
-                  hostId={hostId}
-                  currentUserId={currentUserId}
-                  expenseApi={expenseApi}
-                  isExpanded={isExpanded}
-                  onToggleExpanded={() => setExpandedExpenseId((prev) => (prev === e.id ? null : e.id))}
-                  isMenuOpen={isMenuOpen}
-                  onToggleMenu={() => setOpenMenuExpenseId((prev) => (prev === e.id ? null : e.id))}
-                  onCloseMenu={() => setOpenMenuExpenseId(null)}
-                  onDelete={() => expenseApi?.onDelete(e.id)}
-                  getDraftValue={getDraftValue}
-                  setDraftValue={setDraftValue}
-                  normalizeDraftValue={normalizeDraftValue}
-                />
-              </React.Fragment>
-            )
-          })
+            })
           )}
 
           {canEditExpenses ? (
@@ -394,53 +325,13 @@ export function ExpensesCard(props: {
       ) : null}
 
       {!canEditExpenses ? (
-        <div className="mt-4">
-          {!expanded ? (
-            <button
-              type="button"
-              onClick={() => setExpanded(true)}
-              className="w-full text-sm text-slate-400 hover:text-slate-200 transition-colors font-semibold"
-              aria-expanded={expanded}
-            >
-              <span className="flex items-center gap-3">
-                <span className="shrink-0">{expenses.length} expense items</span>
-                <span className="flex-1 border-b border-slate-700/80" aria-hidden="true" />
-                <span className="shrink-0 inline-flex items-center gap-1">
-                  <span>see details</span>
-                  <ChevronDown className="w-4 h-4" />
-                </span>
-              </span>
-            </button>
-          ) : null}
-          <hr className="border-slate-800" />
-          <div className="pt-3">
-            <div className="text-sm font-bold text-white mb-2">You pay</div>
-            <div className="space-y-1">
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-sm text-slate-300 font-bold">Up Front</div>
-                <div className="text-sm text-white font-bold text-right">
-                  {formatSummaryCents(summary.upFrontCents, { currency, isEstimate: false })}
-                </div>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-sm text-slate-300 font-bold">Settled After</div>
-                <div className="text-sm text-white font-bold text-right">
-                  {formatSummaryCents(summary.settledAfterCents, { currency, isEstimate: summary.hasEstimate })}
-                </div>
-              </div>
-              <hr className="border-slate-800 my-2" />
-              <div className="flex items-center justify-between gap-3">
-                <div className="text-sm text-slate-300 font-bold">Total</div>
-                <div className="text-sm text-white font-bold text-right">
-                  {formatSummaryCents(summary.upFrontCents + summary.settledAfterCents, {
-                    currency,
-                    isEstimate: summary.hasEstimate,
-                  })}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <ExpensesSummarySection
+          expenseCalculator={expenseCalculator}
+          expenseCount={expenses.length}
+          expanded={expanded}
+          onExpand={() => setExpanded(true)}
+          currency={currency}
+        />
       ) : null}
     </div>
   )
