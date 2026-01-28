@@ -1,21 +1,24 @@
 import * as React from 'react'
 
 import type { EventExpense, Person } from '../types'
+import type { ExpenseDetails } from '../useExpenseCalculator'
 import { formatCentsMaybeEstimate, titleForKind } from '../utils'
 
 export function ExpenseReadOnlyRow(props: {
   expense: EventExpense
+  expenseDetails: ExpenseDetails
   peopleById: Map<string, Person>
-  participantIdsForView: string[]
-  perCentsForView: number
-  totalCents: number
-  isEstimate: boolean
 }) {
-  const { expense: e, peopleById, participantIdsForView, perCentsForView, totalCents, isEstimate } = props
-  const totalLabel = formatCentsMaybeEstimate(totalCents, { currency: e.currency, isEstimate })
-  const perLabel = formatCentsMaybeEstimate(perCentsForView, { currency: e.currency, isEstimate })
+  const { expense: e, expenseDetails, peopleById } = props
 
-  const participantNames = participantIdsForView.map((id) => peopleById.get(id)?.name ?? 'Unknown').filter(Boolean)
+  const { effectiveParticipantIds, perPersonCents, totalCents, isEstimate } = expenseDetails
+
+  const totalLabel = formatCentsMaybeEstimate(totalCents, { currency: e.currency, isEstimate })
+  const perLabel = formatCentsMaybeEstimate(perPersonCents, { currency: e.currency, isEstimate })
+
+  const participantNames = effectiveParticipantIds
+    .map((id) => peopleById.get(id)?.name ?? 'Unknown')
+    .filter(Boolean)
 
   return (
     <div className="bg-slate-900 border border-slate-700 rounded-xl p-4">
@@ -31,10 +34,8 @@ export function ExpenseReadOnlyRow(props: {
         </div>
       </div>
       <div className="mt-2 text-xs text-slate-500">
-        {participantIdsForView.length} people{participantNames.length ? ` · ${participantNames.join(', ')}` : ''}
+        {effectiveParticipantIds.length} people{participantNames.length ? ` · ${participantNames.join(', ')}` : ''}
       </div>
     </div>
   )
 }
-
-

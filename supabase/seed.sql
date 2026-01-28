@@ -71,7 +71,7 @@ DELETE FROM auth.users WHERE id IN (
 );
 
 -- User ID mappings (u1-u7 to UUIDs)
--- u1 = Alex (You)
+-- u1 = Alex
 -- u2 = Sarah
 -- u3 = Marcus
 -- u4 = Elena
@@ -155,7 +155,7 @@ ON CONFLICT (id) DO NOTHING;
 
 -- Insert user profiles
 INSERT INTO public.user_profiles (id, name, avatar) VALUES
-  ('00000000-0000-0000-0000-000000000001', 'Alex (You)', 'https://picsum.photos/seed/alex/100/100'),
+  ('00000000-0000-0000-0000-000000000001', 'Alex', 'https://picsum.photos/seed/alex/100/100'),
   ('00000000-0000-0000-0000-000000000002', 'Sarah', 'https://picsum.photos/seed/sarah/100/100'),
   ('00000000-0000-0000-0000-000000000003', 'Marcus', 'https://picsum.photos/seed/marcus/100/100'),
   ('00000000-0000-0000-0000-000000000004', 'Elena', 'https://picsum.photos/seed/elena/100/100'),

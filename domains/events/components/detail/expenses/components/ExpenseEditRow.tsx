@@ -14,7 +14,7 @@ import {
   ensureExpenseShapeOnTimingChange,
   formatCentsMaybeEstimate,
   isEstimateExpense,
-  kindLine,
+  titleForKind,
 } from '../utils'
 import { ExpenseParticipantsEditor } from './ExpenseParticipantsEditor'
 
@@ -80,7 +80,7 @@ export function ExpenseEditRow(props: {
             }}
           >
             <div className="font-bold text-white truncate">{e.title || 'Untitled expense'}</div>
-            <div className="text-sm text-slate-400">{kindLine(e)}</div>
+            <div className="text-sm text-slate-400">{titleForKind(e)}</div>
             <div className="text-sm text-slate-400 truncate">
               {totalLabel} total • {perLabel} / person • {e.participantIds.length} people
             </div>
