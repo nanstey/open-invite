@@ -60,6 +60,7 @@ jobs:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
           VITE_PEXELS_API: ${{ secrets.VITE_PEXELS_API }}
+          VITE_APP_ENV: staging
 
       - name: Verify build output
         run: |

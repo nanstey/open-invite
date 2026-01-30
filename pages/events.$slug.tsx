@@ -11,21 +11,7 @@ import { coerceEventTab, parseEventTab, type EventTab } from '../domains/events/
 import { useEventRouteData } from '../domains/events/hooks/useEventRouteData'
 import { useEventDetailActions } from '../domains/events/hooks/useEventDetailActions'
 import { markEventViewedFromRouteParam } from '../services/eventService'
-
-type EventsView = 'list' | 'map' | 'calendar'
-
-function parseEventsView(value: unknown): EventsView {
-  const view = typeof value === 'string' ? value.toLowerCase() : 'list'
-  if (view === 'map' || view === 'calendar' || view === 'list') return view
-  return 'list'
-}
-
-function parseEventsViewSearch(value: unknown): EventsView | undefined {
-  if (typeof value !== 'string') return undefined
-  const view = value.toLowerCase()
-  if (view === 'map' || view === 'calendar' || view === 'list') return view
-  return undefined
-}
+import { parseEventsView, parseEventsViewOptional } from '../domains/events/hooks/useEventNavigation'
 
 function parseEventTabSearch(value: unknown): EventTab | undefined {
   return parseEventTab(value)
@@ -33,7 +19,7 @@ function parseEventTabSearch(value: unknown): EventTab | undefined {
 
 export const Route = createFileRoute('/events/$slug')({
   validateSearch: (search: Record<string, unknown>) => ({
-    view: parseEventsViewSearch(search.view),
+    view: parseEventsViewOptional(search.view),
     tab: parseEventTabSearch(search.tab),
   }),
   beforeLoad: ({ context, params }) => {

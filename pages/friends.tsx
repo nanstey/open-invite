@@ -3,13 +3,7 @@ import { createFileRoute, redirect } from '@tanstack/react-router'
 
 import type { FriendsMode } from '../lib/types'
 import { FriendsView } from '../domains/friends/FriendsView'
-
-type FriendsTab = 'friends' | 'groups'
-
-function parseFriendsTab(value: unknown): FriendsTab {
-  const tab = typeof value === 'string' ? value.toLowerCase() : 'friends'
-  return tab === 'groups' ? 'groups' : 'friends'
-}
+import { type FriendsTab, parseFriendsTab } from '../domains/friends/types'
 
 function tabToMode(tab: FriendsTab): FriendsMode {
   return tab === 'groups' ? 'GROUPS' : 'FRIENDS'
