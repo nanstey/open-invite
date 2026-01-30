@@ -162,7 +162,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     return (
       <>
         {activeSection === 'PUBLIC' ? <Outlet /> : <AppShellLayout />}
-        {import.meta.env.DEV ? <TanStackRouterDevtools position="bottom-right" /> : null}
+        {import.meta.env.VITE_SHOW_DEVTOOLS === 'true' || (import.meta.env.VITE_SHOW_DEVTOOLS === undefined && import.meta.env.DEV) ? <TanStackRouterDevtools position="bottom-right" /> : null}
       </>
     )
   },
