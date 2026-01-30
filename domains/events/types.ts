@@ -103,3 +103,6 @@ export interface SocialEvent {
 // UI-only modes used within events domain
 export type InvitesMode = 'LIST' | 'MAP' | 'CALENDAR'
 export type MyEventsMode = 'HOSTING' | 'ATTENDING'
+
+// Re-export EventsView from the navigation hook for convenience
+export { type EventsView } from './hooks/useEventNavigation'

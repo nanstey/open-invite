@@ -3,14 +3,7 @@ import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 
 import { useAuth } from '../domains/auth/AuthProvider'
 import { EventEditor } from '../domains/events/components/detail/EventEditor'
-
-type EventsView = 'list' | 'map' | 'calendar'
-
-function parseEventsView(value: unknown): EventsView {
-  const view = typeof value === 'string' ? value.toLowerCase() : 'list'
-  if (view === 'map' || view === 'calendar' || view === 'list') return view
-  return 'list'
-}
+import { parseEventsView } from '../domains/events/hooks/useEventNavigation'
 
 export const Route = createFileRoute('/events/new')({
   validateSearch: (search: Record<string, unknown>) => ({
