@@ -17,6 +17,7 @@ export interface Database {
           id: string
           name: string
           avatar: string
+          is_admin: boolean
           created_at: string
           updated_at: string
         }
@@ -24,6 +25,7 @@ export interface Database {
           id: string
           name: string
           avatar: string
+          is_admin?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -31,6 +33,7 @@ export interface Database {
           id?: string
           name?: string
           avatar?: string
+          is_admin?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -423,9 +426,54 @@ export interface Database {
     Functions: {
       [_ in never]: never
     }
+      user_feedback: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          type: 'bug' | 'feature' | 'ux' | 'other'
+          importance: 'low' | 'medium' | 'high' | 'critical'
+          description: string
+          status: 'new' | 'reviewed' | 'planned' | 'done' | 'declined'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          type: 'bug' | 'feature' | 'ux' | 'other'
+          importance: 'low' | 'medium' | 'high' | 'critical'
+          description: string
+          status?: 'new' | 'reviewed' | 'planned' | 'done' | 'declined'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          type?: 'bug' | 'feature' | 'ux' | 'other'
+          importance?: 'low' | 'medium' | 'high' | 'critical'
+          description?: string
+          status?: 'new' | 'reviewed' | 'planned' | 'done' | 'declined'
+          created_at?: string
+          updated_at?: string
+        }
+      }
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      [_ in never]: never
+    }
     Enums: {
       event_visibility_type: 'ALL_FRIENDS' | 'GROUPS' | 'INVITE_ONLY'
       notification_type: 'INVITE' | 'COMMENT' | 'REACTION' | 'REMINDER' | 'SYSTEM'
+      feedback_type: 'bug' | 'feature' | 'ux' | 'other'
+      feedback_importance: 'low' | 'medium' | 'high' | 'critical'
+      feedback_status: 'new' | 'reviewed' | 'planned' | 'done' | 'declined'
     }
   }
 }

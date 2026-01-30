@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './pages/__root'
 import { Route as ProfileRouteImport } from './pages/profile'
 import { Route as FriendsRouteImport } from './pages/friends'
+import { Route as FeedbackRouteImport } from './pages/feedback'
 import { Route as EventsRouteImport } from './pages/events'
 import { Route as AlertsRouteImport } from './pages/alerts'
 import { Route as IndexRouteImport } from './pages/index'
@@ -27,6 +28,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const FriendsRoute = FriendsRouteImport.update({
   id: '/friends',
   path: '/friends',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FeedbackRoute = FeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EventsRoute = EventsRouteImport.update({
@@ -69,6 +75,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/alerts': typeof AlertsRoute
   '/events': typeof EventsRouteWithChildren
+  '/feedback': typeof FeedbackRoute
   '/friends': typeof FriendsRoute
   '/profile': typeof ProfileRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/alerts': typeof AlertsRoute
   '/events': typeof EventsRouteWithChildren
+  '/feedback': typeof FeedbackRoute
   '/friends': typeof FriendsRoute
   '/profile': typeof ProfileRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/alerts': typeof AlertsRoute
   '/events': typeof EventsRouteWithChildren
+  '/feedback': typeof FeedbackRoute
   '/friends': typeof FriendsRoute
   '/profile': typeof ProfileRoute
   '/auth/callback': typeof AuthCallbackRoute
@@ -105,6 +114,7 @@ export interface FileRouteTypes {
     | '/'
     | '/alerts'
     | '/events'
+    | '/feedback'
     | '/friends'
     | '/profile'
     | '/auth/callback'
@@ -116,6 +126,7 @@ export interface FileRouteTypes {
     | '/'
     | '/alerts'
     | '/events'
+    | '/feedback'
     | '/friends'
     | '/profile'
     | '/auth/callback'
@@ -127,6 +138,7 @@ export interface FileRouteTypes {
     | '/'
     | '/alerts'
     | '/events'
+    | '/feedback'
     | '/friends'
     | '/profile'
     | '/auth/callback'
@@ -139,6 +151,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AlertsRoute: typeof AlertsRoute
   EventsRoute: typeof EventsRouteWithChildren
+  FeedbackRoute: typeof FeedbackRoute
   FriendsRoute: typeof FriendsRoute
   ProfileRoute: typeof ProfileRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -159,6 +172,13 @@ declare module '@tanstack/react-router' {
       path: '/friends'
       fullPath: '/friends'
       preLoaderRoute: typeof FriendsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/feedback': {
+      id: '/feedback'
+      path: '/feedback'
+      fullPath: '/feedback'
+      preLoaderRoute: typeof FeedbackRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/events': {
@@ -230,6 +250,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AlertsRoute: AlertsRoute,
   EventsRoute: EventsRouteWithChildren,
+  FeedbackRoute: FeedbackRoute,
   FriendsRoute: FriendsRoute,
   ProfileRoute: ProfileRoute,
   AuthCallbackRoute: AuthCallbackRoute,

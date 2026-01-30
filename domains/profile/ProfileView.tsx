@@ -1,11 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from '@tanstack/react-router';
 import { User } from '../../lib/types';
-import { Settings, LogOut, ChevronRight, MapPin, Link as LinkIcon, Edit2, Shield, BellRing, Moon } from 'lucide-react';
+import { Settings, LogOut, ChevronRight, MapPin, Link as LinkIcon, Edit2, Shield, BellRing, Moon, MessageSquarePlus, ClipboardList } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { supabase } from '../../lib/supabase';
 import { fetchFriends } from '../../services/friendService';
+import { checkIsAdmin } from '../../services/feedbackService';
 import { ComingSoonPopover, useComingSoonPopover } from '../../lib/ui/components/ComingSoonPopover';
+import { FeedbackModal } from '../feedback/FeedbackModal';
 
 interface ProfileViewProps {
   currentUser: User;
@@ -13,11 +16,14 @@ interface ProfileViewProps {
 
 export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
   const auth = useAuth();
+  const navigate = useNavigate();
   const comingSoon = useComingSoonPopover();
   const [hostedCount, setHostedCount] = useState(0);
   const [attendedCount, setAttendedCount] = useState(0);
   const [friendsCount, setFriendsCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
   
   useEffect(() => {
     if (!currentUser) {
@@ -56,6 +62,10 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
 
         // Fetch friends count
         const friends = await fetchFriends();
+
+        // Check admin status
+        const adminStatus = await checkIsAdmin();
+        setIsAdmin(adminStatus);
 
         setHostedCount(hosted || 0);
         setFriendsCount(friends.length);
@@ -182,16 +192,58 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
                      <ChevronRight className="w-5 h-5 text-slate-600" />
                  </button>
              </div>
-
-             <button 
-                 onClick={handleSignOut}
-                 className="w-full mt-6 p-4 rounded-xl border border-red-900/30 bg-red-900/10 text-red-400 font-bold flex items-center justify-center gap-2 hover:bg-red-900/20 transition-colors"
-             >
-                 <LogOut className="w-5 h-5" /> Sign Out
-             </button>
         </div>
 
+        {/* Feedback Section */}
+        <div className="space-y-3 mt-6">
+             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider px-1">Feedback</h3>
+             
+             <div className="bg-surface rounded-xl border border-slate-700 overflow-hidden divide-y divide-slate-700/50">
+                 <button
+                     onClick={() => setShowFeedbackModal(true)}
+                     className="w-full flex items-center justify-between p-4 transition-colors hover:bg-slate-800/50"
+                 >
+                     <div className="flex items-center gap-3">
+                         <div className="p-2 bg-primary/10 rounded-lg text-primary"><MessageSquarePlus className="w-5 h-5" /></div>
+                         <div className="text-left">
+                             <div className="text-sm font-bold text-slate-300">Submit Feedback</div>
+                             <div className="text-xs text-slate-500">Help us improve Open Invite</div>
+                         </div>
+                     </div>
+                     <ChevronRight className="w-5 h-5 text-slate-600" />
+                 </button>
+                 
+                 {isAdmin && (
+                   <button
+                       onClick={() => navigate({ to: '/feedback' })}
+                       className="w-full flex items-center justify-between p-4 transition-colors hover:bg-slate-800/50"
+                   >
+                       <div className="flex items-center gap-3">
+                           <div className="p-2 bg-amber-500/10 rounded-lg text-amber-400"><ClipboardList className="w-5 h-5" /></div>
+                           <div className="text-left">
+                               <div className="text-sm font-bold text-slate-300">View Feedback</div>
+                               <div className="text-xs text-slate-500">Manage all user feedback</div>
+                           </div>
+                       </div>
+                       <ChevronRight className="w-5 h-5 text-slate-600" />
+                   </button>
+                 )}
+             </div>
+        </div>
+
+        {/* Sign Out */}
+        <button 
+            onClick={handleSignOut}
+            className="w-full mt-6 p-4 rounded-xl border border-red-900/30 bg-red-900/10 text-red-400 font-bold flex items-center justify-center gap-2 hover:bg-red-900/20 transition-colors"
+        >
+            <LogOut className="w-5 h-5" /> Sign Out
+        </button>
+
         <ComingSoonPopover state={comingSoon.state} />
+        
+        {showFeedbackModal && (
+          <FeedbackModal onClose={() => setShowFeedbackModal(false)} />
+        )}
     </div>
   );
 };
