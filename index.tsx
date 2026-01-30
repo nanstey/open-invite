@@ -24,7 +24,7 @@ root.render(
       <AuthProvider>
         <Root />
       </AuthProvider>
-      {import.meta.env.DEV ? <ReactQueryDevtools initialIsOpen={false} /> : null}
+      {import.meta.env.VITE_SHOW_DEVTOOLS === 'true' || (import.meta.env.VITE_SHOW_DEVTOOLS === undefined && import.meta.env.DEV) ? <ReactQueryDevtools initialIsOpen={false} /> : null}
     </QueryClientProvider>
   </React.StrictMode>
 );
