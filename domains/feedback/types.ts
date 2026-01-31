@@ -82,3 +82,13 @@ export const FEEDBACK_TYPE_COLORS: Record<FeedbackType, string> = {
   other: 'bg-slate-500/20 text-slate-300 border-slate-500/40',
 }
 
+// Simplified feedback item for pickers and lists
+export interface SimpleFeedbackItem {
+  id: string
+  title: string
+  description?: string
+  type: FeedbackType
+  importance: FeedbackImportance
+  status: FeedbackStatus
+}
+

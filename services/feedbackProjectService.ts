@@ -4,7 +4,30 @@ import type {
   ProjectFormData,
   ProjectStatus,
   ProjectFeedbackItem,
+  SimpleProject,
 } from '../domains/feedback/projectTypes'
+import type { SimpleFeedbackItem } from '../domains/feedback/types'
+
+// ============================================================================
+// Transform Helpers
+// ============================================================================
+
+/**
+ * Transform database row to Project type
+ */
+function transformProjectRow(row: any): Project {
+  return {
+    id: row.id,
+    title: row.title,
+    description: row.description,
+    status: row.status,
+    sortOrder: row.sort_order,
+    githubRepo: row.github_repo,
+    githubUrl: row.github_url,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
 
 // ============================================================================
 // Project CRUD
@@ -22,17 +45,7 @@ export async function fetchProjects(): Promise<Project[]> {
     return []
   }
 
-  const projects: Project[] = (data || []).map((row: any) => ({
-    id: row.id,
-    title: row.title,
-    description: row.description,
-    status: row.status,
-    sortOrder: row.sort_order,
-    githubRepo: row.github_repo,
-    githubUrl: row.github_url,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  }))
+  const projects: Project[] = (data || []).map(transformProjectRow)
 
   // Fetch feedback counts for each project
   if (projects.length > 0) {
@@ -68,18 +81,7 @@ export async function fetchProject(projectId: string): Promise<Project | null> {
     return null
   }
 
-  const row = data as any
-  return {
-    id: row.id,
-    title: row.title,
-    description: row.description,
-    status: row.status,
-    sortOrder: row.sort_order,
-    githubRepo: row.github_repo,
-    githubUrl: row.github_url,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
-  }
+  return transformProjectRow(data)
 }
 
 export async function createProject(formData: ProjectFormData): Promise<Project | null> {
@@ -111,17 +113,8 @@ export async function createProject(formData: ProjectFormData): Promise<Project 
     return null
   }
 
-  const row = data as any
   return {
-    id: row.id,
-    title: row.title,
-    description: row.description,
-    status: row.status,
-    sortOrder: row.sort_order,
-    githubRepo: row.github_repo,
-    githubUrl: row.github_url,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    ...transformProjectRow(data),
     feedbackCount: 0,
   }
 }
@@ -315,14 +308,26 @@ export async function fetchFeedbackNotInProject(projectId: string): Promise<any[
 }
 
 // ============================================================================
-// Fetch projects linked to a feedback item
+// Fetch all feedback items (simplified for pickers)
 // ============================================================================
 
-interface SimpleProject {
-  id: string
-  title: string
-  status: string
+export async function fetchAllFeedbackSimple(): Promise<SimpleFeedbackItem[]> {
+  const { data, error } = await supabase
+    .from('user_feedback')
+    .select('id, title, description, type, importance, status')
+    .order('created_at', { ascending: false })
+
+  if (error) {
+    console.error('Error fetching feedback:', error)
+    return []
+  }
+
+  return (data || []) as SimpleFeedbackItem[]
 }
+
+// ============================================================================
+// Fetch projects linked to a feedback item
+// ============================================================================
 
 export async function fetchProjectsForFeedback(feedbackId: string): Promise<SimpleProject[]> {
   const { data, error } = await supabase
@@ -344,7 +349,7 @@ export async function fetchProjectsForFeedback(feedbackId: string): Promise<Simp
 
   return (data || [])
     .filter((row: any) => row.feedback_projects)
-    .map((row: any) => ({
+    .map((row: any): SimpleProject => ({
       id: row.feedback_projects.id,
       title: row.feedback_projects.title,
       status: row.feedback_projects.status,
@@ -367,11 +372,7 @@ export async function fetchAllProjects(): Promise<SimpleProject[]> {
     return []
   }
 
-  return (data || []).map((row: any) => ({
-    id: row.id,
-    title: row.title,
-    status: row.status,
-  }))
+  return (data || []) as SimpleProject[]
 }
 
 // ============================================================================

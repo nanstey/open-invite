@@ -1,8 +1,8 @@
 import React from 'react'
 import { Link } from '@tanstack/react-router'
 import { ClipboardList, FolderKanban } from 'lucide-react'
-import { FeedbackAdminPage } from './FeedbackAdminPage'
-import { ProjectsKanbanBoard } from './ProjectsKanbanBoard'
+import { FeedbackAdminPage } from './components/FeedbackAdminPage'
+import { ProjectsKanbanBoard } from './components/ProjectsKanbanBoard'
 
 type TabId = 'feedback' | 'projects'
 

@@ -1,6 +1,6 @@
 import React from 'react'
 import { ExternalLink, X } from 'lucide-react'
-import { PROJECT_STATUS_COLORS, type ProjectStatus } from './projectTypes'
+import { PROJECT_STATUS_COLORS, type ProjectStatus } from '../../projectTypes'
 
 export interface ProjectLinkCardProps {
   projectId: string

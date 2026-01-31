@@ -75,3 +75,10 @@ export const PROJECT_STATUS_COLORS: Record<ProjectStatus, string> = {
   completed: 'bg-green-500/20 text-green-300 border-green-500/40',
   archived: 'bg-slate-500/20 text-slate-400 border-slate-500/40',
 }
+
+// Simplified project for pickers and lists
+export interface SimpleProject {
+  id: string
+  title: string
+  status: ProjectStatus
+}

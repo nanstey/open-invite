@@ -1,14 +1,14 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { X, Send, Loader2 } from 'lucide-react'
-import { FormInput, FormSelect } from '../../lib/ui/components/FormControls'
-import { submitFeedback } from '../../services/feedbackService'
+import { FormInput, FormSelect } from '../../../../lib/ui/components/FormControls'
+import { submitFeedback } from '../../../../services/feedbackService'
 import {
   FEEDBACK_TYPE_OPTIONS,
   FEEDBACK_IMPORTANCE_OPTIONS,
   type FeedbackType,
   type FeedbackImportance,
   type FeedbackFormData,
-} from './types'
+} from '../../types'
 
 interface FeedbackModalProps {
   onClose: () => void

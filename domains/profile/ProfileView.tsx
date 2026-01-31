@@ -8,7 +8,7 @@ import { supabase } from '../../lib/supabase';
 import { fetchFriends } from '../../services/friendService';
 import { checkIsAdmin } from '../../services/feedbackService';
 import { ComingSoonPopover, useComingSoonPopover } from '../../lib/ui/components/ComingSoonPopover';
-import { FeedbackModal } from '../feedback/FeedbackModal';
+import { FeedbackModal } from '../feedback/components/feedback/FeedbackModal';
 
 interface ProfileViewProps {
   currentUser: User;
