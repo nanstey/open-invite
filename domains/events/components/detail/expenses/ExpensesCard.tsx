@@ -198,7 +198,7 @@ export function ExpensesCard(props: {
     <div className={cardClassName}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-white">Expenses</h1>
+          <h1 className="text-2xl font-bold text-white">Expenses</h1>
         </div>
       </div>
 
