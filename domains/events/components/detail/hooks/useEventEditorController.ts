@@ -21,6 +21,7 @@ const EMPTY_COMMENTS: SocialEvent['comments'] = []
 type EventEditorValues = {
   title: string
   headerImageUrl: string
+  headerImagePositionY: number
   location: string
   description: string
   startDateTimeLocal: string
@@ -186,6 +187,7 @@ export function useEventEditorController(props: {
       return {
         title: ev.title,
         headerImageUrl: ev.headerImageUrl ?? '',
+        headerImagePositionY: ev.headerImagePositionY ?? 50,
         location: ev.location,
         description: ev.description,
         startDateTimeLocal: toLocalDateTimeInputValue(ev.startTime),
@@ -203,6 +205,7 @@ export function useEventEditorController(props: {
     return {
       title: '',
       headerImageUrl: '',
+      headerImagePositionY: 50,
       location: '',
       description: '',
       startDateTimeLocal: '',
@@ -222,6 +225,7 @@ export function useEventEditorController(props: {
     props.initialEvent?.locationData,
     props.initialEvent?.description,
     props.initialEvent?.headerImageUrl,
+    props.initialEvent?.headerImagePositionY,
     props.initialEvent?.id,
     props.initialEvent?.isFlexibleEnd,
     props.initialEvent?.isFlexibleStart,
@@ -262,6 +266,7 @@ export function useEventEditorController(props: {
         const created = await createEvent({
           title,
           headerImageUrl: value.headerImageUrl.trim() || undefined,
+          headerImagePositionY: value.headerImagePositionY,
           location,
           description,
           startTime: times.startTime,
@@ -306,6 +311,7 @@ export function useEventEditorController(props: {
       const updated = await updateEvent(props.initialEvent.id, {
         title,
         headerImageUrl: value.headerImageUrl.trim() || undefined,
+        headerImagePositionY: value.headerImagePositionY,
         location,
         description,
         ...(hasItinerary ? {} : { startTime: times.startTime, endTime: times.endTime }),
@@ -388,6 +394,7 @@ export function useEventEditorController(props: {
       hostId: props.currentUser.id,
       title: values.title,
       headerImageUrl: values.headerImageUrl,
+      headerImagePositionY: values.headerImagePositionY,
       description: values.description,
       activityType: values.activityType,
       location: values.location,
@@ -428,6 +435,7 @@ export function useEventEditorController(props: {
     values.activityType,
     values.coordinates,
     values.headerImageUrl,
+    values.headerImagePositionY,
     values.locationData,
     values.description,
     values.durationHours,
@@ -444,6 +452,7 @@ export function useEventEditorController(props: {
     (patch: Partial<SocialEvent>) => {
       if (patch.title !== undefined) form.setFieldValue('title', patch.title)
       if (patch.headerImageUrl !== undefined) form.setFieldValue('headerImageUrl', patch.headerImageUrl ?? '')
+      if (patch.headerImagePositionY !== undefined) form.setFieldValue('headerImagePositionY', patch.headerImagePositionY)
       if (patch.location !== undefined) form.setFieldValue('location', patch.location)
       if (patch.description !== undefined) form.setFieldValue('description', patch.description)
       if (patch.activityType !== undefined) form.setFieldValue('activityType', patch.activityType)
@@ -607,5 +616,3 @@ export function useEventEditorController(props: {
 
   return { previewEvent, editModel }
 }
-
-

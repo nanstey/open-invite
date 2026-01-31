@@ -79,6 +79,7 @@ export interface SocialEvent {
   hostId: string
   title: string
   headerImageUrl?: string
+  headerImagePositionY?: number
   description: string
   activityType: string // e.g., "Dining", "Sport", "Travel"
   location: string
