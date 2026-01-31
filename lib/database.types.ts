@@ -47,6 +47,7 @@ export interface Database {
           description: string
           activity_type: string
           header_image_url: string | null
+          header_image_position_y: number | null
           location: string
           coordinates: Json | null
           location_data: Json | null
@@ -69,6 +70,7 @@ export interface Database {
           description: string
           activity_type: string
           header_image_url?: string | null
+          header_image_position_y?: number | null
           location: string
           coordinates?: Json | null
           location_data?: Json | null
@@ -91,6 +93,7 @@ export interface Database {
           description?: string
           activity_type?: string
           header_image_url?: string | null
+          header_image_position_y?: number | null
           location?: string
           coordinates?: Json | null
           location_data?: Json | null
@@ -526,4 +529,3 @@ export interface Database {
     }
   }
 }
-

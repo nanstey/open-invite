@@ -261,12 +261,17 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       <HeroHeader
         eventId={event.id}
         headerImageUrl={event.headerImageUrl}
+        headerImagePositionY={event.headerImagePositionY}
         activityType={event.activityType}
         title={event.title}
         showBackButton={showBackButton && !!onClose}
         onBack={onClose}
         showHeaderImagePicker={isEditMode && isHost}
         onOpenHeaderImagePicker={() => setShowHeaderImageModal(true)}
+        onSaveHeaderImagePositionY={(positionY) => {
+          if (!isEditMode) return
+          edit?.onChange({ headerImagePositionY: positionY })
+        }}
       />
 
       <KeyFactsCard
