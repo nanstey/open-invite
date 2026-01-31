@@ -41,7 +41,7 @@ export function KeyFactsCard(props: {
 
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-6 -mt-6 relative z-10">
-      <div className="bg-background border border-transparent rounded-2xl p-4 md:p-5">
+      <div className="bg-surface border border-slate-700 rounded-2xl p-4 md:p-5">
         {/* Mobile: host (left) + datetime (right) */}
         <div className="md:hidden flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
