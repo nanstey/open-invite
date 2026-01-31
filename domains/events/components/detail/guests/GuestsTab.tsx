@@ -64,7 +64,7 @@ export function GuestsTab(props: {
         </div>
       ) : null}
 
-      <div className="bg-surface border border-slate-700 rounded-2xl p-5">
+      <div className={isEditMode ? 'bg-surface border border-slate-700 rounded-2xl p-5' : 'bg-background border border-transparent rounded-2xl p-5'}>
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-lg font-bold text-white flex items-center gap-2">
             <Users className="w-5 h-5 text-slate-400" /> Guests
@@ -157,5 +157,4 @@ export function GuestsTab(props: {
     </div>
   )
 }
-
 

@@ -35,8 +35,12 @@ export function AboutCard(props: {
     }
   }, [description, viewMode])
 
+  const cardClassName = isEditMode
+    ? 'bg-surface border border-slate-700 rounded-2xl p-5'
+    : 'bg-background border border-transparent rounded-2xl p-5'
+
   return (
-    <div className="bg-surface border border-slate-700 rounded-2xl p-5">
+    <div className={cardClassName}>
       <h1 className="text-xl font-bold text-white mb-3">About</h1>
       {isEditMode ? (
         <>
@@ -90,16 +94,16 @@ export function AboutCard(props: {
             <div className="w-full bg-slate-900 border border-slate-700 rounded-lg p-4 min-h-[8rem]">
               <MrkdwnRenderer
                 content={description}
-                className="text-slate-300 leading-relaxed text-base space-y-3"
+                className="text-slate-300 leading-relaxed text-base space-y-4"
               />
             </div>
           )}
         </>
       ) : (
-        <div className="w-full bg-slate-900 border border-slate-700 rounded-lg p-4">
+        <div className="w-full rounded-lg">
           <MrkdwnRenderer
             content={description}
-            className="text-slate-300 leading-relaxed text-base space-y-3"
+            className="text-slate-300 leading-relaxed text-base space-y-4"
           />
         </div>
       )}

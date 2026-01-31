@@ -22,7 +22,6 @@ import { useEventTabsController } from './hooks/useEventTabsController'
 import { useAttendanceToggle } from './hooks/useAttendanceToggle'
 import { HostedByActionsCard } from './actions/HostedByActionsCard'
 import type { EventActionsModel } from './actions/types'
-import { StickyHostedByActionsCard } from './actions/StickyHostedByActionsCard'
 import { MobileActionsBar } from './actions/MobileActionsBar'
 import { TitleCard } from './details/TitleCard'
 import { AboutCard } from './details/AboutCard'
@@ -313,6 +312,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                 error={isEditMode ? edit?.errors?.description : undefined}
                   />
 
+              {!isEditMode && <hr className="border-slate-700" />}
+
               <DateTimeCard
                 isEditMode={isEditMode}
                 hasItinerary={hasItinerary}
@@ -325,8 +326,10 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                 errorDurationHours={isEditMode ? edit?.errors?.durationHours : undefined}
               />
 
+              {!isEditMode && hasItinerary && <hr className="border-slate-700" />}
+
               {isEditMode || hasItinerary ? (
-                <ItineraryCard>
+                <ItineraryCard isEditMode={isEditMode}>
                   {isEditMode ? (
                     edit?.itinerary ? (
                       <ItineraryEditor
@@ -353,6 +356,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   )}
                 </ItineraryCard>
               ) : null}
+
+              {!isEditMode && <hr className="border-slate-700" />}
 
               <LocationCard
                 itineraryItems={itineraryItems}
@@ -381,6 +386,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                 }
                 locationError={isEditMode ? edit?.errors?.location : undefined}
               />
+
+              {!isEditMode && <hr className="border-slate-700" />}
 
               <ExpensesCard
                 isEditMode={isEditMode}
@@ -430,7 +437,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           ) : null}
         </div>
 
-        <StickyHostedByActionsCard host={host} seats={seats} actions={actionsModel} />
+        <HostedByActionsCard host={host} seats={seats} actions={actionsModel} variant="sticky" />
       </div>
 
       <MobileActionsBar reserveBottomNavSpace={reserveBottomNavSpace} actions={actionsModel} />

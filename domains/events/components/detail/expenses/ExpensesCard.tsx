@@ -79,9 +79,13 @@ export function ExpensesCard(props: {
     onOutsideClick: () => setOpenMenuExpenseId(null),
   })
 
+  const cardClassName = isEditMode
+    ? 'bg-surface border border-slate-700 rounded-2xl p-5'
+    : 'bg-background border border-transparent rounded-2xl p-5'
+
   if (isGuest) {
     return (
-      <div className="bg-surface border border-slate-700 rounded-2xl p-5">
+      <div className={cardClassName}>
         <h1 className="text-xl font-bold text-white mb-2">Expenses</h1>
         <div className="text-sm text-slate-400">Sign in to see expenses and cost splitting.</div>
         {onRequireAuth ? (
@@ -201,7 +205,7 @@ export function ExpensesCard(props: {
   }
 
   return (
-    <div className="bg-surface border border-slate-700 rounded-2xl p-5">
+    <div className={cardClassName}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold text-white">Expenses</h1>
@@ -336,5 +340,4 @@ export function ExpensesCard(props: {
     </div>
   )
 }
-
 

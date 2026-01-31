@@ -45,8 +45,12 @@ export function ChatTab(props: {
     setCommentText('')
   }
 
+  const cardClassName = isEditMode
+    ? 'bg-surface border border-slate-700 rounded-2xl p-5'
+    : 'bg-background border border-transparent rounded-2xl p-5'
+
   return (
-    <div className="bg-surface border border-slate-700 rounded-2xl p-5">
+    <div className={cardClassName}>
       <h2 className="text-lg font-bold text-white mb-4">Chat</h2>
 
       <div className="space-y-6 mb-6">
@@ -103,5 +107,4 @@ export function ChatTab(props: {
     </div>
   )
 }
-
 
