@@ -13,7 +13,13 @@ export function HostedByActionsCard(props: {
 
   return (
     <div className="hidden md:block lg:hidden max-w-6xl mx-auto px-4 md:px-6 py-4">
-      <div className="bg-surface border border-slate-700 rounded-2xl p-5 shadow-sm">
+      <div
+        className={
+          actions.mode === 'edit'
+            ? 'bg-surface border border-slate-700 rounded-2xl p-5 shadow-sm'
+            : 'bg-background border border-transparent rounded-2xl p-5'
+        }
+      >
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
             {host ? (
@@ -63,5 +69,4 @@ export function HostedByActionsCard(props: {
     </div>
   )
 }
-
 

@@ -30,8 +30,12 @@ export function DateTimeCard(props: {
 
   const timeOptions = React.useMemo(() => buildQuarterHourTimeOptions(), [])
 
+  const cardClassName = isEditMode
+    ? 'bg-surface border border-slate-700 rounded-2xl p-5'
+    : 'bg-background border border-transparent rounded-2xl p-5'
+
   return (
-    <div className="bg-surface border border-slate-700 rounded-2xl p-5">
+    <div className={cardClassName}>
       <h1 className="text-xl font-bold text-white mb-3">Date &amp; Time</h1>
       {isEditMode ? (
         hasItinerary ? (
@@ -88,5 +92,4 @@ export function DateTimeCard(props: {
     </div>
   )
 }
-
 

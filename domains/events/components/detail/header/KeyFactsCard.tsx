@@ -41,7 +41,7 @@ export function KeyFactsCard(props: {
 
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-6 -mt-6 relative z-10">
-      <div className="bg-surface/95 backdrop-blur border border-slate-800 rounded-2xl p-4 md:p-5 shadow-lg">
+      <div className="bg-background border border-transparent rounded-2xl p-4 md:p-5">
         {/* Mobile: host (left) + datetime (right) */}
         <div className="md:hidden flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -86,7 +86,7 @@ export function KeyFactsCard(props: {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:mt-0 mt-3">
-          <div className="hidden md:flex items-start gap-3 p-3 rounded-xl bg-slate-900/40 border border-slate-800">
+          <div className="hidden md:flex items-start gap-3 p-3 rounded-xl">
             <div className="p-2 bg-slate-800 rounded-lg shrink-0">
               <Calendar className="w-5 h-5 text-secondary" />
             </div>
@@ -118,7 +118,7 @@ export function KeyFactsCard(props: {
             </div>
           </div>
 
-          <div className="hidden md:flex items-start gap-3 p-3 rounded-xl bg-slate-900/40 border border-slate-800">
+          <div className="hidden md:flex items-start gap-3 p-3 rounded-xl">
             <div className="p-2 bg-slate-800 rounded-lg shrink-0">
               <MapPin className="w-5 h-5 text-accent" />
             </div>
@@ -137,7 +137,7 @@ export function KeyFactsCard(props: {
             </div>
           </div>
 
-          <div className="hidden md:flex items-start gap-3 p-3 rounded-xl bg-slate-900/40 border border-slate-800">
+          <div className="hidden md:flex items-start gap-3 p-3 rounded-xl">
             <div className="p-2 bg-slate-800 rounded-lg shrink-0">
               <Users className="w-5 h-5 text-slate-300" />
             </div>
@@ -161,5 +161,4 @@ export function KeyFactsCard(props: {
     </div>
   )
 }
-
 

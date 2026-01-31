@@ -82,8 +82,12 @@ export function LocationCard(props: {
     return formatEventLocationForDisplay({ raw: props.locationValue, locationData: props.eventLocationData })
   }, [props.eventLocationData, props.locationValue])
 
+  const cardClassName = props.isEditMode
+    ? 'bg-surface border border-slate-700 rounded-2xl p-5'
+    : 'bg-background border border-transparent rounded-2xl p-5'
+
   return (
-    <div className="bg-surface border border-slate-700 rounded-2xl p-5">
+    <div className={cardClassName}>
       <h1 className="text-xl font-bold text-white mb-3">Location</h1>
       <div className="flex items-start gap-3">
         <div className="p-2 bg-slate-800 rounded-lg shrink-0">
@@ -180,5 +184,4 @@ export function LocationCard(props: {
     </div>
   )
 }
-
 

@@ -321,7 +321,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               />
 
               {isEditMode || hasItinerary ? (
-                <ItineraryCard>
+                <ItineraryCard isEditMode={isEditMode}>
                   {isEditMode ? (
                     edit?.itinerary ? (
                       <ItineraryEditor

@@ -14,7 +14,13 @@ export function StickyHostedByActionsCard(props: {
   return (
     <aside className="hidden lg:block">
       <div className="sticky top-6 space-y-4">
-        <div className="bg-surface border border-slate-700 rounded-2xl p-5 shadow-sm">
+        <div
+          className={
+            actions.mode === 'edit'
+              ? 'bg-surface border border-slate-700 rounded-2xl p-5 shadow-sm'
+              : 'bg-background border border-transparent rounded-2xl p-5'
+          }
+        >
           <div className="flex items-center gap-4">
             {host ? (
               <img src={host.avatar} className="w-12 h-12 rounded-full border-2 border-slate-700" alt={host.name} />
@@ -63,5 +69,4 @@ export function StickyHostedByActionsCard(props: {
     </aside>
   )
 }
-
 
