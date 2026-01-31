@@ -13,19 +13,26 @@ export const Route = createFileRoute('/admin')({
     }
     // If exactly /admin, redirect to /admin/feedback
     if (location.pathname === '/admin') {
-      throw redirect({ to: '/admin/feedback' })
+      throw redirect({ to: '/admin/feedback', search: { feedbackId: undefined } })
     }
   },
   component: AdminLayoutComponent,
 })
 
 function AdminLayoutComponent() {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
   const navigate = useNavigate()
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
 
   useEffect(() => {
-    if (!user) return
+    // Still loading auth state, wait
+    if (loading) return
+
+    // Not signed in after loading completed, redirect home
+    if (!user) {
+      navigate({ to: '/' })
+      return
+    }
 
     const checkAdminStatus = async () => {
       const admin = await checkIsAdmin()
@@ -38,7 +45,7 @@ function AdminLayoutComponent() {
     }
 
     checkAdminStatus()
-  }, [user, navigate])
+  }, [user, loading, navigate])
 
   // Loading state while checking admin status
   if (isAdmin === null) {

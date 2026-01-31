@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 import type { Database } from '../lib/database.types'
-import type { Feedback, FeedbackFormData, FeedbackStatus, FeedbackRow } from '../domains/feedback/types'
+import type { Feedback, FeedbackFormData, FeedbackStatus, FeedbackRow, FeedbackUpdate } from '../domains/feedback/types'
 
 type FeedbackInsert = Database['public']['Tables']['user_feedback']['Insert']
 
@@ -99,8 +99,8 @@ export async function fetchAllFeedback(): Promise<Feedback[]> {
 
   // Fetch user profiles for all feedback
   const userIds = [...new Set(feedbackRows.map(f => f.user_id))]
-  const { data: profiles, error: profilesError } = await supabase
-    .from('user_profiles')
+  const { data: profiles, error: profilesError } = await (supabase
+    .from('user_profiles') as any)
     .select('id, name, avatar')
     .in('id', userIds)
 
@@ -125,9 +125,9 @@ export async function fetchAllFeedback(): Promise<Feedback[]> {
  * Update feedback status (admin only - RLS enforced)
  */
 export async function updateFeedbackStatus(feedbackId: string, status: FeedbackStatus): Promise<boolean> {
-  const { error } = await supabase
-    .from('user_feedback')
-    .update({ status } as any)
+  const { error } = await (supabase
+    .from('user_feedback') as any)
+    .update({ status })
     .eq('id', feedbackId)
 
   if (error) {
