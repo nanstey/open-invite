@@ -13,11 +13,14 @@ import { Route as ProfileRouteImport } from './pages/profile'
 import { Route as FriendsRouteImport } from './pages/friends'
 import { Route as EventsRouteImport } from './pages/events'
 import { Route as AlertsRouteImport } from './pages/alerts'
+import { Route as AdminRouteImport } from './pages/admin'
 import { Route as IndexRouteImport } from './pages/index'
 import { Route as EventsNewRouteImport } from './pages/events.new'
 import { Route as EventsSlugRouteImport } from './pages/events.$slug'
 import { Route as ESlugRouteImport } from './pages/e.$slug'
 import { Route as AuthCallbackRouteImport } from './pages/auth.callback'
+import { Route as AdminProjectsRouteImport } from './pages/admin.projects'
+import { Route as AdminFeedbackRouteImport } from './pages/admin.feedback'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
@@ -37,6 +40,11 @@ const EventsRoute = EventsRouteImport.update({
 const AlertsRoute = AlertsRouteImport.update({
   id: '/alerts',
   path: '/alerts',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRoute = AdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -64,13 +72,26 @@ const AuthCallbackRoute = AuthCallbackRouteImport.update({
   path: '/auth/callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminProjectsRoute = AdminProjectsRouteImport.update({
+  id: '/projects',
+  path: '/projects',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminFeedbackRoute = AdminFeedbackRouteImport.update({
+  id: '/feedback',
+  path: '/feedback',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/alerts': typeof AlertsRoute
   '/events': typeof EventsRouteWithChildren
   '/friends': typeof FriendsRoute
   '/profile': typeof ProfileRoute
+  '/admin/feedback': typeof AdminFeedbackRoute
+  '/admin/projects': typeof AdminProjectsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/e/$slug': typeof ESlugRoute
   '/events/$slug': typeof EventsSlugRoute
@@ -78,10 +99,13 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/alerts': typeof AlertsRoute
   '/events': typeof EventsRouteWithChildren
   '/friends': typeof FriendsRoute
   '/profile': typeof ProfileRoute
+  '/admin/feedback': typeof AdminFeedbackRoute
+  '/admin/projects': typeof AdminProjectsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/e/$slug': typeof ESlugRoute
   '/events/$slug': typeof EventsSlugRoute
@@ -90,10 +114,13 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin': typeof AdminRouteWithChildren
   '/alerts': typeof AlertsRoute
   '/events': typeof EventsRouteWithChildren
   '/friends': typeof FriendsRoute
   '/profile': typeof ProfileRoute
+  '/admin/feedback': typeof AdminFeedbackRoute
+  '/admin/projects': typeof AdminProjectsRoute
   '/auth/callback': typeof AuthCallbackRoute
   '/e/$slug': typeof ESlugRoute
   '/events/$slug': typeof EventsSlugRoute
@@ -103,10 +130,13 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/admin'
     | '/alerts'
     | '/events'
     | '/friends'
     | '/profile'
+    | '/admin/feedback'
+    | '/admin/projects'
     | '/auth/callback'
     | '/e/$slug'
     | '/events/$slug'
@@ -114,10 +144,13 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/admin'
     | '/alerts'
     | '/events'
     | '/friends'
     | '/profile'
+    | '/admin/feedback'
+    | '/admin/projects'
     | '/auth/callback'
     | '/e/$slug'
     | '/events/$slug'
@@ -125,10 +158,13 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/admin'
     | '/alerts'
     | '/events'
     | '/friends'
     | '/profile'
+    | '/admin/feedback'
+    | '/admin/projects'
     | '/auth/callback'
     | '/e/$slug'
     | '/events/$slug'
@@ -137,6 +173,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminRoute: typeof AdminRouteWithChildren
   AlertsRoute: typeof AlertsRoute
   EventsRoute: typeof EventsRouteWithChildren
   FriendsRoute: typeof FriendsRoute
@@ -175,6 +212,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AlertsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin': {
+      id: '/admin'
+      path: '/admin'
+      fullPath: '/admin'
+      preLoaderRoute: typeof AdminRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -210,8 +254,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/projects': {
+      id: '/admin/projects'
+      path: '/projects'
+      fullPath: '/admin/projects'
+      preLoaderRoute: typeof AdminProjectsRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/feedback': {
+      id: '/admin/feedback'
+      path: '/feedback'
+      fullPath: '/admin/feedback'
+      preLoaderRoute: typeof AdminFeedbackRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
+
+interface AdminRouteChildren {
+  AdminFeedbackRoute: typeof AdminFeedbackRoute
+  AdminProjectsRoute: typeof AdminProjectsRoute
+}
+
+const AdminRouteChildren: AdminRouteChildren = {
+  AdminFeedbackRoute: AdminFeedbackRoute,
+  AdminProjectsRoute: AdminProjectsRoute,
+}
+
+const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface EventsRouteChildren {
   EventsSlugRoute: typeof EventsSlugRoute
@@ -228,6 +298,7 @@ const EventsRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminRoute: AdminRouteWithChildren,
   AlertsRoute: AlertsRoute,
   EventsRoute: EventsRouteWithChildren,
   FriendsRoute: FriendsRoute,

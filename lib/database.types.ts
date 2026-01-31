@@ -17,6 +17,7 @@ export interface Database {
           id: string
           name: string
           avatar: string
+          is_admin: boolean
           created_at: string
           updated_at: string
         }
@@ -24,6 +25,7 @@ export interface Database {
           id: string
           name: string
           avatar: string
+          is_admin?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -31,6 +33,7 @@ export interface Database {
           id?: string
           name?: string
           avatar?: string
+          is_admin?: boolean
           created_at?: string
           updated_at?: string
         }
@@ -416,6 +419,96 @@ export interface Database {
           updated_at?: string
         }
       }
+      user_feedback: {
+        Row: {
+          id: string
+          user_id: string
+          title: string
+          type: 'bug' | 'feature' | 'ux' | 'other'
+          importance: 'low' | 'medium' | 'high' | 'critical'
+          description: string
+          status: 'new' | 'reviewed' | 'planned' | 'done' | 'declined'
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          title: string
+          type: 'bug' | 'feature' | 'ux' | 'other'
+          importance: 'low' | 'medium' | 'high' | 'critical'
+          description: string
+          status?: 'new' | 'reviewed' | 'planned' | 'done' | 'declined'
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          title?: string
+          type?: 'bug' | 'feature' | 'ux' | 'other'
+          importance?: 'low' | 'medium' | 'high' | 'critical'
+          description?: string
+          status?: 'new' | 'reviewed' | 'planned' | 'done' | 'declined'
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      feedback_projects: {
+        Row: {
+          id: string
+          title: string
+          description: string | null
+          status: 'backlog' | 'on_deck' | 'in_progress' | 'review' | 'completed' | 'archived'
+          sort_order: number
+          github_repo: string | null
+          github_url: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          description?: string | null
+          status?: 'backlog' | 'on_deck' | 'in_progress' | 'review' | 'completed' | 'archived'
+          sort_order?: number
+          github_repo?: string | null
+          github_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          description?: string | null
+          status?: 'backlog' | 'on_deck' | 'in_progress' | 'review' | 'completed' | 'archived'
+          sort_order?: number
+          github_repo?: string | null
+          github_url?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      feedback_project_items: {
+        Row: {
+          id: string
+          project_id: string
+          feedback_id: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          project_id: string
+          feedback_id: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          project_id?: string
+          feedback_id?: string
+          created_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never
@@ -426,6 +519,10 @@ export interface Database {
     Enums: {
       event_visibility_type: 'ALL_FRIENDS' | 'GROUPS' | 'INVITE_ONLY'
       notification_type: 'INVITE' | 'COMMENT' | 'REACTION' | 'REMINDER' | 'SYSTEM'
+      feedback_type: 'bug' | 'feature' | 'ux' | 'other'
+      feedback_importance: 'low' | 'medium' | 'high' | 'critical'
+      feedback_status: 'new' | 'reviewed' | 'planned' | 'done' | 'declined'
+      feedback_project_status: 'backlog' | 'on_deck' | 'in_progress' | 'review' | 'completed' | 'archived'
     }
   }
 }
