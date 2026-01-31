@@ -1,7 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { ArrowUpDown, Search, Loader2, Filter, X } from 'lucide-react'
+import { useNavigate } from '@tanstack/react-router'
+import { ArrowUpDown, Search, Loader2, Filter, X, FolderKanban, ExternalLink } from 'lucide-react'
 import { fetchAllFeedback } from '../../services/feedbackService'
+import { fetchAllFeedbackProjectMappings, type FeedbackProjectMapping } from '../../services/feedbackProjectService'
 import { FeedbackDetailPanel } from './FeedbackDetailPanel'
+import { PROJECT_STATUS_COLORS } from './projectTypes'
 import { FormSelect } from '../../lib/ui/components/FormControls'
 import {
   FEEDBACK_TYPE_COLORS,
@@ -58,35 +61,64 @@ function SortableHeader({ label, field, currentSort, direction, onSort }: Sortab
   )
 }
 
-export function FeedbackAdminPage() {
+interface FeedbackAdminPageProps {
+  initialFeedbackId?: string
+}
+
+export function FeedbackAdminPage({ initialFeedbackId }: FeedbackAdminPageProps) {
+  const navigate = useNavigate()
   const [feedback, setFeedback] = useState<Feedback[]>([])
+  const [projectMappings, setProjectMappings] = useState<FeedbackProjectMapping[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [sortField, setSortField] = useState<SortField>('createdAt')
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null)
+  const [initialFeedbackHandled, setInitialFeedbackHandled] = useState(false)
+
+  // Helper to get projects for a feedback item
+  const getProjectsForFeedback = (feedbackId: string) => {
+    return projectMappings.filter(m => m.feedbackId === feedbackId)
+  }
   
   // Filters
   const [filterType, setFilterType] = useState<FeedbackType | 'all'>('all')
   const [filterImportance, setFilterImportance] = useState<FeedbackImportance | 'all'>('all')
   const [filterStatus, setFilterStatus] = useState<FeedbackStatus | 'all'>('all')
+  const [filterProject, setFilterProject] = useState<string>('all') // 'all' | 'none' | projectId
   
-  const hasActiveFilters = filterType !== 'all' || filterImportance !== 'all' || filterStatus !== 'all'
+  const hasActiveFilters = filterType !== 'all' || filterImportance !== 'all' || filterStatus !== 'all' || filterProject !== 'all'
   
   const clearFilters = () => {
     setFilterType('all')
     setFilterImportance('all')
     setFilterStatus('all')
+    setFilterProject('all')
   }
 
+  // Auto-open feedback if initialFeedbackId is provided
   useEffect(() => {
-    const loadFeedback = async () => {
+    if (initialFeedbackId && feedback.length > 0 && !initialFeedbackHandled) {
+      const item = feedback.find(f => f.id === initialFeedbackId)
+      if (item) {
+        setSelectedFeedback(item)
+      }
+      setInitialFeedbackHandled(true)
+    }
+  }, [initialFeedbackId, feedback, initialFeedbackHandled])
+
+  useEffect(() => {
+    const loadData = async () => {
       setLoading(true)
-      const data = await fetchAllFeedback()
-      setFeedback(data)
+      const [feedbackData, mappingsData] = await Promise.all([
+        fetchAllFeedback(),
+        fetchAllFeedbackProjectMappings(),
+      ])
+      setFeedback(feedbackData)
+      setProjectMappings(mappingsData)
       setLoading(false)
     }
-    loadFeedback()
+    loadData()
   }, [])
 
   const handleSort = (field: SortField) => {
@@ -105,6 +137,12 @@ export function FeedbackAdminPage() {
     if (selectedFeedback?.id === id) {
       setSelectedFeedback((prev) => (prev ? { ...prev, status: newStatus, updatedAt: new Date().toISOString() } : null))
     }
+  }
+
+  const handleProjectsChange = async () => {
+    // Refresh project mappings when projects are added/removed from feedback
+    const mappingsData = await fetchAllFeedbackProjectMappings()
+    setProjectMappings(mappingsData)
   }
 
   const filteredAndSortedFeedback = useMemo(() => {
@@ -134,6 +172,18 @@ export function FeedbackAdminPage() {
     // Filter by status
     if (filterStatus !== 'all') {
       result = result.filter((f) => f.status === filterStatus)
+    }
+
+    // Filter by project
+    if (filterProject !== 'all') {
+      const feedbackIdsWithProjects = new Set(projectMappings.map(m => m.feedbackId))
+      if (filterProject === 'has') {
+        // Show feedback with at least one linked project
+        result = result.filter((f) => feedbackIdsWithProjects.has(f.id))
+      } else if (filterProject === 'none') {
+        // Show feedback with no linked projects
+        result = result.filter((f) => !feedbackIdsWithProjects.has(f.id))
+      }
     }
 
     // Sort
@@ -171,7 +221,7 @@ export function FeedbackAdminPage() {
     })
 
     return result
-  }, [feedback, searchTerm, filterType, filterImportance, filterStatus, sortField, sortDirection])
+  }, [feedback, searchTerm, filterType, filterImportance, filterStatus, filterProject, projectMappings, sortField, sortDirection])
 
   if (loading) {
     return (
@@ -185,7 +235,7 @@ export function FeedbackAdminPage() {
     <div className="max-w-6xl mx-auto pb-20 px-4">
 
       {/* Search */}
-      <div className="relative mb-4">
+      <div className="relative my-4">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
         <input
           type="text"
@@ -245,6 +295,17 @@ export function FeedbackAdminPage() {
           ))}
         </FormSelect>
 
+        <FormSelect
+          value={filterProject}
+          onChange={(e) => setFilterProject(e.target.value)}
+          size="sm"
+          className="!w-auto min-w-[140px]"
+        >
+          <option value="all">All Projects</option>
+          <option value="has">Has Project</option>
+          <option value="none">No Project</option>
+        </FormSelect>
+
         {hasActiveFilters && (
           <button
             onClick={clearFilters}
@@ -280,8 +341,12 @@ export function FeedbackAdminPage() {
       ) : (
         <div className="bg-surface rounded-xl border border-slate-700 overflow-hidden">
           {/* Table Header - Desktop */}
-          <div className="hidden md:grid grid-cols-[1fr_100px_100px_100px_120px] gap-4 p-4 border-b border-slate-700 bg-slate-800/50">
+          <div className="hidden md:grid grid-cols-[1fr_180px_100px_100px_100px_100px] gap-4 p-4 border-b border-slate-700 bg-slate-800/50">
             <SortableHeader label="Title" field="title" currentSort={sortField} direction={sortDirection} onSort={handleSort} />
+            <div className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-400">
+              <FolderKanban className="w-3 h-3" />
+              Project
+            </div>
             <SortableHeader label="Type" field="type" currentSort={sortField} direction={sortDirection} onSort={handleSort} />
             <SortableHeader label="Priority" field="importance" currentSort={sortField} direction={sortDirection} onSort={handleSort} />
             <SortableHeader label="Status" field="status" currentSort={sortField} direction={sortDirection} onSort={handleSort} />
@@ -297,12 +362,50 @@ export function FeedbackAdminPage() {
                 className="w-full text-left p-4 hover:bg-slate-800/50 transition-colors"
               >
                 {/* Desktop Layout */}
-                <div className="hidden md:grid grid-cols-[1fr_100px_100px_100px_120px] gap-4 items-center">
+                <div className="hidden md:grid grid-cols-[1fr_180px_100px_100px_100px_100px] gap-4 items-center">
                   <div className="min-w-0">
                     <div className="text-sm font-bold text-white truncate">{f.title}</div>
                     <div className="text-xs text-slate-500 truncate">
                       {f.userName || 'Unknown User'}
                     </div>
+                  </div>
+                  <div className="min-w-0">
+                    {(() => {
+                      const projects = getProjectsForFeedback(f.id)
+                      if (projects.length === 0) {
+                        return <span className="text-xs text-slate-600">—</span>
+                      }
+                      const project = projects[0]
+                      return (
+                        <div 
+                          className="bg-slate-900 rounded-lg p-2 cursor-pointer hover:bg-slate-800 transition-colors group"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            navigate({ to: '/admin/projects', search: { projectId: project.projectId } })
+                          }}
+                          title="View project"
+                        >
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm text-white truncate flex-1" title={project.projectTitle}>
+                              {project.projectTitle}
+                            </span>
+                            <ExternalLink className="w-3 h-3 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            <span
+                              className={`text-xs px-1.5 py-0.5 rounded border ${
+                                PROJECT_STATUS_COLORS[project.projectStatus as keyof typeof PROJECT_STATUS_COLORS] || 'bg-slate-500/20 text-slate-300 border-slate-500/40'
+                              }`}
+                            >
+                              {project.projectStatus.replace('_', ' ')}
+                            </span>
+                            {projects.length > 1 && (
+                              <span className="text-xs text-slate-500">+{projects.length - 1}</span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    })()}
                   </div>
                   <Badge className={FEEDBACK_TYPE_COLORS[f.type]}>{f.type}</Badge>
                   <Badge className={FEEDBACK_IMPORTANCE_COLORS[f.importance]}>{f.importance}</Badge>
@@ -320,6 +423,39 @@ export function FeedbackAdminPage() {
                     <Badge className={FEEDBACK_TYPE_COLORS[f.type]}>{f.type}</Badge>
                     <Badge className={FEEDBACK_IMPORTANCE_COLORS[f.importance]}>{f.importance}</Badge>
                   </div>
+                  {(() => {
+                    const projects = getProjectsForFeedback(f.id)
+                    if (projects.length > 0) {
+                      const project = projects[0]
+                      return (
+                        <div 
+                          className="bg-slate-900 rounded-lg p-2 cursor-pointer hover:bg-slate-800 transition-colors"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            navigate({ to: '/admin/projects', search: { projectId: project.projectId } })
+                          }}
+                        >
+                          <div className="flex items-center gap-1">
+                            <span className="text-sm text-white truncate flex-1">{project.projectTitle}</span>
+                            <ExternalLink className="w-3 h-3 text-slate-500 shrink-0" />
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            <span
+                              className={`text-xs px-1.5 py-0.5 rounded border ${
+                                PROJECT_STATUS_COLORS[project.projectStatus as keyof typeof PROJECT_STATUS_COLORS] || 'bg-slate-500/20 text-slate-300 border-slate-500/40'
+                              }`}
+                            >
+                              {project.projectStatus.replace('_', ' ')}
+                            </span>
+                            {projects.length > 1 && (
+                              <span className="text-xs text-slate-500">+{projects.length - 1}</span>
+                            )}
+                          </div>
+                        </div>
+                      )
+                    }
+                    return null
+                  })()}
                   <div className="flex items-center justify-between text-xs text-slate-500">
                     <span>{f.userName || 'Unknown User'}</span>
                     <span>{formatDate(f.createdAt)}</span>
@@ -337,6 +473,7 @@ export function FeedbackAdminPage() {
           feedback={selectedFeedback}
           onClose={() => setSelectedFeedback(null)}
           onStatusChange={handleStatusChange}
+          onProjectsChange={handleProjectsChange}
         />
       )}
     </div>

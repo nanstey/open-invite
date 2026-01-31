@@ -1,22 +1,25 @@
 import React, { useEffect, useState } from 'react'
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, redirect, useNavigate, Outlet } from '@tanstack/react-router'
 import { Loader2 } from 'lucide-react'
 
 import { useAuth } from '../domains/auth/AuthProvider'
 import { checkIsAdmin } from '../services/feedbackService'
-import { FeedbackAdminPage } from '../domains/feedback/FeedbackAdminPage'
 
-export const Route = createFileRoute('/feedback')({
-  beforeLoad: ({ context }) => {
+export const Route = createFileRoute('/admin')({
+  beforeLoad: ({ context, location }) => {
     // Must be authenticated
     if (!context.auth.loading && !context.auth.user) {
       throw redirect({ to: '/' })
     }
+    // If exactly /admin, redirect to /admin/feedback
+    if (location.pathname === '/admin') {
+      throw redirect({ to: '/admin/feedback' })
+    }
   },
-  component: FeedbackRouteComponent,
+  component: AdminLayoutComponent,
 })
 
-function FeedbackRouteComponent() {
+function AdminLayoutComponent() {
   const { user } = useAuth()
   const navigate = useNavigate()
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null)
@@ -24,7 +27,7 @@ function FeedbackRouteComponent() {
   useEffect(() => {
     if (!user) return
 
-    const checkAdmin = async () => {
+    const checkAdminStatus = async () => {
       const admin = await checkIsAdmin()
       setIsAdmin(admin)
 
@@ -34,7 +37,7 @@ function FeedbackRouteComponent() {
       }
     }
 
-    checkAdmin()
+    checkAdminStatus()
   }, [user, navigate])
 
   // Loading state while checking admin status
@@ -51,9 +54,5 @@ function FeedbackRouteComponent() {
     return null
   }
 
-  return (
-    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 pt-2">
-      <FeedbackAdminPage />
-    </div>
-  )
+  return <Outlet />
 }
