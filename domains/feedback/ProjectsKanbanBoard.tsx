@@ -532,7 +532,8 @@ function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetailPanelPr
   const [savingTitle, setSavingTitle] = useState(false)
   const [savingDescription, setSavingDescription] = useState(false)
   
-  // GitHub URL (always editable for simplicity)
+  // GitHub URL
+  const [isEditingGithub, setIsEditingGithub] = useState(false)
   const [githubUrl, setGithubUrl] = useState(project.githubUrl || '')
   const [savingGithub, setSavingGithub] = useState(false)
 
@@ -793,26 +794,72 @@ function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetailPanelPr
 
           {/* GitHub Link */}
           <div>
-            <label className="block text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">GitHub Link</label>
-            <div className="flex items-center gap-2">
-              <Github className="w-5 h-5 text-slate-500 shrink-0" />
-              <input
-                type="text"
-                value={githubUrl}
-                onChange={(e) => setGithubUrl(e.target.value)}
-                placeholder="https://github.com/..."
-                className="flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-primary"
-              />
-              {githubUrlChanged && (
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-sm font-bold text-slate-400 uppercase tracking-wider">GitHub Link</label>
+              {!isEditingGithub && (
                 <button
-                  onClick={handleSaveGithubUrl}
-                  disabled={savingGithub}
-                  className="px-3 py-2 text-sm rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-1 shrink-0"
+                  onClick={() => setIsEditingGithub(true)}
+                  className="p-1 text-slate-500 hover:text-white transition-colors rounded"
+                  title="Edit GitHub link"
                 >
-                  {savingGithub ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+                  <Pencil className="w-4 h-4" />
                 </button>
               )}
             </div>
+            {isEditingGithub ? (
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Github className="w-5 h-5 text-slate-500 shrink-0" />
+                  <input
+                    type="text"
+                    value={githubUrl}
+                    onChange={(e) => setGithubUrl(e.target.value)}
+                    placeholder="https://github.com/..."
+                    className="flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-primary"
+                    autoFocus
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setGithubUrl(project.githubUrl || '')
+                      setIsEditingGithub(false)
+                    }}
+                    disabled={savingGithub}
+                    className="flex-1 px-3 py-2 text-sm rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      await handleSaveGithubUrl()
+                      setIsEditingGithub(false)
+                    }}
+                    disabled={savingGithub}
+                    className="flex-1 px-3 py-2 text-sm rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                  >
+                    {savingGithub ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="min-h-[24px]">
+                {project.githubUrl ? (
+                  <a
+                    href={project.githubUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 text-primary hover:text-primary/80 transition-colors"
+                  >
+                    <Github className="w-5 h-5" />
+                    <span className="text-sm underline">{project.githubUrl}</span>
+                    <ExternalLink className="w-4 h-4" />
+                  </a>
+                ) : (
+                  <p className="text-slate-500 text-sm italic">No GitHub link</p>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Linked Feedback */}
