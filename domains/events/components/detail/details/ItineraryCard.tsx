@@ -7,7 +7,7 @@ export function ItineraryCard(props: { children: React.ReactNode; isEditMode?: b
 
   return (
     <div className={cardClassName}>
-      <h1 className="text-xl font-bold text-white mb-3">Itinerary</h1>
+      <h1 className="text-2xl font-bold text-white mb-3">Itinerary</h1>
       {props.children}
     </div>
   )

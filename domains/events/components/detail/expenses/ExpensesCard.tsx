@@ -83,28 +83,10 @@ export function ExpensesCard(props: {
     ? 'bg-surface border border-slate-700 rounded-2xl p-5'
     : 'bg-background border border-transparent rounded-2xl p-5'
 
-  if (isGuest) {
-    return (
-      <div className={cardClassName}>
-        <h1 className="text-xl font-bold text-white mb-2">Expenses</h1>
-        <div className="text-sm text-slate-400">Sign in to see expenses and cost splitting.</div>
-        {onRequireAuth ? (
-          <button
-            type="button"
-            onClick={onRequireAuth}
-            className="mt-3 px-4 py-2 rounded-xl bg-primary text-white font-bold hover:bg-primary/90 transition-colors"
-          >
-            Sign in
-          </button>
-        ) : null}
-      </div>
-    )
-  }
-
   const currency = expenses[0]?.currency ?? 'USD'
 
   const canEditExpenses = isEditMode && !!expenseApi
-  const showExpenseList = canEditExpenses ? true : expanded
+  const showExpenseList = canEditExpenses ? true : expanded && !isGuest
   const isAnyExpanded = !!expandedExpenseId
 
   const sensors = useSensors(
@@ -204,11 +186,19 @@ export function ExpensesCard(props: {
     })
   }
 
+  const handleExpand = () => {
+    if (isGuest) {
+      onRequireAuth?.()
+      return
+    }
+    setExpanded(true)
+  }
+
   return (
     <div className={cardClassName}>
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold text-white">Expenses</h1>
+          <h1 className="text-2xl font-bold text-white">Expenses</h1>
         </div>
       </div>
 
@@ -333,7 +323,7 @@ export function ExpensesCard(props: {
           expenseCalculator={expenseCalculator}
           expenseCount={expenses.length}
           expanded={expanded}
-          onExpand={() => setExpanded(true)}
+          onExpand={handleExpand}
           currency={currency}
         />
       ) : null}

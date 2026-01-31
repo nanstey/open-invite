@@ -88,7 +88,7 @@ export function LocationCard(props: {
 
   return (
     <div className={cardClassName}>
-      <h1 className="text-xl font-bold text-white mb-3">Location</h1>
+      <h1 className="text-2xl font-bold text-white mb-3">Location</h1>
       <div className="flex items-start gap-3">
         <div className="p-2 bg-slate-800 rounded-lg shrink-0">
           <MapPin className="w-5 h-5 text-accent" />

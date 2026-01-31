@@ -1,5 +1,24 @@
 import * as React from 'react'
 
+// Styling config - spacing between elements is handled by space-y-4 on the wrapper
+const styles = {
+  // Extra top margin for headers (creates visual sections)
+  h1Spacing: 'mt-2',
+  h2Spacing: 'mt-1',
+  listItemSpacing: 'space-y-2',
+
+  // Element styles
+  codeBlock: 'bg-slate-800/80 border border-slate-700/50 rounded-xl p-4 overflow-x-auto',
+  codeText: 'text-slate-200 text-sm font-mono',
+  inlineCode: 'px-1.5 py-0.5 rounded-md bg-slate-700/70 text-slate-100 font-mono text-[0.9em]',
+  blockquote: 'border-l-4 border-primary pl-4 bg-primary/5 rounded-r-xl py-4 italic text-slate-200',
+  list: 'ml-6 [&>li]:relative list-disc',
+  hr: 'border-slate-700/60',
+  h1: 'text-slate-50 font-bold text-xl border-b border-slate-700/50 pb-2',
+  h2: 'text-slate-100 font-semibold text-lg',
+  link: 'text-primary underline decoration-primary/40 hover:decoration-primary transition-colors',
+}
+
 function escapeHtml(value: string) {
   return value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
@@ -17,7 +36,7 @@ function inlineMrkdwn(value: string) {
   const codeSpans: string[] = []
   const PLACEHOLDER = '\x00CODE\x00'
   let processed = value.replace(/`([^`]+)`/g, (_, code) => {
-    codeSpans.push(`<code class="px-1 py-0.5 rounded bg-slate-800 text-slate-200">${code}</code>`)
+    codeSpans.push(`<code class="${styles.inlineCode}">${code}</code>`)
     return PLACEHOLDER
   })
 
@@ -25,11 +44,11 @@ function inlineMrkdwn(value: string) {
     // Links: <url|text> or <url> (escaped as &lt;...&gt;)
     .replace(
       /&lt;(https?:\/\/[^|&]+)\|([^&]+)&gt;/g,
-      '<a class="text-primary underline" href="$1" target="_blank" rel="noreferrer">$2</a>',
+      `<a class="${styles.link}" href="$1" target="_blank" rel="noreferrer">$2</a>`,
     )
     .replace(
       /&lt;(https?:\/\/[^&]+)&gt;/g,
-      '<a class="text-primary underline" href="$1" target="_blank" rel="noreferrer">$1</a>',
+      `<a class="${styles.link}" href="$1" target="_blank" rel="noreferrer">$1</a>`,
     )
     // Bold: *text*
     .replace(/\*([^*]+)\*/g, '<strong>$1</strong>')
@@ -78,7 +97,7 @@ function renderMrkdwn(mrkdwn: string) {
       if (inCodeBlock) {
         // Close code block
         html.push(
-          `<pre class="bg-slate-800 rounded-lg p-3 my-2 overflow-x-auto"><code class="text-slate-200 text-sm">${codeBlockLines.join('\n')}</code></pre>`,
+          `<pre class="${styles.codeBlock}"><code class="${styles.codeText}">${codeBlockLines.join('\n')}</code></pre>`,
         )
         codeBlockLines.length = 0
         inCodeBlock = false
@@ -102,7 +121,7 @@ function renderMrkdwn(mrkdwn: string) {
     // Horizontal rule (---, ***, ___)
     if (/^[-*_]{3,}$/.test(trimmed)) {
       closeBlocks()
-      html.push('<hr class="border-slate-700 my-4" />')
+      html.push(`<hr class="${styles.hr}" />`)
       continue
     }
 
@@ -111,9 +130,7 @@ function renderMrkdwn(mrkdwn: string) {
     if (blockquoteMatch) {
       closeList()
       if (!inBlockquote) {
-        html.push(
-          '<blockquote class="border-l-4 border-primary pl-4 bg-slate-800/60 rounded-r-lg py-3 my-2 italic text-slate-200">',
-        )
+        html.push(`<blockquote class="${styles.blockquote}">`)
         inBlockquote = true
       }
       const content = blockquoteMatch[1].trim()
@@ -129,7 +146,7 @@ function renderMrkdwn(mrkdwn: string) {
     const listMatch = /^[-•]\s+(.+)/.exec(trimmed)
     if (listMatch) {
       if (!inList) {
-        html.push('<ul class="list-disc ml-5 space-y-1">')
+        html.push(`<ul class="${styles.list} ${styles.listItemSpacing}">`)
         inList = true
       }
       html.push(`<li>${inlineMrkdwn(listMatch[1])}</li>`)
@@ -140,11 +157,11 @@ function renderMrkdwn(mrkdwn: string) {
 
     // Headers (# and ##)
     if (trimmed.startsWith('## ')) {
-      html.push(`<h2 class="text-slate-100 font-semibold text-lg">${inlineMrkdwn(trimmed.slice(3))}</h2>`)
+      html.push(`<h2 class="${styles.h2} ${styles.h2Spacing}">${inlineMrkdwn(trimmed.slice(3))}</h2>`)
       continue
     }
     if (trimmed.startsWith('# ')) {
-      html.push(`<h1 class="text-slate-100 font-semibold text-xl">${inlineMrkdwn(trimmed.slice(2))}</h1>`)
+      html.push(`<h1 class="${styles.h1} ${styles.h1Spacing}">${inlineMrkdwn(trimmed.slice(2))}</h1>`)
       continue
     }
 
@@ -154,7 +171,7 @@ function renderMrkdwn(mrkdwn: string) {
   // Close any remaining open code block
   if (inCodeBlock && codeBlockLines.length > 0) {
     html.push(
-      `<pre class="bg-slate-800 rounded-lg p-3 my-2 overflow-x-auto"><code class="text-slate-200 text-sm">${codeBlockLines.join('\n')}</code></pre>`,
+      `<pre class="${styles.codeBlock}"><code class="${styles.codeText}">${codeBlockLines.join('\n')}</code></pre>`,
     )
   }
 
@@ -170,6 +187,6 @@ export function MrkdwnRenderer({ content, className }: { content: string; classN
     return <p className="text-slate-500 italic">No description yet.</p>
   }
 
-  return <div className={className} dangerouslySetInnerHTML={{ __html: html }} />
+  return <div className={`mt-6 space-y-6 ${className ?? ''}`} dangerouslySetInnerHTML={{ __html: html }} />
 }
 
