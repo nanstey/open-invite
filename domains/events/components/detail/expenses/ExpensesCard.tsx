@@ -82,7 +82,7 @@ export function ExpensesCard(props: {
   if (isGuest) {
     return (
       <div className="bg-surface border border-slate-700 rounded-2xl p-5">
-        <h2 className="text-lg font-bold text-white mb-2">Expenses</h2>
+        <h1 className="text-xl font-bold text-white mb-2">Expenses</h1>
         <div className="text-sm text-slate-400">Sign in to see expenses and cost splitting.</div>
         {onRequireAuth ? (
           <button
@@ -204,7 +204,7 @@ export function ExpensesCard(props: {
     <div className="bg-surface border border-slate-700 rounded-2xl p-5">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-lg font-bold text-white">Expenses</h2>
+          <h1 className="text-xl font-bold text-white">Expenses</h1>
         </div>
       </div>
 
