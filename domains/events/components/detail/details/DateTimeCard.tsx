@@ -32,7 +32,7 @@ export function DateTimeCard(props: {
 
   return (
     <div className="bg-surface border border-slate-700 rounded-2xl p-5">
-      <h2 className="text-lg font-bold text-white mb-3">Date &amp; Time</h2>
+      <h1 className="text-xl font-bold text-white mb-3">Date &amp; Time</h1>
       {isEditMode ? (
         hasItinerary ? (
           <div className="text-sm text-slate-400 bg-slate-900/40 border border-slate-800 rounded-xl p-4">
