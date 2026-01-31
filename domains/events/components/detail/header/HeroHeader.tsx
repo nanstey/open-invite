@@ -71,7 +71,8 @@ export function HeroHeader(props: {
     // Dragging up = show more of the bottom = increase position
     const sensitivity = 100 / containerHeight // Full drag = full range
     const newPosition = dragStartRef.current.startPosition - deltaY * sensitivity
-    setDraftPositionY(Math.min(100, Math.max(0, newPosition)))
+    const clampedPosition = Math.min(100, Math.max(0, newPosition))
+    setDraftPositionY(Math.round(clampedPosition * 100) / 100)
   }
 
   const handleDragEnd = () => {
