@@ -28,5 +28,6 @@ dist-ssr
 *.sln
 *.sw?
 
-# Local Netlify folder
+# Local folders
 .netlify
+.tanstack
