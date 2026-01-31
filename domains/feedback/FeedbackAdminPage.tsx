@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { ArrowUpDown, Search, Loader2, Filter, X, FolderKanban, ExternalLink } from 'lucide-react'
+import { ArrowUpDown, Search, Loader2, Filter, X, FolderKanban } from 'lucide-react'
 import { fetchAllFeedback } from '../../services/feedbackService'
 import { fetchAllFeedbackProjectMappings, type FeedbackProjectMapping } from '../../services/feedbackProjectService'
 import { FeedbackDetailPanel } from './FeedbackDetailPanel'
-import { PROJECT_STATUS_COLORS } from './projectTypes'
+import { ProjectLinkCard } from './ProjectLinkCard'
 import { FormSelect } from '../../lib/ui/components/FormControls'
 import {
   FEEDBACK_TYPE_COLORS,
@@ -377,33 +377,13 @@ export function FeedbackAdminPage({ initialFeedbackId }: FeedbackAdminPageProps)
                       }
                       const project = projects[0]
                       return (
-                        <div 
-                          className="bg-slate-900 rounded-lg p-2 cursor-pointer hover:bg-slate-800 transition-colors group"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            navigate({ to: '/admin/projects', search: { projectId: project.projectId } })
-                          }}
-                          title="View project"
-                        >
-                          <div className="flex items-center gap-1">
-                            <span className="text-sm text-white truncate flex-1" title={project.projectTitle}>
-                              {project.projectTitle}
-                            </span>
-                            <ExternalLink className="w-3 h-3 text-slate-500 opacity-0 group-hover:opacity-100 transition-opacity shrink-0" />
-                          </div>
-                          <div className="flex items-center gap-1 mt-1">
-                            <span
-                              className={`text-xs px-1.5 py-0.5 rounded border ${
-                                PROJECT_STATUS_COLORS[project.projectStatus as keyof typeof PROJECT_STATUS_COLORS] || 'bg-slate-500/20 text-slate-300 border-slate-500/40'
-                              }`}
-                            >
-                              {project.projectStatus.replace('_', ' ')}
-                            </span>
-                            {projects.length > 1 && (
-                              <span className="text-xs text-slate-500">+{projects.length - 1}</span>
-                            )}
-                          </div>
-                        </div>
+                        <ProjectLinkCard
+                          projectId={project.projectId}
+                          title={project.projectTitle}
+                          status={project.projectStatus}
+                          additionalCount={projects.length > 1 ? projects.length - 1 : undefined}
+                          onClick={() => navigate({ to: '/admin/projects', search: { projectId: project.projectId } })}
+                        />
                       )
                     })()}
                   </div>
@@ -428,30 +408,13 @@ export function FeedbackAdminPage({ initialFeedbackId }: FeedbackAdminPageProps)
                     if (projects.length > 0) {
                       const project = projects[0]
                       return (
-                        <div 
-                          className="bg-slate-900 rounded-lg p-2 cursor-pointer hover:bg-slate-800 transition-colors"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            navigate({ to: '/admin/projects', search: { projectId: project.projectId } })
-                          }}
-                        >
-                          <div className="flex items-center gap-1">
-                            <span className="text-sm text-white truncate flex-1">{project.projectTitle}</span>
-                            <ExternalLink className="w-3 h-3 text-slate-500 shrink-0" />
-                          </div>
-                          <div className="flex items-center gap-1 mt-1">
-                            <span
-                              className={`text-xs px-1.5 py-0.5 rounded border ${
-                                PROJECT_STATUS_COLORS[project.projectStatus as keyof typeof PROJECT_STATUS_COLORS] || 'bg-slate-500/20 text-slate-300 border-slate-500/40'
-                              }`}
-                            >
-                              {project.projectStatus.replace('_', ' ')}
-                            </span>
-                            {projects.length > 1 && (
-                              <span className="text-xs text-slate-500">+{projects.length - 1}</span>
-                            )}
-                          </div>
-                        </div>
+                        <ProjectLinkCard
+                          projectId={project.projectId}
+                          title={project.projectTitle}
+                          status={project.projectStatus}
+                          additionalCount={projects.length > 1 ? projects.length - 1 : undefined}
+                          onClick={() => navigate({ to: '/admin/projects', search: { projectId: project.projectId } })}
+                        />
                       )
                     }
                     return null

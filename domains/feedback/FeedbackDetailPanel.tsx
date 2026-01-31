@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { X, User as UserIcon, Calendar, AlertCircle, FolderKanban, Plus, Loader2, Check, Search, ExternalLink } from 'lucide-react'
+import { X, User as UserIcon, Calendar, AlertCircle, FolderKanban, Plus, Loader2, Check, Search } from 'lucide-react'
 import { FormSelect } from '../../lib/ui/components/FormControls'
 import { updateFeedbackStatus } from '../../services/feedbackService'
 import {
@@ -17,7 +17,7 @@ import {
   type Feedback,
   type FeedbackStatus,
 } from './types'
-import { PROJECT_STATUS_COLORS } from './projectTypes'
+import { ProjectLinkCard } from './ProjectLinkCard'
 
 interface FeedbackDetailPanelProps {
   feedback: Feedback
@@ -249,41 +249,14 @@ export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProje
                 {linkedProjects.length > 0 && (
                   <div className="space-y-2 mb-3">
                     {linkedProjects.map((project) => (
-                      <div
+                      <ProjectLinkCard
                         key={project.id}
-                        className="flex items-center justify-between p-2 bg-slate-900 rounded-lg group"
-                      >
-                        <button
-                          type="button"
-                          onClick={() => handleNavigateToProject(project.id)}
-                          className="flex-1 min-w-0 text-left hover:opacity-80 transition-opacity"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-white truncate">{project.title}</span>
-                            <ExternalLink className="w-3 h-3 text-slate-500 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </div>
-                          <div className="flex items-center gap-1 mt-1">
-                            <span
-                              className={`text-xs px-1.5 py-0.5 rounded border ${
-                                PROJECT_STATUS_COLORS[project.status as keyof typeof PROJECT_STATUS_COLORS] || 'bg-slate-500/20 text-slate-300 border-slate-500/40'
-                              }`}
-                            >
-                              {project.status.replace('_', ' ')}
-                            </span>
-                          </div>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handleRemoveFromProject(project.id)
-                          }}
-                          className="p-1 text-slate-500 hover:text-red-400 opacity-0 group-hover:opacity-100 transition-all shrink-0"
-                          title="Remove from project"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
+                        projectId={project.id}
+                        title={project.title}
+                        status={project.status}
+                        onClick={() => handleNavigateToProject(project.id)}
+                        onRemove={() => handleRemoveFromProject(project.id)}
+                      />
                     ))}
                   </div>
                 )}
