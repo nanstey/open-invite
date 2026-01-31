@@ -13,26 +13,34 @@ function escapeHtml(value: string) {
  * - <url|text> or <url> for links
  */
 function inlineMrkdwn(value: string) {
-  return (
-    value
-      // Links: <url|text> or <url> (escaped as &lt;...&gt;)
-      .replace(
-        /&lt;(https?:\/\/[^|&]+)\|([^&]+)&gt;/g,
-        '<a class="text-primary underline" href="$1" target="_blank" rel="noreferrer">$2</a>',
-      )
-      .replace(
-        /&lt;(https?:\/\/[^&]+)&gt;/g,
-        '<a class="text-primary underline" href="$1" target="_blank" rel="noreferrer">$1</a>',
-      )
-      // Inline code
-      .replace(/`([^`]+)`/g, '<code class="px-1 py-0.5 rounded bg-slate-800 text-slate-200">$1</code>')
-      // Bold: *text*
-      .replace(/\*([^*]+)\*/g, '<strong>$1</strong>')
-      // Italic: _text_
-      .replace(/\b_([^_]+)_\b/g, '<em>$1</em>')
-      // Strikethrough: ~text~
-      .replace(/~([^~]+)~/g, '<s>$1</s>')
-  )
+  // Extract inline code spans first to protect them from subsequent formatting
+  const codeSpans: string[] = []
+  const PLACEHOLDER = '\x00CODE\x00'
+  let processed = value.replace(/`([^`]+)`/g, (_, code) => {
+    codeSpans.push(`<code class="px-1 py-0.5 rounded bg-slate-800 text-slate-200">${code}</code>`)
+    return PLACEHOLDER
+  })
+
+  processed = processed
+    // Links: <url|text> or <url> (escaped as &lt;...&gt;)
+    .replace(
+      /&lt;(https?:\/\/[^|&]+)\|([^&]+)&gt;/g,
+      '<a class="text-primary underline" href="$1" target="_blank" rel="noreferrer">$2</a>',
+    )
+    .replace(
+      /&lt;(https?:\/\/[^&]+)&gt;/g,
+      '<a class="text-primary underline" href="$1" target="_blank" rel="noreferrer">$1</a>',
+    )
+    // Bold: *text*
+    .replace(/\*([^*]+)\*/g, '<strong>$1</strong>')
+    // Italic: _text_ (at start of string, after whitespace, or after word boundary)
+    .replace(/(^|[\s])_([^_]+)_([\s]|$)/g, '$1<em>$2</em>$3')
+    // Strikethrough: ~text~
+    .replace(/~([^~]+)~/g, '<s>$1</s>')
+
+  // Restore code spans in order
+  let idx = 0
+  return processed.replace(new RegExp(PLACEHOLDER, 'g'), () => codeSpans[idx++] ?? '')
 }
 
 function renderMrkdwn(mrkdwn: string) {
