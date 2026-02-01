@@ -44,6 +44,7 @@ const baseEventRow = {
   allow_friend_invites: true,
   max_seats: null,
   no_phones: false,
+  itinerary_time_display: 'START_AND_END',
 }
 
 const mockFrom = (handlers: Record<string, () => any>) => {

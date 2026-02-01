@@ -59,6 +59,7 @@ export interface Database {
           allow_friend_invites: boolean
           max_seats: number | null
           no_phones: boolean
+          itinerary_time_display: 'START_ONLY' | 'START_AND_END'
           created_at: string
           updated_at: string
         }
@@ -82,6 +83,7 @@ export interface Database {
           allow_friend_invites?: boolean
           max_seats?: number | null
           no_phones?: boolean
+          itinerary_time_display?: 'START_ONLY' | 'START_AND_END'
           created_at?: string
           updated_at?: string
         }
@@ -105,6 +107,7 @@ export interface Database {
           allow_friend_invites?: boolean
           max_seats?: number | null
           no_phones?: boolean
+          itinerary_time_display?: 'START_ONLY' | 'START_AND_END'
           created_at?: string
           updated_at?: string
         }

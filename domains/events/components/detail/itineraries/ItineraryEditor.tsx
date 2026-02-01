@@ -45,6 +45,7 @@ type ItineraryEditorProps = {
   event: SocialEvent
   itineraryItems: ItineraryItem[]
   showItineraryTimesOnly: boolean
+  showItineraryStartTimeOnly: boolean
   hasItinerary: boolean
   draftStartIso: string | null
   durationHours?: number | ''
@@ -58,6 +59,7 @@ export function ItineraryEditor(props: ItineraryEditorProps) {
     event,
     itineraryItems,
     showItineraryTimesOnly,
+    showItineraryStartTimeOnly,
     hasItinerary,
     draftStartIso,
     durationHours,
@@ -150,6 +152,7 @@ export function ItineraryEditor(props: ItineraryEditorProps) {
           expandedItineraryItemId={expandedItineraryItemId}
           openItineraryMenuItemId={openItineraryMenuItemId}
           showItineraryTimesOnly={showItineraryTimesOnly}
+          showItineraryStartTimeOnly={showItineraryStartTimeOnly}
           timeOptions={timeOptions}
           formatItineraryLocationForDisplay={formatItineraryLocationForDisplay}
           openItineraryLocationInMaps={openItineraryLocationInMaps}
@@ -183,6 +186,7 @@ function ItineraryBuilder(props: {
   expandedItineraryItemId: string | null
   openItineraryMenuItemId: string | null
   showItineraryTimesOnly: boolean
+  showItineraryStartTimeOnly: boolean
   timeOptions: Array<{ value: string; label: string }>
   formatItineraryLocationForDisplay: (location: string | undefined) => { full: string; label: string; isReal: boolean }
   openItineraryLocationInMaps: (locationFull: string) => void
@@ -199,6 +203,7 @@ function ItineraryBuilder(props: {
     expandedItineraryItemId,
     openItineraryMenuItemId,
     showItineraryTimesOnly,
+    showItineraryStartTimeOnly,
     timeOptions,
     formatItineraryLocationForDisplay,
     openItineraryLocationInMaps,
@@ -221,6 +226,7 @@ function ItineraryBuilder(props: {
           isExpanded={expandedItineraryItemId === item.id}
           isMenuOpen={openItineraryMenuItemId === item.id}
           showItineraryTimesOnly={showItineraryTimesOnly}
+          showItineraryStartTimeOnly={showItineraryStartTimeOnly}
           timeOptions={timeOptions}
           formatItineraryLocationForDisplay={formatItineraryLocationForDisplay}
           openItineraryLocationInMaps={openItineraryLocationInMaps}
@@ -250,6 +256,7 @@ function ItineraryItemCard(props: {
   isExpanded: boolean
   isMenuOpen: boolean
   showItineraryTimesOnly: boolean
+  showItineraryStartTimeOnly: boolean
   timeOptions: Array<{ value: string; label: string }>
   formatItineraryLocationForDisplay: (location: string | undefined) => { full: string; label: string; isReal: boolean }
   openItineraryLocationInMaps: (locationFull: string) => void
@@ -272,6 +279,7 @@ function ItineraryItemCard(props: {
     isExpanded,
     isMenuOpen,
     showItineraryTimesOnly,
+    showItineraryStartTimeOnly,
     timeOptions,
     formatItineraryLocationForDisplay,
     openItineraryLocationInMaps,
@@ -284,7 +292,7 @@ function ItineraryItemCard(props: {
 
   const start = new Date(item.startTime)
   const end = getItineraryItemEndDate(item)
-  const time = `${formatTime12h(start)} - ${formatTime12h(end)}`
+  const time = showItineraryStartTimeOnly ? formatTime12h(start) : `${formatTime12h(start)} - ${formatTime12h(end)}`
   const date = formatDateLongEnUS(start)
   const loc = formatItineraryLocationForDisplay(item.location)
 
