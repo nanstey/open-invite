@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { Plus, Loader2, Github, ExternalLink, X, Pencil, ChevronDown, ChevronUp } from 'lucide-react'
 import { SlidePanel } from '../../../../lib/ui/components/SlidePanel'
+import { Button } from '../../../../lib/ui/9ui/button'
+import { Textarea } from '../../../../lib/ui/9ui/textarea'
 import { FeedbackPicker } from '../feedback/FeedbackPicker'
 import {
   updateProject,
@@ -219,18 +221,19 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
         <div className="flex items-center justify-between mb-2">
           <label className="text-sm font-bold text-slate-400 uppercase tracking-wider">Description</label>
           {!isEditingDescription && (
-            <button
+            <Button
+              variant="ghost"
               onClick={handleStartEditDescription}
-              className="p-1 text-slate-500 hover:text-white transition-colors rounded"
+              className="p-1 text-slate-500 hover:text-white rounded"
               title="Edit description"
             >
               <Pencil className="w-4 h-4" />
-            </button>
+            </Button>
           )}
         </div>
         {isEditingDescription ? (
           <div className="space-y-2">
-            <textarea
+            <Textarea
               value={editDescription}
               onChange={(e) => setEditDescription(e.target.value)}
               rows={6}
@@ -239,20 +242,21 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
               autoFocus
             />
             <div className="flex gap-2">
-              <button
+              <Button
+                variant="ghost"
                 onClick={handleCancelEditDescription}
                 disabled={savingDescription}
-                className="flex-1 px-3 py-2 text-sm rounded-lg border border-slate-700 text-slate-300 hover:bg-slate-800 transition-colors"
+                className="flex-1 px-3 py-2 text-sm border border-slate-700 text-slate-300 hover:bg-slate-800"
               >
                 Cancel
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={handleSaveDescription}
                 disabled={savingDescription}
-                className="flex-1 px-3 py-2 text-sm rounded-lg bg-primary text-white font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                className="flex-1 px-3 py-2 text-sm font-medium flex items-center justify-center gap-1"
               >
                 {savingDescription ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
-              </button>
+              </Button>
             </div>
           </div>
         ) : (
@@ -481,4 +485,3 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
     </SlidePanel>
   )
 }
-

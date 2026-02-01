@@ -1,6 +1,7 @@
 import * as React from 'react'
 
 import { FormSelect } from '../../../../../../lib/ui/components/FormControls'
+import { Checkbox } from '../../../../../../lib/ui/9ui/checkbox'
 
 import type { EventExpense, ExpenseApi, ExpenseAppliesTo, Person } from '../types'
 import { computeParticipantIdsForAppliesTo } from '../utils'
@@ -57,8 +58,7 @@ export function ExpenseParticipantsEditor(props: {
                 const checked = e.participantIds.includes(p.id)
                 return (
                   <label key={p.id} className="flex items-center gap-2 text-sm text-slate-200">
-                    <input
-                      type="checkbox"
+                    <Checkbox
                       checked={checked}
                       onChange={(ev) => {
                         const nextRaw = ev.target.checked
@@ -83,5 +83,4 @@ export function ExpenseParticipantsEditor(props: {
     </div>
   )
 }
-
 

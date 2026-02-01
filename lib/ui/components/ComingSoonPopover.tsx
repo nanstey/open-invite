@@ -1,4 +1,5 @@
 import React from 'react'
+import { Popover, PopoverContent } from '../9ui/popover'
 
 type ComingSoonState = {
   open: boolean
@@ -87,22 +88,28 @@ export function ComingSoonPopover(props: { state: ComingSoonState }) {
   if (!open) return null
 
   return (
-    <div
-      ref={ref}
-      className="fixed z-[9999] pointer-events-none select-none px-3 py-1.5 rounded-lg bg-slate-950/95 border border-slate-700 text-white text-xs font-bold shadow-lg shadow-black/40"
-      style={{
-        left: pos.left,
-        top: pos.top,
-        transform: 'translate(-50%, -120%)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)',
-      }}
-      role="status"
-      aria-live="polite"
-    >
-      {message}
-    </div>
+    <Popover open>
+      <div
+        ref={ref}
+        className="fixed z-[9999] pointer-events-none select-none"
+        style={{
+          left: pos.left,
+          top: pos.top,
+          transform: 'translate(-50%, -120%)',
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
+        }}
+      >
+        <PopoverContent
+          staticPosition
+          className="pointer-events-none select-none w-auto px-3 py-1.5 rounded-lg bg-slate-950/95 border border-slate-700 text-white text-xs font-bold shadow-lg shadow-black/40"
+          role="status"
+          aria-live="polite"
+        >
+          {message}
+        </PopoverContent>
+      </div>
+    </Popover>
   )
 }
-
 

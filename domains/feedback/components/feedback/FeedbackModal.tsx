@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { X, Send, Loader2 } from 'lucide-react'
 import { FormInput, FormSelect } from '../../../../lib/ui/components/FormControls'
+import { Button } from '../../../../lib/ui/9ui/button'
+import { Textarea } from '../../../../lib/ui/9ui/textarea'
 import { submitFeedback } from '../../../../services/feedbackService'
 import {
   FEEDBACK_TYPE_OPTIONS,
@@ -190,7 +192,7 @@ export function FeedbackModal({ onClose, onSuccess }: FeedbackModalProps) {
             <label className="block text-sm font-medium text-slate-300 mb-1">
               Description <span className="text-red-400">*</span>
             </label>
-            <textarea
+            <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Tell us more about your feedback..."
@@ -201,10 +203,10 @@ export function FeedbackModal({ onClose, onSuccess }: FeedbackModalProps) {
           </div>
 
           {/* Submit Button */}
-          <button
+          <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full font-bold py-3 px-4 flex items-center justify-center gap-2"
           >
             {loading ? (
               <>
@@ -217,7 +219,7 @@ export function FeedbackModal({ onClose, onSuccess }: FeedbackModalProps) {
                 Submit Feedback
               </>
             )}
-          </button>
+          </Button>
         </form>
       )}
     </>

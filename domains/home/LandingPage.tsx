@@ -1,5 +1,6 @@
 import React from 'react';
 import { CalendarDays, Map, Users, Bell, MapPin, Sparkles } from 'lucide-react';
+import { Card } from '../../lib/ui/9ui/card';
 
 // ============================================================================
 // Types
@@ -116,7 +117,7 @@ function HeroSection({ onSignIn }: { onSignIn: () => void }) {
 
 function FeatureCard({ feature }: { feature: Feature; key?: React.Key }) {
   return (
-    <div className="group relative bg-slate-900/50 backdrop-blur-sm border border-slate-800 rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
+    <Card className="group relative bg-slate-900/50 backdrop-blur-sm border-slate-800 rounded-2xl overflow-hidden hover:border-primary/50 transition-all duration-300 hover:shadow-xl hover:shadow-primary/10">
       {/* Image */}
       <div className="relative h-48 overflow-hidden">
         <img
@@ -135,7 +136,7 @@ function FeatureCard({ feature }: { feature: Feature; key?: React.Key }) {
         <h3 className="text-xl font-bold mb-2 text-white">{feature.title}</h3>
         <p className="text-slate-400 leading-relaxed">{feature.description}</p>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -164,13 +165,13 @@ function FeaturesSection() {
 
 function CategoryCard({ category }: { category: Category; key?: React.Key }) {
   return (
-    <div className="group relative aspect-square bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl overflow-hidden hover:border-primary/50 transition-all duration-300 cursor-pointer">
+    <Card className="group relative aspect-square bg-slate-800/50 backdrop-blur-sm border-slate-700 rounded-xl overflow-hidden hover:border-primary/50 transition-all duration-300 cursor-pointer">
       <div className={`absolute inset-0 ${category.color} opacity-10 group-hover:opacity-20 transition-opacity`}></div>
       <div className="relative h-full flex flex-col items-center justify-center p-4">
         <div className="text-4xl mb-2">{category.icon}</div>
         <div className="text-sm font-semibold text-slate-200">{category.name}</div>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -331,4 +332,3 @@ export function LandingPage({ onSignIn }: LandingPageProps) {
     </div>
   );
 }
-

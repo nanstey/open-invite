@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { GripVertical, MoreVertical, Trash2, Github, ExternalLink, MessageSquare } from 'lucide-react'
 import type { Project, ProjectStatus } from '../../projectTypes'
+import { Card } from '../../../../lib/ui/9ui/card'
 
 export interface ProjectCardProps {
   project: Project
@@ -28,7 +29,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   }
 
   return (
-    <div
+    <Card
       draggable
       onDragStart={handleDragStart}
       onDragEnd={onDragEnd}
@@ -96,7 +97,6 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           )}
         </div>
       </div>
-    </div>
+    </Card>
   )
 }
-

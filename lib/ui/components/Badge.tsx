@@ -1,8 +1,6 @@
 import * as React from 'react'
-
-function cx(...parts: Array<string | false | null | undefined>) {
-  return parts.filter(Boolean).join(' ')
-}
+import { Badge as BaseBadge } from '../9ui/badge'
+import { cn } from '../9ui/utils'
 
 export interface BadgeProps {
   children: React.ReactNode
@@ -21,16 +19,15 @@ export interface BadgeProps {
  */
 export function Badge({ children, colorClass, size = 'sm', className }: BadgeProps) {
   return (
-    <span
-      className={cx(
-        'rounded font-bold border',
+    <BaseBadge
+      className={cn(
+        'font-bold',
         size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-2 py-1 text-xs',
         colorClass,
         className,
       )}
     >
       {children}
-    </span>
+    </BaseBadge>
   )
 }
-

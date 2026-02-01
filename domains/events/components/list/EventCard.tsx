@@ -7,6 +7,7 @@ import { Calendar, MapPin, Users, PhoneOff, MessageSquare, Crown, CheckCircle2, 
 import type { LucideIcon } from 'lucide-react';
 import { StatusFilter } from './EventsFilterBar';
 import { fetchUser } from '../../../../services/userService';
+import { Card } from '../../../../lib/ui/9ui/card';
 
 // Helper for color interpolation
 const hexToRgb = (hex: string) => {
@@ -297,7 +298,7 @@ export const EventCard: React.FC<EventCardProps> = ({
           </div>
 
           {/* The Card Itself */}
-          <div 
+          <Card 
             ref={cardRef}
             onClick={() => { 
               // Only trigger click if the user hasn't dragged/scrolled significantly
@@ -311,7 +312,8 @@ export const EventCard: React.FC<EventCardProps> = ({
               transform: `translateX(${offsetX}px)`,
               // Slower snap back animation
               transition: isDragging ? 'none' : `transform ${isExiting ? SLIDE_DURATION : SNAP_DURATION}ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.2s`,
-              backgroundColor: dynamicBgColor // Overrides class background when dragging
+              backgroundColor: dynamicBgColor ?? (isInvolved ? theme.hex : undefined), // Overrides class background when dragging
+              borderColor: isInvolved ? 'transparent' : theme.hex,
             }}
           >
             <div className="flex justify-between items-start mb-2">
@@ -399,7 +401,7 @@ export const EventCard: React.FC<EventCardProps> = ({
                 </div>
               </div>
             )}
-          </div>
+          </Card>
         </div>
       </div>
     </div>

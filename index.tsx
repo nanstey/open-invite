@@ -22,7 +22,9 @@ root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Root />
+        <div className="root">
+          <Root />
+        </div>
       </AuthProvider>
       {import.meta.env.VITE_SHOW_DEVTOOLS === 'true' || (import.meta.env.VITE_SHOW_DEVTOOLS === undefined && import.meta.env.DEV) ? <ReactQueryDevtools initialIsOpen={false} /> : null}
     </QueryClientProvider>

@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { X } from 'lucide-react'
+import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from '../9ui/sheet'
 
 function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(' ')
@@ -38,39 +39,24 @@ export function SlidePanel({
   className,
 }: SlidePanelProps) {
   return (
-    <>
-      {/* Backdrop for mobile */}
-      <div 
-        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[60] md:hidden"
-        onClick={onClose}
-      />
-      
-      {/* Panel */}
-      <div 
+    <Sheet open onOpenChange={(open) => (!open ? onClose() : undefined)}>
+      <SheetContent
+        side="right"
         className={cx(
           'fixed inset-0 md:inset-auto md:right-0 md:top-0 md:bottom-0',
           widthClass,
-          'bg-slate-900 z-[70] flex flex-col border-l border-slate-700 shadow-2xl animate-slide-in-right',
+          'z-[70] flex flex-col shadow-2xl animate-slide-in-right',
           className,
         )}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-4 border-b border-slate-700 shrink-0">
-          <h2 className="text-lg font-bold text-white">{title}</h2>
-          <button
-            onClick={onClose}
-            className="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800"
-          >
+        <SheetHeader className="flex items-center justify-between p-4 border-b border-slate-700 shrink-0">
+          <SheetTitle className="text-lg font-bold text-white">{title}</SheetTitle>
+          <SheetClose className="p-2 text-slate-400 hover:text-white transition-colors rounded-lg hover:bg-slate-800">
             <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
-          {children}
-        </div>
-      </div>
-    </>
+          </SheetClose>
+        </SheetHeader>
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">{children}</div>
+      </SheetContent>
+    </Sheet>
   )
 }
-

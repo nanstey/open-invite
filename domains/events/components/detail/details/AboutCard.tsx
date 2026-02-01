@@ -1,6 +1,9 @@
 import * as React from 'react'
 import { FormattingHelpModal, FORMATTING_EXAMPLE } from './FormattingHelpModal'
 import { MrkdwnRenderer } from './MrkdwnRenderer'
+import { Button } from '../../../../../lib/ui/9ui/button'
+import { Card } from '../../../../../lib/ui/9ui/card'
+import { Textarea } from '../../../../../lib/ui/9ui/textarea'
 
 type ViewMode = 'edit' | 'preview'
 
@@ -40,47 +43,42 @@ export function AboutCard(props: {
     : 'bg-background border border-transparent rounded-2xl p-5'
 
   return (
-    <div className={cardClassName}>
+    <Card className={cardClassName}>
       <h1 className="text-2xl font-bold text-white mb-3">About</h1>
       {isEditMode ? (
         <>
           <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
             <div className="inline-flex rounded-lg border border-slate-700 bg-slate-900 p-1">
-              <button
+              <Button
                 type="button"
+                variant={viewMode === 'edit' ? 'primary' : 'ghost'}
                 onClick={() => setViewMode('edit')}
                 aria-pressed={viewMode === 'edit'}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition ${
-                  viewMode === 'edit'
-                    ? 'bg-primary text-white'
-                    : 'text-slate-300 hover:text-white'
-                }`}
+                className="px-3 py-1 text-sm font-medium rounded-md"
               >
                 Edit
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
+                variant={viewMode === 'preview' ? 'primary' : 'ghost'}
                 onClick={() => setViewMode('preview')}
                 aria-pressed={viewMode === 'preview'}
-                className={`px-3 py-1 text-sm font-medium rounded-md transition ${
-                  viewMode === 'preview'
-                    ? 'bg-primary text-white'
-                    : 'text-slate-300 hover:text-white'
-                }`}
+                className="px-3 py-1 text-sm font-medium rounded-md"
               >
                 Preview
-              </button>
+              </Button>
             </div>
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={() => setShowFormattingHelp(true)}
-              className="text-xs text-slate-400 hover:text-slate-200 underline"
+              className="text-xs text-slate-400 hover:text-slate-200 underline px-0"
             >
               Formatting help
-            </button>
+            </Button>
           </div>
           {viewMode === 'edit' ? (
-            <textarea
+            <Textarea
               ref={textareaRef}
               value={description}
               onChange={(e) => onChangeDescription?.(e.target.value)}
@@ -115,6 +113,6 @@ export function AboutCard(props: {
           onInsertExample={handleInsertExample}
         />
       )}
-    </div>
+    </Card>
   )
 }

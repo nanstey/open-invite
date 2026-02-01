@@ -3,6 +3,7 @@ import * as React from 'react'
 import type { User } from '../../../../../lib/types'
 import { EventActions } from './EventActions'
 import type { EventActionsModel } from './types'
+import { Card } from '../../../../../lib/ui/9ui/card'
 
 export function HostedByActionsCard(props: {
   host?: User | null
@@ -17,7 +18,7 @@ export function HostedByActionsCard(props: {
     return (
       <aside className="hidden lg:block">
         <div className="sticky top-6 space-y-4">
-          <div className="bg-surface border border-slate-700 rounded-2xl p-5 shadow-sm">
+          <Card className="bg-surface border border-slate-700 rounded-2xl p-5 shadow-sm">
             <div className="flex items-center gap-4">
               {host ? (
                 <img src={host.avatar} className="w-12 h-12 rounded-full border-2 border-slate-700" alt={host.name} />
@@ -61,7 +62,7 @@ export function HostedByActionsCard(props: {
               isSaving={actions.isSaving}
               primaryLabel={actions.primaryLabel}
             />
-          </div>
+          </Card>
         </div>
       </aside>
     )
@@ -69,7 +70,7 @@ export function HostedByActionsCard(props: {
 
   return (
     <div className="hidden md:block lg:hidden max-w-6xl mx-auto px-4 md:px-6 py-4">
-      <div className="bg-surface border border-slate-700 rounded-2xl p-5 shadow-sm">
+      <Card className="bg-surface border border-slate-700 rounded-2xl p-5 shadow-sm">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
             {host ? (
@@ -115,7 +116,7 @@ export function HostedByActionsCard(props: {
             primaryLabel={actions.primaryLabel}
           />
         </div>
-      </div>
+      </Card>
     </div>
   )
 }

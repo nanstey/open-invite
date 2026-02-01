@@ -5,6 +5,7 @@ import { MapPin } from 'lucide-react'
 import { LeafletMiniMapPreview } from '../maps/LeafletMiniMapPreview'
 import { FullScreenMapModal } from '../maps/FullScreenMapModal'
 import { LocationAutocomplete, type LocationSuggestion } from '../../../../../lib/ui/components/LocationAutocomplete'
+import { Card } from '../../../../../lib/ui/9ui/card'
 import { useItineraryGeocoding } from '../../../hooks/useItineraryGeocoding'
 import type { LocationData } from '../../../types'
 import { formatEventLocationForDisplay } from '../utils/locationDisplay'
@@ -87,7 +88,7 @@ export function LocationCard(props: {
     : 'bg-background border border-transparent rounded-2xl p-5'
 
   return (
-    <div className={cardClassName}>
+    <Card className={cardClassName}>
       <h1 className="text-2xl font-bold text-white mb-3">Location</h1>
       <div className="flex items-start gap-3">
         <div className="p-2 bg-slate-800 rounded-lg shrink-0">
@@ -181,7 +182,6 @@ export function LocationCard(props: {
           onClose={() => setShowMapModal(false)}
       />
       ) : null}
-    </div>
+    </Card>
   )
 }
-
