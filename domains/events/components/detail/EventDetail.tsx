@@ -407,6 +407,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                     : undefined
                 }
                 people={expensePeople}
+                itineraryItems={itineraryItems}
               />
             </div>
           ) : null}
@@ -420,6 +421,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               isEditMode={isEditMode}
               onChangeAttendees={(nextAttendees) => edit?.onChange({ attendees: nextAttendees })}
               onChangeMaxSeats={(next) => edit?.onChange({ maxSeats: next })}
+              onChangeItineraryAttendanceEnabled={(next) => edit?.onChange({ itineraryAttendanceEnabled: next })}
             />
           ) : null}
 

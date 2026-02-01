@@ -47,6 +47,7 @@ export interface EventExpense {
   amountCents?: number
   currency: string
   participantIds: string[]
+  itineraryItemId?: string | null
 }
 
 export enum EventVisibility {
@@ -94,6 +95,7 @@ export interface SocialEvent {
   allowFriendInvites: boolean
   maxSeats?: number
   attendees: string[] // User IDs
+  itineraryAttendanceEnabled?: boolean
   noPhones: boolean
   comments: Comment[]
   reactions: Record<string, Reaction> // key is emoji

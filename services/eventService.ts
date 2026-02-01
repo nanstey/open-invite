@@ -93,6 +93,7 @@ function transformEventRow(
     groupIds,
     allowFriendInvites: row.allow_friend_invites,
     maxSeats: row.max_seats || undefined,
+    itineraryAttendanceEnabled: row.itinerary_attendance_enabled ?? false,
     attendees,
     noPhones: row.no_phones,
     comments,
@@ -353,6 +354,7 @@ export async function createEvent(
     visibility_type: eventData.visibilityType,
     allow_friend_invites: eventData.allowFriendInvites,
     max_seats: eventData.maxSeats || null,
+    itinerary_attendance_enabled: eventData.itineraryAttendanceEnabled ?? false,
     no_phones: eventData.noPhones,
   };
   
@@ -412,6 +414,7 @@ export async function updateEvent(eventId: string, updates: Partial<SocialEvent>
   if (updates.visibilityType !== undefined) updateData.visibility_type = updates.visibilityType;
   if (updates.allowFriendInvites !== undefined) updateData.allow_friend_invites = updates.allowFriendInvites;
   if (updates.maxSeats !== undefined) updateData.max_seats = updates.maxSeats;
+  if (updates.itineraryAttendanceEnabled !== undefined) updateData.itinerary_attendance_enabled = updates.itineraryAttendanceEnabled;
   if (updates.noPhones !== undefined) updateData.no_phones = updates.noPhones;
 
   type EventUpdate = Database['public']['Tables']['events']['Update'];

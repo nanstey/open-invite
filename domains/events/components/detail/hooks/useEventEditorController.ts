@@ -29,6 +29,7 @@ type EventEditorValues = {
   activityType: string
   isFlexibleStart: boolean
   isFlexibleEnd: boolean
+  itineraryAttendanceEnabled: boolean
   noPhones: boolean
   maxSeats: number | ''
   coordinates: { lat: number; lng: number } | undefined
@@ -90,6 +91,7 @@ export function diffExpenses(initial: EventExpense[], current: DraftExpense[]): 
       amountCents: e.amountCents,
       currency: e.currency,
       participantIds: e.participantIds,
+      itineraryItemId: e.itineraryItemId ?? null,
     }))
 
   const updates: ExpenseUpdate[] = []
@@ -107,6 +109,7 @@ export function diffExpenses(initial: EventExpense[], current: DraftExpense[]): 
     if (prev.amountCents !== cur.amountCents) patch.amountCents = cur.amountCents
     if (prev.currency !== cur.currency) patch.currency = cur.currency
     if (prev.participantIds.join(',') !== cur.participantIds.join(',')) patch.participantIds = cur.participantIds
+    if ((prev.itineraryItemId ?? null) !== (cur.itineraryItemId ?? null)) patch.itineraryItemId = cur.itineraryItemId ?? null
 
     if (Object.keys(patch).length > 0) updates.push({ id: cur.id, patch })
   }
@@ -169,6 +172,7 @@ export function useEventEditorController(props: {
       amountCents: e.amountCents,
       currency: e.currency,
       participantIds: e.participantIds,
+      itineraryItemId: e.itineraryItemId ?? null,
     }))
   })
 
@@ -195,6 +199,7 @@ export function useEventEditorController(props: {
         activityType: ev.activityType,
         isFlexibleStart: ev.isFlexibleStart,
         isFlexibleEnd: ev.isFlexibleEnd,
+        itineraryAttendanceEnabled: ev.itineraryAttendanceEnabled ?? false,
         noPhones: ev.noPhones,
         maxSeats: ev.maxSeats && ev.maxSeats > 0 ? ev.maxSeats : '',
         coordinates: ev.coordinates,
@@ -213,6 +218,7 @@ export function useEventEditorController(props: {
       activityType: 'Social',
       isFlexibleStart: false,
       isFlexibleEnd: false,
+      itineraryAttendanceEnabled: false,
       noPhones: false,
       maxSeats: '',
       coordinates: undefined,
@@ -229,6 +235,7 @@ export function useEventEditorController(props: {
     props.initialEvent?.id,
     props.initialEvent?.isFlexibleEnd,
     props.initialEvent?.isFlexibleStart,
+    props.initialEvent?.itineraryAttendanceEnabled,
     props.initialEvent?.location,
     props.initialEvent?.maxSeats,
     props.initialEvent?.noPhones,
@@ -274,6 +281,7 @@ export function useEventEditorController(props: {
           activityType,
           isFlexibleStart: value.isFlexibleStart,
           isFlexibleEnd: value.isFlexibleEnd,
+          itineraryAttendanceEnabled: value.itineraryAttendanceEnabled,
           noPhones: value.noPhones,
           maxSeats: normalizedMaxSeats,
           visibilityType: EventVisibility.INVITE_ONLY,
@@ -318,6 +326,7 @@ export function useEventEditorController(props: {
         activityType,
         isFlexibleStart: value.isFlexibleStart,
         isFlexibleEnd: value.isFlexibleEnd,
+        itineraryAttendanceEnabled: value.itineraryAttendanceEnabled,
         noPhones: value.noPhones,
         maxSeats: normalizedMaxSeats,
         visibilityType: EventVisibility.INVITE_ONLY,
@@ -413,6 +422,7 @@ export function useEventEditorController(props: {
           : Number(values.maxSeats) > 0
             ? Number(values.maxSeats)
             : undefined,
+      itineraryAttendanceEnabled: values.itineraryAttendanceEnabled,
       attendees: props.initialEvent?.attendees ?? EMPTY_STRING_ARR,
       noPhones: values.noPhones,
       comments: props.initialEvent?.comments ?? EMPTY_COMMENTS,
@@ -441,6 +451,7 @@ export function useEventEditorController(props: {
     values.durationHours,
     values.isFlexibleEnd,
     values.isFlexibleStart,
+    values.itineraryAttendanceEnabled,
     values.location,
     values.maxSeats,
     values.noPhones,
@@ -458,6 +469,7 @@ export function useEventEditorController(props: {
       if (patch.activityType !== undefined) form.setFieldValue('activityType', patch.activityType)
       if (patch.isFlexibleStart !== undefined) form.setFieldValue('isFlexibleStart', patch.isFlexibleStart)
       if (patch.isFlexibleEnd !== undefined) form.setFieldValue('isFlexibleEnd', patch.isFlexibleEnd)
+      if (patch.itineraryAttendanceEnabled !== undefined) form.setFieldValue('itineraryAttendanceEnabled', patch.itineraryAttendanceEnabled)
       if (patch.noPhones !== undefined) form.setFieldValue('noPhones', patch.noPhones)
       if ('maxSeats' in patch) {
         const n = patch.maxSeats === undefined ? undefined : Number(patch.maxSeats)

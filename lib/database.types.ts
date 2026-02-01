@@ -58,6 +58,7 @@ export interface Database {
           visibility_type: 'ALL_FRIENDS' | 'GROUPS' | 'INVITE_ONLY'
           allow_friend_invites: boolean
           max_seats: number | null
+          itinerary_attendance_enabled: boolean
           no_phones: boolean
           created_at: string
           updated_at: string
@@ -81,6 +82,7 @@ export interface Database {
           visibility_type?: 'ALL_FRIENDS' | 'GROUPS' | 'INVITE_ONLY'
           allow_friend_invites?: boolean
           max_seats?: number | null
+          itinerary_attendance_enabled?: boolean
           no_phones?: boolean
           created_at?: string
           updated_at?: string
@@ -104,6 +106,7 @@ export interface Database {
           visibility_type?: 'ALL_FRIENDS' | 'GROUPS' | 'INVITE_ONLY'
           allow_friend_invites?: boolean
           max_seats?: number | null
+          itinerary_attendance_enabled?: boolean
           no_phones?: boolean
           created_at?: string
           updated_at?: string
@@ -379,6 +382,7 @@ export interface Database {
         Row: {
           id: string
           event_id: string
+          itinerary_item_id: string | null
           title: string
           applies_to: string
           split_type: string
@@ -394,6 +398,7 @@ export interface Database {
         Insert: {
           id?: string
           event_id: string
+          itinerary_item_id?: string | null
           title: string
           applies_to?: string
           split_type: string
@@ -409,6 +414,7 @@ export interface Database {
         Update: {
           id?: string
           event_id?: string
+          itinerary_item_id?: string | null
           title?: string
           applies_to?: string
           split_type?: string

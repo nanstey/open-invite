@@ -5,6 +5,7 @@ import { Users } from 'lucide-react'
 import type { User } from '../../../../../lib/types'
 import type { SocialEvent } from '../../../types'
 import { EventVisibility } from '../../../types'
+import { Checkbox } from '../../../../../lib/ui/9ui/checkbox'
 import { FormSelect } from '../../../../../lib/ui/components/FormControls'
 import { ComingSoonPopover, useComingSoonPopover } from '../../../../../lib/ui/components/ComingSoonPopover'
 import { useGuestsEditActions } from '../hooks/useGuestsEditActions'
@@ -17,8 +18,18 @@ export function GuestsTab(props: {
   isEditMode: boolean
   onChangeAttendees?: (nextAttendees: string[]) => void
   onChangeMaxSeats?: (next: number | undefined) => void
+  onChangeItineraryAttendanceEnabled?: (next: boolean) => void
 }) {
-  const { event, attendeesList, friendIds, currentUserId, isEditMode, onChangeAttendees, onChangeMaxSeats } = props
+  const {
+    event,
+    attendeesList,
+    friendIds,
+    currentUserId,
+    isEditMode,
+    onChangeAttendees,
+    onChangeMaxSeats,
+    onChangeItineraryAttendanceEnabled,
+  } = props
   const comingSoon = useComingSoonPopover()
   const guestsEdit = useGuestsEditActions({
     enabled: isEditMode,
@@ -59,6 +70,20 @@ export function GuestsTab(props: {
               <FormSelect value={EventVisibility.INVITE_ONLY} size="lg" disabled>
                 <option value={EventVisibility.INVITE_ONLY}>Invite only</option>
               </FormSelect>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Itinerary attendance</div>
+            <label className="flex items-center gap-2 text-sm text-slate-200">
+              <Checkbox
+                checked={event.itineraryAttendanceEnabled ?? false}
+                onChange={(e) => onChangeItineraryAttendanceEnabled?.(e.target.checked)}
+              />
+              Enable itinerary-level attendance
+            </label>
+            <div className="text-xs text-slate-500">
+              Attendees select itinerary items when they join, and expense totals are scoped accordingly.
             </div>
           </div>
         </div>
@@ -157,4 +182,3 @@ export function GuestsTab(props: {
     </div>
   )
 }
-

@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp, MoreVertical, Trash2 } from 'lucide-react'
 import { FormInput, FormSelect } from '../../../../../../lib/ui/components/FormControls'
 import { parseMoneyInputToCents } from '../../../../../../lib/ui/utils/money'
 
+import type { ItineraryItem } from '../../../../types'
 import type { EventExpense, ExpenseApi, ExpenseSettledKind, ExpenseSplitType, ExpenseTiming, Person } from '../types'
 import {
   canCommitMoneyInput,
@@ -25,6 +26,7 @@ export function ExpenseEditRow(props: {
   hostId?: string
   currentUserId?: string
   expenseApi?: ExpenseApi
+  itineraryItems: ItineraryItem[]
 
   isExpanded: boolean
   onToggleExpanded: () => void
@@ -45,6 +47,7 @@ export function ExpenseEditRow(props: {
     hostId,
     currentUserId,
     expenseApi,
+    itineraryItems,
     isExpanded,
     onToggleExpanded,
     isMenuOpen,
@@ -198,6 +201,28 @@ export function ExpenseEditRow(props: {
             )}
           </div>
 
+          {itineraryItems.length > 0 ? (
+            <div className="space-y-2">
+              <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Assign to itinerary item</div>
+              <FormSelect
+                value={e.itineraryItemId ?? ''}
+                onChange={(ev) => {
+                  const next = ev.target.value
+                  expenseApi?.onUpdate(e.id, { itineraryItemId: next === '' ? null : next })
+                }}
+                variant="surface"
+                size="md"
+              >
+                <option value="">Event-wide</option>
+                {itineraryItems.map((item) => (
+                  <option key={item.id} value={item.id}>
+                    {item.title}
+                  </option>
+                ))}
+              </FormSelect>
+            </div>
+          ) : null}
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <FormInput
               type="text"
@@ -242,5 +267,3 @@ export function ExpenseEditRow(props: {
     </div>
   )
 }
-
-

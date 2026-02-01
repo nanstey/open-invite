@@ -17,6 +17,7 @@ function transformRow(row: ExpenseRow): EventExpense {
     amountCents: row.amount_cents ?? undefined,
     currency: row.currency,
     participantIds: row.participant_ids,
+    itineraryItemId: row.itinerary_item_id ?? null,
   }
 }
 
@@ -50,6 +51,7 @@ export async function createEventExpense(input: Omit<EventExpense, 'id'>): Promi
     currency: input.currency,
     participant_ids: input.participantIds,
     sort_order: input.sortOrder,
+    itinerary_item_id: input.itineraryItemId ?? null,
   }
 
   const result = await supabase.from('event_expenses').insert(insert as unknown as never).select().single()
@@ -75,6 +77,7 @@ export async function updateEventExpense(
   if (patch.currency !== undefined) update.currency = patch.currency
   if (patch.participantIds !== undefined) update.participant_ids = patch.participantIds
   if (patch.sortOrder !== undefined) update.sort_order = patch.sortOrder
+  if ('itineraryItemId' in patch) update.itinerary_item_id = patch.itineraryItemId ?? null
 
   const result = await supabase.from('event_expenses').update(update as unknown as never).eq('id', expenseId).select().single()
   const { data, error } = result as unknown as { data: ExpenseRow | null; error: any }
@@ -94,5 +97,4 @@ export async function deleteEventExpense(expenseId: string): Promise<boolean> {
   }
   return true
 }
-
 
