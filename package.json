@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
     "supabase:start": "supabase start --exclude vector --ignore-health-check",
     "supabase:stop": "supabase stop",
     "supabase:reset": "supabase db reset",
@@ -29,13 +31,16 @@
     "react-dom": "^19.2.1"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.0",
     "@tanstack/react-query-devtools": "^5.91.2",
     "@tanstack/react-router-devtools": "^1.147.2",
     "@tanstack/router-plugin": "^1.147.2",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "jsdom": "^26.1.0",
     "supabase": "^2.67.1",
     "typescript": "~5.8.2",
-    "vite": "^6.2.0"
+    "vite": "^6.2.0",
+    "vitest": "^3.2.4"
   }
 }
