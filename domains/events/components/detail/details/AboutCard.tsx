@@ -127,7 +127,6 @@ export function AboutCard(props: {
             <div className="w-full bg-slate-900 border border-slate-700 rounded-lg p-4 min-h-[8rem]">
               <MrkdwnRenderer
                 content={description}
-                className="text-slate-300 leading-relaxed text-base space-y-4"
               />
             </div>
           )}
@@ -136,7 +135,6 @@ export function AboutCard(props: {
         <div className="w-full rounded-lg">
           <MrkdwnRenderer
             content={description}
-            className="text-slate-300 leading-relaxed text-base space-y-4"
           />
         </div>
       )}
