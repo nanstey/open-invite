@@ -20,10 +20,11 @@ export type PopoverProps = {
   open?: boolean
   defaultOpen?: boolean
   onOpenChange?: (open: boolean) => void
+  className?: string
   children: React.ReactNode
 }
 
-export function Popover({ open, defaultOpen = false, onOpenChange, children }: PopoverProps) {
+export function Popover({ open, defaultOpen = false, onOpenChange, className, children }: PopoverProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen)
   const isControlled = typeof open === 'boolean'
   const currentOpen = isControlled ? open : uncontrolledOpen
@@ -40,7 +41,7 @@ export function Popover({ open, defaultOpen = false, onOpenChange, children }: P
 
   return (
     <PopoverContext.Provider value={{ open: currentOpen, setOpen }}>
-      <div className="relative inline-flex">{children}</div>
+      <div className={cn('relative inline-flex', className)}>{children}</div>
     </PopoverContext.Provider>
   )
 }
