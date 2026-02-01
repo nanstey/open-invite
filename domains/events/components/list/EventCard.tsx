@@ -311,7 +311,8 @@ export const EventCard: React.FC<EventCardProps> = ({
               transform: `translateX(${offsetX}px)`,
               // Slower snap back animation
               transition: isDragging ? 'none' : `transform ${isExiting ? SLIDE_DURATION : SNAP_DURATION}ms cubic-bezier(0.2, 0.8, 0.2, 1), background-color 0.2s`,
-              backgroundColor: dynamicBgColor // Overrides class background when dragging
+              backgroundColor: dynamicBgColor ?? (isInvolved ? theme.hex : undefined), // Overrides class background when dragging
+              borderColor: isInvolved ? 'transparent' : theme.hex,
             }}
           >
             <div className="flex justify-between items-start mb-2">
