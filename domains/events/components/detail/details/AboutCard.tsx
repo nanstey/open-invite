@@ -94,7 +94,7 @@ export function AboutCard(props: {
           </div>
           {viewMode === 'edit' ? (
             <Popover open={emojiAutocomplete.isOpen} onOpenChange={emojiAutocomplete.setIsOpen} className="w-full">
-              <div className="w-full">
+              <div className="w-full relative">
                 <Textarea
                   ref={textareaRef}
                   value={description}
@@ -108,10 +108,11 @@ export function AboutCard(props: {
                 />
                 <PopoverContent
                   align="start"
-                  className="mt-0 w-[320px] p-0"
+                  className="w-[320px] p-0"
                   style={{
                     left: emojiAutocomplete.popoverPosition.left,
                     top: emojiAutocomplete.popoverPosition.top,
+                    marginTop: 0,
                   }}
                 >
                   <EmojiPicker

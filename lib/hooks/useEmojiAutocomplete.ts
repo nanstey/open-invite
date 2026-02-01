@@ -58,9 +58,6 @@ const getCaretCoordinates = (
   const properties = [
     'boxSizing',
     'width',
-    'height',
-    'overflowX',
-    'overflowY',
     'borderTopWidth',
     'borderRightWidth',
     'borderBottomWidth',
@@ -95,25 +92,31 @@ const getCaretCoordinates = (
   div.style.left = '-9999px'
   div.style.whiteSpace = input instanceof HTMLTextAreaElement ? 'pre-wrap' : 'pre'
   div.style.wordWrap = 'break-word'
+  div.style.height = 'auto'
+  div.style.overflow = 'visible'
 
-  div.textContent = input.value.slice(0, position)
-  const span = document.createElement('span')
-  span.textContent = input.value.slice(position) || '.'
-  div.appendChild(span)
-
-  div.scrollTop = input.scrollTop
-  div.scrollLeft = input.scrollLeft
+  // Create a marker span at the cursor position
+  const beforeText = document.createTextNode(input.value.slice(0, position))
+  const marker = document.createElement('span')
+  marker.textContent = '\u200B' // zero-width space as cursor marker
+  const afterText = document.createTextNode(input.value.slice(position) || '.')
+  
+  div.appendChild(beforeText)
+  div.appendChild(marker)
+  div.appendChild(afterText)
 
   document.body.appendChild(div)
 
-  const spanRect = span.getBoundingClientRect()
+  const markerRect = marker.getBoundingClientRect()
   const divRect = div.getBoundingClientRect()
-  const left = spanRect.left - divRect.left
-  const top = spanRect.top - divRect.top
-  const height = spanRect.height || parseFloat(style.lineHeight || '0') || 16
+  // Calculate content position (not affected by scroll)
+  const left = markerRect.left - divRect.left
+  const top = markerRect.top - divRect.top
+  const height = markerRect.height || parseFloat(style.lineHeight || '0') || 16
 
   document.body.removeChild(div)
 
+  // Return content-relative positions; scroll will be handled by the caller
   return { left, top, height }
 }
 
@@ -146,9 +149,19 @@ export function useEmojiAutocomplete({ value, onChange, inputRef }: UseEmojiAuto
       if (!input) return
       const caret = getCaretCoordinates(input, cursor)
       const offset = 6
+
+      // Get the input's bounding rect to calculate position relative to its container
+      const inputRect = input.getBoundingClientRect()
+      const parent = input.offsetParent as HTMLElement | null
+      const parentRect = parent?.getBoundingClientRect() ?? { left: 0, top: 0 }
+
+      // Calculate position relative to the positioned parent
+      const inputOffsetLeft = inputRect.left - parentRect.left
+      const inputOffsetTop = inputRect.top - parentRect.top
+
       setPopoverPosition({
-        left: input.offsetLeft + caret.left,
-        top: input.offsetTop + caret.top + caret.height + offset,
+        left: inputOffsetLeft + caret.left - input.scrollLeft,
+        top: inputOffsetTop + caret.top + caret.height + offset - input.scrollTop,
       })
     },
     [inputRef],

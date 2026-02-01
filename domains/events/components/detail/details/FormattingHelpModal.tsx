@@ -3,14 +3,14 @@ import { X } from 'lucide-react'
 
 export const FORMATTING_EXAMPLE = `# Welcome to the Event!
 
-We're excited to have you join us for this *amazing* experience. Here's what you need to know:
+We're excited to have you join us for this *amazing* experience :tada: Here's what you need to know:
 
 ## What to Expect
-- Arrive 15 minutes early
-- Bring your _own snacks_ if you'd like
-- ~No pets allowed~ Pets are welcome!
+- ⏱️ Arrive 15 minutes early 
+- 🍿 Bring your _own snacks_ if you'd like 
+- 🐶 ~No pets allowed~ Pets are welcome! 
 
-> This is going to be the best event of the year!
+> This is going to be the best event of the year! :fire:
 
 Check out our website for more details: <https://example.com|Click here>
 
@@ -25,6 +25,7 @@ Parking: Free
 `
 
 const FORMATTING_OPTIONS = [
+  { format: 'Emoji', syntax: ':name:', example: ':pizza: :heart:' },
   { format: 'Bold', syntax: '*text*', example: '*bold*' },
   { format: 'Italic', syntax: '_text_', example: '_italic_' },
   { format: 'Strikethrough', syntax: '~text~', example: '~crossed out~' },
