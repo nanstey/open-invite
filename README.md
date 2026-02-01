@@ -80,6 +80,23 @@ For full database functionality with authentication and real-time features:
 - `pnpm run supabase:migrate` - Run pending migrations
 - `pnpm run supabase:studio` - Open Supabase Studio UI
 
+### Testing
+
+Tests live alongside the code they cover (for example, `lib/supabaseClient.test.ts`).
+
+1. Install dependencies:
+   ```bash
+   pnpm install
+   ```
+2. Run the test suite:
+   ```bash
+   pnpm test
+   ```
+3. (Optional) Watch mode:
+   ```bash
+   pnpm run test:watch
+   ```
+
 ### Features
 
 - **Authentication**: Sign up/sign in with email and password
