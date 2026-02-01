@@ -1,8 +1,11 @@
 import * as React from 'react'
 import { FormattingHelpModal, FORMATTING_EXAMPLE } from './FormattingHelpModal'
 import { MrkdwnRenderer } from './MrkdwnRenderer'
+import { useEmojiAutocomplete } from '../../../../../lib/hooks/useEmojiAutocomplete'
 import { Button } from '../../../../../lib/ui/9ui/button'
 import { Card } from '../../../../../lib/ui/9ui/card'
+import { EmojiPicker } from '../../../../../lib/ui/9ui/emoji-picker'
+import { Popover, PopoverContent } from '../../../../../lib/ui/9ui/popover'
 import { Textarea } from '../../../../../lib/ui/9ui/textarea'
 
 type ViewMode = 'edit' | 'preview'
@@ -17,6 +20,18 @@ export function AboutCard(props: {
   const [viewMode, setViewMode] = React.useState<ViewMode>('edit')
   const [showFormattingHelp, setShowFormattingHelp] = React.useState(false)
   const textareaRef = React.useRef<HTMLTextAreaElement>(null)
+  const handleDescriptionChange = React.useCallback(
+    (next: string) => {
+      onChangeDescription?.(next)
+    },
+    [onChangeDescription],
+  )
+
+  const emojiAutocomplete = useEmojiAutocomplete({
+    value: description,
+    onChange: handleDescriptionChange,
+    inputRef: textareaRef,
+  })
 
   const handleInsertExample = () => {
     const separator = description.trim() ? '\n\n' : ''
@@ -78,21 +93,41 @@ export function AboutCard(props: {
             </Button>
           </div>
           {viewMode === 'edit' ? (
-            <Textarea
-              ref={textareaRef}
-              value={description}
-              onChange={(e) => onChangeDescription?.(e.target.value)}
-              placeholder="What's the vibe?"
-              required
-              className={`w-full bg-slate-900 border rounded-lg py-3 px-4 text-white outline-none min-h-[8rem] resize-none overflow-hidden ${
-                error ? 'border-red-500 focus:border-red-500' : 'border-slate-700 focus:border-primary'
-              }`}
-            />
+            <Popover open={emojiAutocomplete.isOpen} onOpenChange={emojiAutocomplete.setIsOpen} className="w-full">
+              <div className="w-full relative">
+                <Textarea
+                  ref={textareaRef}
+                  value={description}
+                  onChange={emojiAutocomplete.handleChange}
+                  onKeyDown={emojiAutocomplete.handleKeyDown}
+                  placeholder="What's the vibe?"
+                  required
+                  className={`w-full bg-slate-900 border rounded-lg py-3 px-4 text-white outline-none min-h-[8rem] resize-none overflow-hidden ${
+                    error ? 'border-red-500 focus:border-red-500' : 'border-slate-700 focus:border-primary'
+                  }`}
+                />
+                <PopoverContent
+                  align="start"
+                  className="w-[320px] p-0"
+                  style={{
+                    left: emojiAutocomplete.popoverPosition.left,
+                    top: emojiAutocomplete.popoverPosition.top,
+                    marginTop: 0,
+                  }}
+                >
+                  <EmojiPicker
+                    emojis={emojiAutocomplete.emojis}
+                    highlightedIndex={emojiAutocomplete.highlightedIndex}
+                    onHighlightChange={emojiAutocomplete.setHighlightedIndex}
+                    onSelect={emojiAutocomplete.handleEmojiSelect}
+                  />
+                </PopoverContent>
+              </div>
+            </Popover>
           ) : (
             <div className="w-full bg-slate-900 border border-slate-700 rounded-lg p-4 min-h-[8rem]">
               <MrkdwnRenderer
                 content={description}
-                className="text-slate-300 leading-relaxed text-base space-y-4"
               />
             </div>
           )}
@@ -101,7 +136,6 @@ export function AboutCard(props: {
         <div className="w-full rounded-lg">
           <MrkdwnRenderer
             content={description}
-            className="text-slate-300 leading-relaxed text-base space-y-4"
           />
         </div>
       )}

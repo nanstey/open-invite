@@ -3,6 +3,9 @@ import * as React from 'react'
 import type { User } from '../../../../../lib/types'
 import type { Comment, SocialEvent } from '../../../types'
 import { Send } from 'lucide-react'
+import { useEmojiAutocomplete } from '../../../../../lib/hooks/useEmojiAutocomplete'
+import { EmojiPicker } from '../../../../../lib/ui/9ui/emoji-picker'
+import { Popover, PopoverContent } from '../../../../../lib/ui/9ui/popover'
 
 export function ChatTab(props: {
   event: SocialEvent
@@ -17,6 +20,8 @@ export function ChatTab(props: {
   const { event, commentUsers, currentUserId, isEditMode, isGuest, onRequireAuth, onPostComment, onUpdateEvent } = props
 
   const [commentText, setCommentText] = React.useState('')
+  const inputRef = React.useRef<HTMLInputElement>(null)
+  const emojiAutocomplete = useEmojiAutocomplete({ value: commentText, onChange: setCommentText, inputRef })
 
   const handlePostComment = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -89,22 +94,42 @@ export function ChatTab(props: {
         </div>
       ) : (
         <form onSubmit={handlePostComment} className="relative">
-          <input
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder="Ask a question or say hi..."
-            className="w-full bg-slate-900 border border-slate-700 rounded-full py-3.5 pl-5 pr-14 text-white focus:border-primary outline-none transition-colors"
-          />
-          <button
-            type="submit"
-            disabled={!commentText.trim()}
-            className="absolute right-2 top-2 p-1.5 bg-primary text-white rounded-full hover:bg-primary/90 disabled:opacity-50 disabled:bg-slate-700 transition-colors"
-          >
-            <Send className="w-5 h-5" />
-          </button>
+          <Popover open={emojiAutocomplete.isOpen} onOpenChange={emojiAutocomplete.setIsOpen} className="w-full">
+            <div className="relative w-full">
+              <input
+                ref={inputRef}
+                value={commentText}
+                onChange={emojiAutocomplete.handleChange}
+                onKeyDown={emojiAutocomplete.handleKeyDown}
+                placeholder="Ask a question or say hi..."
+                className="w-full bg-slate-900 border border-slate-700 rounded-full py-3.5 pl-5 pr-14 text-white focus:border-primary outline-none transition-colors"
+              />
+              <button
+                type="submit"
+                disabled={!commentText.trim()}
+                className="absolute right-2 top-2 p-1.5 bg-primary text-white rounded-full hover:bg-primary/90 disabled:opacity-50 disabled:bg-slate-700 transition-colors"
+              >
+                <Send className="w-5 h-5" />
+              </button>
+              <PopoverContent
+                align="start"
+                className="mt-0 w-[320px] p-0"
+                style={{
+                  left: emojiAutocomplete.popoverPosition.left,
+                  top: emojiAutocomplete.popoverPosition.top,
+                }}
+              >
+                <EmojiPicker
+                  emojis={emojiAutocomplete.emojis}
+                  highlightedIndex={emojiAutocomplete.highlightedIndex}
+                  onHighlightChange={emojiAutocomplete.setHighlightedIndex}
+                  onSelect={emojiAutocomplete.handleEmojiSelect}
+                />
+              </PopoverContent>
+            </div>
+          </Popover>
         </form>
       )}
     </div>
   )
 }
-
