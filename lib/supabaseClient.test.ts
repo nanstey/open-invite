@@ -1,79 +1,236 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-type MockSupabase = {
-  auth: {
-    getSession: ReturnType<typeof vi.fn>
-    signInWithOAuth: ReturnType<typeof vi.fn>
-  }
-  from: ReturnType<typeof vi.fn>
-}
+import { getCurrentUser, onAuthStateChange, signUp } from './supabaseClient'
 
-const mockSupabase = vi.hoisted<MockSupabase>(() => ({
+const supabase = {
   auth: {
     getSession: vi.fn(),
-    signInWithOAuth: vi.fn(),
+    signUp: vi.fn(),
+    onAuthStateChange: vi.fn(),
   },
   from: vi.fn(),
-}))
+}
 
-vi.mock('./supabase', () => ({
-  supabase: mockSupabase,
-}))
+vi.mock('./supabase', () => ({ supabase }))
 
-import { getCurrentUser, signInWithGoogle } from './supabaseClient'
+const userProfilesBuilder = (options: {
+  selectResult: any
+  insertResult?: any
+}) => {
+  const select = vi.fn(() => ({
+    eq: vi.fn(() => ({
+      single: vi.fn(async () => options.selectResult),
+    })),
+  }))
 
-function mockProfileQuery(profile: { id: string; name: string; avatar: string } | null) {
-  const single = vi.fn().mockResolvedValue({ data: profile, error: null })
-  const eq = vi.fn().mockReturnValue({ single })
-  const select = vi.fn().mockReturnValue({ eq })
-  mockSupabase.from.mockReturnValue({ select })
-  return { select, eq, single }
+  const insert = vi.fn(() => ({
+    select: vi.fn(() => ({
+      single: vi.fn(async () => options.insertResult ?? { data: null, error: null }),
+    })),
+  }))
+
+  return { select, insert }
 }
 
 describe('supabaseClient', () => {
   beforeEach(() => {
-    mockSupabase.auth.getSession.mockReset()
-    mockSupabase.auth.signInWithOAuth.mockReset()
-    mockSupabase.from.mockReset()
+    vi.clearAllMocks()
   })
 
-  it('returns null when there is no session user', async () => {
-    mockSupabase.auth.getSession.mockResolvedValue({ data: { session: null }, error: null })
-
-    await expect(getCurrentUser()).resolves.toBeNull()
+  afterEach(() => {
+    vi.useRealTimers()
   })
 
-  it('returns the profile when a session user exists', async () => {
-    mockSupabase.auth.getSession.mockResolvedValue({
-      data: { session: { user: { id: 'user-1', email: 'test@example.com' } } },
+  it('getCurrentUser returns null when no session user', async () => {
+    supabase.auth.getSession.mockResolvedValue({ data: { session: null }, error: null })
+
+    const result = await getCurrentUser()
+
+    expect(result).toBeNull()
+  })
+
+  it('getCurrentUser creates default profile when missing', async () => {
+    const sessionUser = {
+      id: 'user-1',
+      email: 'hello@example.com',
+      user_metadata: {},
+    }
+    supabase.auth.getSession.mockResolvedValue({
+      data: { session: { user: sessionUser } },
       error: null,
     })
 
-    mockProfileQuery({ id: 'user-1', name: 'Test User', avatar: 'avatar.png' })
+    supabase.from.mockImplementation((table: string) => {
+      if (table === 'user_profiles') {
+        return userProfilesBuilder({
+          selectResult: { data: null, error: { code: 'PGRST116', message: 'No rows' } },
+          insertResult: { data: { id: 'user-1', name: 'hello', avatar: 'avatar' }, error: null },
+        })
+      }
+      throw new Error(`Unexpected table ${table}`)
+    })
 
-    await expect(getCurrentUser()).resolves.toEqual({
+    const result = await getCurrentUser()
+
+    expect(result).toEqual({
       id: 'user-1',
-      name: 'Test User',
-      avatar: 'avatar.png',
+      name: 'hello',
+      avatar: 'avatar',
       isCurrentUser: true,
     })
   })
 
-  it('builds a safe redirect for google oauth', async () => {
-    Object.defineProperty(window, 'location', {
-      value: { origin: 'https://open-invite.test' },
-      writable: true,
+  it('getCurrentUser returns fallback user when profile fetch times out', async () => {
+    vi.useFakeTimers()
+    const sessionUser = {
+      id: 'user-2',
+      email: 'timer@example.com',
+      user_metadata: { full_name: 'Timer User' },
+    }
+    supabase.auth.getSession.mockResolvedValue({
+      data: { session: { user: sessionUser } },
+      error: null,
     })
 
-    mockSupabase.auth.signInWithOAuth.mockResolvedValue({ data: null, error: null })
+    supabase.from.mockImplementation((table: string) => {
+      if (table === 'user_profiles') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn(() => new Promise(() => {})),
+            })),
+          })),
+        }
+      }
+      throw new Error(`Unexpected table ${table}`)
+    })
 
-    await signInWithGoogle('/events')
+    const promise = getCurrentUser()
+    await vi.advanceTimersByTimeAsync(2000)
 
-    expect(mockSupabase.auth.signInWithOAuth).toHaveBeenCalledWith({
-      provider: 'google',
-      options: {
-        redirectTo: 'https://open-invite.test/auth/callback?redirect=%2Fevents',
-      },
+    const result = await promise
+
+    expect(result).toEqual({
+      id: 'user-2',
+      name: 'Timer User',
+      avatar: expect.stringContaining('Timer%20User'),
+      isCurrentUser: true,
+    })
+  })
+
+  it('signUp returns user when auth and profile insert succeed', async () => {
+    supabase.auth.signUp.mockResolvedValue({
+      data: { user: { id: 'user-3' } },
+      error: null,
+    })
+
+    supabase.from.mockImplementation((table: string) => {
+      if (table === 'user_profiles') {
+        return {
+          insert: vi.fn(async () => ({ error: null })),
+        }
+      }
+      throw new Error(`Unexpected table ${table}`)
+    })
+
+    const result = await signUp('a@b.com', 'password', 'Name', 'avatar')
+
+    expect(result).toEqual({ user: { id: 'user-3' } })
+  })
+
+  it('signUp returns error when profile insert fails', async () => {
+    const profileError = new Error('profile failed')
+    supabase.auth.signUp.mockResolvedValue({
+      data: { user: { id: 'user-4' } },
+      error: null,
+    })
+    supabase.from.mockImplementation((table: string) => {
+      if (table === 'user_profiles') {
+        return {
+          insert: vi.fn(async () => ({ error: profileError })),
+        }
+      }
+      throw new Error(`Unexpected table ${table}`)
+    })
+
+    const result = await signUp('a@b.com', 'password', 'Name', 'avatar')
+
+    expect(result).toEqual({ error: profileError })
+  })
+
+  it('onAuthStateChange calls callback with user when session exists', async () => {
+    const sessionUser = {
+      id: 'user-5',
+      email: 'user@example.com',
+      user_metadata: { full_name: 'User Five' },
+    }
+    supabase.from.mockImplementation((table: string) => {
+      if (table === 'user_profiles') {
+        return userProfilesBuilder({
+          selectResult: { data: { id: 'user-5', name: 'User Five', avatar: 'avatar' }, error: null },
+        })
+      }
+      throw new Error(`Unexpected table ${table}`)
+    })
+
+    let authCallback: any
+    supabase.auth.onAuthStateChange.mockImplementation((cb: any) => {
+      authCallback = cb
+      return { data: { subscription: { unsubscribe: vi.fn() } } }
+    })
+
+    const handler = vi.fn()
+    onAuthStateChange(handler)
+
+    await authCallback('SIGNED_IN', { user: sessionUser })
+
+    expect(handler).toHaveBeenCalledWith({
+      id: 'user-5',
+      name: 'User Five',
+      avatar: 'avatar',
+      isCurrentUser: true,
+    })
+  })
+
+  it('onAuthStateChange falls back to default user on timeout', async () => {
+    vi.useFakeTimers()
+    const sessionUser = {
+      id: 'user-6',
+      email: 'slow@example.com',
+      user_metadata: {},
+    }
+
+    supabase.from.mockImplementation((table: string) => {
+      if (table === 'user_profiles') {
+        return {
+          select: vi.fn(() => ({
+            eq: vi.fn(() => ({
+              single: vi.fn(() => new Promise(() => {})),
+            })),
+          })),
+        }
+      }
+      throw new Error(`Unexpected table ${table}`)
+    })
+
+    let authCallback: any
+    supabase.auth.onAuthStateChange.mockImplementation((cb: any) => {
+      authCallback = cb
+      return { data: { subscription: { unsubscribe: vi.fn() } } }
+    })
+
+    const handler = vi.fn()
+    onAuthStateChange(handler)
+
+    const promise = authCallback('SIGNED_IN', { user: sessionUser })
+    await vi.advanceTimersByTimeAsync(3100)
+    await promise
+
+    expect(handler).toHaveBeenCalledWith({
+      id: 'user-6',
+      name: 'slow',
+      avatar: expect.stringContaining('slow'),
+      isCurrentUser: true,
     })
   })
 })
