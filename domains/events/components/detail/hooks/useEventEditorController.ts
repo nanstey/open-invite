@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query'
 import { useForm, useStore } from '@tanstack/react-form'
 
 import type { User } from '../../../../../lib/types'
-import type { EventExpense, ItineraryItem, LocationData, SocialEvent } from '../../../types'
+import type { EventExpense, ItineraryItem, ItineraryTimeDisplay, LocationData, SocialEvent } from '../../../types'
 import { EventVisibility } from '../../../types'
 import { createEvent, fetchEventById, updateEvent } from '../../../../../services/eventService'
 import { createItineraryItem, deleteItineraryItem, updateItineraryItem } from '../../../../../services/itineraryService'
@@ -33,6 +33,7 @@ type EventEditorValues = {
   maxSeats: number | ''
   coordinates: { lat: number; lng: number } | undefined
   locationData: LocationData | undefined
+  itineraryTimeDisplay: ItineraryTimeDisplay
 }
 
 type DraftExpense = Omit<EventExpense, 'eventId'>
@@ -199,6 +200,7 @@ export function useEventEditorController(props: {
         maxSeats: ev.maxSeats && ev.maxSeats > 0 ? ev.maxSeats : '',
         coordinates: ev.coordinates,
         locationData: ev.locationData,
+        itineraryTimeDisplay: ev.itineraryTimeDisplay,
       }
     }
 
@@ -217,6 +219,7 @@ export function useEventEditorController(props: {
       maxSeats: '',
       coordinates: undefined,
       locationData: undefined,
+      itineraryTimeDisplay: 'START_AND_END',
     }
   }, [
     props.initialEvent?.activityType,
@@ -234,6 +237,7 @@ export function useEventEditorController(props: {
     props.initialEvent?.noPhones,
     props.initialEvent?.startTime,
     props.initialEvent?.title,
+    props.initialEvent?.itineraryTimeDisplay,
   ])
 
   const onSubmit = React.useCallback(
@@ -281,6 +285,7 @@ export function useEventEditorController(props: {
           allowFriendInvites: false,
           coordinates: value.coordinates,
           locationData: value.locationData,
+          itineraryTimeDisplay: value.itineraryTimeDisplay,
         })
         if (!created) throw new Error('createEvent returned null')
 
@@ -325,6 +330,7 @@ export function useEventEditorController(props: {
         allowFriendInvites: false,
         coordinates: value.coordinates,
         locationData: value.locationData,
+        itineraryTimeDisplay: value.itineraryTimeDisplay,
       })
 
       if (!updated) throw new Error('updateEvent returned null')
@@ -415,6 +421,7 @@ export function useEventEditorController(props: {
             : undefined,
       attendees: props.initialEvent?.attendees ?? EMPTY_STRING_ARR,
       noPhones: values.noPhones,
+      itineraryTimeDisplay: values.itineraryTimeDisplay,
       comments: props.initialEvent?.comments ?? EMPTY_COMMENTS,
       reactions: props.initialEvent?.reactions ?? EMPTY_REACTIONS,
       itineraryItems: mapDraftItineraryItems(itineraryItems, editingEventId),
@@ -441,6 +448,7 @@ export function useEventEditorController(props: {
     values.durationHours,
     values.isFlexibleEnd,
     values.isFlexibleStart,
+    values.itineraryTimeDisplay,
     values.location,
     values.maxSeats,
     values.noPhones,
@@ -466,6 +474,7 @@ export function useEventEditorController(props: {
       if ('coordinates' in patch) form.setFieldValue('coordinates', patch.coordinates)
       if ('locationData' in patch) form.setFieldValue('locationData', patch.locationData)
       if (patch.startTime !== undefined) form.setFieldValue('startDateTimeLocal', toLocalDateTimeInputValue(patch.startTime))
+      if (patch.itineraryTimeDisplay !== undefined) form.setFieldValue('itineraryTimeDisplay', patch.itineraryTimeDisplay)
     },
     [form],
   )

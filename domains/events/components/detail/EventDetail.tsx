@@ -138,6 +138,13 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   // --- Local UI state ---
   const [showHeaderImageModal, setShowHeaderImageModal] = useState(false)
 
+  // --- Itinerary time display (persisted on event) ---
+  const showItineraryStartTimeOnly = event.itineraryTimeDisplay === 'START_ONLY'
+  const handleChangeItineraryStartTimeOnly = (next: boolean) => {
+    if (!isEditMode) return
+    edit?.onChange({ itineraryTimeDisplay: next ? 'START_ONLY' : 'START_AND_END' })
+  }
+
   // --- Viewer identity ---
   const currentUserId = currentUser?.id;
   const isGuest = !currentUserId;
@@ -329,13 +336,18 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               {!isEditMode && hasItinerary && <hr className="border-slate-700" />}
 
               {isEditMode || hasItinerary ? (
-                <ItineraryCard isEditMode={isEditMode}>
+                <ItineraryCard
+                  isEditMode={isEditMode}
+                  showItineraryStartTimeOnly={showItineraryStartTimeOnly}
+                  onChangeItineraryStartTimeOnly={handleChangeItineraryStartTimeOnly}
+                >
                   {isEditMode ? (
                     edit?.itinerary ? (
                       <ItineraryEditor
                         event={event}
                         itineraryItems={itineraryItems}
                         showItineraryTimesOnly={dateTime.showItineraryTimesOnly}
+                        showItineraryStartTimeOnly={showItineraryStartTimeOnly}
                         hasItinerary={hasItinerary}
                         draftStartIso={draftStart.draftStartIso}
                         durationHours={edit?.durationHours}
@@ -350,6 +362,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                     <ItinerarySection
                       items={itineraryItems}
                       showItineraryTimesOnly={dateTime.showItineraryTimesOnly}
+                      showItineraryStartTimeOnly={showItineraryStartTimeOnly}
                       formatItineraryLocationForDisplay={formatItineraryLocationForDisplay}
                       openItineraryLocationInMaps={openItineraryLocationInMaps}
                     />

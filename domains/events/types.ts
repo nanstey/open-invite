@@ -73,6 +73,8 @@ export type LocationData = {
   raw?: Record<string, unknown>
 }
 
+export type ItineraryTimeDisplay = 'START_ONLY' | 'START_AND_END'
+
 export interface SocialEvent {
   id: string
   slug: string
@@ -95,6 +97,7 @@ export interface SocialEvent {
   maxSeats?: number
   attendees: string[] // User IDs
   noPhones: boolean
+  itineraryTimeDisplay: ItineraryTimeDisplay
   comments: Comment[]
   reactions: Record<string, Reaction> // key is emoji
   itineraryItems?: ItineraryItem[] // optional to keep list fetch lightweight

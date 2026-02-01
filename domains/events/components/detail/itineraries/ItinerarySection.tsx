@@ -7,10 +7,12 @@ import { sortByStartTime } from './itinerary'
 export function ItinerarySection(props: {
   items: ItineraryItem[]
   showItineraryTimesOnly: boolean
+  showItineraryStartTimeOnly: boolean
   formatItineraryLocationForDisplay: (location: string | undefined) => { full: string; label: string; isReal: boolean }
   openItineraryLocationInMaps: (locationFull: string) => void
 }) {
-  const { items, showItineraryTimesOnly, formatItineraryLocationForDisplay, openItineraryLocationInMaps } = props
+  const { items, showItineraryTimesOnly, showItineraryStartTimeOnly, formatItineraryLocationForDisplay, openItineraryLocationInMaps } =
+    props
   const orderedItems = React.useMemo(() => sortByStartTime(items), [items])
 
   return (
@@ -18,7 +20,7 @@ export function ItinerarySection(props: {
       {orderedItems.map((item) => {
           const start = new Date(item.startTime)
           const end = new Date(start.getTime() + item.durationMinutes * 60_000)
-          const time = `${formatTime12h(start)} - ${formatTime12h(end)}`
+          const time = showItineraryStartTimeOnly ? formatTime12h(start) : `${formatTime12h(start)} - ${formatTime12h(end)}`
           const date = formatDateLongEnUS(start)
           const loc = formatItineraryLocationForDisplay(item.location)
           return (
@@ -50,5 +52,4 @@ export function ItinerarySection(props: {
     </div>
   )
 }
-
 

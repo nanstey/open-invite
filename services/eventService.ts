@@ -1,5 +1,5 @@
 import { supabase } from '../lib/supabase';
-import type { SocialEvent, Comment, Reaction, EventVisibility, LocationData } from '../domains/events/types';
+import type { SocialEvent, Comment, Reaction, EventVisibility, LocationData, ItineraryTimeDisplay } from '../domains/events/types';
 import type { Database } from '../lib/database.types';
 import { fetchItineraryItems } from './itineraryService'
 import { fetchEventExpenses } from './expenseService'
@@ -95,6 +95,7 @@ function transformEventRow(
     maxSeats: row.max_seats || undefined,
     attendees,
     noPhones: row.no_phones,
+    itineraryTimeDisplay: (row.itinerary_time_display as ItineraryTimeDisplay) || 'START_AND_END',
     comments,
     reactions,
     itineraryItems,
@@ -354,6 +355,7 @@ export async function createEvent(
     allow_friend_invites: eventData.allowFriendInvites,
     max_seats: eventData.maxSeats || null,
     no_phones: eventData.noPhones,
+    itinerary_time_display: eventData.itineraryTimeDisplay,
   };
   
   const result = await supabase
@@ -413,6 +415,7 @@ export async function updateEvent(eventId: string, updates: Partial<SocialEvent>
   if (updates.allowFriendInvites !== undefined) updateData.allow_friend_invites = updates.allowFriendInvites;
   if (updates.maxSeats !== undefined) updateData.max_seats = updates.maxSeats;
   if (updates.noPhones !== undefined) updateData.no_phones = updates.noPhones;
+  if (updates.itineraryTimeDisplay !== undefined) updateData.itinerary_time_display = updates.itineraryTimeDisplay;
 
   type EventUpdate = Database['public']['Tables']['events']['Update'];
   const result = await supabase
