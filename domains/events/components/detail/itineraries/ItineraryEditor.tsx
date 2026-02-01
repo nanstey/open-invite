@@ -5,6 +5,10 @@ import type { ItineraryItem, SocialEvent } from '../../../types'
 import { DateTimeFields } from '../../../../../lib/ui/components/DateTimeFields'
 import { LocationAutocomplete } from '../../../../../lib/ui/components/LocationAutocomplete'
 import { FormSelect } from '../../../../../lib/ui/components/FormControls'
+import { Button } from '../../../../../lib/ui/9ui/button'
+import { Card } from '../../../../../lib/ui/9ui/card'
+import { Input } from '../../../../../lib/ui/9ui/input'
+import { Textarea } from '../../../../../lib/ui/9ui/textarea'
 import { buildQuarterHourTimeOptions } from '../../../../../lib/ui/utils/datetime'
 import { formatDateLongEnUS, formatTime12h, splitLocalDateTime, toLocalDateTimeInputValue } from '../../../../../lib/ui/utils/datetime'
 import {
@@ -228,13 +232,13 @@ function ItineraryBuilder(props: {
         />
       ))}
 
-      <button
+      <Button
         type="button"
         onClick={onAddItem}
-        className="w-full py-3 rounded-xl font-bold text-sm bg-slate-800 text-white hover:bg-slate-700 transition-colors border border-slate-700"
+        className="w-full py-3 font-bold text-sm bg-slate-800 text-white hover:bg-slate-700 border border-slate-700"
       >
         Add Item
-      </button>
+      </Button>
     </div>
   )
 }
@@ -288,7 +292,7 @@ function ItineraryItemCard(props: {
   const itemDurationHours = minutesToQuarterHourHours(item.durationMinutes)
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/30">
+    <Card className="rounded-xl border border-slate-800 bg-slate-900/30">
       <div className="p-4">
         <ItineraryItemHeader
           title={item.title}
@@ -316,7 +320,7 @@ function ItineraryItemCard(props: {
           onUpdate={onUpdate}
         />
       ) : null}
-    </div>
+    </Card>
   )
 }
 
@@ -535,7 +539,7 @@ function ItineraryItemFields(props: {
       <div className="space-y-3">
         <div className="space-y-1">
           <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Title</div>
-          <input
+          <Input
             value={item.title}
             onChange={(e) => onUpdate({ title: e.target.value })}
             className="w-full bg-slate-900 border rounded-lg py-2.5 px-3 text-white outline-none border-slate-700 focus:border-primary"
@@ -556,7 +560,7 @@ function ItineraryItemFields(props: {
 
       <div className="space-y-1">
         <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Description (optional)</div>
-        <textarea
+        <Textarea
           value={item.description ?? ''}
           onChange={(e) => onUpdate({ description: e.target.value || undefined })}
           className="w-full bg-slate-900 border rounded-lg py-2.5 px-3 text-white outline-none border-slate-700 focus:border-primary h-20 resize-none"
@@ -566,5 +570,3 @@ function ItineraryItemFields(props: {
     </div>
   )
 }
-
-

@@ -1,4 +1,7 @@
 import * as React from 'react'
+import { Input } from '../9ui/input'
+import { Select } from '../9ui/select'
+import { cn } from '../9ui/utils'
 
 type Size = 'sm' | 'md' | 'lg'
 
@@ -35,10 +38,10 @@ export type FormInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
 
 export function FormInput({ className, size, variant, ...props }: FormInputProps) {
   return (
-    <input
+    <Input
       {...props}
-      className={cx(
-        'w-full border text-white outline-none focus:border-primary placeholder:text-slate-500',
+      className={cn(
+        'border text-white placeholder:text-slate-500',
         variantClasses(variant),
         sizeClasses(size),
         className,
@@ -65,10 +68,10 @@ export function FormSelect({
 }: FormSelectProps) {
   return (
     <div className={cx('relative', wrapperClassName)}>
-      <select
+      <Select
         {...props}
-        className={cx(
-          'w-full border text-white outline-none focus:border-primary appearance-none',
+        className={cn(
+          'border text-white focus:border-primary appearance-none',
           variantClasses(variant),
           sizeClasses(size),
           // keep text clear of the caret
@@ -77,12 +80,11 @@ export function FormSelect({
         )}
       >
         {children}
-      </select>
+      </Select>
       <div className={cx('pointer-events-none absolute inset-y-0 right-4 flex items-center', caretClassName)}>
         <div className="w-2 h-2 border-r border-b border-slate-400 rotate-45" />
       </div>
     </div>
   )
 }
-
 

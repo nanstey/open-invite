@@ -2,6 +2,9 @@ import React, { useState } from 'react'
 import { Loader2, Github } from 'lucide-react'
 import { FeedbackPicker } from '../feedback/FeedbackPicker'
 import type { ProjectFormData } from '../../projectTypes'
+import { Button } from '../../../../lib/ui/9ui/button'
+import { Input } from '../../../../lib/ui/9ui/input'
+import { Textarea } from '../../../../lib/ui/9ui/textarea'
 
 export interface CreateProjectModalProps {
   onClose: () => void
@@ -69,7 +72,7 @@ export function CreateProjectModal({ onClose, onCreate }: CreateProjectModalProp
             <label className="block text-sm font-medium text-slate-300 mb-1">
               Title <span className="text-red-400">*</span>
             </label>
-            <input
+            <Input
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
@@ -84,7 +87,7 @@ export function CreateProjectModal({ onClose, onCreate }: CreateProjectModalProp
             <label className="block text-sm font-medium text-slate-300 mb-1">
               Description
             </label>
-            <textarea
+            <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="What is this project about?"
@@ -100,7 +103,7 @@ export function CreateProjectModal({ onClose, onCreate }: CreateProjectModalProp
             </label>
             <div className="flex items-center gap-2">
               <Github className="w-5 h-5 text-slate-500" />
-              <input
+              <Input
                 type="text"
                 value={githubUrl}
                 onChange={(e) => setGithubUrl(e.target.value)}
@@ -122,25 +125,25 @@ export function CreateProjectModal({ onClose, onCreate }: CreateProjectModalProp
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button
+            <Button
               type="button"
+              variant="ghost"
               onClick={onClose}
-              className="flex-1 px-4 py-3 rounded-lg border border-slate-700 text-slate-300 font-bold hover:bg-slate-700 transition-colors"
+              className="flex-1 px-4 py-3 border border-slate-700 text-slate-300 font-bold hover:bg-slate-700"
               disabled={loading}
             >
               Cancel
-            </button>
-            <button
+            </Button>
+            <Button
               type="submit"
               disabled={loading}
-              className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              className="flex-1 font-bold py-3 px-4 flex items-center justify-center gap-2"
             >
               {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Create'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>
     </div>
   )
 }
-

@@ -1,6 +1,8 @@
 import React from 'react'
 import { ExternalLink, X } from 'lucide-react'
 import { PROJECT_STATUS_COLORS, type ProjectStatus } from '../../projectTypes'
+import { Badge } from '../../../../lib/ui/components/Badge'
+import { Card } from '../../../../lib/ui/9ui/card'
 
 export interface ProjectLinkCardProps {
   projectId: string
@@ -22,8 +24,8 @@ export const ProjectLinkCard: React.FC<ProjectLinkCardProps> = ({
   onRemove,
 }) => {
   return (
-    <div
-      className="flex items-center justify-between p-2 bg-slate-900 rounded-lg border border-transparent hover:border-slate-600 transition-colors group cursor-pointer"
+    <Card
+      className="flex items-center justify-between p-2 bg-slate-900 rounded-lg border-transparent hover:border-slate-600 transition-colors group cursor-pointer"
       onClick={(e) => {
         e.stopPropagation()
         onClick()
@@ -37,13 +39,13 @@ export const ProjectLinkCard: React.FC<ProjectLinkCardProps> = ({
           <ExternalLink className="w-3 h-3 text-slate-500 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity" />
         </div>
         <div className="flex items-center gap-1 mt-1">
-          <span
-            className={`text-xs px-1.5 py-0.5 rounded border ${
+          <Badge
+            colorClass={
               PROJECT_STATUS_COLORS[status as keyof typeof PROJECT_STATUS_COLORS] || 'bg-slate-500/20 text-slate-300 border-slate-500/40'
-            }`}
+            }
           >
             {status.replace('_', ' ')}
-          </span>
+          </Badge>
           {additionalCount && additionalCount > 0 && (
             <span className="text-xs text-slate-500">+{additionalCount}</span>
           )}
@@ -62,7 +64,6 @@ export const ProjectLinkCard: React.FC<ProjectLinkCardProps> = ({
           <X className="w-4 h-4" />
         </button>
       )}
-    </div>
+    </Card>
   )
 }
-

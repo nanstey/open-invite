@@ -1,6 +1,8 @@
 import * as React from 'react'
 
 import { FormSelect } from '../../../../../lib/ui/components/FormControls'
+import { Card } from '../../../../../lib/ui/9ui/card'
+import { Input } from '../../../../../lib/ui/9ui/input'
 
 export function TitleCard(props: {
   isEditMode: boolean
@@ -15,11 +17,11 @@ export function TitleCard(props: {
   if (!isEditMode) return null
 
   return (
-    <div className="bg-surface border border-slate-700 rounded-2xl p-5">
+    <Card className="bg-surface border border-slate-700 rounded-2xl p-5">
       <h1 className="text-2xl font-bold text-white mb-3">Title</h1>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <div className="md:col-span-2">
-          <input
+          <Input
             value={title}
             onChange={(e) => onChangeTitle?.(e.target.value)}
             placeholder="Invite title"
@@ -49,8 +51,7 @@ export function TitleCard(props: {
           {errors?.activityType ? <div className="text-xs text-red-400 mt-1">{errors.activityType}</div> : null}
         </div>
       </div>
-    </div>
+    </Card>
   )
 }
-
 

@@ -7,6 +7,8 @@ import type { LocationData } from '../../../types'
 import { buildGoogleMapsLatLngUrl } from '../maps/maps'
 import { openExternalUrl } from '../../../../../lib/ui/utils/openExternalUrl'
 import { formatEventLocationForDisplay } from '../utils/locationDisplay'
+import { Button } from '../../../../../lib/ui/9ui/button'
+import { Card } from '../../../../../lib/ui/9ui/card'
 
 type SeatsSummary = {
   attendeeCount: number
@@ -41,7 +43,7 @@ export function KeyFactsCard(props: {
 
   return (
     <div className="max-w-6xl mx-auto px-4 md:px-6 -mt-6 relative z-10">
-      <div className="bg-surface border border-slate-700 rounded-2xl p-4 md:p-5">
+      <Card className="bg-surface border border-slate-700 rounded-2xl p-4 md:p-5">
         {/* Mobile: host (left) + datetime (right) */}
         <div className="md:hidden flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
@@ -126,13 +128,14 @@ export function KeyFactsCard(props: {
               <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Where</div>
               <div className="font-bold text-white truncate">{wherePrimary}</div>
               {hasCoordinates ? (
-                <button
-                  className="text-sm text-slate-500 underline decoration-slate-600 decoration-dashed hover:text-slate-300 transition-colors"
+                <Button
+                  variant="ghost"
+                  className="px-0 text-sm text-slate-500 underline decoration-slate-600 decoration-dashed hover:text-slate-300"
                   type="button"
                   onClick={openInMaps}
                 >
                   Open in maps
-                </button>
+                </Button>
               ) : null}
             </div>
           </div>
@@ -157,8 +160,7 @@ export function KeyFactsCard(props: {
             </div>
           </div>
         </div>
-      </div>
+      </Card>
     </div>
   )
 }
-

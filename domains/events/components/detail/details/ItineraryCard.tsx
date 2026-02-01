@@ -1,4 +1,5 @@
 import * as React from 'react'
+import { Card } from '../../../../../lib/ui/9ui/card'
 
 export function ItineraryCard(props: { children: React.ReactNode; isEditMode?: boolean }) {
   const cardClassName = props.isEditMode
@@ -6,10 +7,9 @@ export function ItineraryCard(props: { children: React.ReactNode; isEditMode?: b
     : 'bg-background border border-transparent rounded-2xl p-5'
 
   return (
-    <div className={cardClassName}>
+    <Card className={cardClassName}>
       <h1 className="text-2xl font-bold text-white mb-3">Itinerary</h1>
       {props.children}
-    </div>
+    </Card>
   )
 }
-

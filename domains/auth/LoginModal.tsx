@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { X } from 'lucide-react';
 import { GoogleIcon } from '@/lib/ui/icons/GoogleIcon';
+import { Button } from '../../lib/ui/9ui/button';
+import { Input } from '../../lib/ui/9ui/input';
 
 // ============================================================================
 // Constants
@@ -78,7 +80,7 @@ function FormInput({ label, type, value, onChange, placeholder, required, minLen
   return (
     <div>
       <label className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
-      <input
+      <Input
         type={type}
         value={value}
         onChange={(e) => onChange(e.target.value)}
@@ -115,15 +117,16 @@ function AuthDivider() {
 
 function GoogleSignInButton({ onClick, disabled, loading }: GoogleSignInButtonProps) {
   return (
-    <button
+    <Button
       type="button"
       onClick={onClick}
       disabled={disabled}
-      className="w-full bg-slate-700 hover:bg-slate-600 border border-slate-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 mb-4"
+      variant="secondary"
+      className="w-full border border-slate-600 text-white font-medium py-2.5 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 mb-4"
     >
       <GoogleIcon />
       {loading ? 'Signing in...' : 'Sign in with Google'}
-    </button>
+    </Button>
   );
 }
 
@@ -169,13 +172,13 @@ function EmailSignInForm({ isSignUp, loading, onSubmit, fields }: EmailSignInFor
         minLength={6}
       />
 
-      <button
+      <Button
         type="submit"
         disabled={loading}
-        className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-2 px-4 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full font-bold py-2 px-4"
       >
         {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -183,12 +186,13 @@ function EmailSignInForm({ isSignUp, loading, onSubmit, fields }: EmailSignInFor
 function AuthToggle({ isSignUp, onToggle }: AuthToggleProps) {
   return (
     <div className="mt-4 text-center">
-      <button
+      <Button
         onClick={onToggle}
-        className="text-sm text-slate-400 hover:text-primary transition-colors"
+        variant="ghost"
+        className="text-sm text-slate-400 hover:text-primary"
       >
         {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
-      </button>
+      </Button>
     </div>
   );
 }
@@ -303,12 +307,13 @@ export function LoginModal({ onClose }: LoginModalProps) {
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
       <div className="bg-slate-800 rounded-xl shadow-2xl w-full max-w-md p-6 relative">
-        <button
+        <Button
+          variant="ghost"
           onClick={onClose}
-          className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+          className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors p-2"
         >
           <X className="w-5 h-5" />
-        </button>
+        </Button>
 
         <h2 className="text-2xl font-bold text-white mb-6">
           {isEmailAuthEnabled && isSignUp ? 'Sign Up' : 'Sign In'}
@@ -338,4 +343,3 @@ export function LoginModal({ onClose }: LoginModalProps) {
     </div>
   );
 }
-

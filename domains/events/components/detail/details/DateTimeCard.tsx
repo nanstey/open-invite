@@ -2,6 +2,7 @@ import * as React from 'react'
 
 import { DateTimeFields } from '../../../../../lib/ui/components/DateTimeFields'
 import { buildQuarterHourTimeOptions } from '../../../../../lib/ui/utils/datetime'
+import { Card } from '../../../../../lib/ui/9ui/card'
 import type { EventDateTimeModel } from '../utils/eventDateTimeModel'
 import type { DraftStartDateTimeLocalModel } from '../hooks/useDraftStartDateTimeLocal'
 
@@ -35,7 +36,7 @@ export function DateTimeCard(props: {
     : 'bg-background border border-transparent rounded-2xl p-5'
 
   return (
-    <div className={cardClassName}>
+    <Card className={cardClassName}>
       <h1 className="text-2xl font-bold text-white mb-3">Date &amp; Time</h1>
       {isEditMode ? (
         hasItinerary ? (
@@ -89,7 +90,6 @@ export function DateTimeCard(props: {
         </div>
       )}
       {isEditMode && errorStartTime ? <div className="text-xs text-red-400 mt-2">{errorStartTime}</div> : null}
-    </div>
+    </Card>
   )
 }
-

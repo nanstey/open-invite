@@ -1,0 +1,5 @@
+{
+  "registries": {
+    "@9ui": "https://9ui.dev/r/{name}.json"
+  }
+}

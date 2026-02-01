@@ -12,6 +12,7 @@ import { ExpenseEditRow } from './components/ExpenseEditRow'
 import { ExpenseReadOnlyRow } from './components/ExpenseReadOnlyRow'
 import { ExpensesSummarySection } from './components/ExpensesSummarySection'
 import { useExpenseCalculator } from './useExpenseCalculator'
+import { Card } from '../../../../../lib/ui/9ui/card'
 
 function SortableExpenseItem(props: {
   id: string
@@ -195,7 +196,7 @@ export function ExpensesCard(props: {
   }
 
   return (
-    <div className={cardClassName}>
+    <Card className={cardClassName}>
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-white">Expenses</h1>
@@ -327,7 +328,6 @@ export function ExpensesCard(props: {
           currency={currency}
         />
       ) : null}
-    </div>
+    </Card>
   )
 }
-
