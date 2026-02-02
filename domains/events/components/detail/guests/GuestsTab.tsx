@@ -14,6 +14,7 @@ export function GuestsTab(props: {
   attendeesList: User[]
   friendIds: Set<string>
   outgoingRequestIds: Set<string>
+  incomingRequestMap: Map<string, string>
   currentUserId?: string
   isEditMode: boolean
   onChangeAttendees?: (nextAttendees: string[]) => void
@@ -25,6 +26,7 @@ export function GuestsTab(props: {
     attendeesList,
     friendIds,
     outgoingRequestIds,
+    incomingRequestMap,
     currentUserId,
     isEditMode,
     onChangeAttendees,
@@ -161,7 +163,7 @@ export function GuestsTab(props: {
                         <Check className="w-3 h-3" />
                         Friends
                       </button>
-                    ) : pendingRequestIds.has(u.id) || outgoingRequestIds.has(u.id) ? (
+                    ) : incomingRequestMap.has(u.id) || pendingRequestIds.has(u.id) || outgoingRequestIds.has(u.id) ? (
                       <button type="button" disabled className="px-3 py-2 rounded-xl text-xs font-bold border bg-amber-500/20 text-amber-400 border-amber-500/20">
                         Pending
                       </button>
