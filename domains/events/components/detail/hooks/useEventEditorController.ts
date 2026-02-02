@@ -34,6 +34,7 @@ type EventEditorValues = {
   coordinates: { lat: number; lng: number } | undefined
   locationData: LocationData | undefined
   itineraryTimeDisplay: ItineraryTimeDisplay
+  visibilityType: EventVisibility
 }
 
 type DraftExpense = Omit<EventExpense, 'eventId'>
@@ -201,6 +202,10 @@ export function useEventEditorController(props: {
         coordinates: ev.coordinates,
         locationData: ev.locationData,
         itineraryTimeDisplay: ev.itineraryTimeDisplay,
+        visibilityType:
+          ev.visibilityType === EventVisibility.GROUPS
+            ? EventVisibility.INVITE_ONLY
+            : ev.visibilityType ?? EventVisibility.INVITE_ONLY,
       }
     }
 
@@ -220,6 +225,7 @@ export function useEventEditorController(props: {
       coordinates: undefined,
       locationData: undefined,
       itineraryTimeDisplay: 'START_AND_END',
+      visibilityType: EventVisibility.INVITE_ONLY,
     }
   }, [
     props.initialEvent?.activityType,
@@ -238,6 +244,7 @@ export function useEventEditorController(props: {
     props.initialEvent?.startTime,
     props.initialEvent?.title,
     props.initialEvent?.itineraryTimeDisplay,
+    props.initialEvent?.visibilityType,
   ])
 
   const onSubmit = React.useCallback(
@@ -280,7 +287,7 @@ export function useEventEditorController(props: {
           isFlexibleEnd: value.isFlexibleEnd,
           noPhones: value.noPhones,
           maxSeats: normalizedMaxSeats,
-          visibilityType: EventVisibility.INVITE_ONLY,
+          visibilityType: value.visibilityType,
           groupIds: [],
           allowFriendInvites: false,
           coordinates: value.coordinates,
@@ -325,7 +332,7 @@ export function useEventEditorController(props: {
         isFlexibleEnd: value.isFlexibleEnd,
         noPhones: value.noPhones,
         maxSeats: normalizedMaxSeats,
-        visibilityType: EventVisibility.INVITE_ONLY,
+        visibilityType: value.visibilityType,
         groupIds: [],
         allowFriendInvites: false,
         coordinates: value.coordinates,
@@ -410,7 +417,7 @@ export function useEventEditorController(props: {
       endTime: times?.endTime ?? props.initialEvent?.endTime,
       isFlexibleStart: values.isFlexibleStart,
       isFlexibleEnd: values.isFlexibleEnd,
-      visibilityType: EventVisibility.INVITE_ONLY,
+      visibilityType: values.visibilityType,
       groupIds: EMPTY_STRING_ARR,
       allowFriendInvites: false,
       maxSeats:
@@ -449,6 +456,7 @@ export function useEventEditorController(props: {
     values.isFlexibleEnd,
     values.isFlexibleStart,
     values.itineraryTimeDisplay,
+    values.visibilityType,
     values.location,
     values.maxSeats,
     values.noPhones,
@@ -466,6 +474,7 @@ export function useEventEditorController(props: {
       if (patch.activityType !== undefined) form.setFieldValue('activityType', patch.activityType)
       if (patch.isFlexibleStart !== undefined) form.setFieldValue('isFlexibleStart', patch.isFlexibleStart)
       if (patch.isFlexibleEnd !== undefined) form.setFieldValue('isFlexibleEnd', patch.isFlexibleEnd)
+      if (patch.visibilityType !== undefined) form.setFieldValue('visibilityType', patch.visibilityType)
       if (patch.noPhones !== undefined) form.setFieldValue('noPhones', patch.noPhones)
       if ('maxSeats' in patch) {
         const n = patch.maxSeats === undefined ? undefined : Number(patch.maxSeats)
