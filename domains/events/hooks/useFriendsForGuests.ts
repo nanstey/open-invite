@@ -1,10 +1,11 @@
 import * as React from 'react'
 
-import { fetchFriends } from '../../../services/friendService'
+import { fetchFriends, fetchOutgoingFriendRequests } from '../../../services/friendService'
 
 export function useFriendsForGuests(args: { enabled: boolean }) {
   const { enabled } = args
   const [friendIds, setFriendIds] = React.useState<Set<string>>(new Set())
+  const [outgoingRequestIds, setOutgoingRequestIds] = React.useState<Set<string>>(new Set())
 
   React.useEffect(() => {
     if (!enabled) return
@@ -12,9 +13,13 @@ export function useFriendsForGuests(args: { enabled: boolean }) {
 
     ;(async () => {
       try {
-        const friends = await fetchFriends()
+        const [friends, outgoingRequests] = await Promise.all([
+          fetchFriends(),
+          fetchOutgoingFriendRequests(),
+        ])
         if (cancelled) return
         setFriendIds(new Set(friends.map((f) => f.id)))
+        setOutgoingRequestIds(new Set(outgoingRequests.map((r) => r.recipientId)))
       } catch (err) {
         console.error('Error loading friends:', err)
       }
@@ -25,7 +30,7 @@ export function useFriendsForGuests(args: { enabled: boolean }) {
     }
   }, [enabled])
 
-  return { friendIds }
+  return { friendIds, outgoingRequestIds }
 }
 
 

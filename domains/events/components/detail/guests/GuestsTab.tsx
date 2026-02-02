@@ -1,25 +1,52 @@
 import * as React from 'react'
 
-import { Users } from 'lucide-react'
+import { Check, Users } from 'lucide-react'
 
 import type { User } from '../../../../../lib/types'
 import type { SocialEvent } from '../../../types'
 import { EventVisibility } from '../../../types'
 import { FormSelect } from '../../../../../lib/ui/components/FormControls'
-import { ComingSoonPopover, useComingSoonPopover } from '../../../../../lib/ui/components/ComingSoonPopover'
 import { useGuestsEditActions } from '../hooks/useGuestsEditActions'
+import { sendFriendRequest } from '../../../../../services/friendService'
 
 export function GuestsTab(props: {
   event: SocialEvent
   attendeesList: User[]
   friendIds: Set<string>
+  outgoingRequestIds: Set<string>
   currentUserId?: string
   isEditMode: boolean
   onChangeAttendees?: (nextAttendees: string[]) => void
   onChangeMaxSeats?: (next: number | undefined) => void
+  onChangeVisibility?: (next: EventVisibility) => void
 }) {
-  const { event, attendeesList, friendIds, currentUserId, isEditMode, onChangeAttendees, onChangeMaxSeats } = props
-  const comingSoon = useComingSoonPopover()
+  const {
+    event,
+    attendeesList,
+    friendIds,
+    outgoingRequestIds,
+    currentUserId,
+    isEditMode,
+    onChangeAttendees,
+    onChangeMaxSeats,
+    onChangeVisibility,
+  } = props
+  const [pendingRequestIds, setPendingRequestIds] = React.useState<Set<string>>(new Set())
+  const [sendingRequestIds, setSendingRequestIds] = React.useState<Set<string>>(new Set())
+
+  const handleSendFriendRequest = async (userId: string) => {
+    setSendingRequestIds((prev) => new Set(prev).add(userId))
+    const success = await sendFriendRequest(userId)
+    if (success) {
+      setPendingRequestIds((prev) => new Set(prev).add(userId))
+    }
+    setSendingRequestIds((prev) => {
+      const next = new Set(prev)
+      next.delete(userId)
+      return next
+    })
+  }
+
   const guestsEdit = useGuestsEditActions({
     enabled: isEditMode,
     event,
@@ -56,7 +83,12 @@ export function GuestsTab(props: {
             </div>
             <div className="space-y-1">
               <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Visibility</div>
-              <FormSelect value={EventVisibility.INVITE_ONLY} size="lg" disabled>
+              <FormSelect
+                value={event.visibilityType}
+                size="lg"
+                onChange={(e) => onChangeVisibility?.(e.target.value as EventVisibility)}
+              >
+                <option value={EventVisibility.ALL_FRIENDS}>All Friends</option>
                 <option value={EventVisibility.INVITE_ONLY}>Invite only</option>
               </FormSelect>
             </div>
@@ -125,17 +157,22 @@ export function GuestsTab(props: {
                         Remove
                       </button>
                     ) : isMe ? null : isFriend ? (
-                      <button type="button" disabled className="px-3 py-2 rounded-xl text-xs font-bold border bg-slate-800 text-slate-300 border-slate-700">
+                      <button type="button" disabled className="px-3 py-2 rounded-xl text-xs font-bold border bg-emerald-500/20 text-emerald-400 border-emerald-500/20 flex items-center gap-1">
+                        <Check className="w-3 h-3" />
                         Friends
+                      </button>
+                    ) : pendingRequestIds.has(u.id) || outgoingRequestIds.has(u.id) ? (
+                      <button type="button" disabled className="px-3 py-2 rounded-xl text-xs font-bold border bg-amber-500/20 text-amber-400 border-amber-500/20">
+                        Pending
                       </button>
                     ) : (
                       <button
                         type="button"
-                        aria-disabled="true"
-                        onClick={(e) => comingSoon.show(e, 'Coming Soon!')}
-                        className="px-3 py-2 rounded-xl text-xs font-bold border bg-slate-900 text-slate-500 border-slate-700 opacity-60 cursor-not-allowed"
+                        onClick={() => handleSendFriendRequest(u.id)}
+                        disabled={sendingRequestIds.has(u.id)}
+                        className="px-3 py-2 rounded-xl text-xs font-bold border bg-violet-500/20 text-violet-400 border-violet-500/30 hover:bg-violet-500/30 transition-colors disabled:opacity-50"
                       >
-                        Add Friend
+                        {sendingRequestIds.has(u.id) ? 'Sending...' : 'Add Friend'}
                       </button>
                     )}
                   </div>
@@ -153,8 +190,6 @@ export function GuestsTab(props: {
         ) : null}
       </div>
 
-      <ComingSoonPopover state={comingSoon.state} />
     </div>
   )
 }
-

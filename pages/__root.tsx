@@ -6,29 +6,23 @@ import {
   useRouterState,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-import {
-  Calendar as CalendarIcon,
-  LayoutGrid,
-  Map as MapIcon,
-  UserCircle,
-  Users as UsersIcon,
-} from 'lucide-react'
 
 import type { RouterContext } from '../routerContext'
 import { useAuth } from '../domains/auth/AuthProvider'
 import { ComingSoonPopover, useComingSoonPopover } from '../lib/ui/components/ComingSoonPopover'
-import { TabGroup, type TabOption } from '../lib/ui/components/TabGroup'
+import { TabGroup } from '../lib/ui/components/TabGroup'
 import { getActiveSection, getPageTitle } from '../domains/app/routing'
 import { DesktopSidebar } from '../domains/app/components/DesktopSidebar'
 import { MobileTopHeader } from '../domains/app/components/MobileTopHeader'
 import { MobileBottomNav } from '../domains/app/components/MobileBottomNav'
+import { HeaderTabsProvider, useHeaderTabs } from '../domains/app/HeaderTabsContext'
 import { coerceEventsView, type EventsView } from '../domains/events/hooks/useEventNavigation'
-import { coerceFriendsTab, type FriendsTab } from '../domains/friends/types'
 
 function AppShellLayout() {
   const { user, loading } = useAuth()
   const navigate = useNavigate()
   const comingSoon = useComingSoonPopover()
+  const headerTabs = useHeaderTabs()
   const { pathname, search } = useRouterState({
     select: (s) => ({ pathname: s.location.pathname, search: s.location.search }),
   })
@@ -37,11 +31,13 @@ function AppShellLayout() {
   const pageTitle = getPageTitle(pathname)
   const isEventsIndex = pathname === '/events'
   const isEventsChildRoute = pathname.startsWith('/events/') && !isEventsIndex
-  const hideShellHeaderForRoute = activeSection === 'EVENTS' && isEventsChildRoute
+  const hideShellHeaderForRoute =
+    (activeSection === 'EVENTS' && isEventsChildRoute) ||
+    activeSection === 'PROFILE' ||
+    activeSection === 'FRIENDS'
   const hideMobileBottomNavForRoute = activeSection === 'EVENTS' && isEventsChildRoute
 
   const eventsView = React.useMemo<EventsView>(() => coerceEventsView((search as any)?.view), [search])
-  const friendsTab = React.useMemo<FriendsTab>(() => coerceFriendsTab((search as any)?.tab), [search])
 
   React.useEffect(() => {
     if (!loading && !user && activeSection !== 'PUBLIC') {
@@ -72,32 +68,6 @@ function AppShellLayout() {
 
   const handleComingSoon = (e: React.MouseEvent) => comingSoon.show(e, 'Coming Soon!')
 
-  const inviteTabs: TabOption[] = [
-    { id: 'list', label: 'Cards', icon: <LayoutGrid className="w-4 h-4" /> },
-    { id: 'map', label: 'Map', icon: <MapIcon className="w-4 h-4" /> },
-    { id: 'calendar', label: 'Calendar', icon: <CalendarIcon className="w-4 h-4" /> },
-  ]
-
-  const friendsTabs: TabOption[] = [
-    { id: 'friends', label: 'Friends', icon: <UsersIcon className="w-4 h-4" /> },
-    { id: 'groups', label: 'Groups', icon: <UserCircle className="w-4 h-4" /> },
-  ]
-
-  const headerTabs =
-    activeSection === 'EVENTS' && isEventsIndex ? (
-      <TabGroup
-        tabs={inviteTabs}
-        activeTab={eventsView}
-        onChange={(id) => navigate({ to: '/events', search: { view: coerceEventsView(id) } })}
-      />
-    ) : activeSection === 'FRIENDS' ? (
-      <TabGroup
-        tabs={friendsTabs}
-        activeTab={friendsTab}
-        onChange={(id) => navigate({ to: '/friends', search: { tab: coerceFriendsTab(id) } })}
-      />
-    ) : null
-
   return (
     <div className="min-h-screen min-h-0 w-full flex flex-col md:flex-row overflow-hidden h-screen text-slate-100 bg-background">
       <DesktopSidebar
@@ -107,15 +77,7 @@ function AppShellLayout() {
         onComingSoon={handleComingSoon}
       />
 
-      {!hideShellHeaderForRoute && (
-        <MobileTopHeader
-          pageTitle={pageTitle}
-          activeSection={activeSection}
-          eventsView={eventsView}
-          friendsTab={friendsTab}
-          isEventsIndex={isEventsIndex}
-        />
-      )}
+      {!hideShellHeaderForRoute && <MobileTopHeader pageTitle={pageTitle} />}
 
       {/* Main Content Area */}
       <main
@@ -128,7 +90,15 @@ function AppShellLayout() {
           <header className="hidden md:flex flex-col gap-4 p-4 md:p-6 pb-2 shrink-0 border-b border-transparent z-10">
             <div className="flex items-center justify-between w-full">
               <h1 className="text-2xl font-bold text-white whitespace-nowrap">{pageTitle}</h1>
-              <div className="block">{headerTabs}</div>
+              <div className="block">
+                {headerTabs && (
+                  <TabGroup
+                    tabs={headerTabs.tabs}
+                    activeTab={headerTabs.activeTab}
+                    onChange={headerTabs.onChange}
+                  />
+                )}
+              </div>
             </div>
           </header>
         )}
@@ -161,7 +131,11 @@ export const Route = createRootRouteWithContext<RouterContext>()({
 
     return (
       <>
-        {activeSection === 'PUBLIC' ? <Outlet /> : <AppShellLayout />}
+        {activeSection === 'PUBLIC' ? <Outlet /> : (
+          <HeaderTabsProvider>
+            <AppShellLayout />
+          </HeaderTabsProvider>
+        )}
         {import.meta.env.VITE_SHOW_DEVTOOLS === 'true' || (import.meta.env.VITE_SHOW_DEVTOOLS === undefined && import.meta.env.DEV) ? <TanStackRouterDevtools position="bottom-right" /> : null}
       </>
     )

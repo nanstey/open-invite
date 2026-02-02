@@ -29,7 +29,8 @@ export function DesktopSidebar({
           search={{ view: 'list' }}
           className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary cursor-pointer select-none mb-4"
         >
-          Open Invite
+          <span className="lg:hidden">0i!</span>
+          <span className="hidden lg:block">Open invite!</span>
         </Link>
 
         <div className="flex flex-col gap-4 w-full">
@@ -46,16 +47,18 @@ export function DesktopSidebar({
             <span className="hidden lg:block font-medium">Events</span>
           </Link>
 
-          <button
-            type="button"
-            aria-disabled="true"
-            onClick={onComingSoon}
-            className="p-3 rounded-xl transition-all flex items-center justify-start gap-3 w-full text-slate-500 opacity-60 cursor-not-allowed"
-            title="Coming Soon!"
+          <Link
+            to="/friends"
+            search={{ tab: 'friends' }}
+            className={`p-3 rounded-xl transition-all flex items-center justify-start gap-3 w-full ${
+              activeSection === 'FRIENDS'
+                ? 'bg-primary/10 text-primary'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
           >
             <UsersIcon className="w-6 h-6" />
             <span className="hidden lg:block font-medium">Friends</span>
-          </button>
+          </Link>
 
           <button
             onClick={() => navigate({ to: '/events/new', search: { view: eventsView } })}

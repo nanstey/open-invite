@@ -1,218 +1,205 @@
-
-import React, { useState, useEffect } from 'react';
-import { FriendsMode, Group, User } from '../../lib/types';
-import { UserPlus, Search, MoreHorizontal, Settings, MessageCircle, Plus } from 'lucide-react';
-import { fetchUserGroups, fetchGroupMembers } from '../../services/friendService';
-import { fetchFriends } from '../../services/friendService';
-import { supabase } from '../../lib/supabase';
+import React, { useState, useEffect, useRef, useMemo } from 'react'
+import { FriendsMode, User } from '../../lib/types'
+import {
+  acceptFriendRequest,
+  cancelFriendRequest,
+  declineFriendRequest,
+  fetchFriends,
+  fetchOutgoingFriendRequests,
+  fetchPendingFriendRequests,
+  removeFriend,
+  type OutgoingFriendRequest,
+  type PendingFriendRequest,
+} from '../../services/friendService'
+import { useClickOutside } from '../../lib/hooks/useClickOutside'
+import { SearchInput } from '../../lib/ui/components/SearchInput'
+import { LoadingSpinner } from '../../lib/ui/components/LoadingSpinner'
+import { PendingRequestsSection } from './components/PendingRequestsSection'
+import { FriendsListSection } from './components/FriendsListSection'
 
 interface FriendsViewProps {
-  activeTab: FriendsMode;
+  activeTab: FriendsMode
 }
 
 export const FriendsView: React.FC<FriendsViewProps> = ({ activeTab }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [groups, setGroups] = useState<Group[]>([]);
-  const [friends, setFriends] = useState<User[]>([]);
-  const [groupMembersMap, setGroupMembersMap] = useState<Map<string, User[]>>(new Map());
-  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('')
+  const [friends, setFriends] = useState<User[]>([])
+  const [pendingRequests, setPendingRequests] = useState<PendingFriendRequest[]>([])
+  const [outgoingRequests, setOutgoingRequests] = useState<OutgoingFriendRequest[]>([])
+  const [loadingFriends, setLoadingFriends] = useState(true)
+  const [loadingRequests, setLoadingRequests] = useState(true)
+  const [loadingOutgoing, setLoadingOutgoing] = useState(true)
+  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set())
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Close menu when clicking outside
+  useClickOutside(menuRef, () => setOpenMenuId(null), openMenuId !== null)
 
   // Fetch friends when FRIENDS tab is active
   useEffect(() => {
     const loadFriends = async () => {
       if (activeTab === 'FRIENDS') {
-        setLoading(true);
+        setLoadingFriends(true)
         try {
-          const fetchedFriends = await fetchFriends();
-          setFriends(fetchedFriends);
+          const fetchedFriends = await fetchFriends()
+          setFriends(fetchedFriends)
         } catch (error) {
-          console.error('Error loading friends:', error);
-          setFriends([]);
+          console.error('Error loading friends:', error)
+          setFriends([])
         } finally {
-          setLoading(false);
+          setLoadingFriends(false)
         }
       }
-    };
-    loadFriends();
-  }, [activeTab]);
+    }
+    loadFriends()
+  }, [activeTab])
 
-  // Fetch user groups when GROUPS tab is active
   useEffect(() => {
-    const loadGroups = async () => {
-      if (activeTab === 'GROUPS') {
-        setLoading(true);
+    const loadRequests = async () => {
+      if (activeTab === 'FRIENDS') {
+        setLoadingRequests(true)
         try {
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
-            const userGroups = await fetchUserGroups(user.id);
-            setGroups(userGroups);
-            
-            // Fetch members for each group
-            const membersPromises = userGroups.map(async (group) => {
-              const members = await fetchGroupMembers(group.id);
-              return [group.id, members] as [string, User[]];
-            });
-            const membersResults = await Promise.all(membersPromises);
-            const membersMap = new Map(membersResults);
-            setGroupMembersMap(membersMap);
-          }
+          const fetchedRequests = await fetchPendingFriendRequests()
+          setPendingRequests(fetchedRequests)
         } catch (error) {
-          console.error('Error loading groups:', error);
-          setGroups([]);
+          console.error('Error loading friend requests:', error)
+          setPendingRequests([])
         } finally {
-          setLoading(false);
+          setLoadingRequests(false)
         }
       }
-    };
-    loadGroups();
-  }, [activeTab]);
+    }
+    loadRequests()
+  }, [activeTab])
 
-  const filteredFriends = friends.filter(friend => 
-    friend.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  useEffect(() => {
+    const loadOutgoing = async () => {
+      if (activeTab === 'FRIENDS') {
+        setLoadingOutgoing(true)
+        try {
+          const fetchedOutgoing = await fetchOutgoingFriendRequests()
+          setOutgoingRequests(fetchedOutgoing)
+        } catch (error) {
+          console.error('Error loading outgoing requests:', error)
+          setOutgoingRequests([])
+        } finally {
+          setLoadingOutgoing(false)
+        }
+      }
+    }
+    loadOutgoing()
+  }, [activeTab])
+
+  const filteredFriends = useMemo(
+    () => friends.filter((friend) => friend.name.toLowerCase().includes(searchTerm.toLowerCase())),
+    [friends, searchTerm]
+  )
+
+  const groupedFriends = useMemo(() => {
+    const groups: Record<string, User[]> = {}
+    filteredFriends.forEach((friend) => {
+      const firstLetter = friend.name.charAt(0).toUpperCase()
+      if (!groups[firstLetter]) {
+        groups[firstLetter] = []
+      }
+      groups[firstLetter].push(friend)
+    })
+    return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b))
+  }, [filteredFriends])
+
+  const updateProcessingIds = (id: string, isProcessing: boolean) => {
+    setProcessingIds((prev) => {
+      const next = new Set(prev)
+      isProcessing ? next.add(id) : next.delete(id)
+      return next
+    })
+  }
+
+  const handleRemoveFriend = async (friend: User) => {
+    if (!window.confirm(`Remove ${friend.name} from your friends?`)) return
+    updateProcessingIds(friend.id, true)
+    const success = await removeFriend(friend.id)
+    if (success) {
+      setFriends((prev) => prev.filter((f) => f.id !== friend.id))
+    }
+    updateProcessingIds(friend.id, false)
+  }
+
+  const handleAcceptRequest = async (request: PendingFriendRequest) => {
+    updateProcessingIds(request.id, true)
+    const success = await acceptFriendRequest(request.id, request.requesterId)
+    if (success) {
+      setPendingRequests((prev) => prev.filter((r) => r.id !== request.id))
+      setFriends((prev) => [request.requester, ...prev])
+    }
+    updateProcessingIds(request.id, false)
+  }
+
+  const handleDeclineRequest = async (request: PendingFriendRequest) => {
+    updateProcessingIds(request.id, true)
+    const success = await declineFriendRequest(request.id)
+    if (success) {
+      setPendingRequests((prev) => prev.filter((r) => r.id !== request.id))
+    }
+    updateProcessingIds(request.id, false)
+  }
+
+  const handleCancelRequest = async (request: OutgoingFriendRequest) => {
+    updateProcessingIds(request.id, true)
+    const success = await cancelFriendRequest(request.id)
+    if (success) {
+      setOutgoingRequests((prev) => prev.filter((r) => r.id !== request.id))
+    }
+    updateProcessingIds(request.id, false)
+  }
+
+  const handleMenuToggle = (friendId: string) => {
+    setOpenMenuId((prev) => (prev === friendId ? null : friendId))
+  }
 
   return (
     <div className="w-full pb-20 pt-2 space-y-6">
-      
-      {/* Search Bar */}
       <div className="bg-slate-900/50 p-1">
-        <div className="relative w-full">
-           <Search className="absolute left-3 top-2.5 w-4 h-4 text-slate-500" />
-           <input 
-             type="text" 
-             placeholder={activeTab === 'FRIENDS' ? "Search friends..." : "Search groups..."}
-             value={searchTerm}
-             onChange={(e) => setSearchTerm(e.target.value)}
-             className="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-3 text-sm text-white focus:border-primary outline-none focus:ring-1 focus:ring-primary"
-           />
-        </div>
+        <SearchInput
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          placeholder="Search friends..."
+          size="lg"
+        />
       </div>
 
-      {/* Friends Tab Content */}
       {activeTab === 'FRIENDS' && (
         <div className="animate-fade-in">
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-slate-400">Loading friends...</p>
-              </div>
-            </div>
+          {loadingFriends ? (
+            <LoadingSpinner message="Loading friends..." />
           ) : (
             <>
-              <div className="flex justify-between items-center mb-4 px-1">
-                 <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider">
-                   {filteredFriends.length} Friends
-                 </h3>
-                 <button className="flex items-center gap-2 text-primary hover:text-white transition-colors text-xs font-bold uppercase tracking-wide">
-                    <UserPlus className="w-4 h-4" /> Add Friend
-                 </button>
-              </div>
-              
-              {filteredFriends.length === 0 ? (
-                <div className="text-center py-12 text-slate-400">
-                  <UserPlus className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>{searchTerm ? 'No friends found matching your search.' : 'No friends yet. Add some friends to get started!'}</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {filteredFriends.map(friend => (
-               <div key={friend.id} className="bg-surface border border-slate-700 p-4 rounded-xl flex items-center justify-between group hover:border-primary/50 transition-colors">
-                  <div className="flex items-center gap-3">
-                     <div className="relative">
-                        <img src={friend.avatar} alt={friend.name} className="w-12 h-12 rounded-full border-2 border-slate-600" />
-                        <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-surface rounded-full"></div>
-                     </div>
-                     <div>
-                        <div className="font-bold text-white">{friend.name}</div>
-                        <div className="text-xs text-slate-500">Last active: Today</div>
-                     </div>
-                  </div>
-                  <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                     <button className="p-2 hover:bg-slate-700 rounded-full text-slate-400 hover:text-white" title="Message">
-                        <MessageCircle className="w-4 h-4" />
-                     </button>
-                     <button className="p-2 hover:bg-slate-700 rounded-full text-slate-400 hover:text-white" title="Options">
-                        <MoreHorizontal className="w-4 h-4" />
-                     </button>
-                  </div>
-               </div>
-                  ))}
-                </div>
-              )}
+              <PendingRequestsSection
+                incomingRequests={pendingRequests}
+                outgoingRequests={outgoingRequests}
+                isLoadingIncoming={loadingRequests}
+                isLoadingOutgoing={loadingOutgoing}
+                processingIds={processingIds}
+                onAccept={handleAcceptRequest}
+                onDecline={handleDeclineRequest}
+                onCancel={handleCancelRequest}
+              />
+
+              <FriendsListSection
+                groupedFriends={groupedFriends}
+                filteredCount={filteredFriends.length}
+                searchTerm={searchTerm}
+                openMenuId={openMenuId}
+                processingIds={processingIds}
+                menuRef={menuRef}
+                onMenuToggle={handleMenuToggle}
+                onRemoveFriend={handleRemoveFriend}
+              />
             </>
           )}
         </div>
       )}
-
-      {/* Groups Tab Content */}
-      {activeTab === 'GROUPS' && (
-        <div className="animate-fade-in">
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="text-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                <p className="text-slate-400">Loading groups...</p>
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="flex justify-between items-center mb-4 px-1">
-                <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider">
-                  My Groups
-                </h3>
-                <button className="flex items-center gap-2 text-primary hover:text-white transition-colors text-xs font-bold uppercase tracking-wide">
-                   <Plus className="w-4 h-4" /> Create Group
-                </button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {groups.length === 0 ? (
-                  <div className="col-span-2 text-center py-12 text-slate-400">
-                    <p>No groups yet. Create a group to get started!</p>
-                  </div>
-                ) : (
-                  groups.map(group => {
-                    const members = groupMembersMap.get(group.id) || [];
-                    return (
-                   <div key={group.id} className="bg-surface border border-slate-700 p-6 rounded-xl hover:border-primary/50 transition-all cursor-pointer">
-                       <div className="flex justify-between items-start mb-4">
-                          <div>
-                             <h3 className="text-xl font-bold text-white mb-1">{group.name}</h3>
-                             <p className="text-sm text-slate-400">{members.length + 1} Members</p>
-                          </div>
-                          <button className="p-2 hover:bg-slate-700 rounded-full text-slate-400 hover:text-white">
-                             <Settings className="w-4 h-4" />
-                          </button>
-                       </div>
-                       
-                       <div className="flex items-center -space-x-3 overflow-hidden py-2">
-                          {members.slice(0, 3).map((m, i) => (
-                            <img key={m.id} src={m.avatar} alt={m.name} className="inline-block h-10 w-10 rounded-full border-2 border-surface ring-2 ring-surface" style={{ zIndex: 10-i }} />
-                          ))}
-                          {members.length > 3 && (
-                            <div className="h-10 w-10 rounded-full bg-slate-800 border-2 border-surface flex items-center justify-center text-xs font-bold text-slate-400" style={{ zIndex: 0 }}>
-                              +{members.length - 3}
-                            </div>
-                          )}
-                       </div>
-                       
-                       <div className="mt-4 pt-4 border-t border-slate-700 flex justify-between items-center">
-                          <div className="text-xs text-slate-500">
-                            <span className="text-green-400">●</span> 2 active events
-                          </div>
-                          <button className="text-xs font-bold text-primary hover:text-white">View Board</button>
-                       </div>
-                   </div>
-                    );
-                  })
-                )}
-              </div>
-            </>
-          )}
-        </div>
-      )}
-
     </div>
-  );
-};
+  )
+}

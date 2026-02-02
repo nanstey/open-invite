@@ -1,7 +1,10 @@
-import React, { useMemo } from 'react'
-import { Outlet, createFileRoute, redirect, useRouterState } from '@tanstack/react-router'
+import React, { useMemo, useCallback } from 'react'
+import { Outlet, createFileRoute, redirect, useNavigate, useRouterState } from '@tanstack/react-router'
+import { Calendar as CalendarIcon, LayoutGrid, Map as MapIcon } from 'lucide-react'
 
 import { useAuth } from '../domains/auth/AuthProvider'
+import { useSetHeaderTabs } from '../domains/app/HeaderTabsContext'
+import type { TabOption } from '../lib/ui/components/TabGroup'
 import { MapView } from '../domains/events/components/list/EventsMapView'
 import { CalendarView } from '../domains/events/components/list/CalendarView'
 import { EventsCardView } from '../domains/events/components/list/EventsCardView'
@@ -9,7 +12,7 @@ import { FilterBar } from '../domains/events/components/list/EventsFilterBar'
 import { EventsEmptyState } from '../domains/events/components/list/EventsEmptyState'
 import { EventsLoadingScreen } from '../domains/events/components/list/EventsLoadingScreen'
 import { useEventFilters } from '../domains/events/hooks/useEventFilters'
-import { useEventNavigation, type EventsView } from '../domains/events/hooks/useEventNavigation'
+import { useEventNavigation, coerceEventsView, type EventsView } from '../domains/events/hooks/useEventNavigation'
 import { useEventsFeed } from '../domains/events/hooks/useEventsFeed'
 import { useFilterBarVisibility } from '../domains/events/hooks/useFilterBarVisibility'
 
@@ -44,9 +47,23 @@ export const Route = createFileRoute('/events')({
   },
 })
 
+const inviteTabs: TabOption[] = [
+  { id: 'list', label: 'Cards', icon: <LayoutGrid className="w-4 h-4" /> },
+  { id: 'map', label: 'Map', icon: <MapIcon className="w-4 h-4" /> },
+  { id: 'calendar', label: 'Calendar', icon: <CalendarIcon className="w-4 h-4" /> },
+]
+
 const EventsPage: React.FC = () => {
   const { user: currentUser, loading: authLoading } = useAuth()
+  const navigate = useNavigate()
   const view = Route.useSearch().view ?? 'list'
+
+  const handleTabChange = useCallback(
+    (id: string) => navigate({ to: '/events', search: { view: coerceEventsView(id) } }),
+    [navigate]
+  )
+
+  useSetHeaderTabs(inviteTabs, view, handleTabChange)
 
   const { events, loading: eventsLoading, join, leave } = useEventsFeed({
     currentUserId: currentUser?.id ?? null,

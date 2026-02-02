@@ -26,7 +26,7 @@ export interface Notification {
 }
 
 export type ViewMode = 'EVENTS' | 'FRIENDS' | 'ALERTS' | 'PROFILE';
-export type FriendsMode = 'FRIENDS' | 'GROUPS';
+export type FriendsMode = 'FRIENDS';
 
 // Event-domain types live in `domains/events/types.ts`. Keep these exports to avoid
 // breaking existing imports outside the events domain during migration.

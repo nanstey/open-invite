@@ -230,7 +230,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     { id: 'chat', label: 'Chat', icon: <MessageSquare className="w-4 h-4" /> },
   ];
 
-  const { friendIds } = useFriendsForGuests({ enabled: !isGuest && !isEditMode && activeTab === 'guests' })
+  const { friendIds, outgoingRequestIds } = useFriendsForGuests({ enabled: !isGuest && !isEditMode && activeTab === 'guests' })
 
   const openItineraryLocationInMaps = (locationFull: string) => {
     const q = String(locationFull ?? '').trim()
@@ -429,10 +429,12 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               event={event}
               attendeesList={attendeesList}
               friendIds={friendIds}
+              outgoingRequestIds={outgoingRequestIds}
               currentUserId={currentUserId ?? undefined}
               isEditMode={isEditMode}
               onChangeAttendees={(nextAttendees) => edit?.onChange({ attendees: nextAttendees })}
               onChangeMaxSeats={(next) => edit?.onChange({ maxSeats: next })}
+              onChangeVisibility={(next) => edit?.onChange({ visibilityType: next })}
             />
           ) : null}
 
