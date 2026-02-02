@@ -253,12 +253,29 @@ export async function removeFriend(friendId: string): Promise<boolean> {
   }
 
   // Remove bidirectional friendship
-  const { error } = await supabase
+  const { error: friendError } = await supabase
     .from('user_friends')
     .delete()
     .or(`and(user_id.eq.${userId},friend_id.eq.${friendId}),and(user_id.eq.${friendId},friend_id.eq.${userId})`);
 
-  return !error;
+  if (friendError) {
+    console.error('Error removing friendship:', friendError);
+    return false;
+  }
+
+  // Also clean up any friend request records between the two users
+  // This allows either user to send a new friend request in the future
+  const { error: requestError } = await supabase
+    .from('friend_requests')
+    .delete()
+    .or(`and(requester_id.eq.${userId},recipient_id.eq.${friendId}),and(requester_id.eq.${friendId},recipient_id.eq.${userId})`);
+
+  if (requestError) {
+    console.error('Error cleaning up friend requests:', requestError);
+    // Don't fail the operation if cleanup fails - friendship was already removed
+  }
+
+  return true;
 }
 
 /**
