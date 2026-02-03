@@ -5,6 +5,7 @@ import { ChevronDown, ChevronUp, MoreVertical, Trash2 } from 'lucide-react'
 import { FormInput, FormSelect } from '../../../../../../lib/ui/components/FormControls'
 import { parseMoneyInputToCents } from '../../../../../../lib/ui/utils/money'
 
+import type { ItineraryItem } from '../../../../types'
 import type { EventExpense, ExpenseApi, ExpenseSettledKind, ExpenseSplitType, ExpenseTiming, Person } from '../types'
 import {
   canCommitMoneyInput,
@@ -25,6 +26,7 @@ export function ExpenseEditRow(props: {
   hostId?: string
   currentUserId?: string
   expenseApi?: ExpenseApi
+  itineraryItems: ItineraryItem[]
 
   isExpanded: boolean
   onToggleExpanded: () => void
@@ -45,6 +47,7 @@ export function ExpenseEditRow(props: {
     hostId,
     currentUserId,
     expenseApi,
+    itineraryItems,
     isExpanded,
     onToggleExpanded,
     isMenuOpen,
@@ -236,11 +239,10 @@ export function ExpenseEditRow(props: {
             hostId={hostId}
             currentUserId={currentUserId}
             expenseApi={expenseApi}
+            itineraryItems={itineraryItems}
           />
         </div>
       ) : null}
     </div>
   )
 }
-
-

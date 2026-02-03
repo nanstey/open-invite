@@ -12,6 +12,10 @@ const supabase = vi.hoisted(() => ({
 vi.mock('../lib/supabase', () => ({ supabase }))
 vi.mock('./itineraryService', () => ({ fetchItineraryItems: vi.fn(async () => []) }))
 vi.mock('./expenseService', () => ({ fetchEventExpenses: vi.fn(async () => []) }))
+vi.mock('./itineraryAttendanceService', () => ({
+  fetchEventItineraryAttendance: vi.fn(async () => []),
+  deleteItineraryAttendance: vi.fn(async () => true),
+}))
 vi.mock('../domains/events/components/detail/route/routing', () => ({ isUuid: vi.fn(() => true) }))
 
 import {

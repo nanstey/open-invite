@@ -8,6 +8,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { useOutsideClick } from '../hooks/useOutsideClick'
 
 import type { EventExpense, Person } from './types'
+import type { ItineraryItem } from '../../../types'
 import { ExpenseEditRow } from './components/ExpenseEditRow'
 import { ExpenseReadOnlyRow } from './components/ExpenseReadOnlyRow'
 import { ExpensesSummarySection } from './components/ExpensesSummarySection'
@@ -50,6 +51,7 @@ export function ExpensesCard(props: {
 
   expenses: EventExpense[]
   people: Person[]
+  itineraryItems?: ItineraryItem[]
   expenseApi?: {
     onAdd: (input: Omit<EventExpense, 'id' | 'eventId'>) => Promise<string> | string
     onUpdate: (id: string, patch: Partial<Omit<EventExpense, 'id' | 'eventId'>>) => Promise<void> | void
@@ -57,7 +59,7 @@ export function ExpensesCard(props: {
     onReorder?: (orderedExpenseIds: string[]) => Promise<void> | void
   }
 }) {
-  const { isEditMode, isGuest, onRequireAuth, currentUserId, hostId, expenses, people, expenseApi } = props
+  const { isEditMode, isGuest, onRequireAuth, currentUserId, hostId, expenses, people, itineraryItems, expenseApi } = props
   const [expanded, setExpanded] = React.useState(false)
   const [expandedExpenseId, setExpandedExpenseId] = React.useState<string | null>(null)
   const [openMenuExpenseId, setOpenMenuExpenseId] = React.useState<string | null>(null)
@@ -180,6 +182,7 @@ export function ExpensesCard(props: {
       amountCents: 0,
       currency: 'USD',
       participantIds,
+      itineraryItemId: null,
     })
     setExpanded(true)
     Promise.resolve(created).then((id) => {
@@ -271,6 +274,7 @@ export function ExpensesCard(props: {
                                   hostId={hostId}
                                   currentUserId={currentUserId}
                                   expenseApi={expenseApi}
+                                  itineraryItems={itineraryItems ?? []}
                                   isExpanded={isExpanded}
                                   onToggleExpanded={() => setExpandedExpenseId((prev) => (prev === e.id ? null : e.id))}
                                   isMenuOpen={isMenuOpen}

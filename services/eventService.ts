@@ -3,6 +3,7 @@ import type { SocialEvent, Comment, Reaction, EventVisibility, LocationData, Iti
 import type { Database } from '../lib/database.types';
 import { fetchItineraryItems } from './itineraryService'
 import { fetchEventExpenses } from './expenseService'
+import { fetchEventItineraryAttendance, deleteItineraryAttendance } from './itineraryAttendanceService'
 import { isUuid } from '../domains/events/components/detail/route/routing'
 
 type EventRow = Database['public']['Tables']['events']['Row'];
@@ -72,6 +73,7 @@ function transformEventRow(
   groupIds: string[],
   itineraryItems?: SocialEvent['itineraryItems'],
   expenses?: SocialEvent['expenses'],
+  itineraryAttendance?: SocialEvent['itineraryAttendance'],
 ): SocialEvent {
   return {
     id: row.id,
@@ -93,12 +95,14 @@ function transformEventRow(
     groupIds,
     allowFriendInvites: row.allow_friend_invites,
     maxSeats: row.max_seats || undefined,
+    itineraryAttendanceEnabled: row.itinerary_attendance_enabled ?? false,
     attendees,
     noPhones: row.no_phones,
     itineraryTimeDisplay: (row.itinerary_time_display as ItineraryTimeDisplay) || 'START_AND_END',
     comments,
     reactions,
     itineraryItems,
+    itineraryAttendance,
     expenses,
   };
 }
@@ -244,13 +248,14 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
   if (!eventRow) return null;
 
   // Fetch related data
-  const [attendeesResult, commentsResult, reactionsResult, eventGroupsResult, itineraryItems, expenses] = await Promise.all([
+  const [attendeesResult, commentsResult, reactionsResult, eventGroupsResult, itineraryItems, expenses, itineraryAttendance] = await Promise.all([
     supabase.from('event_attendees').select('*').eq('event_id', eventId),
     supabase.from('comments').select('*').eq('event_id', eventId).order('timestamp', { ascending: true }),
     supabase.from('reactions').select('*').eq('event_id', eventId),
     supabase.from('event_groups').select('*').eq('event_id', eventId),
     fetchItineraryItems(eventId),
     fetchEventExpenses(eventId),
+    fetchEventItineraryAttendance(eventId),
   ]);
 
   const attendeesData = attendeesResult.data as EventAttendeeRow[] | null;
@@ -288,7 +293,7 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
     });
   }
 
-  return transformEventRow(eventRow, attendees, comments, reactions, groupIds, itineraryItems, expenses);
+  return transformEventRow(eventRow, attendees, comments, reactions, groupIds, itineraryItems, expenses, itineraryAttendance);
 }
 
 /**
@@ -354,6 +359,7 @@ export async function createEvent(
     visibility_type: eventData.visibilityType,
     allow_friend_invites: eventData.allowFriendInvites,
     max_seats: eventData.maxSeats || null,
+    itinerary_attendance_enabled: eventData.itineraryAttendanceEnabled ?? false,
     no_phones: eventData.noPhones,
     itinerary_time_display: eventData.itineraryTimeDisplay,
   };
@@ -414,6 +420,7 @@ export async function updateEvent(eventId: string, updates: Partial<SocialEvent>
   if (updates.visibilityType !== undefined) updateData.visibility_type = updates.visibilityType;
   if (updates.allowFriendInvites !== undefined) updateData.allow_friend_invites = updates.allowFriendInvites;
   if (updates.maxSeats !== undefined) updateData.max_seats = updates.maxSeats;
+  if (updates.itineraryAttendanceEnabled !== undefined) updateData.itinerary_attendance_enabled = updates.itineraryAttendanceEnabled;
   if (updates.noPhones !== undefined) updateData.no_phones = updates.noPhones;
   if (updates.itineraryTimeDisplay !== undefined) updateData.itinerary_time_display = updates.itineraryTimeDisplay;
 
@@ -495,7 +502,16 @@ export async function leaveEvent(eventId: string): Promise<boolean> {
     .eq('event_id', eventId)
     .eq('user_id', user.id);
 
-  return !error;
+  if (error) {
+    return false;
+  }
+
+  const attendanceDeleted = await deleteItineraryAttendance(eventId);
+  if (!attendanceDeleted) {
+    console.warn('Failed to clear itinerary attendance on leave for event:', eventId);
+  }
+
+  return true;
 }
 
 /**

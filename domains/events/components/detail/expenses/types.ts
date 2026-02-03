@@ -22,6 +22,7 @@ export type EventExpense = {
   amountCents?: number
   currency: string
   participantIds: string[]
+  itineraryItemId?: string | null
 }
 
 export type ExpenseApi = {
@@ -61,5 +62,4 @@ export type ExpenseSummary = {
   totalCents: number
   hasEstimate: boolean
 }
-
 

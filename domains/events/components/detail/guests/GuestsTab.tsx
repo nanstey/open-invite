@@ -5,6 +5,7 @@ import { Check, Users } from 'lucide-react'
 import type { User } from '../../../../../lib/types'
 import type { SocialEvent } from '../../../types'
 import { EventVisibility } from '../../../types'
+import { Checkbox } from '../../../../../lib/ui/9ui/checkbox'
 import { FormSelect } from '../../../../../lib/ui/components/FormControls'
 import { useGuestsEditActions } from '../hooks/useGuestsEditActions'
 import { sendFriendRequest } from '../../../../../services/friendService'
@@ -17,9 +18,12 @@ export function GuestsTab(props: {
   incomingRequestMap: Map<string, string>
   currentUserId?: string
   isEditMode: boolean
+  itineraryFilterId?: string
+  onChangeItineraryFilterId?: (next: string) => void
   onChangeAttendees?: (nextAttendees: string[]) => void
   onChangeMaxSeats?: (next: number | undefined) => void
   onChangeVisibility?: (next: EventVisibility) => void
+  onChangeItineraryAttendanceEnabled?: (next: boolean) => void
 }) {
   const {
     event,
@@ -29,9 +33,12 @@ export function GuestsTab(props: {
     incomingRequestMap,
     currentUserId,
     isEditMode,
+    itineraryFilterId,
+    onChangeItineraryFilterId,
     onChangeAttendees,
     onChangeMaxSeats,
     onChangeVisibility,
+    onChangeItineraryAttendanceEnabled,
   } = props
   const [pendingRequestIds, setPendingRequestIds] = React.useState<Set<string>>(new Set())
   const [sendingRequestIds, setSendingRequestIds] = React.useState<Set<string>>(new Set())
@@ -55,6 +62,35 @@ export function GuestsTab(props: {
     attendeesList,
     onChangeAttendees,
   })
+
+  const itineraryItems = event.itineraryItems ?? []
+  const activeFilterId = itineraryFilterId ?? ''
+  const shouldShowFilter = !isEditMode && event.itineraryAttendanceEnabled && itineraryItems.length > 0
+
+  const selectedAttendeeIds = React.useMemo(() => {
+    if (!activeFilterId) return new Set<string>()
+    const set = new Set<string>()
+    for (const entry of event.itineraryAttendance ?? []) {
+      if (entry.itineraryItemIds?.includes(activeFilterId)) {
+        set.add(entry.userId)
+      }
+    }
+    return set
+  }, [activeFilterId, event.itineraryAttendance])
+
+  const orderedAttendeesList = React.useMemo(() => {
+    if (!activeFilterId) return guestsEdit.visibleAttendeesList
+    const attending: User[] = []
+    const others: User[] = []
+    for (const attendee of guestsEdit.visibleAttendeesList) {
+      if (selectedAttendeeIds.has(attendee.id)) {
+        attending.push(attendee)
+      } else {
+        others.push(attendee)
+      }
+    }
+    return [...attending, ...others]
+  }, [activeFilterId, guestsEdit.visibleAttendeesList, selectedAttendeeIds])
 
   const attendeeCount = guestsEdit.visibleAttendeesList.length
   const goingLabel = event.maxSeats ? `${attendeeCount}/${event.maxSeats}` : `${attendeeCount}`
@@ -95,6 +131,20 @@ export function GuestsTab(props: {
               </FormSelect>
             </div>
           </div>
+
+          <div className="space-y-2">
+            <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Itinerary attendance</div>
+            <label className="flex items-center gap-2 text-sm text-slate-200">
+              <Checkbox
+                checked={event.itineraryAttendanceEnabled ?? false}
+                onChange={(e) => onChangeItineraryAttendanceEnabled?.(e.target.checked)}
+              />
+              Enable itinerary-level attendance
+            </label>
+            <div className="text-xs text-slate-500">
+              Attendees select itinerary items when they join, and expense totals are scoped accordingly.
+            </div>
+          </div>
         </div>
       ) : null}
 
@@ -106,20 +156,42 @@ export function GuestsTab(props: {
           <div className="text-sm text-slate-400 font-medium">{event.maxSeats ? goingLabel : `${attendeeCount}`}</div>
         </div>
 
-        {guestsEdit.visibleAttendeesList.length === 0 ? (
+        {shouldShowFilter ? (
+          <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-2">
+            <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Filter by itinerary</div>
+            <FormSelect
+              value={activeFilterId}
+              size="md"
+              onChange={(e) => onChangeItineraryFilterId?.(e.target.value)}
+            >
+              <option value="">All guests</option>
+              {itineraryItems.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.title}
+                </option>
+              ))}
+            </FormSelect>
+          </div>
+        ) : null}
+
+        {orderedAttendeesList.length === 0 ? (
           <div className="text-sm text-slate-500 italic">No guests yet.</div>
         ) : (
           <div className="space-y-2">
-            {guestsEdit.visibleAttendeesList.map((u) => {
+            {orderedAttendeesList.map((u) => {
               const isThisHost = u.id === event.hostId
               const isMe = !!currentUserId && u.id === currentUserId
               const isFriend = friendIds.has(u.id)
               const canRemove = isEditMode && !isThisHost
+              const isFiltered = !!activeFilterId
+              const isAttendingItem = !isFiltered || selectedAttendeeIds.has(u.id)
 
               return (
                 <div
                   key={u.id}
-                  className="flex items-center justify-between gap-3 p-3 rounded-xl border border-slate-800 bg-slate-900/30 hover:border-slate-700 transition-colors"
+                  className={`flex items-center justify-between gap-3 p-3 rounded-xl border border-slate-800 bg-slate-900/30 hover:border-slate-700 transition-colors ${
+                    isFiltered && !isAttendingItem ? 'opacity-50 grayscale' : ''
+                  }`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="relative shrink-0">
