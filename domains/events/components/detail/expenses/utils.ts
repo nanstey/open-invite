@@ -23,6 +23,14 @@ export function computeParticipantIdsForAppliesTo(args: {
   return peopleIds
 }
 
+export function filterExpensesForItinerarySelection(
+  expenses: EventExpense[],
+  selectedItineraryItemIds: string[],
+): EventExpense[] {
+  const selected = new Set(selectedItineraryItemIds)
+  return expenses.filter((expense) => !expense.itineraryItemId || selected.has(expense.itineraryItemId))
+}
+
 export function canCommitMoneyInput(s: string): boolean {
   const v = String(s ?? '').trim()
   if (!v) return false
@@ -110,5 +118,4 @@ export function ensureExpenseShapeOnSettledKindChange(
 ): Partial<Omit<EventExpense, 'id' | 'eventId'>> {
   return { settledKind, amountCents: 0 }
 }
-
 

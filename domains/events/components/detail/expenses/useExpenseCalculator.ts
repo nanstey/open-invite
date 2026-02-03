@@ -125,6 +125,15 @@ export function computeExpenseSummary(allDetails: ExpenseDetails[]): ExpenseSumm
   }
 }
 
+export function computeExpenseSummaryForExpenses(
+  expenses: EventExpense[],
+  currentUserId: string | undefined,
+  hostId: string | undefined,
+): ExpenseSummary {
+  const details = expenses.map((expense) => computeExpenseDetails(expense, currentUserId, hostId))
+  return computeExpenseSummary(details)
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // React Hook
 // ─────────────────────────────────────────────────────────────────────────────
@@ -219,4 +228,3 @@ export function useExpenseCalculator(context: ExpenseCalculatorContext): Expense
     normalizeDraftValue,
   }
 }
-

@@ -16,6 +16,7 @@ import { ChatTab } from './chat/ChatTab'
 import { GuestsTab } from './guests/GuestsTab'
 import { ItineraryEditor } from './itineraries/ItineraryEditor'
 import { ItinerarySection } from './itineraries/ItinerarySection'
+import { ItineraryAttendanceOverlay } from './itineraries/ItineraryAttendanceOverlay'
 import { useInviteShare } from './hooks/useInviteShare'
 import { useDraftStartDateTimeLocal } from './hooks/useDraftStartDateTimeLocal'
 import { useEventTabsController } from './hooks/useEventTabsController'
@@ -27,6 +28,15 @@ import { TitleCard } from './details/TitleCard'
 import { AboutCard } from './details/AboutCard'
 import { DateTimeCard } from './details/DateTimeCard'
 import { ItineraryCard } from './details/ItineraryCard'
+import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../../../../lib/ui/9ui/alert-dialog'
 import { LocationCard } from './details/LocationCard'
 import { ExpensesCard } from './expenses/ExpensesCard'
 import { HeroHeader } from './header/HeroHeader'
@@ -34,6 +44,8 @@ import { KeyFactsCard } from './header/KeyFactsCard'
 import { formatItineraryLocationForDisplay, formatRawLocationForDisplay } from './utils/locationDisplay'
 import { buildEventDateTimeModel } from './utils/eventDateTimeModel'
 import type { LocationSuggestion } from '../../../../lib/ui/components/LocationAutocomplete'
+import { upsertItineraryAttendance } from '../../../../services/itineraryAttendanceService'
+import { fetchEventById } from '../../../../services/eventService'
 
 interface EventDetailProps {
   event: SocialEvent;
@@ -137,6 +149,10 @@ export const EventDetail: React.FC<EventDetailProps> = ({
 
   // --- Local UI state ---
   const [showHeaderImageModal, setShowHeaderImageModal] = useState(false)
+  const [showItineraryAttendanceOverlay, setShowItineraryAttendanceOverlay] = useState(false)
+  const [guestItineraryFilterId, setGuestItineraryFilterId] = useState('')
+  const [pendingJoin, setPendingJoin] = useState(false)
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false)
 
   // --- Itinerary time display (persisted on event) ---
   const showItineraryStartTimeOnly = event.itineraryTimeDisplay === 'START_ONLY'
@@ -201,6 +217,81 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const itineraryItems: ItineraryItem[] =
     (isEditMode ? edit?.itinerary?.items : event.itineraryItems) ?? []
   const hasItinerary = itineraryItems.length > 0
+  const itineraryAttendance = event.itineraryAttendance ?? []
+  const currentAttendance = currentUserId
+    ? itineraryAttendance.find((entry) => entry.userId === currentUserId)
+    : undefined
+  const currentAttendanceIds = currentAttendance?.itineraryItemIds ?? []
+  const canManageItineraryAttendance =
+    !isEditMode &&
+    event.itineraryAttendanceEnabled &&
+    !!currentUserId &&
+    isAttending &&
+    !isHost &&
+    hasItinerary
+  const shouldGateJoin =
+    !isEditMode &&
+    event.itineraryAttendanceEnabled &&
+    !!currentUserId &&
+    !isHost &&
+    hasItinerary &&
+    !isAttending
+  const shouldPromptItineraryAttendance =
+    canManageItineraryAttendance &&
+    (!currentAttendance || (currentAttendance.itineraryItemIds?.length ?? 0) === 0)
+
+  const wasAttendingRef = React.useRef(isAttending)
+
+  React.useEffect(() => {
+    const wasAttending = wasAttendingRef.current
+    wasAttendingRef.current = isAttending
+
+    if (!wasAttending && isAttending && canManageItineraryAttendance) {
+      setShowItineraryAttendanceOverlay(true)
+      return
+    }
+
+    if (shouldPromptItineraryAttendance) {
+      setShowItineraryAttendanceOverlay(true)
+    }
+  }, [canManageItineraryAttendance, isAttending, shouldPromptItineraryAttendance])
+
+  const handleSaveAttendance = React.useCallback(
+    async (selectedIds: string[]) => {
+      if (pendingJoin && !isAttending) {
+        if (onJoin) {
+          await onJoin(event.id)
+        } else {
+          return false
+        }
+      }
+      const saved = await upsertItineraryAttendance(event.id, selectedIds)
+      if (!saved) return false
+      const refreshed = await fetchEventById(event.id)
+      if (refreshed) {
+        onUpdateEvent(refreshed)
+      }
+      setPendingJoin(false)
+      return true
+    },
+    [event.id, isAttending, onJoin, onUpdateEvent, pendingJoin],
+  )
+
+  const attendanceByItem = React.useMemo(() => {
+    if (!itineraryAttendance.length || attendeesList.length === 0) return new Map<string, User[]>()
+    const byId = new Map(attendeesList.map((person) => [person.id, person]))
+    const map = new Map<string, User[]>()
+    for (const entry of itineraryAttendance) {
+      const user = byId.get(entry.userId)
+      if (!user) continue
+      for (const itemId of entry.itineraryItemIds ?? []) {
+        const list = map.get(itemId) ?? []
+        list.push(user as User)
+        map.set(itemId, list)
+      }
+    }
+    return map
+  }, [attendeesList, itineraryAttendance])
 
   // --- Derived view models ---
   const dateTime = React.useMemo(
@@ -246,7 +337,18 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     onDismiss,
     isHost,
     onEditRequested,
-    onJoinLeave: attendance.onJoinLeave,
+    onJoinLeave: async () => {
+      if (isAttending) {
+        setLeaveConfirmOpen(true)
+        return
+      }
+      if (shouldGateJoin) {
+        setPendingJoin(true)
+        setShowItineraryAttendanceOverlay(true)
+        return
+      }
+      await attendance.onJoinLeave()
+    },
     isJoinDisabled,
     isAttending,
     isFull,
@@ -340,6 +442,17 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                   isEditMode={isEditMode}
                   showItineraryStartTimeOnly={showItineraryStartTimeOnly}
                   onChangeItineraryStartTimeOnly={handleChangeItineraryStartTimeOnly}
+                  headerActions={
+                    canManageItineraryAttendance ? (
+                      <button
+                        type="button"
+                        onClick={() => setShowItineraryAttendanceOverlay(true)}
+                        className="px-3 py-2 rounded-xl text-xs font-bold border border-slate-700 bg-slate-900/60 text-slate-200 hover:bg-slate-800 transition-colors"
+                      >
+                        {currentAttendance ? 'Edit selections' : 'Choose items'}
+                      </button>
+                    ) : null
+                  }
                 >
                   {isEditMode ? (
                     edit?.itinerary ? (
@@ -365,6 +478,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                       showItineraryStartTimeOnly={showItineraryStartTimeOnly}
                       formatItineraryLocationForDisplay={formatItineraryLocationForDisplay}
                       openItineraryLocationInMaps={openItineraryLocationInMaps}
+                      attendanceByItem={event.itineraryAttendanceEnabled ? attendanceByItem : undefined}
                     />
                   )}
                 </ItineraryCard>
@@ -420,6 +534,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
                     : undefined
                 }
                 people={expensePeople}
+                itineraryItems={itineraryItems}
               />
             </div>
           ) : null}
@@ -433,9 +548,12 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               incomingRequestMap={incomingRequestMap}
               currentUserId={currentUserId ?? undefined}
               isEditMode={isEditMode}
+              itineraryFilterId={guestItineraryFilterId}
+              onChangeItineraryFilterId={setGuestItineraryFilterId}
               onChangeAttendees={(nextAttendees) => edit?.onChange({ attendees: nextAttendees })}
               onChangeMaxSeats={(next) => edit?.onChange({ maxSeats: next })}
               onChangeVisibility={(next) => edit?.onChange({ visibilityType: next })}
+              onChangeItineraryAttendanceEnabled={(next) => edit?.onChange({ itineraryAttendanceEnabled: next })}
             />
           ) : null}
 
@@ -472,6 +590,50 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           }}
         />
       ) : null}
+
+      {showItineraryAttendanceOverlay ? (
+        <ItineraryAttendanceOverlay
+          open={showItineraryAttendanceOverlay}
+          title={event.title}
+          itineraryItems={itineraryItems}
+          expenses={event.expenses ?? []}
+          currentUserId={currentUserId ?? undefined}
+          hostId={event.hostId}
+          initialSelectedIds={currentAttendanceIds}
+          mode={pendingJoin ? 'join' : currentAttendance ? 'edit' : 'join'}
+          onClose={() => {
+            setShowItineraryAttendanceOverlay(false)
+            setPendingJoin(false)
+          }}
+          onSave={handleSaveAttendance}
+        />
+      ) : null}
+
+      <AlertDialog open={leaveConfirmOpen} onOpenChange={setLeaveConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Leave this event?</AlertDialogTitle>
+            <AlertDialogDescription>
+              You will be removed from the guest list.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogClose className="px-4 py-2 rounded-xl text-slate-200 hover:bg-slate-800 text-sm font-semibold">
+              Cancel
+            </AlertDialogClose>
+            <button
+              type="button"
+              onClick={async () => {
+                setLeaveConfirmOpen(false)
+                await attendance.onJoinLeave()
+              }}
+              className="px-4 py-2 rounded-xl text-sm font-semibold bg-red-500/20 text-red-200 border border-red-500/40 hover:bg-red-500/30"
+            >
+              Leave event
+            </button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
     </div>
   );

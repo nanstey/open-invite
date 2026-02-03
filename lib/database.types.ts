@@ -106,6 +106,7 @@ export type Database = {
           currency: string
           event_id: string
           id: string
+          itinerary_item_id: string | null
           participant_ids: string[]
           settled_kind: string | null
           sort_order: number
@@ -121,6 +122,7 @@ export type Database = {
           currency?: string
           event_id: string
           id?: string
+          itinerary_item_id?: string | null
           participant_ids: string[]
           settled_kind?: string | null
           sort_order?: number
@@ -136,6 +138,7 @@ export type Database = {
           currency?: string
           event_id?: string
           id?: string
+          itinerary_item_id?: string | null
           participant_ids?: string[]
           settled_kind?: string | null
           sort_order?: number
@@ -150,6 +153,13 @@ export type Database = {
             columns: ["event_id"]
             isOneToOne: false
             referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "event_expenses_itinerary_item_id_fkey"
+            columns: ["itinerary_item_id"]
+            isOneToOne: false
+            referencedRelation: "event_itinerary_items"
             referencedColumns: ["id"]
           },
         ]
@@ -269,6 +279,41 @@ export type Database = {
           },
         ]
       }
+      event_itinerary_attendance: {
+        Row: {
+          created_at: string | null
+          event_id: string
+          id: string
+          itinerary_item_ids: string[]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          event_id: string
+          id?: string
+          itinerary_item_ids?: string[]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          event_id?: string
+          id?: string
+          itinerary_item_ids?: string[]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_itinerary_attendance_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       event_link_views: {
         Row: {
           event_id: string
@@ -310,6 +355,7 @@ export type Database = {
           is_flexible_end: boolean
           is_flexible_start: boolean
           itinerary_time_display: string
+          itinerary_attendance_enabled: boolean
           location: string
           location_data: Json | null
           max_seats: number | null
@@ -334,6 +380,7 @@ export type Database = {
           is_flexible_end?: boolean
           is_flexible_start?: boolean
           itinerary_time_display?: string
+          itinerary_attendance_enabled?: boolean
           location: string
           location_data?: Json | null
           max_seats?: number | null
@@ -358,6 +405,7 @@ export type Database = {
           is_flexible_end?: boolean
           is_flexible_start?: boolean
           itinerary_time_display?: string
+          itinerary_attendance_enabled?: boolean
           location?: string
           location_data?: Json | null
           max_seats?: number | null
@@ -1527,4 +1575,3 @@ export const Constants = {
     },
   },
 } as const
-

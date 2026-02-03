@@ -21,6 +21,15 @@ export interface ItineraryItem {
   description?: string
 }
 
+export interface ItineraryAttendance {
+  id: string
+  eventId: string
+  userId: string
+  itineraryItemIds: string[]
+  createdAt?: string
+  updatedAt?: string
+}
+
 export type ExpenseSplitType = 'GROUP' | 'PER_PERSON'
 export type ExpenseTiming = 'UP_FRONT' | 'SETTLED_LATER'
 export type ExpenseSettledKind = 'EXACT' | 'ESTIMATE'
@@ -47,6 +56,7 @@ export interface EventExpense {
   amountCents?: number
   currency: string
   participantIds: string[]
+  itineraryItemId?: string | null
 }
 
 export enum EventVisibility {
@@ -96,11 +106,13 @@ export interface SocialEvent {
   allowFriendInvites: boolean
   maxSeats?: number
   attendees: string[] // User IDs
+  itineraryAttendanceEnabled?: boolean
   noPhones: boolean
   itineraryTimeDisplay: ItineraryTimeDisplay
   comments: Comment[]
   reactions: Record<string, Reaction> // key is emoji
   itineraryItems?: ItineraryItem[] // optional to keep list fetch lightweight
+  itineraryAttendance?: ItineraryAttendance[] // optional to keep list fetch lightweight
   expenses?: EventExpense[] // optional to keep list fetch lightweight
 }
 
