@@ -29,6 +29,10 @@ export const PendingRequestsSection: React.FC<PendingRequestsSectionProps> = ({
   const totalCount = incomingRequests.length + outgoingRequests.length
   const hasRequests = totalCount > 0
 
+  if (!hasRequests) {
+    return null
+  }
+
   return (
     <div className="space-y-4">
       <SectionHeader

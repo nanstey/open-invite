@@ -22,51 +22,53 @@ export function MobileBottomNav({
   const navigate = useNavigate()
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-slate-900 border-t border-slate-800 z-50 flex justify-around items-center px-1 pb-safe-area shadow-[0_-5px_20px_rgba(0,0,0,0.3)]">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-slate-900 border-t border-slate-800 z-50 grid grid-cols-5 items-center justify-items-center px-2 pb-safe-area shadow-[0_-5px_20px_rgba(0,0,0,0.3)]">
       <Link
         to="/events"
         search={{ view: eventsView }}
-        className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
+        className={`w-full flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
           activeSection === 'EVENTS' ? 'text-primary' : 'text-slate-400'
         }`}
       >
         <CalendarDays className="w-6 h-6" />
-        <span className="text-[10px] font-medium">Events</span>
+        <span className="text-[12px] font-medium">Events</span>
       </Link>
 
-      <button
-        type="button"
-        aria-disabled="true"
-        onClick={onComingSoon}
-        className="flex flex-col items-center gap-1 p-2 rounded-lg text-slate-500 opacity-60 cursor-not-allowed"
-        title="Coming Soon!"
+      <Link
+        to="/friends"
+        search={{ tab: 'friends' }}
+        className={`w-full flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
+          activeSection === 'FRIENDS' ? 'text-primary' : 'text-slate-400'
+        }`}
       >
         <UsersIcon className="w-6 h-6" />
-        <span className="text-[10px] font-medium">Friends</span>
-      </button>
-
-      <button
-        onClick={() => navigate({ to: '/events/new', search: { view: eventsView } })}
-        className="-mt-8 bg-primary text-white p-3 rounded-full shadow-lg shadow-primary/30 border-4 border-slate-900 transform transition-transform hover:scale-105 active:scale-95"
-        type="button"
-      >
-        <Plus className="w-7 h-7" />
-      </button>
+        <span className="text-[12px] font-medium">Friends</span>
+      </Link>
+      
+      <div className="w-full flex justify-center">
+        <button
+          onClick={() => navigate({ to: '/events/new', search: { view: eventsView } })}
+          className="-mt-8 bg-primary text-white p-3 rounded-full shadow-lg shadow-primary/30 border-4 border-slate-900 transform transition-transform hover:scale-105 active:scale-95"
+          type="button"
+        >
+          <Plus className="w-7 h-7" />
+        </button>
+      </div>
 
       <button
         type="button"
         aria-disabled="true"
         onClick={onComingSoon}
-        className="flex flex-col items-center gap-1 p-2 rounded-lg text-slate-500 opacity-60 cursor-not-allowed"
+        className="w-full flex flex-col items-center gap-1 p-2 rounded-lg text-slate-500 opacity-60 cursor-not-allowed"
         title="Coming Soon!"
       >
         <Bell className="w-6 h-6" />
-        <span className="text-[10px] font-medium">Notifications</span>
+        <span className="text-[12px] font-medium">Alerts</span>
       </button>
 
       <Link
         to="/profile"
-        className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
+        className={`w-full flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
           activeSection === 'PROFILE' ? 'text-primary' : 'text-slate-400'
         }`}
       >
@@ -77,9 +79,8 @@ export function MobileBottomNav({
         >
           <img src={user.avatar} alt="Me" className="w-full h-full object-cover" />
         </div>
-        <span className="text-[10px] font-medium">Profile</span>
+        <span className="text-[12px] font-medium">Profile</span>
       </Link>
     </nav>
   )
 }
-
