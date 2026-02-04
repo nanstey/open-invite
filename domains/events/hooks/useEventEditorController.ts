@@ -2,16 +2,16 @@ import React from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useForm, useStore } from '@tanstack/react-form'
 
-import type { User } from '../../../../../lib/types'
-import type { EventExpense, ItineraryItem, ItineraryTimeDisplay, LocationData, SocialEvent } from '../../../types'
-import { EventVisibility } from '../../../types'
-import { createEvent, fetchEventById, updateEvent } from '../../../../../services/eventService'
-import { ensureItineraryAttendanceForAllAttendees } from '../../../../../services/itineraryAttendanceService'
-import { createItineraryItem, deleteItineraryItem, updateItineraryItem } from '../../../../../services/itineraryService'
-import { createEventExpense, deleteEventExpense, updateEventExpense } from '../../../../../services/expenseService'
-import { toLocalDateTimeInputValue } from '../../../../../lib/ui/utils/datetime'
-import { validateEventEditor } from '../utils/validateEventEditor'
-import { computeEventTimes, diffItineraryItems, mapDraftItineraryItems, type DraftItineraryItem } from '../utils/eventEditorUtils'
+import type { User } from '../../../lib/types'
+import type { EventExpense, ItineraryItem, ItineraryTimeDisplay, LocationData, SocialEvent } from '../types'
+import { EventVisibility } from '../types'
+import { createEvent, fetchEventById, updateEvent } from '../../../services/eventService'
+import { ensureItineraryAttendanceForAllAttendees } from '../../../services/itineraryAttendanceService'
+import { createItineraryItem, deleteItineraryItem, updateItineraryItem } from '../../../services/itineraryService'
+import { createEventExpense, deleteEventExpense, updateEventExpense } from '../../../services/expenseService'
+import { toLocalDateTimeInputValue } from '../../../lib/ui/utils/datetime'
+import { validateEventEditor } from '../components/detail/utils/validateEventEditor'
+import { computeEventTimes, diffItineraryItems, mapDraftItineraryItems, type DraftItineraryItem } from '../components/detail/utils/eventEditorUtils'
 
 type EditorMode = 'create' | 'update'
 
@@ -583,7 +583,7 @@ export function useEventEditorController(props: {
       const nextOrdered: DraftExpense[] = []
       for (const id of orderedExpenseIds) {
         const item = prevById.get(id)
-        if (item) nextOrdered.push(item)
+        if (item) nextOrdered.push(item as DraftExpense)
       }
 
       // Append any expenses not included (e.g. new ones added since the list was built).

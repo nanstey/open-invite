@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { copyToClipboard } from '../../../../../lib/ui/utils/clipboard'
+import { copyToClipboard } from '../../../lib/ui/utils/clipboard'
 
 type UseInviteShareInput = {
   eventId: string

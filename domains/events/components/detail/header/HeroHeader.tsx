@@ -94,6 +94,9 @@ export function HeroHeader(props: {
   }
 
   const handleTouchMove = (e: React.TouchEvent) => {
+    if (isAdjusting) {
+      e.preventDefault()
+    }
     handleDragMove(e.touches[0].clientY)
   }
 
@@ -118,10 +121,25 @@ export function HeroHeader(props: {
     }
   }, [isDragging])
 
+  // Prevent mobile page scroll while adjusting the header image.
+  React.useEffect(() => {
+    if (!isAdjusting || !containerRef.current) return
+    const container = containerRef.current
+    const handleTouchMoveEvent = (e: TouchEvent) => {
+      e.preventDefault()
+    }
+
+    container.addEventListener('touchmove', handleTouchMoveEvent, { passive: false })
+    return () => {
+      container.removeEventListener('touchmove', handleTouchMoveEvent)
+    }
+  }, [isAdjusting])
+
   return (
     <div
       ref={containerRef}
       className={`relative w-full h-56 md:h-72 bg-slate-800 ${isAdjusting ? 'cursor-grab' : ''} ${isDragging ? 'cursor-grabbing' : ''}`}
+      style={{ touchAction: isAdjusting ? 'none' : 'auto' }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
@@ -216,4 +234,3 @@ export function HeroHeader(props: {
     </div>
   )
 }
-

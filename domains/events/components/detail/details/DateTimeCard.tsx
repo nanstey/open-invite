@@ -4,7 +4,7 @@ import { DateTimeFields } from '../../../../../lib/ui/components/DateTimeFields'
 import { buildQuarterHourTimeOptions } from '../../../../../lib/ui/utils/datetime'
 import { Card } from '../../../../../lib/ui/9ui/card'
 import type { EventDateTimeModel } from '../utils/eventDateTimeModel'
-import type { DraftStartDateTimeLocalModel } from '../hooks/useDraftStartDateTimeLocal'
+import type { DraftStartDateTimeLocalModel } from '../../../hooks/useDraftStartDateTimeLocal'
 
 export function DateTimeCard(props: {
   isEditMode: boolean

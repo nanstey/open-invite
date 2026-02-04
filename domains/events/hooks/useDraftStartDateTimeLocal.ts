@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { splitLocalDateTime } from '../../../../../lib/ui/utils/datetime'
+import { splitLocalDateTime } from '../../../lib/ui/utils/datetime'
 
 export type DraftStartDateTimeLocalModel = {
   draftDate: string
@@ -22,7 +22,7 @@ export function useDraftStartDateTimeLocal(input: {
 
   React.useEffect(() => {
     if (!enabled) return
-    const { date, time } = splitLocalDateTime(startDateTimeLocal)
+    const { date, time } = splitLocalDateTime(startDateTimeLocal ?? '')
     setDraftDate(date)
     setDraftTime(time)
   }, [enabled, startDateTimeLocal])

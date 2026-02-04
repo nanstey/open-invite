@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { parseEventTab, type EventTab } from '../route/routing'
+import { parseEventTab, type EventTab } from '../components/detail/route/routing'
 
 export function useEventTabsController(input: {
   activeTabProp?: EventTab

@@ -2,7 +2,7 @@ import type { User } from '../../../../lib/types'
 import type { SocialEvent } from '../../types'
 import { EventDetail } from './EventDetail'
 import type { EventTab } from './route/routing'
-import { useEventEditorController } from './hooks/useEventEditorController'
+import { useEventEditorController } from '../../hooks/useEventEditorController'
 
 type EditorMode = 'create' | 'update'
 
