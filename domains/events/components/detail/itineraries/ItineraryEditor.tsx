@@ -18,7 +18,7 @@ import {
   minutesToQuarterHourHours,
   sortByStartTime,
 } from './itinerary'
-import { useOutsideClick } from '../hooks/useOutsideClick'
+import { useOutsideClick } from '../../../hooks/useOutsideClick'
 
 type ItineraryApi = {
   onAdd: (input: {

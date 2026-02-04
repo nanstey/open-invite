@@ -5,7 +5,7 @@ import { DndContext, PointerSensor, closestCenter, useSensor, useSensors, type D
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 
-import { useOutsideClick } from '../hooks/useOutsideClick'
+import { useOutsideClick } from '../../../hooks/useOutsideClick'
 
 import type { EventExpense, Person } from './types'
 import type { ItineraryItem } from '../../../types'

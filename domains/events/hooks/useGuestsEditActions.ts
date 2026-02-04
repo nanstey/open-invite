@@ -1,7 +1,7 @@
 import * as React from 'react'
 
-import type { User } from '../../../../../lib/types'
-import type { SocialEvent } from '../../../types'
+import type { User } from '../../../lib/types'
+import type { SocialEvent } from '../types'
 
 export function useGuestsEditActions(input: {
   enabled: boolean

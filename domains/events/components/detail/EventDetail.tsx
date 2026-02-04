@@ -2,50 +2,31 @@
 import React, { useState } from 'react';
 import type { Group, User } from '../../../../lib/types';
 import type { ItineraryItem, SocialEvent } from '../../types';
-import type { EventExpense } from './expenses/types'
 import { Info, MessageSquare, Users } from 'lucide-react';
 import { TabGroup, type TabOption } from '../../../../lib/ui/components/TabGroup';
 import { useRouterState } from '@tanstack/react-router';
 import { HeaderImageModal } from './images/HeaderImageModal'
-import { buildGoogleMapsSearchUrl } from './maps/maps'
-import { openExternalUrl } from '../../../../lib/ui/utils/openExternalUrl'
 import type { EventTab } from './route/routing'
 import { useEventPeople } from '../../hooks/useEventPeople'
 import { useFriendsForGuests } from '../../hooks/useFriendsForGuests'
 import { ChatTab } from './chat/ChatTab'
 import { GuestsTab } from './guests/GuestsTab'
-import { ItineraryEditor } from './itineraries/ItineraryEditor'
-import { ItinerarySection } from './itineraries/ItinerarySection'
 import { ItineraryAttendanceOverlay } from './itineraries/ItineraryAttendanceOverlay'
-import { useInviteShare } from './hooks/useInviteShare'
-import { useDraftStartDateTimeLocal } from './hooks/useDraftStartDateTimeLocal'
-import { useEventTabsController } from './hooks/useEventTabsController'
-import { useAttendanceToggle } from './hooks/useAttendanceToggle'
+import { useInviteShare } from '../../hooks/useInviteShare'
+import { useDraftStartDateTimeLocal } from '../../hooks/useDraftStartDateTimeLocal'
+import { useEventTabsController } from '../../hooks/useEventTabsController'
+import { useAttendanceToggle } from '../../hooks/useAttendanceToggle'
 import { HostedByActionsCard } from './actions/HostedByActionsCard'
 import type { EventActionsModel } from './actions/types'
 import { MobileActionsBar } from './actions/MobileActionsBar'
-import { TitleCard } from './details/TitleCard'
-import { AboutCard } from './details/AboutCard'
-import { DateTimeCard } from './details/DateTimeCard'
-import { ItineraryCard } from './details/ItineraryCard'
-import {
-  AlertDialog,
-  AlertDialogClose,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '../../../../lib/ui/9ui/alert-dialog'
-import { LocationCard } from './details/LocationCard'
-import { ExpensesCard } from './expenses/ExpensesCard'
+import { DetailsTab } from './details/DetailsTab'
+import { LeaveEventDialog } from './actions/LeaveEventDialog'
 import { HeroHeader } from './header/HeroHeader'
 import { KeyFactsCard } from './header/KeyFactsCard'
-import { formatItineraryLocationForDisplay, formatRawLocationForDisplay } from './utils/locationDisplay'
 import { buildEventDateTimeModel } from './utils/eventDateTimeModel'
-import type { LocationSuggestion } from '../../../../lib/ui/components/LocationAutocomplete'
 import { upsertItineraryAttendance } from '../../../../services/itineraryAttendanceService'
 import { fetchEventById } from '../../../../services/eventService'
+import type { EventExpense } from '../../types'
 
 interface EventDetailProps {
   event: SocialEvent;
@@ -323,12 +304,6 @@ export const EventDetail: React.FC<EventDetailProps> = ({
 
   const { friendIds, outgoingRequestIds, incomingRequestMap } = useFriendsForGuests({ enabled: !isGuest && !isEditMode && activeTab === 'guests' })
 
-  const openItineraryLocationInMaps = (locationFull: string) => {
-    const q = String(locationFull ?? '').trim()
-    if (!q) return
-    openExternalUrl(buildGoogleMapsSearchUrl(q))
-  }
-
   const actionsModel: EventActionsModel = {
     mode: isEditMode ? 'edit' : 'view',
     inviteCopied,
@@ -358,6 +333,17 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     isSaving: edit?.isSaving,
     primaryLabel: edit?.primaryLabel,
   }
+
+  const expenseApi =
+    isEditMode && edit?.expenses
+      ? {
+          onAdd: edit.expenses.onAdd,
+          onUpdate: edit.expenses.onUpdate,
+          onDelete: edit.expenses.onDelete,
+          onReorder: edit.expenses.onReorder,
+        }
+      : undefined
+  const expenses = (isEditMode ? edit?.expenses?.items : event.expenses) ?? []
 
   return (
     <div
@@ -404,139 +390,28 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           <TabGroup tabs={tabs} activeTab={activeTab} onChange={tabController.onTabChange} />
 
           {activeTab === 'details' ? (
-            <div className="space-y-4">
-              <TitleCard
-                isEditMode={isEditMode}
-                title={event.title}
-                activityType={event.activityType}
-                onChangeTitle={(next) => edit?.onChange({ title: next })}
-                onChangeActivityType={(next) => edit?.onChange({ activityType: next })}
-                errors={isEditMode ? { title: edit?.errors?.title, activityType: edit?.errors?.activityType } : undefined}
-              />
-
-              <AboutCard
-                isEditMode={isEditMode}
-                description={event.description}
-                onChangeDescription={(next) => edit?.onChange({ description: next })}
-                error={isEditMode ? edit?.errors?.description : undefined}
-                  />
-
-              {!isEditMode && <hr className="border-slate-700" />}
-
-              <DateTimeCard
-                isEditMode={isEditMode}
-                hasItinerary={hasItinerary}
-                dateTime={dateTime}
-                isFlexibleStart={event.isFlexibleStart}
-                draft={draftStart}
-                durationHours={edit?.durationHours}
-                onChangeDurationHours={edit?.onChangeDurationHours}
-                errorStartTime={isEditMode ? edit?.errors?.startTime : undefined}
-                errorDurationHours={isEditMode ? edit?.errors?.durationHours : undefined}
-              />
-
-              {!isEditMode && hasItinerary && <hr className="border-slate-700" />}
-
-              {isEditMode || hasItinerary ? (
-                <ItineraryCard
-                  isEditMode={isEditMode}
-                  showItineraryStartTimeOnly={showItineraryStartTimeOnly}
-                  onChangeItineraryStartTimeOnly={handleChangeItineraryStartTimeOnly}
-                  headerActions={
-                    canManageItineraryAttendance ? (
-                      <button
-                        type="button"
-                        onClick={() => setShowItineraryAttendanceOverlay(true)}
-                        className="px-3 py-2 rounded-xl text-xs font-bold border border-slate-700 bg-slate-900/60 text-slate-200 hover:bg-slate-800 transition-colors"
-                      >
-                        {currentAttendance ? 'Edit selections' : 'Choose items'}
-                      </button>
-                    ) : null
-                  }
-                >
-                  {isEditMode ? (
-                    edit?.itinerary ? (
-                      <ItineraryEditor
-                        event={event}
-                        itineraryItems={itineraryItems}
-                        showItineraryTimesOnly={dateTime.showItineraryTimesOnly}
-                        showItineraryStartTimeOnly={showItineraryStartTimeOnly}
-                        hasItinerary={hasItinerary}
-                        draftStartIso={draftStart.draftStartIso}
-                        durationHours={edit?.durationHours}
-                        formatItineraryLocationForDisplay={formatItineraryLocationForDisplay}
-                        openItineraryLocationInMaps={openItineraryLocationInMaps}
-                        itineraryApi={edit.itinerary}
-                      />
-                    ) : (
-                      <div className="text-sm text-slate-500 italic">Itinerary editing is unavailable.</div>
-                    )
-                  ) : (
-                    <ItinerarySection
-                      items={itineraryItems}
-                      showItineraryTimesOnly={dateTime.showItineraryTimesOnly}
-                      showItineraryStartTimeOnly={showItineraryStartTimeOnly}
-                      formatItineraryLocationForDisplay={formatItineraryLocationForDisplay}
-                      openItineraryLocationInMaps={openItineraryLocationInMaps}
-                      attendanceByItem={event.itineraryAttendanceEnabled ? attendanceByItem : undefined}
-                    />
-                  )}
-                </ItineraryCard>
-              ) : null}
-
-              {!isEditMode && <hr className="border-slate-700" />}
-
-              <LocationCard
-                itineraryItems={itineraryItems}
-                formatRawLocationForDisplay={formatRawLocationForDisplay}
-                formatItineraryLocationForDisplay={formatItineraryLocationForDisplay}
-                onOpenItineraryLocationInMaps={openItineraryLocationInMaps}
-                activityType={event.activityType}
-                title={event.title || 'Map'}
-                eventLocation={event.location}
-                eventLocationData={event.locationData}
-                eventCoordinates={event.coordinates}
-                isEditMode={isEditMode}
-                locationValue={event.location}
-                onChangeLocationText={(text) =>
-                  edit?.onChange({ location: text, coordinates: undefined, locationData: undefined })
-                }
-                onSelectLocation={(selection: LocationSuggestion) =>
-                  edit?.onChange({
-                    location: selection.locationData.display.full,
-                    coordinates: {
-                      lat: selection.locationData.geo.lat,
-                      lng: selection.locationData.geo.lng,
-                    },
-                    locationData: selection.locationData,
-                  })
-                }
-                locationError={isEditMode ? edit?.errors?.location : undefined}
-              />
-
-              {!isEditMode && <hr className="border-slate-700" />}
-
-              <ExpensesCard
-                isEditMode={isEditMode}
-                isGuest={isGuest}
-                onRequireAuth={onRequireAuth}
-                currentUserId={currentUser?.id}
-                hostId={event.hostId}
-                expenses={(isEditMode ? edit?.expenses?.items : event.expenses) ?? []}
-                expenseApi={
-                  isEditMode && edit?.expenses
-                    ? {
-                        onAdd: edit.expenses.onAdd,
-                        onUpdate: edit.expenses.onUpdate,
-                        onDelete: edit.expenses.onDelete,
-                        onReorder: edit.expenses.onReorder,
-                      }
-                    : undefined
-                }
-                people={expensePeople}
-                itineraryItems={itineraryItems}
-              />
-            </div>
+            <DetailsTab
+              event={event}
+              isEditMode={isEditMode}
+              isGuest={isGuest}
+              onRequireAuth={onRequireAuth}
+              currentUserId={currentUser?.id}
+              hostId={event.hostId}
+              expenses={expenses}
+              expenseApi={expenseApi}
+              people={expensePeople}
+              itineraryItems={itineraryItems}
+              hasItinerary={hasItinerary}
+              dateTime={dateTime}
+              draftStart={draftStart}
+              edit={edit}
+              showItineraryStartTimeOnly={showItineraryStartTimeOnly}
+              onChangeItineraryStartTimeOnly={handleChangeItineraryStartTimeOnly}
+              canManageItineraryAttendance={canManageItineraryAttendance}
+              onOpenItineraryAttendance={() => setShowItineraryAttendanceOverlay(true)}
+              hasCurrentAttendance={!!currentAttendance}
+              attendanceByItem={attendanceByItem}
+            />
           ) : null}
 
           {activeTab === 'guests' ? (
@@ -609,31 +484,14 @@ export const EventDetail: React.FC<EventDetailProps> = ({
         />
       ) : null}
 
-      <AlertDialog open={leaveConfirmOpen} onOpenChange={setLeaveConfirmOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Leave this event?</AlertDialogTitle>
-            <AlertDialogDescription>
-              You will be removed from the guest list.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogClose className="px-4 py-2 rounded-xl text-slate-200 hover:bg-slate-800 text-sm font-semibold">
-              Cancel
-            </AlertDialogClose>
-            <button
-              type="button"
-              onClick={async () => {
-                setLeaveConfirmOpen(false)
-                await attendance.onJoinLeave()
-              }}
-              className="px-4 py-2 rounded-xl text-sm font-semibold bg-red-500/20 text-red-200 border border-red-500/40 hover:bg-red-500/30"
-            >
-              Leave event
-            </button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <LeaveEventDialog
+        open={leaveConfirmOpen}
+        onOpenChange={setLeaveConfirmOpen}
+        onConfirm={async () => {
+          setLeaveConfirmOpen(false)
+          await attendance.onJoinLeave()
+        }}
+      />
 
     </div>
   );
