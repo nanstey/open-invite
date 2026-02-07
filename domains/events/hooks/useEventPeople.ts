@@ -10,6 +10,7 @@ export function useEventPeople(args: { event: SocialEvent; currentUserId?: strin
   const [host, setHost] = React.useState<User | null>(null)
   const [attendeesList, setAttendeesList] = React.useState<User[]>([])
   const [commentUsers, setCommentUsers] = React.useState<Map<string, User>>(new Map())
+  const [reactionUsers, setReactionUsers] = React.useState<Map<string, User>>(new Map())
 
   React.useEffect(() => {
     let cancelled = false
@@ -39,6 +40,22 @@ export function useEventPeople(args: { event: SocialEvent; currentUserId?: strin
       } else {
         setCommentUsers(new Map())
       }
+
+      // Comment reactions
+      const reactionUserIds: string[] = []
+      event.comments.forEach((comment) => {
+        Object.values(comment.reactions ?? {}).forEach((reaction) => {
+          reaction.userIds?.forEach((id) => reactionUserIds.push(id))
+        })
+      })
+      if (reactionUserIds.length > 0) {
+        const uniqueReactionUserIds = [...new Set(reactionUserIds)]
+        const fetchedReactionUsers = await fetchUsers(uniqueReactionUserIds, currentUserId)
+        if (cancelled) return
+        setReactionUsers(new Map(fetchedReactionUsers.map((u) => [u.id, u])))
+      } else {
+        setReactionUsers(new Map())
+      }
     }
 
     loadUsers()
@@ -48,7 +65,6 @@ export function useEventPeople(args: { event: SocialEvent; currentUserId?: strin
     }
   }, [event.hostId, event.attendees, event.comments, currentUserId])
 
-  return { host, attendeesList, commentUsers }
+  return { host, attendeesList, commentUsers, reactionUsers }
 }
-
 

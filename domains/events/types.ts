@@ -3,12 +3,14 @@ export interface Comment {
   userId: string
   text: string
   timestamp: string
+  reactions?: Record<string, Reaction>
 }
 
 export interface Reaction {
   emoji: string
   count: number
   userReacted: boolean
+  userIds?: string[]
 }
 
 export interface ItineraryItem {

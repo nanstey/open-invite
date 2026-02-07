@@ -1,7 +1,7 @@
 import * as React from 'react'
 
 import type { SocialEvent } from '../types'
-import { addComment, fetchEventById, joinEvent, leaveEvent } from '../../../services/eventService'
+import { addComment, fetchEventById, joinEvent, leaveEvent, toggleCommentReaction } from '../../../services/eventService'
 
 type SetEvent = React.Dispatch<React.SetStateAction<SocialEvent | null>>
 
@@ -69,6 +69,50 @@ export function useEventDetailActions(args: {
     [setEvent],
   )
 
+  const cloneReactions = React.useCallback((reactions: SocialEvent['comments'][number]['reactions']) => {
+    if (!reactions) return undefined
+    return Object.fromEntries(
+      Object.entries(reactions).map(([emoji, reaction]) => [
+        emoji,
+        { ...reaction, userIds: reaction.userIds ? [...reaction.userIds] : undefined },
+      ]),
+    )
+  }, [])
+
+  const applyCommentReaction = React.useCallback(
+    (reactions: NonNullable<SocialEvent['comments'][number]['reactions']>, emoji: string) => {
+      const next = cloneReactions(reactions) ?? {}
+      const currentEmoji = Object.keys(next).find((key) => next[key]?.userReacted)
+
+      if (currentEmoji && next[currentEmoji]) {
+        next[currentEmoji].count -= 1
+        next[currentEmoji].userReacted = false
+        if (next[currentEmoji].userIds) {
+          next[currentEmoji].userIds = next[currentEmoji].userIds.filter((id) => id !== userId)
+        }
+        if (next[currentEmoji].count <= 0) {
+          delete next[currentEmoji]
+        }
+      }
+
+      if (currentEmoji === emoji) {
+        return next
+      }
+
+      if (!next[emoji]) {
+        next[emoji] = { emoji, count: 0, userReacted: false, userIds: [] }
+      }
+      next[emoji].count += 1
+      next[emoji].userReacted = true
+      if (next[emoji].userIds && !next[emoji].userIds.includes(userId)) {
+        next[emoji].userIds.push(userId)
+      }
+
+      return next
+    },
+    [cloneReactions],
+  )
+
   const handleJoinEvent = React.useCallback(
     async (eventId: string) => {
       await runOptimisticAttendanceChange({
@@ -128,7 +172,37 @@ export function useEventDetailActions(args: {
     [updateEventComments, userId],
   )
 
-  return { onUpdateEvent, handleJoinEvent, handleLeaveEvent, handlePostComment }
+  const handleToggleCommentReaction = React.useCallback(
+    async (eventId: string, commentId: string, emoji: string) => {
+      let previousReactions: SocialEvent['comments'][number]['reactions'] | undefined
+
+      updateEventComments(eventId, (comments) =>
+        comments.map((comment) => {
+          if (comment.id !== commentId) return comment
+          previousReactions = cloneReactions(comment.reactions)
+          const updated = applyCommentReaction(comment.reactions ?? {}, emoji)
+          return { ...comment, reactions: Object.keys(updated).length ? updated : undefined }
+        }),
+      )
+
+      try {
+        const success = await toggleCommentReaction(commentId, emoji)
+        if (!success) {
+          throw new Error('Failed to toggle comment reaction')
+        }
+      } catch (error) {
+        console.error('Error toggling comment reaction:', error)
+        updateEventComments(eventId, (comments) =>
+          comments.map((comment) =>
+            comment.id === commentId
+              ? { ...comment, reactions: previousReactions }
+              : comment,
+          ),
+        )
+      }
+    },
+    [applyCommentReaction, cloneReactions, updateEventComments],
+  )
+
+  return { onUpdateEvent, handleJoinEvent, handleLeaveEvent, handlePostComment, handleToggleCommentReaction }
 }
-
-

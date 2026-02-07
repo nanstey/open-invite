@@ -9,6 +9,7 @@ import { isUuid } from '../domains/events/components/detail/route/routing'
 type EventRow = Database['public']['Tables']['events']['Row'];
 type EventAttendeeRow = Database['public']['Tables']['event_attendees']['Row'];
 type CommentRow = Database['public']['Tables']['comments']['Row'];
+type CommentReactionRow = Database['public']['Tables']['comment_reactions']['Row'];
 type ReactionRow = Database['public']['Tables']['reactions']['Row'];
 type EventGroupRow = Database['public']['Tables']['event_groups']['Row'];
 
@@ -146,6 +147,7 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
   const commentsMap = new Map<string, Comment[]>();
   const reactionsMap = new Map<string, Map<string, Reaction>>();
   const groupIdsMap = new Map<string, string[]>();
+  const commentReactionsMap = new Map<string, Map<string, Reaction>>();
 
   // Process attendees
   if (attendeesData) {
@@ -168,8 +170,10 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
   }
 
   // Process comments
+  const commentIds: string[] = [];
   if (commentsData) {
     commentsData.forEach(comment => {
+      commentIds.push(comment.id);
       if (!commentsMap.has(comment.event_id)) {
         commentsMap.set(comment.event_id, []);
       }
@@ -180,6 +184,39 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
         timestamp: comment.timestamp,
       });
     });
+  }
+
+  if (commentIds.length > 0) {
+    const { data: commentReactionsData } = await supabase
+      .from('comment_reactions')
+      .select('*')
+      .in('comment_id', commentIds);
+
+    const commentReactions = commentReactionsData as CommentReactionRow[] | null;
+    if (commentReactions) {
+      commentReactions.forEach((reaction) => {
+        if (!commentReactionsMap.has(reaction.comment_id)) {
+          commentReactionsMap.set(reaction.comment_id, new Map());
+        }
+        const reactions = commentReactionsMap.get(reaction.comment_id)!;
+        if (!reactions.has(reaction.emoji)) {
+          reactions.set(reaction.emoji, {
+            emoji: reaction.emoji,
+            count: 0,
+            userReacted: false,
+            userIds: [],
+          });
+        }
+        const current = reactions.get(reaction.emoji)!;
+        current.count++;
+        if (current.userIds && !current.userIds.includes(reaction.user_id)) {
+          current.userIds.push(reaction.user_id);
+        }
+        if (currentUserId && reaction.user_id === currentUserId) {
+          current.userReacted = true;
+        }
+      });
+    }
   }
 
   // Process reactions
@@ -209,7 +246,16 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
   // Transform events
   return events.map((event: EventRow) => {
     const attendees = attendeesMap.get(event.id) || [];
-    const comments = commentsMap.get(event.id) || [];
+    const comments = (commentsMap.get(event.id) || []).map((comment) => {
+      const reactionsRecord: Record<string, Reaction> = {};
+      commentReactionsMap.get(comment.id)?.forEach((reaction, emoji) => {
+        reactionsRecord[emoji] = reaction;
+      });
+      return {
+        ...comment,
+        reactions: Object.keys(reactionsRecord).length ? reactionsRecord : undefined,
+      };
+    });
     const groupIds = groupIdsMap.get(event.id) || [];
     const reactionsObj: Record<string, Reaction> = {};
     reactionsMap.get(event.id)?.forEach((reaction, emoji) => {
@@ -272,9 +318,56 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
   })) || [];
   const groupIds = eventGroupsData?.map(eg => eg.group_id) || [];
 
-  // Process reactions
   const { data: { user } } = await supabase.auth.getUser();
   const currentUserId = user?.id;
+
+  const commentReactionsMap = new Map<string, Map<string, Reaction>>();
+  const commentIds = comments.map((comment) => comment.id);
+  if (commentIds.length > 0) {
+    const { data: commentReactionsData } = await supabase
+      .from('comment_reactions')
+      .select('*')
+      .in('comment_id', commentIds);
+
+    const commentReactions = commentReactionsData as CommentReactionRow[] | null;
+    if (commentReactions) {
+      commentReactions.forEach((reaction) => {
+        if (!commentReactionsMap.has(reaction.comment_id)) {
+          commentReactionsMap.set(reaction.comment_id, new Map());
+        }
+        const reactions = commentReactionsMap.get(reaction.comment_id)!;
+        if (!reactions.has(reaction.emoji)) {
+          reactions.set(reaction.emoji, {
+            emoji: reaction.emoji,
+            count: 0,
+            userReacted: false,
+            userIds: [],
+          });
+        }
+        const current = reactions.get(reaction.emoji)!;
+        current.count++;
+        if (current.userIds && !current.userIds.includes(reaction.user_id)) {
+          current.userIds.push(reaction.user_id);
+        }
+        if (currentUserId && reaction.user_id === currentUserId) {
+          current.userReacted = true;
+        }
+      });
+    }
+  }
+
+  const commentsWithReactions = comments.map((comment) => {
+    const reactionsRecord: Record<string, Reaction> = {};
+    commentReactionsMap.get(comment.id)?.forEach((reaction, emoji) => {
+      reactionsRecord[emoji] = reaction;
+    });
+    return {
+      ...comment,
+      reactions: Object.keys(reactionsRecord).length ? reactionsRecord : undefined,
+    };
+  });
+
+  // Process reactions
   const reactions: Record<string, Reaction> = {};
   
   if (reactionsData) {
@@ -293,7 +386,7 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
     });
   }
 
-  return transformEventRow(eventRow, attendees, comments, reactions, groupIds, itineraryItems, expenses, itineraryAttendance);
+  return transformEventRow(eventRow, attendees, commentsWithReactions, reactions, groupIds, itineraryItems, expenses, itineraryAttendance);
 }
 
 /**
@@ -591,4 +684,50 @@ export async function toggleReaction(eventId: string, emoji: string): Promise<bo
     const { error } = result as unknown as { error: any };
     return !error;
   }
+}
+
+/**
+ * Add, replace, or remove a reaction on a comment (one per user).
+ */
+export async function toggleCommentReaction(commentId: string, emoji: string): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return false;
+  }
+
+  const { data: existing } = await supabase
+    .from('comment_reactions')
+    .select('id, emoji')
+    .eq('comment_id', commentId)
+    .eq('user_id', user.id)
+    .maybeSingle();
+
+  const existingReaction = existing as Pick<CommentReactionRow, 'id' | 'emoji'> | null;
+
+  if (existingReaction) {
+    const { error: deleteError } = await supabase
+      .from('comment_reactions')
+      .delete()
+      .eq('id', existingReaction.id);
+
+    if (deleteError) {
+      return false;
+    }
+
+    if (existingReaction.emoji === emoji) {
+      return true;
+    }
+  }
+
+  type CommentReactionInsert = Database['public']['Tables']['comment_reactions']['Insert'];
+  const reactionData: CommentReactionInsert = {
+    comment_id: commentId,
+    user_id: user.id,
+    emoji,
+  };
+  const result = await supabase
+    .from('comment_reactions')
+    .insert(reactionData as unknown as never);
+  const { error } = result as unknown as { error: any };
+  return !error;
 }
