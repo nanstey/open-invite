@@ -34,6 +34,7 @@ interface EventDetailProps {
   onClose?: () => void;
   onUpdateEvent: (updated: SocialEvent) => void;
   onPostComment?: (eventId: string, text: string) => Promise<void> | void;
+  onToggleCommentReaction?: (eventId: string, commentId: string, emoji: string) => Promise<void> | void;
   onJoin?: (eventId: string) => Promise<void> | void;
   onLeave?: (eventId: string) => Promise<void> | void;
   activeTab?: EventTab;
@@ -101,6 +102,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   onClose,
   onUpdateEvent,
   onPostComment,
+  onToggleCommentReaction,
   onJoin,
   onLeave,
   activeTab: activeTabProp,
@@ -156,7 +158,10 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const activeTab = tabController.activeTab
 
   // --- People / social data ---
-  const { host, attendeesList, commentUsers } = useEventPeople({ event, currentUserId: currentUserId ?? undefined })
+  const { host, attendeesList, commentUsers, reactionUsers } = useEventPeople({
+    event,
+    currentUserId: currentUserId ?? undefined,
+  })
 
   const expensePeople = React.useMemo(() => {
     const all: Array<{ id: string; name: string }> = []
@@ -436,11 +441,13 @@ export const EventDetail: React.FC<EventDetailProps> = ({
             <ChatTab
               event={event}
               commentUsers={commentUsers}
+              reactionUsers={reactionUsers}
               currentUserId={currentUserId ?? undefined}
               isEditMode={isEditMode}
               isGuest={isGuest}
               onRequireAuth={onRequireAuth}
               onPostComment={onPostComment}
+              onToggleCommentReaction={onToggleCommentReaction}
               onUpdateEvent={onUpdateEvent}
             />
           ) : null}

@@ -76,7 +76,7 @@ export const Route = createFileRoute('/events/$slug')({
 
     // IMPORTANT: Call hooks unconditionally to preserve hook ordering across renders.
     // `user` may be null briefly while auth is initializing, or `event` may be null while loading.
-    const { onUpdateEvent, handleJoinEvent, handleLeaveEvent, handlePostComment } = useEventDetailActions({
+    const { onUpdateEvent, handleJoinEvent, handleLeaveEvent, handlePostComment, handleToggleCommentReaction } = useEventDetailActions({
       userId: user?.id ?? '',
       setEvent,
     })
@@ -126,6 +126,7 @@ export const Route = createFileRoute('/events/$slug')({
         onClose={onClose}
         onUpdateEvent={onUpdateEvent}
         onPostComment={handlePostComment}
+        onToggleCommentReaction={handleToggleCommentReaction}
         onJoin={handleJoinEvent}
         onLeave={handleLeaveEvent}
         onEditRequested={isHost ? () => setIsEditing(true) : undefined}
@@ -135,4 +136,3 @@ export const Route = createFileRoute('/events/$slug')({
     )
   },
 })
-

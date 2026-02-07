@@ -51,6 +51,7 @@ vi.mock('../domains/events/hooks/useEventDetailActions', () => ({
     handleJoinEvent: vi.fn(),
     handleLeaveEvent: vi.fn(),
     handlePostComment: vi.fn(),
+    handleToggleCommentReaction: vi.fn(),
   }),
 }))
 
