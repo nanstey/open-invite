@@ -1,19 +1,34 @@
 import * as React from 'react'
 
+import type { Group } from '../../../../../lib/types'
 import type { SocialEvent } from '../../../types'
 import { EventVisibility } from '../../../types'
 import { Checkbox } from '../../../../../lib/ui/9ui/checkbox'
 import { FormSelect } from '../../../../../lib/ui/components/FormControls'
+import { SearchableMultiSelect } from '../../../../../lib/ui/components/SearchableMultiSelect'
 
 type GuestsSettingsCardProps = {
   event: SocialEvent
   onChangeMaxSeats?: (next: number | undefined) => void
   onChangeVisibility?: (next: EventVisibility) => void
+  onChangeGroupIds?: (nextGroupIds: string[]) => void
+  groupOptions?: Group[]
+  groupsLoading?: boolean
+  groupError?: string
   onChangeItineraryAttendanceEnabled?: (next: boolean) => void
 }
 
 export function GuestsSettingsCard(props: GuestsSettingsCardProps) {
-  const { event, onChangeMaxSeats, onChangeVisibility, onChangeItineraryAttendanceEnabled } = props
+  const {
+    event,
+    onChangeMaxSeats,
+    onChangeVisibility,
+    onChangeGroupIds,
+    groupOptions,
+    groupsLoading,
+    groupError,
+    onChangeItineraryAttendanceEnabled,
+  } = props
 
   return (
     <div className="bg-surface border border-slate-700 rounded-2xl p-5 space-y-4">
@@ -45,10 +60,31 @@ export function GuestsSettingsCard(props: GuestsSettingsCardProps) {
             onChange={(e) => onChangeVisibility?.(e.target.value as EventVisibility)}
           >
             <option value={EventVisibility.ALL_FRIENDS}>All Friends</option>
+            <option value={EventVisibility.GROUPS}>Groups</option>
             <option value={EventVisibility.INVITE_ONLY}>Invite only</option>
           </FormSelect>
         </div>
       </div>
+
+      {event.visibilityType === EventVisibility.GROUPS ? (
+        <div className="space-y-2">
+          <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Group visibility</div>
+          <SearchableMultiSelect
+            options={(groupOptions ?? []).map((group) => ({
+              id: group.id,
+              label: group.name,
+            }))}
+            selectedIds={event.groupIds ?? []}
+            onChange={(nextIds) => onChangeGroupIds?.(nextIds)}
+            placeholder={groupsLoading ? 'Loading groups...' : 'Select groups'}
+            isLoading={groupsLoading}
+          />
+          {groupError ? <div className="text-xs text-red-400">{groupError}</div> : null}
+          <div className="text-xs text-slate-500">
+            Select one or more groups to control who can view this event.
+          </div>
+        </div>
+      ) : null}
 
       <div className="space-y-2">
         <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Itinerary attendance</div>

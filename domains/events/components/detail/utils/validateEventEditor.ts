@@ -5,6 +5,8 @@ type EventEditorValuesLike = {
   activityType: string
   startDateTimeLocal: string
   durationHours: number | ''
+  visibilityType?: string
+  groupIds?: string[]
 }
 
 export function validateEventEditor(values: EventEditorValuesLike, hasItinerary: boolean): {
@@ -14,6 +16,7 @@ export function validateEventEditor(values: EventEditorValuesLike, hasItinerary:
   startTime?: string
   durationHours?: string
   location?: string
+  groupIds?: string
 } {
   const title = values.title.trim()
   const location = values.location.trim()
@@ -30,7 +33,10 @@ export function validateEventEditor(values: EventEditorValuesLike, hasItinerary:
     startTime: hasItinerary ? undefined : startDateTimeLocal ? undefined : 'Date & time is required',
     durationHours: hasItinerary ? undefined : durationHours && durationHours > 0 ? undefined : 'Duration is required',
     location: location ? undefined : 'Location is required',
+    groupIds:
+      values.visibilityType === 'GROUPS' && (!values.groupIds || values.groupIds.length === 0)
+        ? 'Select at least one group'
+        : undefined,
   }
 }
-
 

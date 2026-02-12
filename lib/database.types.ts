@@ -551,36 +551,80 @@ export type Database = {
       }
       groups: {
         Row: {
+          allow_members_add_members: boolean | null
+          allow_members_create_events: boolean | null
           created_at: string | null
           created_by: string
           deleted_at: string | null
           id: string
           is_open: boolean
           name: string
+          new_members_require_admin_approval: boolean | null
           updated_at: string | null
           updated_by: string | null
         }
         Insert: {
+          allow_members_add_members?: boolean | null
+          allow_members_create_events?: boolean | null
           created_at?: string | null
           created_by: string
           deleted_at?: string | null
           id?: string
           is_open?: boolean
           name: string
+          new_members_require_admin_approval?: boolean | null
           updated_at?: string | null
           updated_by?: string | null
         }
         Update: {
+          allow_members_add_members?: boolean | null
+          allow_members_create_events?: boolean | null
           created_at?: string | null
           created_by?: string
           deleted_at?: string | null
           id?: string
           is_open?: boolean
           name?: string
+          new_members_require_admin_approval?: boolean | null
           updated_at?: string | null
           updated_by?: string | null
         }
         Relationships: []
+      }
+      group_member_requests: {
+        Row: {
+          created_at: string | null
+          group_id: string
+          id: string
+          requester_id: string
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          group_id: string
+          id?: string
+          requester_id: string
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          group_id?: string
+          id?: string
+          requester_id?: string
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_member_requests_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "groups"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {

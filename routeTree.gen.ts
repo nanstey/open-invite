@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './pages/__root'
 import { Route as ProfileRouteImport } from './pages/profile'
+import { Route as GroupsRouteImport } from './pages/groups'
 import { Route as FriendsRouteImport } from './pages/friends'
 import { Route as EventsRouteImport } from './pages/events'
 import { Route as AlertsRouteImport } from './pages/alerts'
@@ -25,6 +26,11 @@ import { Route as AdminFeedbackRouteImport } from './pages/admin.feedback'
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GroupsRoute = GroupsRouteImport.update({
+  id: '/groups',
+  path: '/groups',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FriendsRoute = FriendsRouteImport.update({
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/alerts': typeof AlertsRoute
   '/events': typeof EventsRouteWithChildren
   '/friends': typeof FriendsRoute
+  '/groups': typeof GroupsRoute
   '/profile': typeof ProfileRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/projects': typeof AdminProjectsRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/alerts': typeof AlertsRoute
   '/events': typeof EventsRouteWithChildren
   '/friends': typeof FriendsRoute
+  '/groups': typeof GroupsRoute
   '/profile': typeof ProfileRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/projects': typeof AdminProjectsRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/alerts': typeof AlertsRoute
   '/events': typeof EventsRouteWithChildren
   '/friends': typeof FriendsRoute
+  '/groups': typeof GroupsRoute
   '/profile': typeof ProfileRoute
   '/admin/feedback': typeof AdminFeedbackRoute
   '/admin/projects': typeof AdminProjectsRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/events'
     | '/friends'
+    | '/groups'
     | '/profile'
     | '/admin/feedback'
     | '/admin/projects'
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/events'
     | '/friends'
+    | '/groups'
     | '/profile'
     | '/admin/feedback'
     | '/admin/projects'
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/alerts'
     | '/events'
     | '/friends'
+    | '/groups'
     | '/profile'
     | '/admin/feedback'
     | '/admin/projects'
@@ -177,6 +189,7 @@ export interface RootRouteChildren {
   AlertsRoute: typeof AlertsRoute
   EventsRoute: typeof EventsRouteWithChildren
   FriendsRoute: typeof FriendsRoute
+  GroupsRoute: typeof GroupsRoute
   ProfileRoute: typeof ProfileRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   ESlugRoute: typeof ESlugRoute
@@ -189,6 +202,13 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/profile'
       preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/groups': {
+      id: '/groups'
+      path: '/groups'
+      fullPath: '/groups'
+      preLoaderRoute: typeof GroupsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/friends': {
@@ -302,6 +322,7 @@ const rootRouteChildren: RootRouteChildren = {
   AlertsRoute: AlertsRoute,
   EventsRoute: EventsRouteWithChildren,
   FriendsRoute: FriendsRoute,
+  GroupsRoute: GroupsRoute,
   ProfileRoute: ProfileRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   ESlugRoute: ESlugRoute,

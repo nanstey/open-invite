@@ -51,7 +51,9 @@ interface EventDetailProps {
     primaryLabel?: string;
     groups?: Group[];
     groupsLoading?: boolean;
-    errors?: Partial<Record<'title' | 'description' | 'startTime' | 'location' | 'activityType' | 'durationHours', string>>;
+    errors?: Partial<
+      Record<'title' | 'description' | 'startTime' | 'location' | 'activityType' | 'durationHours' | 'groupIds', string>
+    >;
     startDateTimeLocal?: string;
     onChangeStartDateTimeLocal?: (value: string) => void;
     durationHours?: number | '';
@@ -433,6 +435,10 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               onChangeAttendees={(nextAttendees) => edit?.onChange({ attendees: nextAttendees })}
               onChangeMaxSeats={(next) => edit?.onChange({ maxSeats: next })}
               onChangeVisibility={(next) => edit?.onChange({ visibilityType: next })}
+              onChangeGroupIds={(nextGroupIds) => edit?.onChange({ groupIds: nextGroupIds })}
+              groupOptions={edit?.groups}
+              groupsLoading={edit?.groupsLoading}
+              groupError={edit?.errors?.groupIds}
               onChangeItineraryAttendanceEnabled={(next) => edit?.onChange({ itineraryAttendanceEnabled: next })}
             />
           ) : null}

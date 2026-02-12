@@ -2,7 +2,7 @@ import React from 'react'
 import { useMutation } from '@tanstack/react-query'
 import { useForm, useStore } from '@tanstack/react-form'
 
-import type { User } from '../../../lib/types'
+import type { Group, GroupRole, User } from '../../../lib/types'
 import type { EventExpense, ItineraryItem, ItineraryTimeDisplay, LocationData, SocialEvent } from '../types'
 import { EventVisibility } from '../types'
 import { createEvent, fetchEventById, updateEvent } from '../../../services/eventService'
@@ -12,6 +12,7 @@ import { createEventExpense, deleteEventExpense, updateEventExpense } from '../.
 import { toLocalDateTimeInputValue } from '../../../lib/ui/utils/datetime'
 import { validateEventEditor } from '../components/detail/utils/validateEventEditor'
 import { computeEventTimes, diffItineraryItems, mapDraftItineraryItems, type DraftItineraryItem } from '../components/detail/utils/eventEditorUtils'
+import { fetchGroupMembershipsForCurrentUser } from '../../../services/friendService'
 
 type EditorMode = 'create' | 'update'
 
@@ -37,6 +38,7 @@ type EventEditorValues = {
   locationData: LocationData | undefined
   itineraryTimeDisplay: ItineraryTimeDisplay
   visibilityType: EventVisibility
+  groupIds: string[]
 }
 
 type DraftExpense = Omit<EventExpense, 'eventId'>
@@ -208,10 +210,8 @@ export function useEventEditorController(props: {
         coordinates: ev.coordinates,
         locationData: ev.locationData,
         itineraryTimeDisplay: ev.itineraryTimeDisplay,
-        visibilityType:
-          ev.visibilityType === EventVisibility.GROUPS
-            ? EventVisibility.INVITE_ONLY
-            : ev.visibilityType ?? EventVisibility.INVITE_ONLY,
+        visibilityType: ev.visibilityType ?? EventVisibility.INVITE_ONLY,
+        groupIds: ev.groupIds ?? [],
       }
     }
 
@@ -233,6 +233,7 @@ export function useEventEditorController(props: {
       locationData: undefined,
       itineraryTimeDisplay: 'START_AND_END',
       visibilityType: EventVisibility.INVITE_ONLY,
+      groupIds: [],
     }
   }, [
     props.initialEvent?.activityType,
@@ -253,7 +254,37 @@ export function useEventEditorController(props: {
     props.initialEvent?.title,
     props.initialEvent?.itineraryTimeDisplay,
     props.initialEvent?.visibilityType,
+    props.initialEvent?.groupIds,
   ])
+
+  const [groups, setGroups] = React.useState<Group[]>([])
+  const [groupsLoading, setGroupsLoading] = React.useState(false)
+  const [groupRoles, setGroupRoles] = React.useState<Map<string, GroupRole>>(new Map())
+
+  React.useEffect(() => {
+    let isMounted = true
+    const loadGroups = async () => {
+      setGroupsLoading(true)
+      const memberships = await fetchGroupMembershipsForCurrentUser()
+      if (!isMounted) return
+      const nextGroups = memberships.map((m) => m.group)
+      const nextRoles = new Map(memberships.map((m) => [m.group.id, m.role] as const))
+      setGroups(nextGroups)
+      setGroupRoles(nextRoles)
+      setGroupsLoading(false)
+    }
+    loadGroups()
+    return () => {
+      isMounted = false
+    }
+  }, [])
+
+  const eligibleGroups = React.useMemo(() => {
+    return groups.filter((group) => {
+      const role = groupRoles.get(group.id)
+      return role === 'ADMIN' || group.allowMembersCreateEvents
+    })
+  }, [groupRoles, groups])
 
   const onSubmit = React.useCallback(
     async ({ value }: { value: EventEditorValues }) => {
@@ -297,11 +328,11 @@ export function useEventEditorController(props: {
           noPhones: value.noPhones,
           maxSeats: normalizedMaxSeats,
           visibilityType: value.visibilityType,
-          groupIds: [],
           allowFriendInvites: false,
           coordinates: value.coordinates,
           locationData: value.locationData,
           itineraryTimeDisplay: value.itineraryTimeDisplay,
+          groupIds: value.visibilityType === EventVisibility.GROUPS ? value.groupIds : [],
         })
         if (!created) throw new Error('createEvent returned null')
 
@@ -343,11 +374,11 @@ export function useEventEditorController(props: {
         noPhones: value.noPhones,
         maxSeats: normalizedMaxSeats,
         visibilityType: value.visibilityType,
-        groupIds: [],
         allowFriendInvites: false,
         coordinates: value.coordinates,
         locationData: value.locationData,
         itineraryTimeDisplay: value.itineraryTimeDisplay,
+        groupIds: value.visibilityType === EventVisibility.GROUPS ? value.groupIds : [],
       })
 
       if (!updated) throw new Error('updateEvent returned null')
@@ -401,7 +432,17 @@ export function useEventEditorController(props: {
   const detailErrors = React.useMemo(() => {
     const hasItinerary = itineraryItems.length > 0
     return validateEventEditor(values, hasItinerary)
-  }, [itineraryItems.length, values.activityType, values.description, values.durationHours, values.location, values.startDateTimeLocal, values.title])
+  }, [
+    itineraryItems.length,
+    values.activityType,
+    values.description,
+    values.durationHours,
+    values.location,
+    values.startDateTimeLocal,
+    values.title,
+    values.visibilityType,
+    values.groupIds,
+  ])
 
   const canSubmit = Object.values(detailErrors).every((v) => !v)
   const [showValidation, setShowValidation] = React.useState(false)
@@ -441,7 +482,7 @@ export function useEventEditorController(props: {
       isFlexibleStart: values.isFlexibleStart,
       isFlexibleEnd: values.isFlexibleEnd,
       visibilityType: values.visibilityType,
-      groupIds: EMPTY_STRING_ARR,
+      groupIds: values.groupIds,
       allowFriendInvites: false,
       maxSeats:
         values.maxSeats === ''
@@ -501,6 +542,7 @@ export function useEventEditorController(props: {
       if (patch.isFlexibleEnd !== undefined) form.setFieldValue('isFlexibleEnd', patch.isFlexibleEnd)
       if (patch.itineraryAttendanceEnabled !== undefined) form.setFieldValue('itineraryAttendanceEnabled', patch.itineraryAttendanceEnabled)
       if (patch.visibilityType !== undefined) form.setFieldValue('visibilityType', patch.visibilityType)
+      if (patch.groupIds !== undefined) form.setFieldValue('groupIds', patch.groupIds)
       if (patch.noPhones !== undefined) form.setFieldValue('noPhones', patch.noPhones)
       if ('maxSeats' in patch) {
         const n = patch.maxSeats === undefined ? undefined : Number(patch.maxSeats)
@@ -597,7 +639,7 @@ export function useEventEditorController(props: {
   }, [])
 
   const itineraryApi = React.useMemo(() => {
-    return {
+      return {
       items: itineraryEditItems,
       onAdd: onAddItineraryItem,
       onUpdate: onUpdateItineraryItem,
@@ -636,6 +678,8 @@ export function useEventEditorController(props: {
       durationHours: values.durationHours,
       onChangeDurationHours,
       onChange: applyPatch,
+      groups: eligibleGroups,
+      groupsLoading,
       itinerary: itineraryApi,
       expenses: expenseApi,
       onSave,

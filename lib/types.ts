@@ -10,9 +10,13 @@ export interface Group {
   id: string;
   name: string;
   createdBy: string;
-  isOpen: boolean;
+  allowMembersCreateEvents: boolean;
+  allowMembersAddMembers: boolean;
+  newMembersRequireAdminApproval: boolean;
   deletedAt?: string;
 }
+
+export type GroupRole = 'ADMIN' | 'MEMBER';
 
 export interface Notification {
   id: string;
@@ -26,7 +30,7 @@ export interface Notification {
 }
 
 export type ViewMode = 'EVENTS' | 'FRIENDS' | 'ALERTS' | 'PROFILE';
-export type FriendsMode = 'FRIENDS';
+export type FriendsMode = 'FRIENDS' | 'GROUPS';
 
 // Event-domain types live in `domains/events/types.ts`. Keep these exports to avoid
 // breaking existing imports outside the events domain during migration.

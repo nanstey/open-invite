@@ -1,11 +1,11 @@
-export type FriendsTab = 'friends'
+export type FriendsTab = 'friends' | 'groups'
 
 export function parseFriendsTab(value: unknown): FriendsTab {
   const tab = typeof value === 'string' ? value.toLowerCase() : 'friends'
-  return tab === 'friends' ? 'friends' : 'friends'
+  return tab === 'groups' ? 'groups' : 'friends'
 }
 
 export function coerceFriendsTab(value: unknown): FriendsTab {
   const v = typeof value === 'string' ? value.toLowerCase() : 'friends'
-  return v === 'friends' ? 'friends' : 'friends'
+  return v === 'groups' ? 'groups' : 'friends'
 }

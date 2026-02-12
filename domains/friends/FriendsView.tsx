@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { FriendsMode, User } from '../../lib/types'
+import { User } from '../../lib/types'
 import {
   acceptFriendRequest,
   cancelFriendRequest,
@@ -17,11 +17,7 @@ import { LoadingSpinner } from '../../lib/ui/components/LoadingSpinner'
 import { PendingRequestsSection } from './components/PendingRequestsSection'
 import { FriendsListSection } from './components/FriendsListSection'
 
-interface FriendsViewProps {
-  activeTab: FriendsMode
-}
-
-export const FriendsView: React.FC<FriendsViewProps> = ({ activeTab }) => {
+export const FriendsView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [friends, setFriends] = useState<User[]>([])
   const [pendingRequests, setPendingRequests] = useState<PendingFriendRequest[]>([])
@@ -39,57 +35,51 @@ export const FriendsView: React.FC<FriendsViewProps> = ({ activeTab }) => {
   // Fetch friends when FRIENDS tab is active
   useEffect(() => {
     const loadFriends = async () => {
-      if (activeTab === 'FRIENDS') {
-        setLoadingFriends(true)
-        try {
-          const fetchedFriends = await fetchFriends()
-          setFriends(fetchedFriends)
-        } catch (error) {
-          console.error('Error loading friends:', error)
-          setFriends([])
-        } finally {
-          setLoadingFriends(false)
-        }
+      setLoadingFriends(true)
+      try {
+        const fetchedFriends = await fetchFriends()
+        setFriends(fetchedFriends)
+      } catch (error) {
+        console.error('Error loading friends:', error)
+        setFriends([])
+      } finally {
+        setLoadingFriends(false)
       }
     }
     loadFriends()
-  }, [activeTab])
+  }, [])
 
   useEffect(() => {
     const loadRequests = async () => {
-      if (activeTab === 'FRIENDS') {
-        setLoadingRequests(true)
-        try {
-          const fetchedRequests = await fetchPendingFriendRequests()
-          setPendingRequests(fetchedRequests)
-        } catch (error) {
-          console.error('Error loading friend requests:', error)
-          setPendingRequests([])
-        } finally {
-          setLoadingRequests(false)
-        }
+      setLoadingRequests(true)
+      try {
+        const fetchedRequests = await fetchPendingFriendRequests()
+        setPendingRequests(fetchedRequests)
+      } catch (error) {
+        console.error('Error loading friend requests:', error)
+        setPendingRequests([])
+      } finally {
+        setLoadingRequests(false)
       }
     }
     loadRequests()
-  }, [activeTab])
+  }, [])
 
   useEffect(() => {
     const loadOutgoing = async () => {
-      if (activeTab === 'FRIENDS') {
-        setLoadingOutgoing(true)
-        try {
-          const fetchedOutgoing = await fetchOutgoingFriendRequests()
-          setOutgoingRequests(fetchedOutgoing)
-        } catch (error) {
-          console.error('Error loading outgoing requests:', error)
-          setOutgoingRequests([])
-        } finally {
-          setLoadingOutgoing(false)
-        }
+      setLoadingOutgoing(true)
+      try {
+        const fetchedOutgoing = await fetchOutgoingFriendRequests()
+        setOutgoingRequests(fetchedOutgoing)
+      } catch (error) {
+        console.error('Error loading outgoing requests:', error)
+        setOutgoingRequests([])
+      } finally {
+        setLoadingOutgoing(false)
       }
     }
     loadOutgoing()
-  }, [activeTab])
+  }, [])
 
   const filteredFriends = useMemo(
     () => friends.filter((friend) => friend.name.toLowerCase().includes(searchTerm.toLowerCase())),
@@ -169,37 +159,35 @@ export const FriendsView: React.FC<FriendsViewProps> = ({ activeTab }) => {
         />
       </div>
 
-      {activeTab === 'FRIENDS' && (
-        <div className="animate-fade-in">
-          {loadingFriends ? (
-            <LoadingSpinner message="Loading friends..." />
-          ) : (
-            <>
-              <PendingRequestsSection
-                incomingRequests={pendingRequests}
-                outgoingRequests={outgoingRequests}
-                isLoadingIncoming={loadingRequests}
-                isLoadingOutgoing={loadingOutgoing}
-                processingIds={processingIds}
-                onAccept={handleAcceptRequest}
-                onDecline={handleDeclineRequest}
-                onCancel={handleCancelRequest}
-              />
+      <div className="animate-fade-in">
+        {loadingFriends ? (
+          <LoadingSpinner message="Loading friends..." />
+        ) : (
+          <>
+            <PendingRequestsSection
+              incomingRequests={pendingRequests}
+              outgoingRequests={outgoingRequests}
+              isLoadingIncoming={loadingRequests}
+              isLoadingOutgoing={loadingOutgoing}
+              processingIds={processingIds}
+              onAccept={handleAcceptRequest}
+              onDecline={handleDeclineRequest}
+              onCancel={handleCancelRequest}
+            />
 
-              <FriendsListSection
-                groupedFriends={groupedFriends}
-                filteredCount={filteredFriends.length}
-                searchTerm={searchTerm}
-                openMenuId={openMenuId}
-                processingIds={processingIds}
-                menuRef={menuRef}
-                onMenuToggle={handleMenuToggle}
-                onRemoveFriend={handleRemoveFriend}
-              />
-            </>
-          )}
-        </div>
-      )}
+            <FriendsListSection
+              groupedFriends={groupedFriends}
+              filteredCount={filteredFriends.length}
+              searchTerm={searchTerm}
+              openMenuId={openMenuId}
+              processingIds={processingIds}
+              menuRef={menuRef}
+              onMenuToggle={handleMenuToggle}
+              onRemoveFriend={handleRemoveFriend}
+            />
+          </>
+        )}
+      </div>
     </div>
   )
 }
