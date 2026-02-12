@@ -212,9 +212,14 @@ export async function addUserToGroup(userId: string, groupId: string): Promise<b
   };
   const { error } = await (supabase
     .from('user_groups') as any)
-    .insert(insertData);
+    .upsert(insertData, { onConflict: 'user_id,group_id', ignoreDuplicates: true });
 
-  return !error;
+  if (error) {
+    console.error('Error adding user to group:', error);
+    return false;
+  }
+
+  return true;
 }
 
 /**
