@@ -4,6 +4,15 @@ import { ArrowLeft, Lock, MessageSquare, Plus, Settings, Users } from 'lucide-re
 import type { Group } from '../../lib/types'
 import { useAuth } from '../auth/AuthProvider'
 import {
+  AlertDialog,
+  AlertDialogClose,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '../../lib/ui/9ui/alert-dialog'
+import {
   Combobox,
   ComboboxChip,
   ComboboxChipRemove,
@@ -27,6 +36,7 @@ import {
   addUserToGroup,
   approveGroupMemberRequest,
   createGroup,
+  deleteGroup,
   denyGroupMemberRequest,
   fetchCurrentUserGroupRoles,
   fetchGroupMemberRequests,
@@ -79,6 +89,10 @@ export function GroupsView() {
   const [pendingRequests, setPendingRequests] = React.useState<GroupMemberRequest[]>([])
   const [loadingRequests, setLoadingRequests] = React.useState(false)
   const [processingRequestId, setProcessingRequestId] = React.useState<string | null>(null)
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false)
+  const [deleteConfirmationInput, setDeleteConfirmationInput] = React.useState('')
+  const [deletingGroup, setDeletingGroup] = React.useState(false)
+  const [deleteError, setDeleteError] = React.useState<string | null>(null)
 
   const isDesktopViewport = () =>
     typeof window !== 'undefined' &&
@@ -359,6 +373,50 @@ export function GroupsView() {
     setProcessingRequestId(null)
   }
 
+  const handleDeleteDialogOpenChange = (open: boolean) => {
+    setIsDeleteDialogOpen(open)
+    setDeleteConfirmationInput('')
+    setDeleteError(null)
+    if (!open) {
+      setDeletingGroup(false)
+    }
+  }
+
+  const handleDeleteGroup = async () => {
+    if (!selectedGroup || deletingGroup) return
+    if (deleteConfirmationInput.trim() !== selectedGroup.name) return
+
+    const groupId = selectedGroup.id
+    setDeletingGroup(true)
+    setDeleteError(null)
+
+    const deleted = await deleteGroup(groupId)
+    if (!deleted) {
+      setDeleteError('Failed to delete group. Please try again.')
+      setDeletingGroup(false)
+      return
+    }
+
+    setGroups((prev) => prev.filter((group) => group.id !== groupId))
+    setRoleByGroupId((prev) => {
+      const next = { ...prev }
+      delete next[groupId]
+      return next
+    })
+    setSelectedGroupId(null)
+    setMembers([])
+    setPendingRequests([])
+    setLoadingRequests(false)
+    setProcessingRequestId(null)
+    setSettingsMessage(null)
+    setGroupSettingsDraft(null)
+    setActiveTab('chat')
+    setDeleteConfirmationInput('')
+    setDeleteError(null)
+    setDeletingGroup(false)
+    setIsDeleteDialogOpen(false)
+  }
+
   const membersCanAddMembers =
     groupSettingsDraft?.allowMembersAddMembers ?? selectedGroup?.allowMembersAddMembers ?? false
   const newMembersRequireAdminApprovalEnabled =
@@ -366,6 +424,7 @@ export function GroupsView() {
     (groupSettingsDraft?.newMembersRequireAdminApproval ??
       selectedGroup?.newMembersRequireAdminApproval ??
       false)
+  const canConfirmDelete = !!selectedGroup && deleteConfirmationInput.trim() === selectedGroup.name
 
   const showDetailOnMobile = !!selectedGroupId
 
@@ -717,6 +776,20 @@ export function GroupsView() {
                       )}
                     </div>
                   ) : null}
+
+                  <div className="rounded-xl border border-red-500/40 bg-red-500/10 p-4 space-y-3">
+                    <div className="text-sm font-semibold text-red-200">Danger zone</div>
+                    <div className="text-xs text-red-100/80">
+                      Deleting this group is a destructive action and cannot be undone.
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteDialogOpenChange(true)}
+                      className="px-4 py-2 rounded-xl text-sm font-semibold bg-red-500/20 text-red-200 border border-red-500/40 hover:bg-red-500/30"
+                    >
+                      Delete group
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div className="rounded-xl border border-slate-700 bg-slate-900/50 p-6 text-center text-slate-300 flex flex-col items-center gap-3">
@@ -733,6 +806,42 @@ export function GroupsView() {
         )}
       </section>
       </div>
+
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={handleDeleteDialogOpenChange}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription className="pt-4">
+              <p>Type the group name to confirm:</p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <input
+            value={deleteConfirmationInput}
+            onChange={(event) => setDeleteConfirmationInput(event.target.value)}
+            placeholder={selectedGroup?.name ?? ''}
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-white placeholder:text-slate-500"
+          />
+          {deleteError ? <div className="mt-2 text-xs text-red-300">{deleteError}</div> : null}
+
+          <AlertDialogFooter>
+            <AlertDialogClose
+              disabled={deletingGroup}
+              className="px-4 py-2 rounded-xl text-slate-200 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-semibold"
+            >
+              Cancel
+            </AlertDialogClose>
+            <button
+              type="button"
+              onClick={() => void handleDeleteGroup()}
+              disabled={!canConfirmDelete || deletingGroup}
+              className="px-4 py-2 rounded-xl text-sm font-semibold bg-red-500/20 text-red-200 border border-red-500/40 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {deletingGroup ? 'Deleting...' : 'Delete'}
+            </button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

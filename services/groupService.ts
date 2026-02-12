@@ -201,6 +201,17 @@ export async function updateGroup(
   };
 }
 
+export async function deleteGroup(groupId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('soft_delete_group', { group_id_param: groupId });
+
+  if (error || !data) {
+    console.error('Error deleting group:', error ?? new Error('soft_delete_group returned false'));
+    return false;
+  }
+
+  return true;
+}
+
 /**
  * Add user to a group
  */

@@ -869,6 +869,7 @@ export type Database = {
         Args: { slug_param: string }
         Returns: string
       }
+      soft_delete_group: { Args: { group_id_param: string }; Returns: boolean }
       recompute_event_time_from_itinerary: {
         Args: { event_id_param: string }
         Returns: undefined
