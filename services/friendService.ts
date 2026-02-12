@@ -36,9 +36,11 @@ export type GroupMembership = {
   role: GroupRole;
 };
 
-export type GroupMember = {
+export type GroupMembershipRole = GroupRole;
+
+export type GroupMember = User & {
   user: User;
-  role: GroupRole;
+  role: GroupMembershipRole;
 };
 
 export type GroupMemberRequest = {
@@ -308,11 +310,10 @@ export async function removeFriend(friendId: string): Promise<boolean> {
 /**
  * Fetch groups that the user can access (groups they created or are members of)
  */
-export async function fetchGroups(userId: string): Promise<Group[]> {
+export async function fetchGroups(_userId: string): Promise<Group[]> {
   const { data: groups, error } = await supabase
     .from('groups')
     .select('*')
-    .or(`created_by.eq.${userId},id.in.(select group_id from user_groups where user_id.eq.${userId})`)
     .is('deleted_at', null)
     .order('name', { ascending: true });
 
@@ -517,6 +518,7 @@ export async function fetchGroupMembers(groupId: string): Promise<User[]> {
   return fetchUsers(userIds);
 }
 
+
 export async function fetchGroupMembershipsForCurrentUser(): Promise<GroupMembership[]> {
   const { data: { session } } = await supabase.auth.getSession();
   const userId = session?.user?.id;
@@ -557,6 +559,31 @@ export async function fetchGroupMembershipsForCurrentUser(): Promise<GroupMember
     }));
 }
 
+/**
+ * Fetch roles for the current user across all groups they belong to.
+ */
+export async function fetchCurrentUserGroupRoles(userId: string): Promise<Record<string, GroupMembershipRole>> {
+  const { data: memberships, error } = await supabase
+    .from('user_groups')
+    .select('group_id, role')
+    .eq('user_id', userId);
+
+  if (error || !memberships) {
+    console.error('Error fetching user group roles:', error);
+    return {};
+  }
+
+  const roleByGroupId: Record<string, GroupMembershipRole> = {};
+  for (const membership of memberships as Pick<UserGroupRow, 'group_id' | 'role'>[]) {
+    roleByGroupId[membership.group_id] = membership.role === 'ADMIN' ? 'ADMIN' : 'MEMBER';
+  }
+
+  return roleByGroupId;
+}
+
+/**
+ * Fetch group members including their role in the group.
+ */
 export async function fetchGroupMembersWithRoles(groupId: string): Promise<GroupMember[]> {
   const { data: userGroups, error } = await supabase
     .from('user_groups')
@@ -564,7 +591,7 @@ export async function fetchGroupMembersWithRoles(groupId: string): Promise<Group
     .eq('group_id', groupId);
 
   if (error || !userGroups) {
-    console.error('Error fetching group members:', error);
+    console.error('Error fetching group members with roles:', error);
     return [];
   }
 
@@ -577,7 +604,11 @@ export async function fetchGroupMembersWithRoles(groupId: string): Promise<Group
     .map((row) => {
       const user = userMap.get(row.user_id);
       if (!user) return null;
-      return { user, role: (row.role ?? 'MEMBER') as GroupRole };
+      return {
+        ...user,
+        user,
+        role: (row.role ?? 'MEMBER') as GroupMembershipRole,
+      } satisfies GroupMember;
     })
     .filter((row): row is GroupMember => !!row);
 }

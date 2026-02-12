@@ -149,8 +149,8 @@ export const FriendsView: React.FC = () => {
   }
 
   return (
-    <div className="w-full pb-20 pt-2 space-y-6">
-      <div className="bg-slate-900/50 p-1">
+    <div className="w-full pt-2 pb-20 space-y-6 md:space-y-7">
+      <div className="bg-slate-900/50 p-1 rounded-xl">
         <SearchInput
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
