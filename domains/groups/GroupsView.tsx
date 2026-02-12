@@ -9,14 +9,16 @@ import { SectionHeader } from '../../lib/ui/components/SectionHeader'
 import { TabGroup, type TabOption } from '../../lib/ui/components/TabGroup'
 import { UserAvatar } from '../../lib/ui/components/UserAvatar'
 import {
+  fetchFriends,
+} from '../../services/friendService'
+import {
   addUserToGroup,
   createGroup,
   fetchCurrentUserGroupRoles,
-  fetchFriends,
   fetchGroupMembersWithRoles,
   fetchGroups,
   type GroupMember,
-} from '../../services/friendService'
+} from '../../services/groupService'
 
 const groupTabs: TabOption[] = [
   { id: 'chat', label: 'Chat', icon: <MessageSquare className="w-4 h-4" /> },
@@ -197,7 +199,6 @@ export function GroupsView() {
                       </div>
                       <div className="min-w-0 flex-1">
                         <div className="font-bold text-white truncate">{group.name}</div>
-                        <div className="text-xs text-slate-400">Group</div>
                       </div>
                       <span className="text-xs font-semibold tracking-wide px-2.5 py-1 rounded-full border border-slate-600 text-slate-300">
                         {role}
@@ -224,7 +225,6 @@ export function GroupsView() {
               </button>
               <div>
                 <h2 className="text-xl font-bold text-white">{selectedGroup.name}</h2>
-                <p className="text-xs uppercase tracking-widest text-slate-400">Group</p>
               </div>
             </div>
 

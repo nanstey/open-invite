@@ -12,7 +12,7 @@ import { createEventExpense, deleteEventExpense, updateEventExpense } from '../.
 import { toLocalDateTimeInputValue } from '../../../lib/ui/utils/datetime'
 import { validateEventEditor } from '../components/detail/utils/validateEventEditor'
 import { computeEventTimes, diffItineraryItems, mapDraftItineraryItems, type DraftItineraryItem } from '../components/detail/utils/eventEditorUtils'
-import { fetchGroupMembershipsForCurrentUser } from '../../../services/friendService'
+import { fetchGroupMembershipsForCurrentUser } from '../../../services/groupService'
 
 type EditorMode = 'create' | 'update'
 
