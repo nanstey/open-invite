@@ -523,6 +523,7 @@ export function useEventEditorController(props: {
     values.itineraryAttendanceEnabled,
     values.itineraryTimeDisplay,
     values.visibilityType,
+    values.groupIds,
     values.location,
     values.maxSeats,
     values.noPhones,
