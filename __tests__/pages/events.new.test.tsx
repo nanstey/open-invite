@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { act } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { Route } from './events.new'
+import { Route } from '../../pages/events.new'
 
 let mockSearch = { view: 'list' as const }
 const mockNavigate = vi.fn()
