@@ -18,7 +18,7 @@ vi.mock('@tanstack/react-router', () => ({
   }),
 }))
 
-import { Route } from './auth.callback'
+import { Route } from '../../pages/auth.callback'
 
 const renderRoute = async () => {
   const container = document.createElement('div')

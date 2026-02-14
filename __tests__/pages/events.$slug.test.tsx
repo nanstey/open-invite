@@ -3,7 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { act } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
-import { Route } from './events.$slug'
+import { Route } from '../../pages/events.$slug'
 
 let mockSearch = { view: undefined, tab: undefined }
 let mockParams = { slug: 'event-1' }
