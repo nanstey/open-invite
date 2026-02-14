@@ -16,7 +16,12 @@
     "supabase:studio": "supabase studio",
     "supabase:logs": "docker logs supabase_db_open-invite --tail 100 -f",
     "supabase:logs:auth": "docker logs supabase_auth_open-invite --tail 100 -f",
-    "supabase:logs:all": "docker logs $(docker ps --filter 'name=supabase' --format '{{.Names}}' | tr '\\n' ' ') --tail 100 -f"
+    "supabase:logs:all": "docker logs $(docker ps --filter 'name=supabase' --format '{{.Names}}' | tr '\\n' ' ') --tail 100 -f",
+    "prepare": "husky",
+    "lint": "eslint . --ext .ts,.tsx",
+    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -31,16 +36,33 @@
     "react-dom": "^19.2.1"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.9.0",
+    "@eslint/js": "^10.0.1",
     "@tanstack/react-query-devtools": "^5.91.2",
     "@tanstack/react-router-devtools": "^1.147.2",
     "@tanstack/router-plugin": "^1.147.2",
+    "@testing-library/jest-dom": "^6.9.0",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "eslint": "^10.0.0",
+    "eslint-plugin-react-hooks": "^7.0.1",
+    "eslint-plugin-react-refresh": "^0.5.0",
+    "husky": "^9.1.7",
     "jsdom": "^26.1.0",
+    "lint-staged": "^16.2.7",
+    "prettier": "^3.8.1",
     "supabase": "^2.67.1",
     "typescript": "~5.8.2",
+    "typescript-eslint": "^8.55.0",
     "vite": "^6.2.0",
     "vitest": "^3.2.4"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,jsx,json,css,md}": [
+      "prettier --write"
+    ]
   }
 }
