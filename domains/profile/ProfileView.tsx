@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { User } from '../../lib/types';
-import { Settings, LogOut, ChevronRight, MapPin, Link as LinkIcon, Edit2, Shield, BellRing, Moon, MessageSquarePlus, ClipboardList } from 'lucide-react';
+import { Settings, LogOut, ChevronRight,  Edit2, Shield, BellRing, Moon, MessageSquarePlus, ClipboardList } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { supabase } from '../../lib/supabase';
 import { fetchFriends } from '../../services/friendService';

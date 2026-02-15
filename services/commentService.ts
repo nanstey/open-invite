@@ -25,7 +25,7 @@ export async function fetchComments(eventId: string): Promise<Comment[]> {
     id: c.id,
     userId: c.user_id,
     text: c.text,
-    timestamp: c.timestamp,
+    timestamp: c.timestamp ?? '',
   }));
 }
 
@@ -60,7 +60,7 @@ export async function addComment(eventId: string, text: string): Promise<Comment
     id: comment.id,
     userId: comment.user_id,
     text: comment.text,
-    timestamp: comment.timestamp,
+    timestamp: comment.timestamp ?? '',
   };
 }
 

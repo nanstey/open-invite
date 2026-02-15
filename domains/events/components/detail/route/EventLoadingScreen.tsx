@@ -1,4 +1,4 @@
-import * as React from 'react'
+
 
 export function EventLoadingScreen(props: { label?: string }) {
   const label = props.label ?? 'Loading...'

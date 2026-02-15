@@ -1,12 +1,11 @@
 import { supabase } from '../lib/supabase';
 import type { Notification } from '../lib/types';
 import type { SocialEvent, Comment, Reaction } from '../domains/events/types';
-import { fetchEventById, fetchEvents } from './eventService';
-import { fetchNotifications } from './notificationService';
+import { fetchEventById } from './eventService';
 
 type EventCallback = (event: SocialEvent) => void;
 type CommentCallback = (comment: Comment, eventId: string) => void;
-type ReactionCallback = (reaction: Reaction, eventId: string, emoji: string) => void;
+// type ReactionCallback = (reaction: Reaction, eventId: string, emoji: string) => void;
 type NotificationCallback = (notification: Notification) => void;
 
 class RealtimeService {

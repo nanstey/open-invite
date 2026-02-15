@@ -22,7 +22,7 @@ const LONG_PRESS_DELAY_MS = 450
 
 function usePopoverDismiss(args: {
   open: boolean
-  ref: React.RefObject<HTMLElement>
+  ref: React.RefObject<HTMLElement | null>
   onClose: () => void
   closeOnEscape?: boolean
   includeTouch?: boolean

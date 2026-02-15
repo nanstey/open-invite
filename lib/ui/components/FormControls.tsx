@@ -31,7 +31,7 @@ function variantClasses(variant: 'surface' | 'muted' | undefined) {
   }
 }
 
-export type FormInputProps = React.InputHTMLAttributes<HTMLInputElement> & {
+export type FormInputProps = Omit<React.InputHTMLAttributes<HTMLInputElement>, 'size'> & {
   size?: Size
   variant?: 'surface' | 'muted'
 }
@@ -50,7 +50,7 @@ export function FormInput({ className, size, variant, ...props }: FormInputProps
   )
 }
 
-export type FormSelectProps = React.SelectHTMLAttributes<HTMLSelectElement> & {
+export type FormSelectProps = Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'size'> & {
   size?: Size
   variant?: 'surface' | 'muted'
   wrapperClassName?: string

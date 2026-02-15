@@ -7,7 +7,7 @@ export interface FriendCardProps {
   friend: User
   isMenuOpen: boolean
   isProcessing: boolean
-  menuRef: React.RefObject<HTMLDivElement>
+  menuRef: React.RefObject<HTMLDivElement | null>
   onMenuToggle: () => void
   onRemove: () => void
 }

@@ -1,4 +1,5 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useState, useEffect, useContext } from 'react';
+import type { ReactNode } from 'react';
 import { onAuthStateChange, getCurrentUser } from '../../lib/supabaseClient';
 import type { User } from '../../lib/types';
 

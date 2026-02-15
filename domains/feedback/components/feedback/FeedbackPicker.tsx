@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { Loader2, Check } from 'lucide-react'
 import { SearchInput } from '../../../../lib/ui/components/SearchInput'
 import { fetchAllFeedbackSimple } from '../../../../services/feedbackProjectService'
