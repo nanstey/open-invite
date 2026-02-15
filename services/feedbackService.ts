@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase'
 import type { Database } from '../lib/database.types'
-import type { Feedback, FeedbackFormData, FeedbackStatus, FeedbackRow, FeedbackUpdate } from '../domains/feedback/types'
+import type { Feedback, FeedbackFormData, FeedbackStatus, FeedbackRow } from '../domains/feedback/types'
 
 type FeedbackInsert = Database['public']['Tables']['user_feedback']['Insert']
 
@@ -16,8 +16,8 @@ function transformFeedbackRow(row: FeedbackRow, userName?: string, userAvatar?: 
     importance: row.importance,
     description: row.description,
     status: row.status,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at,
+    createdAt: row.created_at ?? '',
+    updatedAt: row.updated_at ?? '',
     userName,
     userAvatar,
   }
@@ -110,8 +110,8 @@ export async function fetchAllFeedback(): Promise<Feedback[]> {
 
   const profileMap = new Map<string, { name: string; avatar: string }>()
   if (profiles) {
-    profiles.forEach(p => {
-      profileMap.set(p.id, { name: p.name, avatar: p.avatar })
+    profiles.forEach((p: { user_id: string; full_name?: string | null; avatar_url?: string | null }) => {
+      profileMap.set(p.user_id, { name: p.full_name || '', avatar: p.avatar_url || '' })
     })
   }
 

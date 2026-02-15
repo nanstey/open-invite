@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { GripVertical, MoreVertical, Trash2, Github, ExternalLink, MessageSquare } from 'lucide-react'
-import type { Project, ProjectStatus } from '../../projectTypes'
+import type { Project } from '../../projectTypes'
 import { Card } from '../../../../lib/ui/9ui/card'
 
 export interface ProjectCardProps {

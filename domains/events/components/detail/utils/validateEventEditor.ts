@@ -17,7 +17,7 @@ export function validateEventEditor(values: EventEditorValuesLike, hasItinerary:
 } {
   const title = values.title.trim()
   const location = values.location.trim()
-  const description = values.description.trim()
+  // const description = values.description.trim()  // unused
   const activityType = String(values.activityType ?? '').trim()
   const startDateTimeLocal = values.startDateTimeLocal
   const durationHours = values.durationHours === '' ? undefined : Number(values.durationHours)

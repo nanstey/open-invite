@@ -31,7 +31,7 @@ export const FriendsView: React.FC<FriendsViewProps> = ({ activeTab }) => {
   const [loadingOutgoing, setLoadingOutgoing] = useState(true)
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set())
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
-  const menuRef = useRef<HTMLDivElement>(null)
+  const menuRef = useRef<HTMLDivElement | null>(null)
 
   // Close menu when clicking outside
   useClickOutside(menuRef, () => setOpenMenuId(null), openMenuId !== null)

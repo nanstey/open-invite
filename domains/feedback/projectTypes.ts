@@ -1,4 +1,3 @@
-import type { Database } from '../../lib/database.types'
 
 // Project status - these are the kanban columns
 export type ProjectStatus = 'backlog' | 'on_deck' | 'in_progress' | 'review' | 'completed' | 'archived'

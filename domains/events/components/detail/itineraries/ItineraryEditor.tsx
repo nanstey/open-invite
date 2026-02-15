@@ -4,7 +4,6 @@ import { ChevronDown, ChevronUp, MoreVertical, Trash2 } from 'lucide-react'
 import type { ItineraryItem, SocialEvent } from '../../../types'
 import { DateTimeFields } from '../../../../../lib/ui/components/DateTimeFields'
 import { LocationAutocomplete } from '../../../../../lib/ui/components/LocationAutocomplete'
-import { FormSelect } from '../../../../../lib/ui/components/FormControls'
 import { Button } from '../../../../../lib/ui/9ui/button'
 import { Card } from '../../../../../lib/ui/9ui/card'
 import { Input } from '../../../../../lib/ui/9ui/input'
@@ -16,8 +15,7 @@ import {
   getItineraryItemEndDate,
   getNextItineraryItemStartIso,
   minutesToQuarterHourHours,
-  sortByStartTime,
-} from './itinerary'
+  sortByStartTime} from './itinerary'
 import { useOutsideClick } from '../../../hooks/useOutsideClick'
 
 type ItineraryApi = {
@@ -65,8 +63,7 @@ export function ItineraryEditor(props: ItineraryEditorProps) {
     durationHours,
     formatItineraryLocationForDisplay,
     openItineraryLocationInMaps,
-    itineraryApi,
-  } = props
+    itineraryApi} = props
 
   const timeOptions = React.useMemo(() => buildQuarterHourTimeOptions(), [])
 
@@ -76,8 +73,7 @@ export function ItineraryEditor(props: ItineraryEditorProps) {
 
   useOutsideClick({
     enabled: !!openItineraryMenuItemId,
-    onOutsideClick: () => setOpenItineraryMenuItemId(null),
-  })
+    onOutsideClick: () => setOpenItineraryMenuItemId(null)})
 
   // If the parent clears the itinerary list, reset local UI state.
   React.useEffect(() => {
@@ -102,8 +98,7 @@ export function ItineraryEditor(props: ItineraryEditorProps) {
       startTime: startIso,
       durationMinutes,
       location: undefined,
-      description: undefined,
-    })
+      description: undefined})
 
     if (typeof newId === 'string') setExpandedItineraryItemId(newId)
   }, [draftStartIso, durationHours, event.startTime, itineraryApi, itineraryItems.length])
@@ -135,8 +130,7 @@ export function ItineraryEditor(props: ItineraryEditorProps) {
       startTime: defaultStartIso,
       durationMinutes: 60,
       location: undefined,
-      description: undefined,
-    })
+      description: undefined})
 
     if (typeof newId === 'string') setExpandedItineraryItemId(newId)
   }, [itineraryApi, orderedItems])
@@ -212,8 +206,7 @@ function ItineraryBuilder(props: {
     onToggleMenu,
     onCloseMenu,
     onDeleteItem,
-    onAddItem,
-  } = props
+    onAddItem} = props
 
   return (
     <div className="space-y-3">
@@ -287,8 +280,7 @@ function ItineraryItemCard(props: {
     onToggleMenu,
     onCloseMenu,
     onDelete,
-    onUpdate,
-  } = props
+    onUpdate} = props
 
   const start = new Date(item.startTime)
   const end = getItineraryItemEndDate(item)
@@ -358,8 +350,7 @@ function ItineraryItemHeader(props: {
     onToggleExpanded,
     onToggleMenu,
     onCloseMenu,
-    onDelete,
-  } = props
+    onDelete} = props
 
   return (
     <div className="flex items-start justify-between gap-3">
@@ -404,8 +395,7 @@ function ItineraryItemSummary(props: {
     location,
     openItineraryLocationInMaps,
     isExpanded,
-    onToggleExpanded,
-  } = props
+    onToggleExpanded} = props
 
   return (
     <div
@@ -539,8 +529,7 @@ function ItineraryItemFields(props: {
         }}
         onChangeDurationHours={(next) =>
           onUpdate({
-            durationMinutes: Math.max(1, Math.round(Number(next || 0) * 60)),
-          })
+            durationMinutes: Math.max(1, Math.round(Number(next || 0) * 60))})
         }
       />
 

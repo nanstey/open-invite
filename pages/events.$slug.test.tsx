@@ -1,4 +1,3 @@
-import React from 'react'
 import { createRoot } from 'react-dom/client'
 import { act } from 'react'
 import { describe, expect, it, vi } from 'vitest'
@@ -96,6 +95,7 @@ describe('Event detail page', () => {
       ...currentEvent,
       attendees: ['user-1', 'user-2'],
       comments: [...currentEvent.comments, { id: 'comment-2', userId: 'user-3', text: 'yo', timestamp: '2025-01-02' }],
+      // @ts-expect-error Dynamic emoji key
       reactions: { ...currentEvent.reactions, '🔥': { emoji: '🔥', count: 2, userReacted: true } },
     }
 

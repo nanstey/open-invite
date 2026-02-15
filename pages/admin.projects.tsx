@@ -1,4 +1,3 @@
-import React from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { FeedbackAdminTabs } from '../domains/feedback/FeedbackAdminTabs'
 

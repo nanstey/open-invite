@@ -8,7 +8,7 @@ import { useEffect, RefObject } from 'react'
  * useClickOutside(menuRef, () => setIsOpen(false), isOpen)
  */
 export function useClickOutside<T extends HTMLElement>(
-  ref: RefObject<T>,
+  ref: RefObject<T | null>,
   onClickOutside: () => void,
   enabled: boolean = true
 ) {
