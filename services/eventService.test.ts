@@ -118,6 +118,9 @@ describe('eventService', () => {
       event_groups: () => ({
         select: () => ({ in: async () => ({ data: [{ event_id: 'event-1', group_id: 'group-1' }], error: null }) }),
       }),
+      comment_reactions: () => ({
+        select: () => ({ in: async () => ({ data: [], error: null }) }),
+      }),
     })
 
     const result = await fetchEvents('user-1')
