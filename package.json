@@ -16,7 +16,12 @@
     "supabase:studio": "supabase studio",
     "supabase:logs": "docker logs supabase_db_open-invite --tail 100 -f",
     "supabase:logs:auth": "docker logs supabase_auth_open-invite --tail 100 -f",
-    "supabase:logs:all": "docker logs $(docker ps --filter 'name=supabase' --format '{{.Names}}' | tr '\\n' ' ') --tail 100 -f"
+    "supabase:logs:all": "docker logs $(docker ps --filter 'name=supabase' --format '{{.Names}}' | tr '\\n' ' ') --tail 100 -f",
+    "prepare": "husky",
+    "lint": "biome lint .",
+    "lint:fix": "biome lint . --write",
+    "format": "biome format . --write",
+    "format:check": "biome format ."
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -31,16 +36,27 @@
     "react-dom": "^19.2.1"
   },
   "devDependencies": {
-    "@testing-library/jest-dom": "^6.9.0",
+    "@biomejs/biome": "^2.4.0",
     "@tanstack/react-query-devtools": "^5.91.2",
     "@tanstack/react-router-devtools": "^1.147.2",
     "@tanstack/router-plugin": "^1.147.2",
+    "@testing-library/jest-dom": "^6.9.0",
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "husky": "^9.1.7",
     "jsdom": "^26.1.0",
+    "lint-staged": "^16.2.7",
     "supabase": "^2.67.1",
     "typescript": "~5.8.2",
     "vite": "^6.2.0",
     "vitest": "^3.2.4"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx}": [
+      "biome check --write"
+    ],
+    "*.{json,css,md}": [
+      "biome format --write"
+    ]
   }
 }
