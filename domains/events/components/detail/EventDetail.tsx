@@ -184,7 +184,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const isAttending = !!currentUserId && event.attendees.includes(currentUserId);
   const isInvolved = isHost || isAttending;
   const hasSeatLimit = typeof event.maxSeats === 'number' && event.maxSeats > 0
-  const isFull = hasSeatLimit && event.attendees.length >= event.maxSeats
+  const isFull = hasSeatLimit && event.attendees.length >= (event.maxSeats ?? 0)
   const attendance = useAttendanceToggle({
     enabled: !isEditMode,
     event,
@@ -345,7 +345,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           onAdd: edit.expenses.onAdd,
           onUpdate: edit.expenses.onUpdate,
           onDelete: edit.expenses.onDelete,
-          onReorder: edit.expenses.onReorder,
+          // onReorder: edit.expenses.onReorder,  // TODO: add onReorder to useExpenseEditor
         }
       : undefined
   const expenses = (isEditMode ? edit?.expenses?.items : event.expenses) ?? []
@@ -412,7 +412,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               edit={edit}
               showItineraryStartTimeOnly={showItineraryStartTimeOnly}
               onChangeItineraryStartTimeOnly={handleChangeItineraryStartTimeOnly}
-              canManageItineraryAttendance={canManageItineraryAttendance}
+              canManageItineraryAttendance={!!canManageItineraryAttendance}
               onOpenItineraryAttendance={() => setShowItineraryAttendanceOverlay(true)}
               hasCurrentAttendance={!!currentAttendance}
               attendanceByItem={attendanceByItem}

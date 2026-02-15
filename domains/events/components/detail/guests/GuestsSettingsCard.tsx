@@ -1,4 +1,4 @@
-import * as React from 'react'
+
 
 import type { SocialEvent } from '../../../types'
 import { EventVisibility } from '../../../types'

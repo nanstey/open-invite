@@ -1,4 +1,4 @@
-import React from 'react'
+
 
 import type { User } from '../../../../lib/types'
 import type { SocialEvent } from '../../types'

@@ -1,4 +1,4 @@
-import * as React from 'react'
+
 
 import { EventActions } from './EventActions'
 import type { EventActionsModel } from './types'

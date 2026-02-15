@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react';
 import { createFileRoute, redirect, useNavigate, Outlet } from '@tanstack/react-router'
 import { Loader2 } from 'lucide-react'
 

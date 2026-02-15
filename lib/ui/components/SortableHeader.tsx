@@ -32,7 +32,7 @@ export function SortableHeader<T extends string>({
   label, 
   field, 
   currentSort, 
-  direction, 
+
   onSort 
 }: SortableHeaderProps<T>) {
   const isActive = currentSort === field

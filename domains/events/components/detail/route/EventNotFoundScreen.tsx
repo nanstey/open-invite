@@ -1,4 +1,4 @@
-import * as React from 'react'
+
 import { ArrowLeft } from 'lucide-react'
 
 export function EventNotFoundScreen(props: {

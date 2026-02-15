@@ -11,7 +11,7 @@ export interface ProjectLinkCardProps {
   /** Additional count to show (e.g., "+2" for more projects) */
   additionalCount?: number
   /** Called when the card is clicked */
-  onClick: () => void
+  onClick: (e?: React.MouseEvent) => void
   /** Called when remove button is clicked. If not provided, remove button is hidden */
   onRemove?: () => void
 }
