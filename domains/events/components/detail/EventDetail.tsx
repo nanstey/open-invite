@@ -1,32 +1,30 @@
-
+import { useRouterState } from '@tanstack/react-router';
+import { Info, MessageSquare, Users } from 'lucide-react';
 import React, { useState } from 'react';
 import type { Group, User } from '../../../../lib/types';
-import type { ItineraryItem, SocialEvent } from '../../types';
-import { Info, MessageSquare, Users } from 'lucide-react';
 import { TabGroup, type TabOption } from '../../../../lib/ui/components/TabGroup';
-import { useRouterState } from '@tanstack/react-router';
-import { HeaderImageModal } from './images/HeaderImageModal'
-import type { EventTab } from './route/routing'
-import { useEventPeople } from '../../hooks/useEventPeople'
-import { useFriendsForGuests } from '../../hooks/useFriendsForGuests'
-import { ChatTab } from './chat/ChatTab'
-import { GuestsTab } from './guests/GuestsTab'
-import { ItineraryAttendanceOverlay } from './itineraries/ItineraryAttendanceOverlay'
-import { useInviteShare } from '../../hooks/useInviteShare'
-import { useDraftStartDateTimeLocal } from '../../hooks/useDraftStartDateTimeLocal'
-import { useEventTabsController } from '../../hooks/useEventTabsController'
-import { useAttendanceToggle } from '../../hooks/useAttendanceToggle'
-import { HostedByActionsCard } from './actions/HostedByActionsCard'
-import type { EventActionsModel } from './actions/types'
-import { MobileActionsBar } from './actions/MobileActionsBar'
-import { DetailsTab } from './details/DetailsTab'
-import { LeaveEventDialog } from './actions/LeaveEventDialog'
-import { HeroHeader } from './header/HeroHeader'
-import { KeyFactsCard } from './header/KeyFactsCard'
-import { buildEventDateTimeModel } from './utils/eventDateTimeModel'
-import { upsertItineraryAttendance } from '../../../../services/itineraryAttendanceService'
-import { fetchEventById } from '../../../../services/eventService'
-import type { EventExpense } from '../../types'
+import { fetchEventById } from '../../../../services/eventService';
+import { upsertItineraryAttendance } from '../../../../services/itineraryAttendanceService';
+import { useAttendanceToggle } from '../../hooks/useAttendanceToggle';
+import { useDraftStartDateTimeLocal } from '../../hooks/useDraftStartDateTimeLocal';
+import { useEventPeople } from '../../hooks/useEventPeople';
+import { useEventTabsController } from '../../hooks/useEventTabsController';
+import { useFriendsForGuests } from '../../hooks/useFriendsForGuests';
+import { useInviteShare } from '../../hooks/useInviteShare';
+import type { EventExpense, ItineraryItem, SocialEvent } from '../../types';
+import { HostedByActionsCard } from './actions/HostedByActionsCard';
+import { LeaveEventDialog } from './actions/LeaveEventDialog';
+import { MobileActionsBar } from './actions/MobileActionsBar';
+import type { EventActionsModel } from './actions/types';
+import { ChatTab } from './chat/ChatTab';
+import { DetailsTab } from './details/DetailsTab';
+import { GuestsTab } from './guests/GuestsTab';
+import { HeroHeader } from './header/HeroHeader';
+import { KeyFactsCard } from './header/KeyFactsCard';
+import { HeaderImageModal } from './images/HeaderImageModal';
+import { ItineraryAttendanceOverlay } from './itineraries/ItineraryAttendanceOverlay';
+import type { EventTab } from './route/routing';
+import { buildEventDateTimeModel } from './utils/eventDateTimeModel';
 
 interface EventDetailProps {
   event: SocialEvent;
@@ -34,7 +32,11 @@ interface EventDetailProps {
   onClose?: () => void;
   onUpdateEvent: (updated: SocialEvent) => void;
   onPostComment?: (eventId: string, text: string) => Promise<void> | void;
-  onToggleCommentReaction?: (eventId: string, commentId: string, emoji: string) => Promise<void> | void;
+  onToggleCommentReaction?: (
+    eventId: string,
+    commentId: string,
+    emoji: string
+  ) => Promise<void> | void;
   onJoin?: (eventId: string) => Promise<void> | void;
   onLeave?: (eventId: string) => Promise<void> | void;
   activeTab?: EventTab;
@@ -51,7 +53,12 @@ interface EventDetailProps {
     primaryLabel?: string;
     groups?: Group[];
     groupsLoading?: boolean;
-    errors?: Partial<Record<'title' | 'description' | 'startTime' | 'location' | 'activityType' | 'durationHours', string>>;
+    errors?: Partial<
+      Record<
+        'title' | 'description' | 'startTime' | 'location' | 'activityType' | 'durationHours',
+        string
+      >
+    >;
     startDateTimeLocal?: string;
     onChangeStartDateTimeLocal?: (value: string) => void;
     durationHours?: number | '';
@@ -60,33 +67,33 @@ interface EventDetailProps {
     itinerary?: {
       items: ItineraryItem[];
       onAdd: (input: {
-        title: string
-        startTime: string
-        durationMinutes: number
-        location?: string
-        description?: string
-      }) => Promise<string> | string
+        title: string;
+        startTime: string;
+        durationMinutes: number;
+        location?: string;
+        description?: string;
+      }) => Promise<string> | string;
       onUpdate: (
         id: string,
         patch: Partial<{
-          title: string
-          startTime: string
-          durationMinutes: number
-          location?: string
-          description?: string
-        }>,
-      ) => Promise<void> | void
-      onDelete: (id: string) => Promise<void> | void
-    }
+          title: string;
+          startTime: string;
+          durationMinutes: number;
+          location?: string;
+          description?: string;
+        }>
+      ) => Promise<void> | void;
+      onDelete: (id: string) => Promise<void> | void;
+    };
     expenses?: {
       items: EventExpense[];
-      onAdd: (input: Omit<EventExpense, 'id' | 'eventId'>) => Promise<string> | string
+      onAdd: (input: Omit<EventExpense, 'id' | 'eventId'>) => Promise<string> | string;
       onUpdate: (
         id: string,
-        patch: Partial<Omit<EventExpense, 'id' | 'eventId'>>,
-      ) => Promise<void> | void
-      onDelete: (id: string) => Promise<void> | void
-    }
+        patch: Partial<Omit<EventExpense, 'id' | 'eventId'>>
+      ) => Promise<void> | void;
+      onDelete: (id: string) => Promise<void> | void;
+    };
     onSave: () => void;
     onCancel: () => void;
   };
@@ -94,7 +101,7 @@ interface EventDetailProps {
 
 // location display helpers moved to `detail/utils/locationDisplay`.
 
-export type { EventTab } from './route/routing'
+export type { EventTab } from './route/routing';
 
 export const EventDetail: React.FC<EventDetailProps> = ({
   event,
@@ -116,7 +123,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   edit,
 }) => {
   // --- Layout / navigation ---
-  const { pathname } = useRouterState({ select: (s) => ({ pathname: s.location.pathname }) });
+  const { pathname } = useRouterState({ select: s => ({ pathname: s.location.pathname }) });
   const reserveBottomNavSpace = layout === 'shell' && !pathname.startsWith('/events/');
 
   // --- Mode / edit capability ---
@@ -128,21 +135,21 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     eventId: event.id,
     eventSlug: event.slug,
     eventTitle: event.title,
-  })
+  });
 
   // --- Local UI state ---
-  const [showHeaderImageModal, setShowHeaderImageModal] = useState(false)
-  const [showItineraryAttendanceOverlay, setShowItineraryAttendanceOverlay] = useState(false)
-  const [guestItineraryFilterId, setGuestItineraryFilterId] = useState('')
-  const [pendingJoin, setPendingJoin] = useState(false)
-  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false)
+  const [showHeaderImageModal, setShowHeaderImageModal] = useState(false);
+  const [showItineraryAttendanceOverlay, setShowItineraryAttendanceOverlay] = useState(false);
+  const [guestItineraryFilterId, setGuestItineraryFilterId] = useState('');
+  const [pendingJoin, setPendingJoin] = useState(false);
+  const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
 
   // --- Itinerary time display (persisted on event) ---
-  const showItineraryStartTimeOnly = event.itineraryTimeDisplay === 'START_ONLY'
+  const showItineraryStartTimeOnly = event.itineraryTimeDisplay === 'START_ONLY';
   const handleChangeItineraryStartTimeOnly = (next: boolean) => {
-    if (!isEditMode) return
-    edit?.onChange({ itineraryTimeDisplay: next ? 'START_ONLY' : 'START_AND_END' })
-  }
+    if (!isEditMode) return;
+    edit?.onChange({ itineraryTimeDisplay: next ? 'START_ONLY' : 'START_AND_END' });
+  };
 
   // --- Viewer identity ---
   const currentUserId = currentUser?.id;
@@ -154,37 +161,37 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     onTabChange,
     isGuest,
     onRequireAuth,
-  })
-  const activeTab = tabController.activeTab
+  });
+  const activeTab = tabController.activeTab;
 
   // --- People / social data ---
   const { host, attendeesList, commentUsers, reactionUsers } = useEventPeople({
     event,
     currentUserId: currentUserId ?? undefined,
-  })
+  });
 
   const expensePeople = React.useMemo(() => {
-    const all: Array<{ id: string; name: string }> = []
-    if (currentUser) all.push({ id: currentUser.id, name: currentUser.name })
-    if (host) all.push({ id: host.id, name: host.name })
-    for (const u of attendeesList) all.push({ id: u.id, name: u.name })
-    const uniq = new Map(all.map((p) => [p.id, p] as const))
-    return Array.from(uniq.values())
-  }, [attendeesList, currentUser, host])
+    const all: Array<{ id: string; name: string }> = [];
+    if (currentUser) all.push({ id: currentUser.id, name: currentUser.name });
+    if (host) all.push({ id: host.id, name: host.name });
+    for (const u of attendeesList) all.push({ id: u.id, name: u.name });
+    const uniq = new Map(all.map(p => [p.id, p] as const));
+    return Array.from(uniq.values());
+  }, [attendeesList, currentUser, host]);
 
   // --- Edit form draft state ---
   const draftStart = useDraftStartDateTimeLocal({
     enabled: isEditMode,
     startDateTimeLocal: edit?.startDateTimeLocal,
     onChangeStartDateTimeLocal: edit?.onChangeStartDateTimeLocal,
-  })
+  });
 
   // --- Attendance / permissions ---
   const isHost = !!currentUserId && event.hostId === currentUserId;
   const isAttending = !!currentUserId && event.attendees.includes(currentUserId);
   const isInvolved = isHost || isAttending;
-  const hasSeatLimit = typeof event.maxSeats === 'number' && event.maxSeats > 0
-  const isFull = hasSeatLimit && event.attendees.length >= (event.maxSeats ?? 0)
+  const hasSeatLimit = typeof event.maxSeats === 'number' && event.maxSeats > 0;
+  const isFull = hasSeatLimit && event.attendees.length >= (event.maxSeats ?? 0);
   const attendance = useAttendanceToggle({
     enabled: !isEditMode,
     event,
@@ -196,88 +203,88 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     onLeave,
     onRequireAuth,
     onUpdateEvent,
-  })
-  const isJoinDisabled = attendance.isJoinDisabled
+  });
+  const isJoinDisabled = attendance.isJoinDisabled;
 
   // --- Itinerary models ---
   const itineraryItems: ItineraryItem[] =
-    (isEditMode ? edit?.itinerary?.items : event.itineraryItems) ?? []
-  const hasItinerary = itineraryItems.length > 0
-  const itineraryAttendance = event.itineraryAttendance ?? []
+    (isEditMode ? edit?.itinerary?.items : event.itineraryItems) ?? [];
+  const hasItinerary = itineraryItems.length > 0;
+  const itineraryAttendance = event.itineraryAttendance ?? [];
   const currentAttendance = currentUserId
-    ? itineraryAttendance.find((entry) => entry.userId === currentUserId)
-    : undefined
-  const currentAttendanceIds = currentAttendance?.itineraryItemIds ?? []
+    ? itineraryAttendance.find(entry => entry.userId === currentUserId)
+    : undefined;
+  const currentAttendanceIds = currentAttendance?.itineraryItemIds ?? [];
   const canManageItineraryAttendance =
     !isEditMode &&
     event.itineraryAttendanceEnabled &&
     !!currentUserId &&
     isAttending &&
     !isHost &&
-    hasItinerary
+    hasItinerary;
   const shouldGateJoin =
     !isEditMode &&
     event.itineraryAttendanceEnabled &&
     !!currentUserId &&
     !isHost &&
     hasItinerary &&
-    !isAttending
+    !isAttending;
   const shouldPromptItineraryAttendance =
     canManageItineraryAttendance &&
-    (!currentAttendance || (currentAttendance.itineraryItemIds?.length ?? 0) === 0)
+    (!currentAttendance || (currentAttendance.itineraryItemIds?.length ?? 0) === 0);
 
-  const wasAttendingRef = React.useRef(isAttending)
+  const wasAttendingRef = React.useRef(isAttending);
 
   React.useEffect(() => {
-    const wasAttending = wasAttendingRef.current
-    wasAttendingRef.current = isAttending
+    const wasAttending = wasAttendingRef.current;
+    wasAttendingRef.current = isAttending;
 
     if (!wasAttending && isAttending && canManageItineraryAttendance) {
-      setShowItineraryAttendanceOverlay(true)
-      return
+      setShowItineraryAttendanceOverlay(true);
+      return;
     }
 
     if (shouldPromptItineraryAttendance) {
-      setShowItineraryAttendanceOverlay(true)
+      setShowItineraryAttendanceOverlay(true);
     }
-  }, [canManageItineraryAttendance, isAttending, shouldPromptItineraryAttendance])
+  }, [canManageItineraryAttendance, isAttending, shouldPromptItineraryAttendance]);
 
   const handleSaveAttendance = React.useCallback(
     async (selectedIds: string[]) => {
       if (pendingJoin && !isAttending) {
         if (onJoin) {
-          await onJoin(event.id)
+          await onJoin(event.id);
         } else {
-          return false
+          return false;
         }
       }
-      const saved = await upsertItineraryAttendance(event.id, selectedIds)
-      if (!saved) return false
-      const refreshed = await fetchEventById(event.id)
+      const saved = await upsertItineraryAttendance(event.id, selectedIds);
+      if (!saved) return false;
+      const refreshed = await fetchEventById(event.id);
       if (refreshed) {
-        onUpdateEvent(refreshed)
+        onUpdateEvent(refreshed);
       }
-      setPendingJoin(false)
-      return true
+      setPendingJoin(false);
+      return true;
     },
-    [event.id, isAttending, onJoin, onUpdateEvent, pendingJoin],
-  )
+    [event.id, isAttending, onJoin, onUpdateEvent, pendingJoin]
+  );
 
   const attendanceByItem = React.useMemo(() => {
-    if (!itineraryAttendance.length || attendeesList.length === 0) return new Map<string, User[]>()
-    const byId = new Map(attendeesList.map((person) => [person.id, person]))
-    const map = new Map<string, User[]>()
+    if (!itineraryAttendance.length || attendeesList.length === 0) return new Map<string, User[]>();
+    const byId = new Map(attendeesList.map(person => [person.id, person]));
+    const map = new Map<string, User[]>();
     for (const entry of itineraryAttendance) {
-      const user = byId.get(entry.userId)
-      if (!user) continue
+      const user = byId.get(entry.userId);
+      if (!user) continue;
       for (const itemId of entry.itineraryItemIds ?? []) {
-        const list = map.get(itemId) ?? []
-        list.push(user as User)
-        map.set(itemId, list)
+        const list = map.get(itemId) ?? [];
+        list.push(user as User);
+        map.set(itemId, list);
       }
     }
-    return map
-  }, [attendeesList, itineraryAttendance])
+    return map;
+  }, [attendeesList, itineraryAttendance]);
 
   // --- Derived view models ---
   const dateTime = React.useMemo(
@@ -287,16 +294,16 @@ export const EventDetail: React.FC<EventDetailProps> = ({
         eventEndTime: event.endTime,
         itineraryItems,
       }),
-    [event.endTime, event.startTime, itineraryItems],
-  )
-  
+    [event.endTime, event.startTime, itineraryItems]
+  );
+
   const seats = React.useMemo(() => {
-    const attendeeCount = attendeesList.length
-    const maxSeats = event.maxSeats
-    const goingLabel = maxSeats ? `${attendeeCount}/${maxSeats}` : `${attendeeCount}`
-    const spotsLeft = maxSeats ? Math.max(maxSeats - attendeeCount, 0) : null
-    return { attendeeCount, maxSeats, goingLabel, spotsLeft }
-  }, [attendeesList.length, event.maxSeats])
+    const attendeeCount = attendeesList.length;
+    const maxSeats = event.maxSeats;
+    const goingLabel = maxSeats ? `${attendeeCount}/${maxSeats}` : `${attendeeCount}`;
+    const spotsLeft = maxSeats ? Math.max(maxSeats - attendeeCount, 0) : null;
+    return { attendeeCount, maxSeats, goingLabel, spotsLeft };
+  }, [attendeesList.length, event.maxSeats]);
 
   // --- UI options ---
   // Time options are now owned by `DateTimeCard` and `ItineraryEditor`.
@@ -307,7 +314,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     { id: 'chat', label: 'Chat', icon: <MessageSquare className="w-4 h-4" /> },
   ];
 
-  const { friendIds, outgoingRequestIds, incomingRequestMap } = useFriendsForGuests({ enabled: !isGuest && !isEditMode && activeTab === 'guests' })
+  const { friendIds, outgoingRequestIds, incomingRequestMap } = useFriendsForGuests({
+    enabled: !isGuest && !isEditMode && activeTab === 'guests',
+  });
 
   const actionsModel: EventActionsModel = {
     mode: isEditMode ? 'edit' : 'view',
@@ -319,15 +328,15 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     onEditRequested,
     onJoinLeave: async () => {
       if (isAttending) {
-        setLeaveConfirmOpen(true)
-        return
+        setLeaveConfirmOpen(true);
+        return;
       }
       if (shouldGateJoin) {
-        setPendingJoin(true)
-        setShowItineraryAttendanceOverlay(true)
-        return
+        setPendingJoin(true);
+        setShowItineraryAttendanceOverlay(true);
+        return;
       }
-      await attendance.onJoinLeave()
+      await attendance.onJoinLeave();
     },
     isJoinDisabled,
     isAttending,
@@ -337,18 +346,19 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     canSave,
     isSaving: edit?.isSaving,
     primaryLabel: edit?.primaryLabel,
-  }
+  };
 
-  const expenseApi =
+  const expenseApi: ExpenseApi | undefined =
     isEditMode && edit?.expenses
       ? {
+          items: edit.expenses.items,
           onAdd: edit.expenses.onAdd,
           onUpdate: edit.expenses.onUpdate,
           onDelete: edit.expenses.onDelete,
           onReorder: edit.expenses.onReorder,
         }
-      : undefined
-  const expenses = (isEditMode ? edit?.expenses?.items : event.expenses) ?? []
+      : undefined;
+  const expenses = (isEditMode ? edit?.expenses?.items : event.expenses) ?? [];
 
   return (
     <div
@@ -367,9 +377,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
         onBack={onClose}
         showHeaderImagePicker={isEditMode && isHost}
         onOpenHeaderImagePicker={() => setShowHeaderImageModal(true)}
-        onSaveHeaderImagePositionY={(positionY) => {
-          if (!isEditMode) return
-          edit?.onChange({ headerImagePositionY: positionY })
+        onSaveHeaderImagePositionY={positionY => {
+          if (!isEditMode) return;
+          edit?.onChange({ headerImagePositionY: positionY });
         }}
       />
 
@@ -382,11 +392,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
         seats={seats}
       />
 
-      <HostedByActionsCard
-        host={host}
-        seats={seats}
-        actions={actionsModel}
-      />
+      <HostedByActionsCard host={host} seats={seats} actions={actionsModel} />
 
       {/* Body */}
       <div className="max-w-6xl mx-auto px-4 md:px-6 py-6 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
@@ -430,10 +436,12 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               isEditMode={isEditMode}
               itineraryFilterId={guestItineraryFilterId}
               onChangeItineraryFilterId={setGuestItineraryFilterId}
-              onChangeAttendees={(nextAttendees) => edit?.onChange({ attendees: nextAttendees })}
-              onChangeMaxSeats={(next) => edit?.onChange({ maxSeats: next })}
-              onChangeVisibility={(next) => edit?.onChange({ visibilityType: next })}
-              onChangeItineraryAttendanceEnabled={(next) => edit?.onChange({ itineraryAttendanceEnabled: next })}
+              onChangeAttendees={nextAttendees => edit?.onChange({ attendees: nextAttendees })}
+              onChangeMaxSeats={next => edit?.onChange({ maxSeats: next })}
+              onChangeVisibility={next => edit?.onChange({ visibilityType: next })}
+              onChangeItineraryAttendanceEnabled={next =>
+                edit?.onChange({ itineraryAttendanceEnabled: next })
+              }
             />
           ) : null}
 
@@ -463,12 +471,12 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           defaultQuery={event.title || ''}
           initialSelectedUrl={event.headerImageUrl}
           onClose={() => setShowHeaderImageModal(false)}
-          onUpdate={(imageUrl) => {
+          onUpdate={imageUrl => {
             if (isEditMode) {
-              edit?.onChange({ headerImageUrl: imageUrl })
-              return
+              edit?.onChange({ headerImageUrl: imageUrl });
+              return;
             }
-            onUpdateEvent({ ...event, headerImageUrl: imageUrl })
+            onUpdateEvent({ ...event, headerImageUrl: imageUrl });
           }}
         />
       ) : null}
@@ -484,8 +492,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           initialSelectedIds={currentAttendanceIds}
           mode={pendingJoin ? 'join' : currentAttendance ? 'edit' : 'join'}
           onClose={() => {
-            setShowItineraryAttendanceOverlay(false)
-            setPendingJoin(false)
+            setShowItineraryAttendanceOverlay(false);
+            setPendingJoin(false);
           }}
           onSave={handleSaveAttendance}
         />
@@ -495,11 +503,10 @@ export const EventDetail: React.FC<EventDetailProps> = ({
         open={leaveConfirmOpen}
         onOpenChange={setLeaveConfirmOpen}
         onConfirm={async () => {
-          setLeaveConfirmOpen(false)
-          await attendance.onJoinLeave()
+          setLeaveConfirmOpen(false);
+          await attendance.onJoinLeave();
         }}
       />
-
     </div>
   );
 };
