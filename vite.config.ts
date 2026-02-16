@@ -9,7 +9,7 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 3000,
       host: '0.0.0.0',
-      allowedHosts: 'all',
+      allowedHosts: true,
     },
     plugins: [
       TanStackRouterVite({
@@ -23,7 +23,6 @@ export default defineConfig(({ mode }) => {
         '@': path.resolve(__dirname, '.'),
       },
     },
-    // Expose Supabase env vars to client
     envPrefix: 'VITE_',
   };
 });
