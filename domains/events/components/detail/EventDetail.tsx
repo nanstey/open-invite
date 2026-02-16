@@ -345,7 +345,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           onAdd: edit.expenses.onAdd,
           onUpdate: edit.expenses.onUpdate,
           onDelete: edit.expenses.onDelete,
-          // onReorder: edit.expenses.onReorder,  // TODO: add onReorder to useExpenseEditor
+          onReorder: edit.expenses.onReorder,
         }
       : undefined
   const expenses = (isEditMode ? edit?.expenses?.items : event.expenses) ?? []

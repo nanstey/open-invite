@@ -110,8 +110,8 @@ export async function fetchAllFeedback(): Promise<Feedback[]> {
 
   const profileMap = new Map<string, { name: string; avatar: string }>()
   if (profiles) {
-    profiles.forEach((p: { user_id: string; full_name?: string | null; avatar_url?: string | null }) => {
-      profileMap.set(p.user_id, { name: p.full_name || '', avatar: p.avatar_url || '' })
+    profiles.forEach((p: { id: string; name?: string | null; avatar?: string | null }) => {
+      profileMap.set(p.id, { name: p.name || '', avatar: p.avatar || '' })
     })
   }
 
