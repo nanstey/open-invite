@@ -1,4 +1,4 @@
-import * as React from 'react'
+
 import { cn } from './utils'
 import type { EmojiItem } from './emoji-data'
 

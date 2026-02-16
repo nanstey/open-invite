@@ -29,8 +29,8 @@ export const FeedbackRow: React.FC<FeedbackRowProps> = ({
   const firstProject = projectMappings[0]
   const additionalCount = projectMappings.length > 1 ? projectMappings.length - 1 : undefined
 
-  const handleProjectClick = (e: React.MouseEvent) => {
-    e.stopPropagation()
+  const handleProjectClick = (e?: React.MouseEvent) => {
+    e?.stopPropagation()
     if (firstProject) {
       onProjectClick(firstProject.projectId)
     }

@@ -1,7 +1,6 @@
-import React from 'react'
+import * as React from 'react'
 import { createFileRoute, redirect, useNavigate, useRouterState } from '@tanstack/react-router'
 
-import type { SocialEvent } from '../domains/events/types'
 import { useAuth } from '../domains/auth/AuthProvider'
 import { EventEditor } from '../domains/events/components/detail/EventEditor'
 import { EventDetail } from '../domains/events/components/detail/EventDetail'

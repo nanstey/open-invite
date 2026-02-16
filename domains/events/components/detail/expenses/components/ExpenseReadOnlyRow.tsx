@@ -1,4 +1,4 @@
-import * as React from 'react'
+
 
 import type { EventExpense, Person } from '../types'
 import type { ExpenseDetails } from '../useExpenseCalculator'

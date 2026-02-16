@@ -1,4 +1,3 @@
-import React from 'react'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 
 import { useAuth } from '../domains/auth/AuthProvider'

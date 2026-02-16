@@ -1,16 +1,8 @@
-import React, { useCallback } from 'react'
-import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-import { Users as UsersIcon } from 'lucide-react'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 
-import type { FriendsMode } from '../lib/types'
 import { FriendsView } from '../domains/friends/FriendsView'
-import { coerceFriendsTab, parseFriendsTab } from '../domains/friends/types'
-import { useSetHeaderTabs } from '../domains/app/HeaderTabsContext'
-import type { TabOption } from '../lib/ui/components/TabGroup'
+import { parseFriendsTab } from '../domains/friends/types'
 
-const friendsTabs: TabOption[] = [
-  { id: 'friends', label: 'Friends', icon: <UsersIcon className="w-4 h-4" /> },
-]
 
 export const Route = createFileRoute('/friends')({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -22,16 +14,10 @@ export const Route = createFileRoute('/friends')({
     }
   },
   component: function FriendsRouteComponent() {
-    const { tab } = Route.useSearch()
-    const navigate = useNavigate()
-    const activeTab: FriendsMode = 'FRIENDS'
+  Route.useSearch()  // search params unused
+    const activeTab = 'FRIENDS'
 
-    const handleTabChange = useCallback(
-      (id: string) => navigate({ to: '/friends', search: { tab: coerceFriendsTab(id) } }),
-      [navigate]
-    )
 
-    // useSetHeaderTabs(friendsTabs, tab ?? 'friends', handleTabChange)
 
     return (
       <div className="flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 pt-2">

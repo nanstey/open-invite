@@ -181,7 +181,7 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
         id: comment.id,
         userId: comment.user_id,
         text: comment.text,
-        timestamp: comment.timestamp,
+        timestamp: comment.timestamp ?? '',
       });
     });
   }
@@ -314,7 +314,7 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
     id: c.id,
     userId: c.user_id,
     text: c.text,
-    timestamp: c.timestamp,
+    timestamp: c.timestamp ?? '',
   })) || [];
   const groupIds = eventGroupsData?.map(eg => eg.group_id) || [];
 
@@ -435,7 +435,15 @@ export async function createEvent(
 
   type EventInsert = Database['public']['Tables']['events']['Insert'];
   
+  const slug = eventData.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .substring(0, 100) || 'event';
+
   const insertData: EventInsert = {
+    slug,
+    // slug will be generated separately
     host_id: user.id,
     title: eventData.title,
     description: eventData.description,
@@ -517,7 +525,7 @@ export async function updateEvent(eventId: string, updates: Partial<SocialEvent>
   if (updates.noPhones !== undefined) updateData.no_phones = updates.noPhones;
   if (updates.itineraryTimeDisplay !== undefined) updateData.itinerary_time_display = updates.itineraryTimeDisplay;
 
-  type EventUpdate = Database['public']['Tables']['events']['Update'];
+  // type EventUpdate = Database['public']['Tables']['events']['Update']; // unused
   const result = await supabase
     .from('events')
     .update(updateData as unknown as never)
@@ -640,7 +648,7 @@ export async function addComment(eventId: string, text: string): Promise<Comment
     id: commentRow.id,
     userId: commentRow.user_id,
     text: commentRow.text,
-    timestamp: commentRow.timestamp,
+    timestamp: commentRow.timestamp ?? '',
   };
 }
 

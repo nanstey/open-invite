@@ -11,7 +11,7 @@ export interface FriendsListSectionProps {
   searchTerm: string
   openMenuId: string | null
   processingIds: Set<string>
-  menuRef: React.RefObject<HTMLDivElement>
+  menuRef: React.RefObject<HTMLDivElement | null>
   onMenuToggle: (friendId: string) => void
   onRemoveFriend: (friend: User) => void
 }
