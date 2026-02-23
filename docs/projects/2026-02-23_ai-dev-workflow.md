@@ -1,7 +1,7 @@
 # RFC: AI-Driven Development Workflow (Feedback-Prioritized)
 
 - **Date:** 2026-02-23
-- **Status:** Proposed (updated per Noel decisions)
+- **Status:** Proposed (final policy decisions incorporated)
 - **Owner:** Noel (human approver/merger)
 - **Scope:** `open-invite` repo workflow from customer feedback intake → proposal → implementation → PR review
 
@@ -62,10 +62,11 @@ Why this approach:
 - Allows extra link types later (design docs, incident follow-ups, etc.).
 - Keeps status enum stable while still distinguishing "in proposal" vs "in development."
 
-Migration-safe path:
+Migration-safe path (finalized rollout):
 1. Add nullable `links` field (JSONB) with default `{}`.
 2. Backfill from existing known PR references where available.
-3. Enforce validation in automation first (soft requirement), then DB/app-level strict validation after adoption.
+3. Enforce **application-level validation first** in automation/API logic.
+4. Defer optional DB-level constraints to a later hardening phase after rollout stabilization.
 
 Operational interpretation:
 - `status = in_progress` + `links.proposal` present + no `links.implementation` => proposal stage in progress.
@@ -98,13 +99,13 @@ Status must update immediately on lifecycle events, with idempotent writes and s
    - event: `proposal_changes_requested`
    - transition: `review -> in_progress`
 
-6. Proposal approved/merged, implementation not yet started
+6. Proposal PR merged while project is in review
    - event: `proposal_approved`
-   - transition: stays `review` until implementation start OR moves to `on_deck` for implementation queue (team choice). **Chosen policy:** move to `on_deck` to indicate ready-for-build.
+   - transition: `review -> in_progress` by immediately initiating implementation branch/work.
 
-7. Implementation branch created (allowed only after proposal approval)
+7. Implementation branch created (triggered immediately after proposal merge)
    - event: `implementation_started`
-   - transition: `on_deck -> in_progress`
+   - transition: remains `in_progress` (idempotent confirmation of active development stage).
 
 8. Implementation PR waiting for Noel feedback
    - event: `implementation_waiting_review`
@@ -171,13 +172,14 @@ Policy:
 3. Agent synthesizes one update plan, applies changes in one batch, pushes once.
 4. Agent posts one summary comment (resolved/deferred/ready for re-review).
 
-## Phase D: Implementation (after proposal approval only)
+## Phase D: Implementation (immediately after proposal merge)
 
-After proposal approval:
-1. Create implementation branch and PR, set `links.implementation`.
-2. PR template must include required field: **`Proposal Ref:`** linking approved proposal PR/doc.
-3. Implement according to approved proposal; document any approved deltas.
-4. Agent never merges; Noel merges.
+After proposal PR is merged:
+1. Immediately create implementation branch and PR, set `links.implementation`.
+2. Transition/confirm project status as `in_progress` when implementation starts.
+3. PR template must include required field: **`Proposal Ref:`** linking approved proposal PR/doc.
+4. Implement according to approved proposal; document any approved deltas.
+5. Agent never merges; Noel merges.
 
 Parallelism rule:
 - **Maximum one active implementation branch per `on_deck` project.**
@@ -198,7 +200,7 @@ Before implementation PR is considered ready to merge:
 
 1. Lint/typecheck/tests pass.
 2. Playwright coverage for impacted critical paths passes.
-3. Visual regression snapshots captured via **GitHub artifact snapshots**.
+3. Visual regression snapshots captured via **GitHub artifact snapshots** with **30-day retention**.
 4. UX/design-system review notes included.
 5. Architecture review notes included.
 6. `Proposal Ref:` present and points to approved proposal.
@@ -253,16 +255,18 @@ Acceptance criteria:
 2. Triage only projects in `on_deck`.
 3. 30-minute automation checks; sub-agent spawned only on detected changes.
 4. PR comments processed in batches.
-5. Visual regression via GitHub artifact snapshots.
+5. Visual regression via GitHub artifact snapshots with **30-day retention**.
 6. No implementation branch before proposal approval.
-7. Implementation PR must reference approved proposal (`Proposal Ref:` required).
-8. One active implementation branch per project.
-9. Notify Noel only for errors/exceptions (not no-change loops).
-10. Noel is sole merge authority.
-11. Clippy is excluded from direct repo work.
+7. If proposal PR is merged while in `review`, agent immediately starts implementation and transitions status to `in_progress`.
+8. Implementation PR must reference approved proposal (`Proposal Ref:` required).
+9. One active implementation branch per project.
+10. Link validation rollout is app-level first; DB constraints are optional and deferred to later hardening.
+11. Notify Noel only for errors/exceptions (not no-change loops).
+12. Noel is sole merge authority.
+13. Clippy is excluded from direct repo work.
 
-## 11) Open Questions for Noel
+## 11) Finalized Policy Decisions
 
-1. On proposal approval, do you want status to move to `on_deck` (recommended) or remain `review` until implementation starts?
-2. Do you want link validation enforced in DB constraints, app validation, or both (and in what rollout order)?
-3. For visual artifacts, should snapshot retention policy be fixed (e.g., 30/90 days)?
+1. On proposal PR merge during `review`, the agent immediately initiates implementation and moves status to `in_progress`.
+2. Link validation rollout order is fixed: application-level validation first; optional DB constraints deferred to a later hardening phase.
+3. Visual regression artifact retention is fixed at 30 days.
