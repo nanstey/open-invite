@@ -1,7 +1,7 @@
 # RFC: AI-Driven Development Workflow (Feedback-Prioritized)
 
 - **Date:** 2026-02-23
-- **Status:** Proposed
+- **Status:** Proposed (updated per Noel decisions)
 - **Owner:** Noel (human approver/merger)
 - **Scope:** `open-invite` repo workflow from customer feedback intake → proposal → implementation → PR review
 
@@ -16,67 +16,143 @@ This RFC formalizes:
 - how PR review comments are processed in **batch context**,
 - and what standards/checks are required before merge.
 
-## 2) Current Context (Codebase + Data)
+## 2) Authoritative Project Status Model
 
-### 2.1 Repository conventions observed
+`feedback_projects.status` is the single workflow state machine for both proposal and development phases.
 
-- Domain-oriented frontend structure (`domains/*`) with shared utilities in `lib/*`.
-- Lint/format baseline via Biome (`biome.json`), with Husky + lint-staged for pre-commit checks.
-- Unit tests via Vitest (`pnpm test`).
-- Supabase local workflows are already scripted (`pnpm run supabase:start`, `supabase:migrate`, etc.).
-- CI/CD deployment workflows exist for staging/production in `.github/workflows`.
+- `backlog` = not ready, human defining scope
+- `on_deck` = ready for agent to build proposal
+- `in_progress` = agent has started work (proposal or development)
+- `review` = waiting for human feedback (proposal PR or development PR)
+- `completed` = merged
 
-### 2.2 Feedback data model observed (Supabase)
+Notes:
+- `archived` exists in current DB enum but is out-of-band for this workflow; operational automation ignores it.
+- Noel is the only merge authority; agent never merges.
 
-From migrations:
-- `20260130000000_add_user_feedback.sql`
-- `20260130010000_add_feedback_projects.sql`
+## 3) Stage Differentiation Within One Status Model
 
-Key tables and relationship:
-- `public.user_feedback`
-  - includes `type`, `importance`, `status`, `title`, `description`, timestamps
-  - status enum: `new`, `reviewed`, `planned`, `done`, `declined`
-  - RLS: users can submit/view own feedback; admins can view/update all
-- `public.feedback_projects`
-  - project container with status enum: `backlog`, `on_deck`, `in_progress`, `review`, `completed`, `archived`
-- `public.feedback_project_items`
-  - join table linking feedback entries to projects
-  - unique `(project_id, feedback_id)`
+Because both proposal and implementation can be `in_progress`/`review`, stage is represented via required typed links.
 
-This gives enough structure to prioritize work from real customer feedback and group related items into project proposals.
+### Recommended schema approach (generalized, migration-safe)
 
-## 3) Goals and Non-Goals
+Use a generalized `links` object (or JSONB column) with typed entries, while requiring two canonical link types:
+- `proposal` (required once proposal PR exists)
+- `implementation` (required once implementation PR exists)
 
-### Goals
-1. Prioritize work from production feedback data.
-2. Require proposal-first planning for new projects.
-3. Keep Noel as final merge authority (agent never merges).
-4. Batch-handle PR comments for coherent revisions.
-5. Enforce local run + Supabase + test/lint + browser QA discipline.
-6. Add architecture/design-system review checkpoints.
+Example shape:
 
-### Non-Goals
-- Replacing human product judgment.
-- Fully autonomous merges/deployments.
-- Building a general-purpose agent platform outside this repo’s needs.
+```json
+{
+  "links": {
+    "proposal": {
+      "url": "https://github.com/nanstey/open-invite/pull/123",
+      "state": "open|approved|merged"
+    },
+    "implementation": {
+      "url": "https://github.com/nanstey/open-invite/pull/456",
+      "state": "open|changes_requested|approved|merged"
+    }
+  }
+}
+```
 
-## 4) Proposed Workflow (End-to-End)
+Why this approach:
+- Supports current need (`proposal` + `implementation`) without future schema churn.
+- Allows extra link types later (design docs, incident follow-ups, etc.).
+- Keeps status enum stable while still distinguishing "in proposal" vs "in development."
+
+Migration-safe path:
+1. Add nullable `links` field (JSONB) with default `{}`.
+2. Backfill from existing known PR references where available.
+3. Enforce validation in automation first (soft requirement), then DB/app-level strict validation after adoption.
+
+Operational interpretation:
+- `status = in_progress` + `links.proposal` present + no `links.implementation` => proposal stage in progress.
+- `status = review` + proposal PR open => proposal awaiting Noel feedback.
+- `status = in_progress|review` + `links.implementation` present => development stage.
+
+## 4) Synchronization Rules (Immediate + Consistent)
+
+Status must update immediately on lifecycle events, with idempotent writes and single-writer control.
+
+### 4.1 Event → status transition mapping
+
+1. Project created but still being defined by human
+   - event: `project_created`
+   - transition: `-> backlog`
+
+2. Human marks project ready for agent proposal work
+   - event: `project_scoped_ready`
+   - transition: `backlog -> on_deck`
+
+3. Agent starts proposal work (first proposal branch/commit/PR creation)
+   - event: `proposal_started`
+   - transition: `on_deck -> in_progress`
+
+4. Proposal PR opened or updated and waiting for Noel
+   - event: `proposal_waiting_review`
+   - transition: `in_progress -> review`
+
+5. Noel requests proposal changes; agent resumes edits
+   - event: `proposal_changes_requested`
+   - transition: `review -> in_progress`
+
+6. Proposal approved/merged, implementation not yet started
+   - event: `proposal_approved`
+   - transition: stays `review` until implementation start OR moves to `on_deck` for implementation queue (team choice). **Chosen policy:** move to `on_deck` to indicate ready-for-build.
+
+7. Implementation branch created (allowed only after proposal approval)
+   - event: `implementation_started`
+   - transition: `on_deck -> in_progress`
+
+8. Implementation PR waiting for Noel feedback
+   - event: `implementation_waiting_review`
+   - transition: `in_progress -> review`
+
+9. Noel requests changes on implementation PR
+   - event: `implementation_changes_requested`
+   - transition: `review -> in_progress`
+
+10. Implementation PR merged by Noel
+    - event: `implementation_merged`
+    - transition: `review -> completed`
+
+### 4.2 Consistency controls
+
+- **Single-writer rule:** only Coordinator Agent service account writes project status.
+- **Idempotent upserts:** each transition call includes `(project_id, event_id, target_status)` and is safe to replay.
+- **Optimistic concurrency:** update with `where version = N`; increment version on success.
+- **Event log first:** append event record before status mutation; persist `last_applied_event_id` on project row.
+
+### 4.3 Rollback/error handling when sync fails
+
+If status update fails after a workflow action (e.g., PR opened but DB write failed):
+1. Mark automation run `error` with project ID + event ID + expected status.
+2. Notify Noel **only on error/exception** (no no-change noise).
+3. Retry with exponential backoff (idempotent event).
+4. If retries exhaust, stop further transitions for that project (lock to `sync_error`) until manual retry/repair.
+5. Reconciliation job on next 30-minute cycle compares GitHub state vs DB state and reapplies missing transition.
+
+## 5) Workflow (End-to-End, Noel-aligned)
 
 ## Phase A: Intake + Prioritization
 
-1. Query/inspect production feedback (`user_feedback`, `feedback_projects`, `feedback_project_items`).
-2. Rank opportunities with a simple score:
+1. Query production feedback (`user_feedback`, `feedback_projects`, `feedback_project_items`).
+2. **Triage only projects currently in `on_deck`.**
+3. Rank with a simple score:
    - `priority_score = importance_weight + volume_weight + recency_weight + strategic_weight`
-3. Select top candidate project(s) and link source feedback IDs.
+4. Link source feedback IDs.
 
-**Output:** selected project candidate with evidence from feedback data.
+Output: selected `on_deck` project candidate with evidence from feedback data.
 
 ## Phase B: Proposal Authoring (required before implementation)
 
-For each new project, the Proposal Agent must:
+For each selected `on_deck` project:
 1. Read project description and relevant code paths.
 2. Ask clarifying questions when requirements are ambiguous.
-3. Produce proposal markdown in `docs/projects/{YYYY-MM-DD}_{project-name}.md`.
+3. Produce/update proposal markdown in `docs/projects/{YYYY-MM-DD}_{project-name}.md`.
+4. Open/update proposal PR and record `links.proposal`.
 
 Required proposal sections:
 - Project brief
@@ -85,186 +161,108 @@ Required proposal sections:
 - High-level implementation
 - Remaining open questions
 
-Proposal is submitted by PR, and Noel is notified when ready for review.
+Policy:
+- **No implementation branch until proposal PR is approved.**
 
 ## Phase C: Review + Batch PR Comment Handling
 
-1. Agent does **not** respond to each comment in isolation.
+1. Agent does not respond to comments one-by-one.
 2. Agent collects all new PR comments since last checkpoint.
-3. Agent synthesizes a single update plan, applies changes in one batch, pushes once.
-4. Agent posts one summary comment: what changed, what remains, and marks ready for re-review.
+3. Agent synthesizes one update plan, applies changes in one batch, pushes once.
+4. Agent posts one summary comment (resolved/deferred/ready for re-review).
 
-## Phase D: Implementation After Proposal Approval
+## Phase D: Implementation (after proposal approval only)
 
-After proposal merge/approval:
-1. Create feature branch.
-2. Implement according to approved proposal.
-3. Allow acceptance criteria refinement if discoveries occur; document deltas in PR.
-4. Agent never merges. Noel performs merge.
+After proposal approval:
+1. Create implementation branch and PR, set `links.implementation`.
+2. PR template must include required field: **`Proposal Ref:`** linking approved proposal PR/doc.
+3. Implement according to approved proposal; document any approved deltas.
+4. Agent never merges; Noel merges.
 
-## 5) Recommended Agent Architecture
+Parallelism rule:
+- **Maximum one active implementation branch per `on_deck` project.**
 
-> Constraint from Noel: include at least one dedicated sub-agent, and **Clippy must never work directly on this repo**.
+## 6) Automation Cadence and Notification Policy
 
-### 5.1 Agents and responsibilities
+30-minute automation loop:
+1. Every 30 minutes, script checks for:
+   - new/updated `on_deck` project signals,
+   - new PR comments/reviews on tracked proposal/implementation PRs.
+2. If no changes, do nothing (no noisy notification).
+3. Spawn sub-agent work **only when changes are detected**.
+4. Notify Noel only on errors/exceptions or when human decision is required.
 
-1. **Coordinator Agent (primary, repo-scoped)**
-   - Orchestrates phases, owns PR state transitions, asks clarifying questions.
-2. **Feedback Triage Sub-agent (dedicated)**
-   - Reads feedback tables, computes priority packs, outputs ranked project candidates.
-3. **Proposal Author Sub-agent (dedicated)**
-   - Generates/updates proposal markdown from approved candidate and codebase context.
-4. **QA Guardrail Sub-agent (dedicated)**
-   - Runs lint/tests/build, validates local app + Supabase startup, runs Playwright smoke/visual checks.
+## 7) Quality/Definition-of-Done Gates
 
-### 5.2 Policy constraints
+Before implementation PR is considered ready to merge:
 
+1. Lint/typecheck/tests pass.
+2. Playwright coverage for impacted critical paths passes.
+3. Visual regression snapshots captured via **GitHub artifact snapshots**.
+4. UX/design-system review notes included.
+5. Architecture review notes included.
+6. `Proposal Ref:` present and points to approved proposal.
+
+## 8) Agent Architecture
+
+Constraint from Noel: include dedicated sub-agents; Clippy must never work directly on this repo.
+
+1. **Coordinator Agent (single writer for state transitions)**
+   - orchestrates phases and status sync.
+2. **Feedback Triage Sub-agent**
+   - ranks `on_deck` work from feedback evidence.
+3. **Proposal Author Sub-agent**
+   - drafts/updates proposal docs and PR content.
+4. **QA Guardrail Sub-agent**
+   - runs DoD checks including Playwright + visual artifacts.
+
+Policy constraints:
 - Allowed execution identity: Open Invite developer agents only.
-- Disallowed execution identity: **Clippy** (explicit denylist for this repo).
+- Disallowed execution identity: **Clippy**.
 - Merge authority: Noel only.
-
-## 6) Tooling, Skills/Agents, and Credentials
-
-### 6.1 Required tools
-
-- Git + GitHub CLI (`gh`) for branching/PR flow
-- Node + pnpm
-- Supabase CLI + Docker (`pnpm run supabase:start`)
-- Vitest (`pnpm test`)
-- Biome (`pnpm run lint`, `pnpm run format:check`)
-- Playwright (E2E + visual regression baseline and diffing)
-
-### 6.2 Required skills/agent capabilities
-
-- Supabase schema/RLS literacy
-- Repo navigation and domain-structured React/TS coding
-- Test authoring (unit/integration/E2E)
-- PR review synthesis + batched response writing
-- Design-system consistency review (current repo has active UI standardization direction)
-
-### 6.3 Required credentials/secrets
-
-Local dev:
-- `.env.local`
-  - `VITE_SUPABASE_URL`
-  - `VITE_SUPABASE_ANON_KEY`
-
-GitHub/CI environments (from existing workflow docs):
-- `SUPABASE_ACCESS_TOKEN`
-- `NETLIFY_AUTH_TOKEN`
-- env-specific: `SUPABASE_PROJECT_REF`, `SUPABASE_DB_PASSWORD`, `NETLIFY_SITE_ID`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
-- optional OAuth provider secrets for Google auth flows
-
-Agent/GitHub operations:
-- `gh` authenticated user with PR create/comment/read access
-
-## 7) Baseline Engineering Standards (Formalized)
-
-Minimum standards for AI-produced work in this repo:
-
-1. **Architecture & modularity**
-   - Keep domain boundaries clear (`domains/*` first, shared logic in `lib/*`).
-   - Prefer composable modules; avoid oversized mixed-responsibility components.
-2. **Code style/quality**
-   - Pass Biome lint + formatting.
-   - Keep types explicit at boundaries; avoid unnecessary `any`.
-3. **Local runtime confidence**
-   - Must boot app locally.
-   - Must run local Supabase (`pnpm run supabase:start`) and migrations when schema-related.
-4. **Testing**
-   - Unit/integration tests for behavior changes.
-   - Playwright smoke coverage for critical user paths.
-   - Visual regression snapshots for high-impact UI surfaces.
-5. **Review gates**
-   - Architecture review (scope, modularity, coupling).
-   - Frontend design-system review (consistency with shared UI direction; reduce duplicate primitives).
-6. **PR hygiene**
-   - Small, traceable commits.
-   - Link implementation to approved proposal.
-   - Batch response to reviewer comments.
-
-### Suggested improvements
-
-- Add CI job for Playwright visual regression on PRs.
-- Add a PR template with required checkboxes for:
-  - Supabase local run,
-  - lint/tests,
-  - architecture review,
-  - design-system review,
-  - feedback linkage IDs.
-
-## 8) PR Comment Heartbeat/Check Loop (Batch Mode)
-
-Purpose: Poll for new review input without noisy per-comment reactions.
-
-Proposed loop:
-1. Every 30 minutes during active review window (e.g., 08:00–18:00 local), fetch PR comments/reviews.
-2. If no new comments: no action.
-3. If new comments exist:
-   - aggregate all unseen comments,
-   - deduplicate overlapping asks,
-   - classify as must-fix / should-fix / question,
-   - generate one consolidated patch set.
-4. Push one update commit (or small coherent set), then post one summary comment:
-   - resolved items
-   - deferred items with rationale
-   - explicit “ready for re-review”.
-
-Checkpoint state to persist per PR:
-- `last_seen_comment_timestamp`
-- `last_seen_review_id`
-- `last_batch_update_commit_sha`
 
 ## 9) Phased Rollout Plan
 
-## Phase 1 (Pilot: Proposal-only flow)
-- Implement proposal-first process for 1–2 feedback-prioritized projects.
-- Enforce Noel-only merge rule.
+### Phase 1 (proposal-state hardening)
+- Adopt authoritative status model + link schema.
+- Enforce proposal-first with `Proposal Ref:` requirement.
 
-**Acceptance criteria**
-- Proposal files created under `docs/projects/` with required sections.
-- PR opened and reviewed by Noel.
-- At least one batched comment-response cycle completed.
+Acceptance criteria:
+- Status transitions follow mapping above.
+- Proposal PR links are recorded and used to disambiguate stage.
 
-**Risks**
-- Under-specified proposals if clarifying questions are skipped.
+### Phase 2 (implementation guardrails)
+- Enforce one active implementation branch per project.
+- Enforce DoD checklist and artifact-based visual regression.
 
-## Phase 2 (Implementation guardrails)
-- Add mandatory QA checklist (Supabase start, app boot, lint/tests, Playwright smoke).
-- Add architecture/design-system review steps.
+Acceptance criteria:
+- Every implementation PR references approved proposal.
+- Required QA/UX/architecture evidence present.
 
-**Acceptance criteria**
-- Each implementation PR includes evidence of checks.
-- No direct merges by agent.
+### Phase 3 (automation reliability)
+- Harden 30-minute change-driven loop and reconciliation.
+- Keep no-change silent behavior; alert only on exceptions.
 
-**Risks**
-- Longer cycle times while standards normalize.
+Acceptance criteria:
+- No noisy heartbeat comments.
+- Sync drift auto-reconciled or escalated with actionable errors.
 
-## Phase 3 (Automation hardening)
-- Add CI automation for visual regression and PR template enforcement.
-- Refine prioritization scoring from real delivery outcomes.
+## 10) Decisions Summary (Noel)
 
-**Acceptance criteria**
-- Reduced regressions and faster reviewer turnaround.
-- Prioritization rationale visible in project proposals.
-
-**Risks**
-- CI flakiness (especially browser tests) if environment not stabilized.
-
-## 10) Decisions Summary
-
-1. Feedback data in Supabase is the source of prioritization truth.
-2. Proposal PR is required before feature implementation.
-3. PR comments handled in batched updates, not piecemeal.
-4. Noel is the sole merge authority.
-5. Clippy is explicitly excluded from direct repo work.
-6. Quality gates include local app boot, local Supabase, lint/tests, Playwright (with visual regression direction), and architecture/design-system reviews.
+1. Authoritative statuses: `backlog`, `on_deck`, `in_progress`, `review`, `completed`.
+2. Triage only projects in `on_deck`.
+3. 30-minute automation checks; sub-agent spawned only on detected changes.
+4. PR comments processed in batches.
+5. Visual regression via GitHub artifact snapshots.
+6. No implementation branch before proposal approval.
+7. Implementation PR must reference approved proposal (`Proposal Ref:` required).
+8. One active implementation branch per project.
+9. Notify Noel only for errors/exceptions (not no-change loops).
+10. Noel is sole merge authority.
+11. Clippy is excluded from direct repo work.
 
 ## 11) Open Questions for Noel
 
-1. Preferred initial weighting for the prioritization score (importance vs volume vs recency vs strategic)?
-2. Should the PR comment heartbeat run only on business hours, or 24/7 with quiet windows?
-3. For visual regression, do you prefer:
-   - GitHub artifact snapshots only, or
-   - a hosted baseline tool/service?
-4. Do you want a hard policy that implementation PRs must reference an approved proposal file path?
+1. On proposal approval, do you want status to move to `on_deck` (recommended) or remain `review` until implementation starts?
+2. Do you want link validation enforced in DB constraints, app validation, or both (and in what rollout order)?
+3. For visual artifacts, should snapshot retention policy be fixed (e.g., 30/90 days)?
