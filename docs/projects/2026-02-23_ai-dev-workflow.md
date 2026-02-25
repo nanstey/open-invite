@@ -115,7 +115,15 @@ Status must update immediately on lifecycle events, with idempotent writes and s
    - event: `implementation_changes_requested`
    - transition: `review -> in_progress`
 
-10. Implementation PR merged by Noel
+10. Implementation batch push completed (address/defer summary posted, addressed-thread resolution attempted)
+    - event: `implementation_batch_pushed`
+    - transition: remains `in_progress` (idempotent progress confirmation)
+
+11. Implementation PR moved to waiting review after batch completion
+    - event: `implementation_rewaiting_review`
+    - transition: `in_progress -> review`
+
+12. Implementation PR merged by Noel
     - event: `implementation_merged`
     - transition: `review -> completed`
 
@@ -168,9 +176,19 @@ Policy:
 ## Phase C: Review + Batch PR Comment Handling
 
 1. Agent does not respond to comments one-by-one.
-2. Agent collects all new PR comments since last checkpoint.
-3. Agent synthesizes one update plan, applies changes in one batch, pushes once.
-4. Agent posts one summary comment (resolved/deferred/ready for re-review).
+2. Agent collects all **new, unresolved** PR comments since last checkpoint.
+3. For comments authored by `chatgpt-codex-connector` (bot), agent must evaluate validity:
+   - If valid, treat exactly like Noel feedback and include it in the implementation batch.
+   - If invalid/not-applicable, do not implement it; leave a thread reply explaining why it is not being addressed.
+4. Agent synthesizes one update plan, applies changes in one batch, pushes once.
+5. After push, resolve all review threads/comments that were addressed in that batch.
+   - If the agent lacks permission to resolve a thread, it must post: "Addressed in commit <sha>; unable to mark resolved due to permissions" and continue.
+6. Agent posts one summary comment (resolved/deferred/ready for re-review), including any bot-comment deferrals with rationale.
+7. Comment dedupe rule: only trigger new development work from comments that are both (a) newer than `last_processed_comment_ts`, (b) still unresolved, and (c) not present in the processed `comment_id`/`thread_id` ledger; already-addressed threads must not trigger new loops.
+8. Reviewer classes:
+   - Human reviewer (Noel/approved humans): default Address unless out-of-scope.
+   - Trusted bot reviewer (`chatgpt-codex-connector` initially): evaluate validity then Address/Defer.
+   - Unknown bot reviewer: stricter validity threshold; default Defer with rationale unless clearly correct + actionable.
 
 ## Phase D: Implementation (immediately after proposal merge)
 
@@ -190,9 +208,28 @@ Parallelism rule:
 1. Every 30 minutes, script checks for:
    - new/updated `on_deck` project signals,
    - new PR comments/reviews on tracked proposal/implementation PRs.
-2. If no changes, do nothing (no noisy notification).
-3. Spawn sub-agent work **only when changes are detected**.
-4. Notify Noel only on errors/exceptions or when human decision is required.
+2. PR comment ingestion must ignore comments/threads already marked resolved or already included in prior batch checkpoints.
+3. Execute cycle steps using `docs/projects/ai-dev-workflow-cycle-checklist.md`.
+4. If no changes, do nothing (no noisy notification).
+5. Spawn sub-agent work **only when changes are detected**.
+6. Max retries per cycle for failing checks/actions: 2 retries per failing step, then mark deferred (`deferred_due_to_ci_failure`) and continue to summary.
+7. Notify Noel only on errors/exceptions or when human decision is required.
+
+### 6.1 Checkpoint Storage Contract (authoritative)
+- Store cycle checkpoints in a durable single source of truth keyed by `(project_id, pr_number)`.
+- Required fields:
+  - `last_processed_comment_ts`
+  - `last_processed_review_ts`
+  - `processed_comment_ids[]`
+  - `processed_thread_ids[]`
+  - `last_batch_commit_sha`
+- Writes must be atomic (all-or-nothing).
+- If checkpoint write fails, stop loop and raise an exception notification (prevents duplicate reprocessing).
+
+### 6.2 Review Staleness Escalation SLA
+- If PR is in `review` with no reviewer action for 24h: post one polite reminder comment.
+- If no reviewer action for 72h: mark workflow state `blocked_review` and include it in the next executive brief.
+- Do not send repeated reminder spam; max one reminder per 24h window.
 
 ## 7) Quality/Definition-of-Done Gates
 
@@ -254,19 +291,26 @@ Acceptance criteria:
 1. Authoritative statuses: `backlog`, `on_deck`, `in_progress`, `review`, `completed`.
 2. Triage only projects in `on_deck`.
 3. 30-minute automation checks; sub-agent spawned only on detected changes.
-4. PR comments processed in batches.
-5. Visual regression via GitHub artifact snapshots with **30-day retention**.
-6. No implementation branch before proposal approval.
-7. If proposal PR is merged while in `review`, agent immediately starts implementation and transitions status to `in_progress`.
-8. Implementation PR must reference approved proposal (`Proposal Ref:` required).
-9. One active implementation branch per project.
-10. Link validation rollout is app-level first; DB constraints are optional and deferred to later hardening.
-11. Notify Noel only for errors/exceptions (not no-change loops).
-12. Noel is sole merge authority.
-13. Clippy is excluded from direct repo work.
+4. PR comments processed in batches (not one-by-one).
+5. `chatgpt-codex-connector` comments are first-class review input when valid; invalid bot comments require explicit in-thread defer rationale.
+6. After each batch push, resolve all addressed comment threads (or post permissions fallback note when resolution is not allowed).
+7. Comment-loop dedupe requires unresolved + newer-than-checkpoint + not-already-processed by `comment_id/thread_id`.
+8. Checkpoint state is durable + atomic by `(project_id, pr_number)`.
+9. Implementation PR must reference approved proposal (`Proposal Ref:` required).
+10. One active implementation branch per project.
+11. No implementation branch before proposal approval.
+12. If proposal PR is merged while in `review`, agent immediately starts implementation and transitions status to `in_progress`.
+13. Visual regression uses GitHub artifact snapshots with **30-day retention**.
+14. Link validation rollout is app-level first; DB constraints are optional and deferred to later hardening.
+15. Retry cap is 2 retries per failing cycle step; then defer with explicit reason.
+16. Notify Noel only for errors/exceptions or explicit decisions needed (no no-change noise).
+17. Noel is sole merge authority.
+18. Clippy is excluded from direct repo work.
 
 ## 11) Finalized Policy Decisions
 
 1. On proposal PR merge during `review`, the agent immediately initiates implementation and moves status to `in_progress`.
 2. Link validation rollout order is fixed: application-level validation first; optional DB constraints deferred to a later hardening phase.
 3. Visual regression artifact retention is fixed at 30 days.
+4. Bot-review handling is explicit: trust-list + validity test + in-thread rationale for deferrals.
+5. Loop re-trigger prevention is explicit: checkpoint + processed-id ledger + unresolved filter.
