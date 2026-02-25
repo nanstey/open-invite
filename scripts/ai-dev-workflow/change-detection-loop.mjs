@@ -139,8 +139,9 @@ function getCurrentBranch() {
 }
 
 function remediateFailedWorkflowRuns({ failedWorkflowRuns, ghRepo, statePath }) {
-  const remediationCommand = process.env.AI_DEV_WORKFLOW_CI_REMEDIATION_CMD;
-  if (!remediationCommand || failedWorkflowRuns.length === 0) {
+  const remediationCommand =
+    process.env.AI_DEV_WORKFLOW_CI_REMEDIATION_CMD ?? "node scripts/ai-dev-workflow/ci-remediate.mjs";
+  if (failedWorkflowRuns.length === 0) {
     return;
   }
 

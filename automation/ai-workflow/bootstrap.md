@@ -36,7 +36,7 @@ This doc bootstraps implementation from operational policy `automation/ai-workfl
 - TODO: wire service credentials for production-safe project polling.
 - TODO: wire GitHub App auth/token strategy for non-interactive `gh api` calls.
 - TODO: wire Telegram credentials (`TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID`) once approved.
-- TODO: wire `AI_DEV_WORKFLOW_CI_REMEDIATION_CMD` to invoke branch-local CI fix workflow.
+- (Optional) override `AI_DEV_WORKFLOW_CI_REMEDIATION_CMD` if custom CI remediation behavior is needed.
 
 ## Safe GitHub comment posting pattern
 

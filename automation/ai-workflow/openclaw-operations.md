@@ -64,7 +64,8 @@ Future production wiring (TODO):
 - Non-interactive GitHub auth strategy for automation identity.
 - Project polling credentials for production-safe data access.
 - Alerting route (Telegram/OpenClaw messaging) for exception-only notifications.
-- CI remediation command wiring (`AI_DEV_WORKFLOW_CI_REMEDIATION_CMD`) to apply fixes automatically on the working branch.
+
+Note: CI remediation has a built-in default (`scripts/ai-dev-workflow/ci-remediate.mjs`), so no extra wiring is required unless you want custom behavior.
 
 ## 5) Checkpointing and Anti-Loop Rules
 

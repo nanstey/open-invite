@@ -32,9 +32,19 @@ Behavior in bootstrap phase:
 - exits with no-op when there are no changes,
 - only notifies on errors (notification wiring TODO).
 
-### Optional CI auto-remediation hooks
+### CI auto-remediation (default, no extra wiring)
 
-- `AI_DEV_WORKFLOW_CI_REMEDIATION_CMD`: shell command to execute when new CI failures are detected.
+By default, the loop runs:
+- `node scripts/ai-dev-workflow/ci-remediate.mjs`
+
+This script will:
+- scope failures to the current branch,
+- run `pnpm lint:fix` + `pnpm format`,
+- run `pnpm lint` + `pnpm test` + `pnpm build`,
+- commit and push fixes if any files changed.
+
+Override hook (optional):
+- `AI_DEV_WORKFLOW_CI_REMEDIATION_CMD`: custom shell command to execute on new CI failures.
 - `AI_DEV_WORKFLOW_AUTO_FIX_ALL_BRANCHES=1`: allow remediation for failures on branches other than current checkout.
 
 Environment passed to remediation command:
