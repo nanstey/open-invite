@@ -22,7 +22,11 @@
     "lint": "biome lint .",
     "lint:fix": "biome lint . --write",
     "format": "biome format . --write",
-    "format:check": "biome format ."
+    "format:check": "biome format .",
+    "ai-workflow:loop": "node automation/ai-workflow/scripts/change-detection-loop.mjs",
+    "ai-workflow:remediate-ci": "node automation/ai-workflow/scripts/ci-remediate.mjs",
+    "ai-workflow:check-migrations": "bash automation/ai-workflow/scripts/check-migration-order.sh",
+    "ai-workflow:validate-local": "bash automation/ai-workflow/scripts/run-local-validation.sh"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -58,7 +62,7 @@
     "*.{ts,tsx,js,jsx}": [
       "biome check --write"
     ],
-    "*.{json,css,md}": [
+    "*.{json,css}": [
       "biome format --write"
     ]
   }

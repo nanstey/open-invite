@@ -14,7 +14,7 @@ This directory contains GitHub Actions workflows for automated deployment to sta
   5. Deploys to Netlify staging site (`staging.openinvite.cc`)
 
 ### `deploy-production.yml`
-- **Trigger:** Push to `live` branch or manual dispatch
+- **Trigger:** GitHub Release published or manual dispatch
 - **Actions:**
   1. Applies new migrations to Supabase production database (`open-invite-prod`)
   2. Builds frontend with production environment variables
@@ -29,7 +29,7 @@ This project uses **GitHub Environments** to manage environment-specific secrets
 1. Go to your GitHub repository → Settings → Environments
 2. Create two environments:
    - **`staging`** - For staging deployments (main branch)
-   - **`production`** - For production deployments (live branch)
+   - **`production`** - For production deployments (release/workflow_dispatch)
 
 ### Repository-Level Secrets (Shared Across Environments)
 
@@ -66,7 +66,7 @@ Configure these secrets in each environment (Settings → Environments → [envi
    - Go to https://app.netlify.com
    - Create two sites from your GitHub repository:
      - Staging site: Configure to deploy from `main` branch
-     - Production site: Configure to deploy from `live` branch
+     - Production site: configure to deploy from the production workflow output (GitHub Release / manual dispatch)
    - Note the Site IDs from each site's settings
 
 2. **Configure Custom Domains:**
@@ -121,7 +121,7 @@ Configure these secrets in each environment (Settings → Environments → [envi
 
 ### Test Production Deployment
 
-1. Merge `main` into `live` branch (or push directly to `live`)
+1. Create/publish a GitHub Release for the target tag (or run `workflow_dispatch`)
 2. Check GitHub Actions tab to see the workflow run
 3. Verify deployment at `openinvite.cc`
 
