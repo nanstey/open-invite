@@ -18,6 +18,8 @@ This folder is the **self-contained operational source** for AI workflow automat
 - `browser-validation-runbook.md` — agent browser validation modes and evidence contract
 - `scripts/` — executable loop/remediation/worktree/local-validation helpers
 - `autonomy-guardrails.md` — hard limits, escalation ladder, and human override controls
+- `ui-ux-consistency-job.md` — recurring UI consistency and component-consolidation review job
+- `system-architect-review-job.md` — recurring architecture/refactor reuse review job
 
 ## Proposal vs Automation
 Project proposal docs may evolve independently. Automation should follow this folder's policy/contracts even if proposal docs drift.

@@ -263,6 +263,12 @@ Parallelism rule:
 - Behavior-changing updates require corresponding test additions/updates unless explicitly justified in PR summary.
 - Self-review gate is required before autonomous commit/push.
 - Refactor scope is limited to touched modules unless explicitly approved.
+- After functional + visual goals, a mandatory post-goal refactor pass must evaluate DRY/composability/reuse opportunities in touched files.
+
+## 6.6 Dedicated Quality Review Jobs
+- UI/UX consistency review job spec: `automation/ai-workflow/ui-ux-consistency-job.md`.
+- System architect refactor review job spec: `automation/ai-workflow/system-architect-review-job.md`.
+- These jobs are intended for recurring deep-pass improvements and backlog generation.
 
 ## 7) Quality/Definition-of-Done Gates
 
