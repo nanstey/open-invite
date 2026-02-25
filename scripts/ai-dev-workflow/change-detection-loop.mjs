@@ -95,6 +95,39 @@ function detectNewPrComments(onDeckProjects, sinceIso, ghRepo) {
   return comments;
 }
 
+function detectFailedWorkflowRuns(sinceIso, ghRepo) {
+  if (!ghRepo) {
+    return [];
+  }
+
+  const endpoint = `/repos/${ghRepo}/actions/runs?status=completed&per_page=100`;
+  const result = runGhJson(endpoint);
+  const runs = Array.isArray(result?.workflow_runs) ? result.workflow_runs : [];
+  const sinceMs = Date.parse(sinceIso);
+
+  return runs
+    .filter((run) => {
+      const updatedMs = Date.parse(run?.updated_at ?? run?.created_at ?? 0);
+      if (Number.isNaN(updatedMs) || updatedMs <= sinceMs) {
+        return false;
+      }
+
+      return ["failure", "timed_out", "cancelled", "action_required", "startup_failure"].includes(
+        run?.conclusion,
+      );
+    })
+    .map((run) => ({
+      id: run.id,
+      name: run.name,
+      runNumber: run.run_number,
+      conclusion: run.conclusion,
+      event: run.event,
+      branch: run.head_branch,
+      updatedAt: run.updated_at,
+      url: run.html_url,
+    }));
+}
+
 function notifyError(message, error) {
   console.error(`[ai-dev-workflow:error] ${message}`);
   if (error) {
@@ -120,8 +153,9 @@ function main() {
 
   const changedProjects = detectProjectChanges(onDeckProjects, priorState);
   const newComments = detectNewPrComments(onDeckProjects, priorState.lastCheckedAt, ghRepo);
+  const failedWorkflowRuns = detectFailedWorkflowRuns(priorState.lastCheckedAt, ghRepo);
 
-  const hasChanges = changedProjects.length > 0 || newComments.length > 0;
+  const hasChanges = changedProjects.length > 0 || newComments.length > 0 || failedWorkflowRuns.length > 0;
   const nextState = {
     lastCheckedAt: new Date().toISOString(),
     onDeckProjects,
@@ -137,6 +171,7 @@ function main() {
   console.log("[ai-dev-workflow] change detected", {
     changedProjects,
     newComments,
+    failedWorkflowRuns,
   });
   console.log("[ai-dev-workflow] bootstrap mode: no worker spawn yet");
 }

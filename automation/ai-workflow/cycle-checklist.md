@@ -14,11 +14,12 @@ Use this checklist on every 30-minute automation cycle to keep behavior determin
 ## 1) Detect Work
 - [ ] Query `feedback_projects` for `status = on_deck` changes since last cycle.
 - [ ] Query tracked proposal/implementation PRs for new reviews/comments.
+- [ ] Query recent GitHub Actions workflow runs and capture newly failed runs since last checkpoint.
 - [ ] Build candidate comment set:
   - [ ] `created_at > last_processed_comment_ts`
   - [ ] thread is unresolved
   - [ ] comment/thread id not already in processed sets
-- [ ] If no project changes and no candidate comments: exit silently (no notification).
+- [ ] If no project changes, no candidate comments, and no newly failed workflow runs: exit silently (no notification).
 
 ## 2) Proposal Stage Handling (if applicable)
 - [ ] If project is `on_deck`, run triage ranking and select candidate(s).
@@ -47,6 +48,7 @@ For each candidate unresolved comment:
 
 ## 5) Execute One Batch
 - [ ] Build a single consolidated plan: Address / Defer / Need-clarification.
+- [ ] For newly failed GitHub Actions runs, include a failure-response plan (root cause, impacted paths, remediation change).
 - [ ] Apply all code/doc changes in one batch.
 - [ ] Run required checks:
   - [ ] lint

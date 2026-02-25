@@ -207,11 +207,13 @@ Parallelism rule:
 30-minute automation loop:
 1. Every 30 minutes, script checks for:
    - new/updated `on_deck` project signals,
-   - new PR comments/reviews on tracked proposal/implementation PRs.
+   - new PR comments/reviews on tracked proposal/implementation PRs,
+   - newly failed GitHub Actions runs since last checkpoint.
 2. PR comment ingestion must ignore comments/threads already marked resolved or already included in prior batch checkpoints.
 3. Execute cycle steps using `automation/ai-workflow/cycle-checklist.md`.
 4. If no changes, do nothing (no noisy notification).
 5. Spawn sub-agent work **only when changes are detected**.
+   - Workflow failure handling: when a new failed CI run is detected, generate and execute a remediation batch (or defer with explicit rationale if blocked).
 6. Max retries per cycle for failing checks/actions: 2 retries per failing step, then mark deferred (`deferred_due_to_ci_failure`) and continue to summary.
 7. Notify Noel only on errors/exceptions or when human decision is required.
 

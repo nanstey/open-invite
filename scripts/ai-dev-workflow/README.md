@@ -27,5 +27,6 @@ Behavior in bootstrap phase:
 
 - checks eligible `on_deck` projects only,
 - checks new PR comments for tracked proposal/implementation PRs,
+- checks newly failed GitHub Actions workflow runs since last checkpoint,
 - exits with no-op when there are no changes,
 - only notifies on errors (notification wiring TODO).

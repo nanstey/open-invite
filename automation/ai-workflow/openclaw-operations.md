@@ -37,6 +37,7 @@ Why isolated:
 2. Agent runs change detector:
    - `node scripts/ai-dev-workflow/change-detection-loop.mjs`
    - (or `pnpm ai-workflow:loop` if environment supports it)
+   - detector includes on-deck project changes, new PR comment/review activity, and newly failed GitHub Actions runs.
 3. If no changes are detected:
    - Exit quietly (no alert).
 4. If changes are detected:

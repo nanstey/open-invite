@@ -20,9 +20,10 @@ This doc bootstraps implementation from operational policy `automation/ai-workfl
 1. Load latest project snapshot from `OPEN_INVITE_ON_DECK_CMD` (optional provider command).
 2. Keep only projects with `status === "on_deck"`.
 3. Check for new PR comments on proposal/implementation PRs tied to those `on_deck` projects.
-4. If there are no detected changes, exit silently with no-op log.
-5. If changes are detected, write checkpoint state and emit a bootstrap log (no worker spawn yet).
-6. Notify only on error via `notifyError(...)`.
+4. Check for newly failed GitHub Actions workflow runs since last checkpoint.
+5. If there are no detected changes, exit silently with no-op log.
+6. If changes are detected, write checkpoint state and emit a bootstrap log (no worker spawn yet).
+7. Notify only on error via `notifyError(...)`.
 
 ## Required environment hooks (bootstrap)
 
