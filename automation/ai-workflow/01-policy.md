@@ -181,6 +181,16 @@ Policy:
 - If PR has high commit noise (many tiny commits), agent may squash branch commits before rebase to simplify conflict resolution and review context.
 - After rebase/squash, force-push is allowed on the PR branch when required, with clear summary note.
 
+### PR hygiene and summary requirements
+- Keep implementation commits scoped and reversible.
+- If branch history is noisy, squash commits when it improves reviewability.
+- PR summary comments must include:
+  - functional changes
+  - UI/UX impact
+  - validation evidence
+  - notable refactors
+  - known follow-ups/risks
+
 1. Agent does not respond to comments one-by-one.
 2. Agent collects all **new, unresolved** PR comments since last checkpoint.
 3. For comments authored by `chatgpt-codex-connector` (bot), agent must evaluate validity:
@@ -347,4 +357,3 @@ Acceptance criteria:
 18. Clippy is excluded from direct repo work.
 19. Branch concurrency uses per-branch locks; parallelism requires separate git worktrees.
 20. Promotion/merge-readiness gates run in a serialized lane even when branch work is parallelized.
-

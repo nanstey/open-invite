@@ -9,38 +9,42 @@ It is intentionally non-automator-specific.
 - `pages/` — route/page entry points
 - `lib/` — shared utilities/framework helpers
 - `supabase/` — DB config, migrations, and seed data
-- `test/` — test utilities and test modules
+- `tests/` — test setup and route-level tests
 - `automation/ai-workflow/` — automation policy/runbooks/scripts (for autonomous workflow operators)
 - `.github/` — PR templates and GitHub automation
 
-## 2) Organization rules
+## 2) Command matrix
+- Install: `pnpm install`
+- Dev app: `pnpm run dev`
+- Type-check: `pnpm run types`
+- Lint: `pnpm run lint`
+- Tests: `pnpm test -- --run`
+- Build: `pnpm run build`
+- Full local validation chain: `pnpm run ai-workflow:validate-local`
+
+## 3) Organization rules
 - Keep domain logic near its owning domain.
 - Prefer extending existing modules over creating near-duplicates.
 - Extract reusable UI/patterns when repeated in multiple places.
 - Keep commits scoped and reversible.
 
-## 3) Code quality expectations
+## 4) Code quality expectations
 - Run lint/typecheck/tests/build before marking work ready.
 - Behavior-changing updates should include or update tests.
 - Keep naming and APIs consistent with existing patterns.
 - Avoid speculative abstractions; extract generics from real repeated use-cases.
 
-## 4) Migrations and data safety
+## 5) Definition of done
+- Required checks pass locally: lint, types, tests, build.
+- Any behavior change has tests or a documented rationale for no test update.
+- PR summary includes validation evidence and notable risks/follow-ups.
+
+## 6) Migrations and data safety
 - Treat migrations as append-only history.
 - Do not edit old migration files in place.
 - New migration files should use fresh timestamps and preserve ordering.
-- If branch migration ordering drifts after rebases/merges, fix by creating/renaming to newer migrations.
+- If branch migration ordering drifts after rebases/merges, fix by creating or renaming migrations to newer timestamps.
 
-## 7) Branch and PR hygiene
-- Rebase when branch is behind `main` and resolve conflicts cleanly.
-- If commit history is noisy, squash when it improves reviewability.
-- PR summaries should clearly include:
-  - functional changes
-  - UI/UX impact
-  - validation evidence
-  - notable refactors
-  - known follow-ups/risks
-
-## 8) Where automation-specific policy lives
-Automation workflow details are intentionally separated under:
-- `automation/ai-workflow/`
+## 7) Automation boundary
+- Keep root `AGENTS.md` focused on repository-wide coding norms.
+- Keep autonomous workflow rules in `automation/ai-workflow/`.

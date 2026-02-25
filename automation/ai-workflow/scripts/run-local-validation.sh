@@ -55,6 +55,7 @@ if [[ "$SKIP_SUPABASE" != "1" ]]; then
 fi
 
 corepack pnpm lint
+corepack pnpm types
 corepack pnpm test
 corepack pnpm build
 
