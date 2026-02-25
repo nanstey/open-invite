@@ -15,14 +15,14 @@ This doc bootstraps implementation from operational policy `automation/ai-workfl
 - Script: `automation/ai-workflow/scripts/change-detection-loop.mjs`
 - NPM script: `pnpm ai-workflow:loop`
 
-### Current behavior (intentional skeleton)
+### Current behavior (bootstrap with CI auto-remediation)
 
 1. Load latest project snapshot from `OPEN_INVITE_ON_DECK_CMD` (optional provider command).
 2. Keep only projects with `status === "on_deck"`.
 3. Check for new PR comments on proposal/implementation PRs tied to those `on_deck` projects.
 4. Check for newly failed GitHub Actions workflow runs since last checkpoint.
 5. If there are no detected changes, exit silently with no-op log.
-6. If changes are detected, write checkpoint state and emit a bootstrap log (no worker spawn yet).
+6. If changes are detected, write checkpoint state and execute default CI auto-remediation when relevant (comment-driven worker orchestration remains staged).
 7. Notify only on error via `notifyError(...)`.
 
 ## Required environment hooks (bootstrap)

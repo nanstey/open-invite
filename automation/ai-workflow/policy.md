@@ -342,10 +342,3 @@ Acceptance criteria:
 19. Branch concurrency uses per-branch locks; parallelism requires separate git worktrees.
 20. Promotion/merge-readiness gates run in a serialized lane even when branch work is parallelized.
 
-## 11) Finalized Policy Decisions
-
-1. On proposal PR merge during `review`, the agent immediately initiates implementation and moves status to `in_progress`.
-2. Link validation rollout order is fixed: application-level validation first; optional DB constraints deferred to a later hardening phase.
-3. Visual regression artifact retention is fixed at 30 days.
-4. Bot-review handling is explicit: trust-list + validity test + in-thread rationale for deferrals.
-5. Loop re-trigger prevention is explicit: checkpoint + processed-id ledger + unresolved filter.

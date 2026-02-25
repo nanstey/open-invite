@@ -33,7 +33,7 @@ corepack pnpm ai-workflow:validate-local
 corepack pnpm supabase:logs
 corepack pnpm supabase:logs:auth
 ```
-5. Stop stack when cycle completes or on idle
+4. Stop stack when cycle completes or on idle
 ```bash
 corepack pnpm supabase:stop
 ```
