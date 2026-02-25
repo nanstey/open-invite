@@ -43,7 +43,7 @@ const filterEmojis = (query: string): EmojiItem[] => {
 export type UseEmojiAutocompleteOptions = {
   value: string
   onChange: (next: string) => void
-  inputRef: React.RefObject<HTMLInputElement | HTMLTextAreaElement>
+  inputRef: React.RefObject<HTMLInputElement | HTMLTextAreaElement | null>
 }
 
 type CaretCoords = { left: number; top: number; height: number }
@@ -83,7 +83,7 @@ const getCaretCoordinates = (
   ] as const
 
   properties.forEach((prop) => {
-    ;(div.style as Record<string, string>)[prop] = (style as Record<string, string>)[prop]
+    ;const styleRecord = style as unknown as Record<string, string>; (div.style as unknown as Record<string, string>)[prop] = styleRecord[prop]
   })
 
   div.style.position = 'absolute'

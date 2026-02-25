@@ -50,7 +50,7 @@ export function LocationCard(props: {
     enabled: hasItinerary,
     uniqueLocations: uniqueItineraryLocations,
     eventLocation: props.eventLocation,
-    eventCoordinates: props.eventCoordinates,
+    eventCoordinates: props.eventCoordinates as { lat: number; lng: number } | undefined || undefined,
   })
 
   const miniMapPoints = React.useMemo(() => {

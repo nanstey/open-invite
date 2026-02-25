@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { User as UserIcon, Calendar, AlertCircle, FolderKanban, Plus, Loader2 } from 'lucide-react'
 import { SlidePanel } from '../../../../lib/ui/components/SlidePanel'

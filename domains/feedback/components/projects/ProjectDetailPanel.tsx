@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { Plus, Loader2, Github, ExternalLink, X, Pencil, ChevronDown, ChevronUp } from 'lucide-react'
 import { SlidePanel } from '../../../../lib/ui/components/SlidePanel'
@@ -12,7 +12,7 @@ import {
   fetchProjectFeedback,
 } from '../../../../services/feedbackProjectService'
 import { FEEDBACK_TYPE_COLORS, FEEDBACK_IMPORTANCE_COLORS, type SimpleFeedbackItem } from '../../types'
-import type { Project, ProjectFormData } from '../../projectTypes'
+import type { Project } from '../../projectTypes'
 
 export interface ProjectDetailPanelProps {
   project: Project
