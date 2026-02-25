@@ -132,6 +132,14 @@ function main() {
   }
 
   shell(`git commit -m "${commitMsg.replace(/"/g, "'")}"`);
+
+  const branchBeforePush = shellOutput("git rev-parse --abbrev-ref HEAD");
+  if (branchBeforePush !== currentBranch || branchBeforePush !== targetBranch) {
+    throw new Error(
+      `branch identity assertion failed before push: current=${currentBranch} target=${targetBranch} beforePush=${branchBeforePush}`,
+    );
+  }
+
   shell(`git push origin ${currentBranch}`);
 
   console.log("[ai-dev-workflow] ci-remediate: pushed remediation commit", {

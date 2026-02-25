@@ -57,8 +57,14 @@ Every autonomous mutation must be:
 ## 5) Locking + State Durability
 - Per-branch lock is required before mutation.
 - Lock must be released in `finally` paths.
+- Stale lock reclaim is allowed only after TTL expiry (default 120m) with explicit log.
 - Checkpoint writes are atomic.
 - If lock/checkpoint integrity is uncertain, stop and escalate.
+
+## 5.1 Stop-loss on Repeated Failure
+- Track consecutive remediation failures per branch.
+- If failures exceed policy limit (default 2), stop mutation and force review-only mode until human intervention.
+- Escalation summary must include branch, failure count, and latest error context.
 
 ## 6) Escalation Ladder
 On repeated failure (same branch/problem >2 cycles):

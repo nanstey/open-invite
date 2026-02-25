@@ -94,6 +94,7 @@ For each candidate unresolved comment:
 ## 8) State Sync + Notifications
 - [ ] Apply idempotent status transition event(s) with event log first.
 - [ ] If sync fails after retries, mark `sync_error` and notify Noel.
+- [ ] If remediation stop-loss threshold is exceeded, halt mutation and escalate with branch + failure-count context.
 - [ ] Notify Noel only on errors/exceptions or explicit decision needed.
 
 ## 9) Exit Criteria

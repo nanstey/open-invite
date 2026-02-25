@@ -145,12 +145,26 @@ function branchKey(name) {
 function acquireBranchLock(branch) {
   const key = branchKey(branch);
   const lockPath = `.ai-dev-workflow/locks/${key}.lock.json`;
+  const ttlMinutes = Number(process.env.AI_DEV_WORKFLOW_LOCK_TTL_MINUTES ?? 120);
 
   if (existsSync(lockPath)) {
     const lock = readJsonFile(lockPath, null);
-    throw new Error(
-      `branch lock already held for ${branch} at ${lockPath}${lock ? ` (owner pid=${lock.pid}, startedAt=${lock.startedAt})` : ""}`,
-    );
+    const startedAtMs = Date.parse(lock?.startedAt ?? "");
+    const ageMinutes = Number.isNaN(startedAtMs) ? null : (Date.now() - startedAtMs) / 60000;
+
+    if (ageMinutes !== null && ageMinutes > ttlMinutes) {
+      console.warn("[ai-dev-workflow] reclaiming stale branch lock", {
+        branch,
+        lockPath,
+        ageMinutes: Math.round(ageMinutes),
+        ttlMinutes,
+      });
+      rmSync(lockPath);
+    } else {
+      throw new Error(
+        `branch lock already held for ${branch} at ${lockPath}${lock ? ` (owner pid=${lock.pid}, startedAt=${lock.startedAt})` : ""}`,
+      );
+    }
   }
 
   writeJsonFile(lockPath, {
@@ -221,6 +235,26 @@ function remediateFailedWorkflowRuns({ failedWorkflowRuns, ghRepo, statePath }) 
   });
 }
 
+function failureLedgerPath() {
+  return ".ai-dev-workflow/failure-ledger.json";
+}
+
+function getConsecutiveRemediationFailures(branch) {
+  const ledger = readJsonFile(failureLedgerPath(), { branches: {} });
+  return Number(ledger?.branches?.[branch]?.consecutiveRemediationFailures ?? 0);
+}
+
+function setConsecutiveRemediationFailures(branch, count, lastError) {
+  const ledger = readJsonFile(failureLedgerPath(), { branches: {} });
+  ledger.branches = ledger.branches ?? {};
+  ledger.branches[branch] = {
+    consecutiveRemediationFailures: Math.max(0, Number(count) || 0),
+    updatedAt: new Date().toISOString(),
+    lastError: lastError ? String(lastError).slice(0, 500) : null,
+  };
+  writeJsonFile(failureLedgerPath(), ledger);
+}
+
 function notifyError(message, error) {
   console.error(`[ai-dev-workflow:error] ${message}`);
   if (error) {
@@ -273,14 +307,46 @@ function main() {
       reviewOnlyMode,
     });
 
-    if (!pauseAutonomy && !reviewOnlyMode) {
-      remediateFailedWorkflowRuns({
-        failedWorkflowRuns,
-        ghRepo,
-        statePath,
+    const remediationFailureLimit = Number(process.env.AI_DEV_WORKFLOW_REMEDIATION_FAILURE_LIMIT ?? 2);
+    const priorConsecutiveFailures = getConsecutiveRemediationFailures(currentBranch);
+
+    if (priorConsecutiveFailures > remediationFailureLimit) {
+      console.warn("[ai-dev-workflow] remediation stop-loss active; forcing review-only behavior", {
+        currentBranch,
+        priorConsecutiveFailures,
+        remediationFailureLimit,
       });
+    }
+
+    const mutationAllowed = !pauseAutonomy && !reviewOnlyMode && priorConsecutiveFailures <= remediationFailureLimit;
+
+    if (mutationAllowed) {
+      try {
+        remediateFailedWorkflowRuns({
+          failedWorkflowRuns,
+          ghRepo,
+          statePath,
+        });
+        setConsecutiveRemediationFailures(currentBranch, 0, null);
+      } catch (error) {
+        const nextFailures = priorConsecutiveFailures + 1;
+        setConsecutiveRemediationFailures(currentBranch, nextFailures, error);
+        if (nextFailures > remediationFailureLimit) {
+          console.error("[ai-dev-workflow] remediation stop-loss triggered; escalation required", {
+            currentBranch,
+            nextFailures,
+            remediationFailureLimit,
+          });
+        }
+        throw error;
+      }
     } else {
-      console.log("[ai-dev-workflow] mutation disabled by override mode; skipping remediation");
+      console.log("[ai-dev-workflow] mutation disabled by override mode or stop-loss; skipping remediation", {
+        pauseAutonomy,
+        reviewOnlyMode,
+        priorConsecutiveFailures,
+        remediationFailureLimit,
+      });
     }
 
     writeJsonFile(statePath, nextState);

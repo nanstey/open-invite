@@ -69,7 +69,12 @@ By default, the loop runs:
 Concurrency safety:
 - acquires a per-branch lock at `.ai-dev-workflow/locks/<branch>.lock.json`
 - refuses to run if another active loop already holds that branch lock
+- automatically reclaims stale locks older than `AI_DEV_WORKFLOW_LOCK_TTL_MINUTES` (default 120)
 - releases lock on completion/failure (finally block)
+
+Stop-loss safety:
+- tracks consecutive remediation failures per branch in `.ai-dev-workflow/failure-ledger.json`
+- when failures exceed `AI_DEV_WORKFLOW_REMEDIATION_FAILURE_LIMIT` (default 2), mutation is halted and review-only behavior is forced
 
 This script will:
 - scope failures to the current branch,
