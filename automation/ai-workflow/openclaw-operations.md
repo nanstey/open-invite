@@ -10,6 +10,8 @@ This document explains how OpenClaw schedules and runs the Open Invite AI workfl
   - Deterministic per-cycle run procedure.
 - `automation/ai-workflow/status-event-map.md`
   - Event -> status transition contract for coordinator logic.
+- `automation/ai-workflow/autonomy-guardrails.md`
+  - Hard autonomy limits, escalation ladder, and override controls.
 - `automation/ai-workflow/scripts/change-detection-loop.mjs`
   - Change detector entrypoint for each cycle.
 - `automation/ai-workflow/scripts/lib/github-comment-safe.sh`
@@ -56,6 +58,7 @@ Run one loop instance per worktree path.
 4. If changes are detected:
    - Execute using `automation/ai-workflow/cycle-checklist.md`
    - Apply policy from `automation/ai-workflow/policy.md`
+   - Enforce limits from `automation/ai-workflow/autonomy-guardrails.md`
    - Use transition semantics from `automation/ai-workflow/status-event-map.md`
    - Use `automation/ai-workflow/supabase-local-runbook.md` for local DB-backed checks
    - Use `automation/ai-workflow/browser-validation-runbook.md` for agent browser validation

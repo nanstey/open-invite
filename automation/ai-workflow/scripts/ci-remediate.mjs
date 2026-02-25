@@ -72,6 +72,11 @@ function writeSummary(payload, currentBranch) {
 }
 
 function main() {
+  if (process.env.PAUSE_AUTONOMY === "1" || process.env.REVIEW_ONLY_MODE === "1") {
+    console.log("[ai-dev-workflow] ci-remediate: disabled by PAUSE_AUTONOMY/REVIEW_ONLY_MODE");
+    return;
+  }
+
   const payload = readFailurePayload();
   const failedRuns = Array.isArray(payload.failedWorkflowRuns) ? payload.failedWorkflowRuns : [];
   if (failedRuns.length === 0) {
@@ -120,6 +125,11 @@ function main() {
   const commitMsg = runIds
     ? `fix(ci): auto-remediate failing workflow runs (${runIds})`
     : "fix(ci): auto-remediate failing workflow runs";
+
+  if (process.env.NO_COMMIT_MODE === "1") {
+    console.log("[ai-dev-workflow] ci-remediate: NO_COMMIT_MODE enabled; changes staged but not committed/pushed");
+    return;
+  }
 
   shell(`git commit -m "${commitMsg.replace(/"/g, "'")}"`);
   shell(`git push origin ${currentBranch}`);

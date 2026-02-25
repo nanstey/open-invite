@@ -4,6 +4,7 @@ Use this checklist on every 30-minute automation cycle to keep behavior determin
 
 ## 0) Preflight
 - [ ] Confirm execution identity is an Open Invite developer agent (not Clippy).
+- [ ] Confirm autonomy mode flags (`PAUSE_AUTONOMY`, `NO_COMMIT_MODE`, `REVIEW_ONLY_MODE`) and apply most restrictive mode.
 - [ ] Acquire branch lock for current branch (abort if lock already held).
 - [ ] Confirm this run is pinned to a single branch/worktree context (no branch switching mid-run).
 - [ ] Load last checkpoint state for this project/PR:
@@ -50,6 +51,7 @@ For each candidate unresolved comment:
 
 ## 5) Execute One Batch
 - [ ] Build a single consolidated plan: Address / Defer / Need-clarification.
+- [ ] Check autonomy budget limits from `automation/ai-workflow/autonomy-guardrails.md` before mutating.
 - [ ] For newly failed GitHub Actions runs, include a failure-response plan (root cause, impacted paths, remediation change).
 - [ ] For backend/integration-sensitive changes, follow `automation/ai-workflow/supabase-local-runbook.md` before final validation.
 - [ ] For UI-facing changes, follow `automation/ai-workflow/browser-validation-runbook.md` and capture concise evidence.

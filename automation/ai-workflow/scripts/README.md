@@ -78,3 +78,8 @@ Environment passed to remediation command:
 - `AI_DEV_WORKFLOW_FAILED_RUNS_JSON`
 - `AI_DEV_WORKFLOW_CURRENT_BRANCH`
 - `GH_REPO`
+
+Autonomy override flags:
+- `PAUSE_AUTONOMY=1` -> no mutations (detection only)
+- `REVIEW_ONLY_MODE=1` -> no mutations, summarize/detect only
+- `NO_COMMIT_MODE=1` -> run remediation steps but do not commit/push

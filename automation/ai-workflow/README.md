@@ -17,6 +17,7 @@ This folder is the **self-contained operational source** for AI workflow automat
 - `supabase-local-runbook.md` — local Supabase lifecycle, safety, and failure triage
 - `browser-validation-runbook.md` — agent browser validation modes and evidence contract
 - `scripts/` — executable loop/remediation/worktree/local-validation helpers
+- `autonomy-guardrails.md` — hard limits, escalation ladder, and human override controls
 
 ## Proposal vs Automation
 Project proposal docs may evolve independently. Automation should follow this folder's policy/contracts even if proposal docs drift.

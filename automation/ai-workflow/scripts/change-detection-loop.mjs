@@ -235,6 +235,8 @@ function main() {
   const statePath = process.env.AI_DEV_WORKFLOW_STATE_PATH ?? defaultStatePath;
   const onDeckCommand = process.env.OPEN_INVITE_ON_DECK_CMD;
   const ghRepo = process.env.GH_REPO;
+  const pauseAutonomy = process.env.PAUSE_AUTONOMY === "1";
+  const reviewOnlyMode = process.env.REVIEW_ONLY_MODE === "1";
   const currentBranch = getCurrentBranch();
   const lockPath = acquireBranchLock(currentBranch);
 
@@ -267,13 +269,19 @@ function main() {
       changedProjects,
       newComments,
       failedWorkflowRuns,
+      pauseAutonomy,
+      reviewOnlyMode,
     });
 
-    remediateFailedWorkflowRuns({
-      failedWorkflowRuns,
-      ghRepo,
-      statePath,
-    });
+    if (!pauseAutonomy && !reviewOnlyMode) {
+      remediateFailedWorkflowRuns({
+        failedWorkflowRuns,
+        ghRepo,
+        statePath,
+      });
+    } else {
+      console.log("[ai-dev-workflow] mutation disabled by override mode; skipping remediation");
+    }
 
     writeJsonFile(statePath, nextState);
     console.log("[ai-dev-workflow] bootstrap mode: change detected and state persisted");
