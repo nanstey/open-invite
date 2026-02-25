@@ -39,6 +39,9 @@ elif [[ "$schema_or_seed_changed" == "1" ]]; then
   needs_reset=1
 fi
 
+# Migration safety guardrails
+bash automation/ai-workflow/scripts/check-migration-order.sh
+
 if [[ "$SKIP_SUPABASE" != "1" ]]; then
   corepack pnpm supabase:start
 

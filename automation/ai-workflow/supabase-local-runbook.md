@@ -11,6 +11,10 @@ This runbook defines how automation should use the local Supabase stack safely a
 - Use branch/worktree isolation for concurrent runs.
 - Prefer `supabase migration up` over reset during normal iteration.
 - Use `supabase db reset` only when explicitly required by migration/seed drift.
+- Migration order guardrails:
+  - branch migrations must be the latest/final migrations,
+  - do not modify old migration files in place,
+  - when migration logic changes, create/rename to newer timestamped migration files.
 
 ## Standard lifecycle
 1. Start stack

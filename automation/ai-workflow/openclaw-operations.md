@@ -62,10 +62,11 @@ Run one loop instance per worktree path.
    - Use transition semantics from `automation/ai-workflow/status-event-map.md`
    - Use `automation/ai-workflow/supabase-local-runbook.md` for local DB-backed checks
    - Use `automation/ai-workflow/browser-validation-runbook.md` for agent browser validation
-5. Post PR updates safely via body-file pattern.
-6. Resolve addressed threads (or post permission fallback message).
-7. Persist checkpoint state atomically.
-8. Notify Noel only for errors or explicit decisions needed.
+5. Ensure branch freshness before final gate checks (rebase onto `main` when behind; resolve conflicts in-branch).
+6. Post PR updates safely via body-file pattern.
+7. Resolve addressed threads (or post permission fallback message).
+8. Persist checkpoint state atomically.
+9. Notify Noel only for errors or explicit decisions needed.
 
 ## 4) Environment and Runtime Inputs
 

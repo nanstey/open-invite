@@ -25,6 +25,7 @@
     "format:check": "biome format .",
     "ai-workflow:loop": "node automation/ai-workflow/scripts/change-detection-loop.mjs",
     "ai-workflow:remediate-ci": "node automation/ai-workflow/scripts/ci-remediate.mjs",
+    "ai-workflow:check-migrations": "bash automation/ai-workflow/scripts/check-migration-order.sh",
     "ai-workflow:validate-local": "bash automation/ai-workflow/scripts/run-local-validation.sh"
   },
   "dependencies": {

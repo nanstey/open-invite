@@ -29,6 +29,7 @@ Without explicit approval, do not autonomously mutate:
 - production environment settings
 - auth policy broadening (RLS/security scope expansion)
 - billing/payment-critical logic
+- historical migration files (older timestamped migrations) via in-place edits
 
 ## 4) Rollback Contract
 Every autonomous mutation must be:

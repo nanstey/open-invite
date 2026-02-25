@@ -37,6 +37,14 @@ Reset behavior:
 - reset when `supabase/migrations/**` or `supabase/seed.sql` changed vs merge-base (`origin/main` by default)
 - otherwise run forward migration only (`supabase:migrate`)
 
+Migration safety check:
+```bash
+corepack pnpm ai-workflow:check-migrations
+```
+Rules enforced:
+- changed migration files must remain final/latest in ordering
+- in-place edits to historical migration files are rejected
+
 Create branch-isolated worktrees quickly:
 
 ```bash

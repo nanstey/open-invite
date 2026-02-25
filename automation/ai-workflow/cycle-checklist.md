@@ -34,6 +34,8 @@ Use this checklist on every 30-minute automation cycle to keep behavior determin
 - [ ] If proposal merged, immediately start implementation branch/PR.
 - [ ] Ensure only one active implementation branch per project.
 - [ ] Ensure implementation PR includes required `Proposal Ref:`.
+- [ ] If PR branch is behind `main`, rebase and resolve conflicts before final validation.
+- [ ] If branch has excessive commit noise, optionally squash before rebase to simplify conflict resolution.
 - [ ] Sync status to `in_progress` when implementation starts/resumes.
 
 ## 4) PR Comment Intake and Classification (Batch)
@@ -54,6 +56,7 @@ For each candidate unresolved comment:
 - [ ] Check autonomy budget limits from `automation/ai-workflow/autonomy-guardrails.md` before mutating.
 - [ ] For newly failed GitHub Actions runs, include a failure-response plan (root cause, impacted paths, remediation change).
 - [ ] For backend/integration-sensitive changes, follow `automation/ai-workflow/supabase-local-runbook.md` before final validation.
+- [ ] Run migration guardrail check (`corepack pnpm ai-workflow:check-migrations`) before DB validation.
 - [ ] For UI-facing changes, follow `automation/ai-workflow/browser-validation-runbook.md` and capture concise evidence.
 - [ ] Apply all code/doc changes in one batch.
 - [ ] Add/update tests when behavior changed (or record explicit rationale if no test added).

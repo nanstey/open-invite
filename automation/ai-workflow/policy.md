@@ -175,6 +175,12 @@ Policy:
 
 ## Phase C: Review + Batch PR Comment Handling
 
+### Branch freshness and conflict policy
+- If implementation PR branch is behind `main`, rebase onto latest `main` before final validation.
+- Resolve rebase conflicts in-branch and run validation checks again.
+- If PR has high commit noise (many tiny commits), agent may squash branch commits before rebase to simplify conflict resolution and review context.
+- After rebase/squash, force-push is allowed on the PR branch when required, with clear summary note.
+
 1. Agent does not respond to comments one-by-one.
 2. Agent collects all **new, unresolved** PR comments since last checkpoint.
 3. For comments authored by `chatgpt-codex-connector` (bot), agent must evaluate validity:
@@ -245,6 +251,10 @@ Parallelism rule:
 - For backend/integration-affecting changes, local Supabase validation must follow `automation/ai-workflow/supabase-local-runbook.md`.
 - For UI-affecting changes, browser validation must follow `automation/ai-workflow/browser-validation-runbook.md`.
 - PR summary comments should include concise validation evidence from these runbooks when applicable.
+- Migration safety rules are mandatory:
+  - branch migration files must remain the final migration(s),
+  - in-place edits to old timestamped migrations are disallowed,
+  - use newer timestamped migration files not earlier than latest applied migration timestamp.
 
 ## 6.5 Autonomy Guardrails (Required)
 - All autonomous execution must comply with `automation/ai-workflow/autonomy-guardrails.md`.
