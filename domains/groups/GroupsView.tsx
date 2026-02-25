@@ -58,8 +58,8 @@ import {
 import { useAuth } from '../auth/AuthProvider';
 
 const groupTabs: TabOption[] = [
-  { id: 'chat', label: 'Chat', icon: <MessageSquare className="w-4 h-4" /> },
   { id: 'members', label: 'Members', icon: <Users className="w-4 h-4" /> },
+  { id: 'chat', label: 'Chat', icon: <MessageSquare className="w-4 h-4" /> },
   { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
 ];
 
@@ -84,6 +84,7 @@ export function GroupsView() {
   const [roleByGroupId, setRoleByGroupId] = React.useState<Record<string, 'ADMIN' | 'MEMBER'>>({});
   const [selectedGroupId, setSelectedGroupId] = React.useState<string | null>(null);
   const [members, setMembers] = React.useState<GroupMember[]>([]);
+  const [membersGroupId, setMembersGroupId] = React.useState<string | null>(null);
   const [friends, setFriends] = React.useState<{ id: string; name: string; avatar: string }[]>([]);
   const [selectedFriendIds, setSelectedFriendIds] = React.useState<string[]>([]);
   const [memberPickerValue, setMemberPickerValue] = React.useState<{
@@ -94,7 +95,7 @@ export function GroupsView() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [loadingMembers, setLoadingMembers] = React.useState(false);
   const [addingMembers, setAddingMembers] = React.useState(false);
-  const [activeTab, setActiveTab] = React.useState('chat');
+  const [activeTab, setActiveTab] = React.useState('members');
   const [messagesByGroup, setMessagesByGroup] = React.useState<Record<string, GroupChatMessage[]>>(
     {}
   );
@@ -149,14 +150,30 @@ export function GroupsView() {
   }, [user?.id]);
 
   React.useEffect(() => {
+    if (!selectedGroupId) {
+      setLoadingMembers(false);
+      setMembersGroupId(null);
+      setMembers([]);
+      return;
+    }
+
+    let cancelled = false;
+
     const loadMembers = async () => {
-      if (!selectedGroupId) return;
       setLoadingMembers(true);
+      setMembersGroupId(null);
+      setMembers([]);
       const groupMembers = await fetchGroupMembersWithRoles(selectedGroupId);
+      if (cancelled) return;
       setMembers(groupMembers);
+      setMembersGroupId(selectedGroupId);
       setLoadingMembers(false);
     };
     void loadMembers();
+
+    return () => {
+      cancelled = true;
+    };
   }, [selectedGroupId]);
 
   const filteredGroups = React.useMemo(
@@ -496,7 +513,7 @@ export function GroupsView() {
     setProcessingRequestId(null);
     setSettingsMessage(null);
     setGroupSettingsDraft(null);
-    setActiveTab('chat');
+    setActiveTab('members');
     setDeleteConfirmationInput('');
     setDeleteError(null);
     setDeletingGroup(false);
@@ -560,8 +577,12 @@ export function GroupsView() {
             ) : (
               <div className="space-y-4">
                 {filteredGroups.map(group => {
-                  const role =
-                    roleByGroupId[group.id] ?? (group.createdBy === user?.id ? 'ADMIN' : 'MEMBER');
+                  const isOwner = group.createdBy === user?.id;
+                  const role = isOwner
+                    ? 'OWNER'
+                    : roleByGroupId[group.id] === 'ADMIN'
+                      ? 'ADMIN'
+                      : null;
                   const selected = selectedGroupId === group.id;
                   return (
                     <button
@@ -569,7 +590,7 @@ export function GroupsView() {
                       key={group.id}
                       onClick={() => {
                         setSelectedGroupId(group.id);
-                        setActiveTab('chat');
+                        setActiveTab('members');
                       }}
                       className={`w-full bg-surface border p-4 rounded-xl text-left flex items-center gap-3 transition-colors ${
                         selected
@@ -583,9 +604,11 @@ export function GroupsView() {
                       <div className="min-w-0 flex-1">
                         <div className="font-bold text-white truncate">{group.name}</div>
                       </div>
-                      <span className="text-xs font-semibold tracking-wide px-2.5 py-1 rounded-full border border-slate-600 text-slate-300">
-                        {role}
-                      </span>
+                      {role ? (
+                        <span className="text-xs font-semibold tracking-wide px-2.5 py-1 rounded-full border border-slate-600 text-slate-300">
+                          {role}
+                        </span>
+                      ) : null}
                     </button>
                   );
                 })}
@@ -735,13 +758,18 @@ export function GroupsView() {
                     </div>
                   ) : null}
 
-                  {loadingMembers ? (
+                  {loadingMembers || membersGroupId !== selectedGroup.id ? (
                     <div className="text-sm text-slate-400">Loading members...</div>
                   ) : (
                     <div className="space-y-3">
                       {members.map(member => {
                         const isCreatorRow = member.id === selectedGroup.createdBy;
                         const isSelfRow = member.id === user?.id;
+                        const memberRole = isCreatorRow
+                          ? 'OWNER'
+                          : member.role === 'ADMIN'
+                            ? 'ADMIN'
+                            : null;
                         const canRemoveMember = isAdmin && !isSelfRow && !isCreatorRow;
                         const isRemovingThisMember = removingMemberId === member.id;
 
@@ -760,9 +788,11 @@ export function GroupsView() {
                               <div className="font-semibold text-white truncate">{member.name}</div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="text-xs text-slate-300 tracking-wide">
-                                {member.role}
-                              </span>
+                              {memberRole ? (
+                                <span className="text-xs text-slate-300 tracking-wide">
+                                  {memberRole}
+                                </span>
+                              ) : null}
                               {canRemoveMember ? (
                                 <div
                                   className="relative shrink-0"
