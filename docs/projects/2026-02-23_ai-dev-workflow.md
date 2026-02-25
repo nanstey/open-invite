@@ -209,7 +209,7 @@ Parallelism rule:
    - new/updated `on_deck` project signals,
    - new PR comments/reviews on tracked proposal/implementation PRs.
 2. PR comment ingestion must ignore comments/threads already marked resolved or already included in prior batch checkpoints.
-3. Execute cycle steps using `docs/projects/ai-dev-workflow-cycle-checklist.md`.
+3. Execute cycle steps using `docs/automation/ai-dev-workflow-cycle-checklist.md`.
 4. If no changes, do nothing (no noisy notification).
 5. Spawn sub-agent work **only when changes are detected**.
 6. Max retries per cycle for failing checks/actions: 2 retries per failing step, then mark deferred (`deferred_due_to_ci_failure`) and continue to summary.
