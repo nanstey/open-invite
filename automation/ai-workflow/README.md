@@ -13,6 +13,7 @@ This folder is the **self-contained operational source** for AI workflow automat
 - `cycle-checklist.md` — deterministic every-cycle checklist
 - `status-event-map.md` — event -> status transitions for coordinator logic
 - `bootstrap.md` — bootstrap scope, constraints, and TODO wiring
+- `openclaw-operations.md` — how OpenClaw cron/jobs orchestrate this workflow
 
 ## Proposal vs Automation
 Project proposal docs may evolve independently. Automation should follow this folder's policy/contracts even if proposal docs drift.
