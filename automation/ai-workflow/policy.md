@@ -233,6 +233,14 @@ Parallelism rule:
 - If no reviewer action for 72h: mark workflow state `blocked_review` and include it in the next executive brief.
 - Do not send repeated reminder spam; max one reminder per 24h window.
 
+### 6.3 Branch Concurrency and Worktree Policy
+- One active automation run per branch at a time (**branch lock required**).
+- Default mode: one branch per working directory; do not switch branches inside an active run.
+- Parallel branch execution is allowed only via **git worktrees** (one worktree per branch).
+- CI auto-remediation must only commit/push to the current branch lock owner.
+- Final promotion gates (merge-readiness validation and handoff) are serialized in a single promotion lane.
+- Keep `AI_DEV_WORKFLOW_AUTO_FIX_ALL_BRANCHES` disabled in normal operation.
+
 ## 7) Quality/Definition-of-Done Gates
 
 Before implementation PR is considered ready to merge:
@@ -308,6 +316,8 @@ Acceptance criteria:
 16. Notify Noel only for errors/exceptions or explicit decisions needed (no no-change noise).
 17. Noel is sole merge authority.
 18. Clippy is excluded from direct repo work.
+19. Branch concurrency uses per-branch locks; parallelism requires separate git worktrees.
+20. Promotion/merge-readiness gates run in a serialized lane even when branch work is parallelized.
 
 ## 11) Finalized Policy Decisions
 

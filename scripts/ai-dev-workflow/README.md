@@ -37,6 +37,11 @@ Behavior in bootstrap phase:
 By default, the loop runs:
 - `node scripts/ai-dev-workflow/ci-remediate.mjs`
 
+Concurrency safety:
+- acquires a per-branch lock at `.ai-dev-workflow/locks/<branch>.lock.json`
+- refuses to run if another active loop already holds that branch lock
+- releases lock on completion/failure (finally block)
+
 This script will:
 - scope failures to the current branch,
 - run `pnpm lint:fix` + `pnpm format`,

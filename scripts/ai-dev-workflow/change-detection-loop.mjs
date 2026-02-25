@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { execSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
 import process from "node:process";
 
@@ -138,6 +138,40 @@ function getCurrentBranch() {
   return output.trim();
 }
 
+function branchKey(name) {
+  return String(name ?? "unknown").replace(/[^a-zA-Z0-9._-]+/g, "_");
+}
+
+function acquireBranchLock(branch) {
+  const key = branchKey(branch);
+  const lockPath = `.ai-dev-workflow/locks/${key}.lock.json`;
+
+  if (existsSync(lockPath)) {
+    const lock = readJsonFile(lockPath, null);
+    throw new Error(
+      `branch lock already held for ${branch} at ${lockPath}${lock ? ` (owner pid=${lock.pid}, startedAt=${lock.startedAt})` : ""}`,
+    );
+  }
+
+  writeJsonFile(lockPath, {
+    branch,
+    pid: process.pid,
+    startedAt: new Date().toISOString(),
+  });
+
+  return lockPath;
+}
+
+function releaseBranchLock(lockPath) {
+  if (!lockPath) {
+    return;
+  }
+
+  if (existsSync(lockPath)) {
+    rmSync(lockPath);
+  }
+}
+
 function remediateFailedWorkflowRuns({ failedWorkflowRuns, ghRepo, statePath }) {
   const remediationCommand =
     process.env.AI_DEV_WORKFLOW_CI_REMEDIATION_CMD ?? "node scripts/ai-dev-workflow/ci-remediate.mjs";
@@ -201,45 +235,51 @@ function main() {
   const statePath = process.env.AI_DEV_WORKFLOW_STATE_PATH ?? defaultStatePath;
   const onDeckCommand = process.env.OPEN_INVITE_ON_DECK_CMD;
   const ghRepo = process.env.GH_REPO;
+  const currentBranch = getCurrentBranch();
+  const lockPath = acquireBranchLock(currentBranch);
 
-  const priorState = readJsonFile(statePath, {
-    lastCheckedAt: new Date(0).toISOString(),
-    onDeckProjects: [],
-  });
+  try {
+    const priorState = readJsonFile(statePath, {
+      lastCheckedAt: new Date(0).toISOString(),
+      onDeckProjects: [],
+    });
 
-  const rawProjects = onDeckCommand ? runJsonCommand(onDeckCommand) : [];
-  const onDeckProjects = normalizeProjects(rawProjects);
+    const rawProjects = onDeckCommand ? runJsonCommand(onDeckCommand) : [];
+    const onDeckProjects = normalizeProjects(rawProjects);
 
-  const changedProjects = detectProjectChanges(onDeckProjects, priorState);
-  const newComments = detectNewPrComments(onDeckProjects, priorState.lastCheckedAt, ghRepo);
-  const failedWorkflowRuns = detectFailedWorkflowRuns(priorState.lastCheckedAt, ghRepo);
+    const changedProjects = detectProjectChanges(onDeckProjects, priorState);
+    const newComments = detectNewPrComments(onDeckProjects, priorState.lastCheckedAt, ghRepo);
+    const failedWorkflowRuns = detectFailedWorkflowRuns(priorState.lastCheckedAt, ghRepo);
 
-  const hasChanges = changedProjects.length > 0 || newComments.length > 0 || failedWorkflowRuns.length > 0;
-  const nextState = {
-    lastCheckedAt: new Date().toISOString(),
-    onDeckProjects,
-  };
+    const hasChanges = changedProjects.length > 0 || newComments.length > 0 || failedWorkflowRuns.length > 0;
+    const nextState = {
+      lastCheckedAt: new Date().toISOString(),
+      onDeckProjects,
+    };
 
-  if (!hasChanges) {
+    if (!hasChanges) {
+      writeJsonFile(statePath, nextState);
+      console.log("[ai-dev-workflow] no-op: no on_deck project changes, PR comment changes, or CI failures");
+      return;
+    }
+
+    console.log("[ai-dev-workflow] change detected", {
+      changedProjects,
+      newComments,
+      failedWorkflowRuns,
+    });
+
+    remediateFailedWorkflowRuns({
+      failedWorkflowRuns,
+      ghRepo,
+      statePath,
+    });
+
     writeJsonFile(statePath, nextState);
-    console.log("[ai-dev-workflow] no-op: no on_deck project changes, PR comment changes, or CI failures");
-    return;
+    console.log("[ai-dev-workflow] bootstrap mode: change detected and state persisted");
+  } finally {
+    releaseBranchLock(lockPath);
   }
-
-  console.log("[ai-dev-workflow] change detected", {
-    changedProjects,
-    newComments,
-    failedWorkflowRuns,
-  });
-
-  remediateFailedWorkflowRuns({
-    failedWorkflowRuns,
-    ghRepo,
-    statePath,
-  });
-
-  writeJsonFile(statePath, nextState);
-  console.log("[ai-dev-workflow] bootstrap mode: change detected and state persisted");
 }
 
 try {

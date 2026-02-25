@@ -17,7 +17,7 @@ This document explains how OpenClaw schedules and runs the Open Invite AI workfl
 
 ## 2) Recommended OpenClaw Job Model
 
-Use an **isolated agentTurn cron job** every 30 minutes.
+Use isolated agentTurn cron jobs every 30 minutes, with branch-level isolation.
 
 Why isolated:
 - Keeps automation state and execution context separate from main chat.
@@ -30,6 +30,19 @@ Why isolated:
 
 ### Cadence
 - 30-minute interval.
+
+### Multi-branch operating mode (recommended)
+- One cron job/runner context per active branch.
+- Each branch runs in its own git worktree directory.
+- Enforce per-branch lock so only one run can mutate a branch at a time.
+- Keep promotion/merge-readiness checks serialized (single promotion lane).
+
+Example worktree setup:
+```bash
+git worktree add ../wt-ci-ai-dev-workflow ci/ai-dev-workflow
+git worktree add ../wt-feat-groups feat/groups
+```
+Run one loop instance per worktree path.
 
 ## 3) Execution Flow Per Cycle
 
@@ -97,3 +110,5 @@ Anti-loop requirement:
 - Noel is sole merge authority.
 - Clippy does not perform direct repo coding actions unless explicitly delegated through approved workflow.
 - Proposal docs may drift from final implementation; automation follows this folder's operational policy/contracts.
+- Do not run multi-branch mutation in a single checkout; use worktrees for parallelism.
+- Keep `AI_DEV_WORKFLOW_AUTO_FIX_ALL_BRANCHES` off unless explicitly running controlled recovery.

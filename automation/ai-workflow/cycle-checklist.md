@@ -4,6 +4,8 @@ Use this checklist on every 30-minute automation cycle to keep behavior determin
 
 ## 0) Preflight
 - [ ] Confirm execution identity is an Open Invite developer agent (not Clippy).
+- [ ] Acquire branch lock for current branch (abort if lock already held).
+- [ ] Confirm this run is pinned to a single branch/worktree context (no branch switching mid-run).
 - [ ] Load last checkpoint state for this project/PR:
   - [ ] `last_processed_comment_ts`
   - [ ] `last_processed_review_ts`
@@ -89,6 +91,7 @@ For each candidate unresolved comment:
 - [ ] No unresolved, unprocessed comments remain in current scope.
 - [ ] All addressed threads resolved.
 - [ ] Checkpoint + event log successfully written.
+- [ ] Branch lock released.
 - [ ] Loop exits cleanly.
 
 ---
