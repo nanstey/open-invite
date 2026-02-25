@@ -57,6 +57,8 @@ Run one loop instance per worktree path.
    - Execute using `automation/ai-workflow/cycle-checklist.md`
    - Apply policy from `automation/ai-workflow/policy.md`
    - Use transition semantics from `automation/ai-workflow/status-event-map.md`
+   - Use `automation/ai-workflow/supabase-local-runbook.md` for local DB-backed checks
+   - Use `automation/ai-workflow/browser-validation-runbook.md` for agent browser validation
 5. Post PR updates safely via body-file pattern.
 6. Resolve addressed threads (or post permission fallback message).
 7. Persist checkpoint state atomically.

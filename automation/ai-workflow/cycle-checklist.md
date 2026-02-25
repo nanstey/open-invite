@@ -51,6 +51,8 @@ For each candidate unresolved comment:
 ## 5) Execute One Batch
 - [ ] Build a single consolidated plan: Address / Defer / Need-clarification.
 - [ ] For newly failed GitHub Actions runs, include a failure-response plan (root cause, impacted paths, remediation change).
+- [ ] For backend/integration-sensitive changes, follow `automation/ai-workflow/supabase-local-runbook.md` before final validation.
+- [ ] For UI-facing changes, follow `automation/ai-workflow/browser-validation-runbook.md` and capture concise evidence.
 - [ ] Apply all code/doc changes in one batch.
 - [ ] Run required checks:
   - [ ] lint

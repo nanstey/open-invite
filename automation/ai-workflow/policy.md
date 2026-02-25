@@ -241,6 +241,11 @@ Parallelism rule:
 - Final promotion gates (merge-readiness validation and handoff) are serialized in a single promotion lane.
 - Keep `AI_DEV_WORKFLOW_AUTO_FIX_ALL_BRANCHES` disabled in normal operation.
 
+## 6.4 Local Supabase + Browser Validation Requirements
+- For backend/integration-affecting changes, local Supabase validation must follow `automation/ai-workflow/supabase-local-runbook.md`.
+- For UI-affecting changes, browser validation must follow `automation/ai-workflow/browser-validation-runbook.md`.
+- PR summary comments should include concise validation evidence from these runbooks when applicable.
+
 ## 7) Quality/Definition-of-Done Gates
 
 Before implementation PR is considered ready to merge:
