@@ -12,7 +12,7 @@ This doc bootstraps implementation from operational policy `automation/ai-workfl
 
 ## New entrypoint
 
-- Script: `scripts/ai-dev-workflow/change-detection-loop.mjs`
+- Script: `automation/ai-workflow/scripts/change-detection-loop.mjs`
 - NPM script: `pnpm ai-workflow:loop`
 
 ### Current behavior (intentional skeleton)
@@ -52,4 +52,4 @@ EOF
 gh pr comment 123 --body-file /tmp/pr-comment.md
 ```
 
-Reference helper: `scripts/ai-dev-workflow/lib/github-comment-safe.sh`.
+Reference helper: `automation/ai-workflow/scripts/lib/github-comment-safe.sh`.

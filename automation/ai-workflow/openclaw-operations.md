@@ -10,9 +10,9 @@ This document explains how OpenClaw schedules and runs the Open Invite AI workfl
   - Deterministic per-cycle run procedure.
 - `automation/ai-workflow/status-event-map.md`
   - Event -> status transition contract for coordinator logic.
-- `scripts/ai-dev-workflow/change-detection-loop.mjs`
+- `automation/ai-workflow/scripts/change-detection-loop.mjs`
   - Change detector entrypoint for each cycle.
-- `scripts/ai-dev-workflow/lib/github-comment-safe.sh`
+- `automation/ai-workflow/scripts/lib/github-comment-safe.sh`
   - Safe PR comment helper (`gh ... --body-file`).
 
 ## 2) Recommended OpenClaw Job Model
@@ -39,8 +39,8 @@ Why isolated:
 
 Example worktree setup:
 ```bash
-scripts/ai-dev-workflow/setup-worktree.sh ci/ai-dev-workflow
-scripts/ai-dev-workflow/setup-worktree.sh feat/groups ../wt-feat-groups
+automation/ai-workflow/scripts/setup-worktree.sh ci/ai-dev-workflow
+automation/ai-workflow/scripts/setup-worktree.sh feat/groups ../wt-feat-groups
 ```
 Run one loop instance per worktree path.
 
@@ -48,7 +48,7 @@ Run one loop instance per worktree path.
 
 1. Cron triggers isolated agent turn.
 2. Agent runs change detector:
-   - `node scripts/ai-dev-workflow/change-detection-loop.mjs`
+   - `node automation/ai-workflow/scripts/change-detection-loop.mjs`
    - (or `pnpm ai-workflow:loop` if environment supports it)
    - detector includes on-deck project changes, new PR comment/review activity, and newly failed GitHub Actions runs.
 3. If no changes are detected:
@@ -80,7 +80,7 @@ Future production wiring (TODO):
 - Project polling credentials for production-safe data access.
 - Alerting route (Telegram/OpenClaw messaging) for exception-only notifications.
 
-Note: CI remediation has a built-in default (`scripts/ai-dev-workflow/ci-remediate.mjs`), so no extra wiring is required unless you want custom behavior.
+Note: CI remediation has a built-in default (`automation/ai-workflow/scripts/ci-remediate.mjs`), so no extra wiring is required unless you want custom behavior.
 
 ## 5) Checkpointing and Anti-Loop Rules
 

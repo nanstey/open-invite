@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Safe wrapper for GitHub PR comments.
-# Usage: scripts/ai-dev-workflow/lib/github-comment-safe.sh <pr-number> <markdown-file>
+# Usage: automation/ai-workflow/scripts/lib/github-comment-safe.sh <pr-number> <markdown-file>
 
 if [[ $# -ne 2 ]]; then
   echo "usage: $0 <pr-number> <markdown-file>" >&2

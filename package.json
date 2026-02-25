@@ -23,8 +23,9 @@
     "lint:fix": "biome lint . --write",
     "format": "biome format . --write",
     "format:check": "biome format .",
-    "ai-workflow:loop": "node scripts/ai-dev-workflow/change-detection-loop.mjs",
-    "ai-workflow:remediate-ci": "node scripts/ai-dev-workflow/ci-remediate.mjs"
+    "ai-workflow:loop": "node automation/ai-workflow/scripts/change-detection-loop.mjs",
+    "ai-workflow:remediate-ci": "node automation/ai-workflow/scripts/ci-remediate.mjs",
+    "ai-workflow:validate-local": "bash automation/ai-workflow/scripts/run-local-validation.sh"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

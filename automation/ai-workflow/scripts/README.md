@@ -10,7 +10,7 @@ cat <<'EOF' > /tmp/review-summary.md
 - Addressed all requested updates in one push
 EOF
 
-scripts/ai-dev-workflow/lib/github-comment-safe.sh 123 /tmp/review-summary.md
+automation/ai-workflow/scripts/lib/github-comment-safe.sh 123 /tmp/review-summary.md
 ```
 
 This avoids shell interpolation issues with backticks, `$`, and multiline markdown.
@@ -23,11 +23,19 @@ Run manually:
 corepack pnpm ai-workflow:loop
 ```
 
+Quick local validation chain:
+
+```bash
+corepack pnpm ai-workflow:validate-local
+# or skip supabase lifecycle if already running
+SKIP_SUPABASE=1 corepack pnpm ai-workflow:validate-local
+```
+
 Create branch-isolated worktrees quickly:
 
 ```bash
-scripts/ai-dev-workflow/setup-worktree.sh ci/ai-dev-workflow
-scripts/ai-dev-workflow/setup-worktree.sh feat/groups ../wt-feat-groups
+automation/ai-workflow/scripts/setup-worktree.sh ci/ai-dev-workflow
+automation/ai-workflow/scripts/setup-worktree.sh feat/groups ../wt-feat-groups
 ```
 
 Behavior in bootstrap phase:
@@ -42,7 +50,7 @@ Behavior in bootstrap phase:
 ### CI auto-remediation (default, no extra wiring)
 
 By default, the loop runs:
-- `node scripts/ai-dev-workflow/ci-remediate.mjs`
+- `node automation/ai-workflow/scripts/ci-remediate.mjs`
 
 Concurrency safety:
 - acquires a per-branch lock at `.ai-dev-workflow/locks/<branch>.lock.json`

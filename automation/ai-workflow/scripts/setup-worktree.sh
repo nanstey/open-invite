@@ -2,11 +2,11 @@
 set -euo pipefail
 
 # Usage:
-#   scripts/ai-dev-workflow/setup-worktree.sh <branch> [worktree-path]
+#   automation/ai-workflow/scripts/setup-worktree.sh <branch> [worktree-path]
 #
 # Examples:
-#   scripts/ai-dev-workflow/setup-worktree.sh ci/ai-dev-workflow
-#   scripts/ai-dev-workflow/setup-worktree.sh feat/groups ../wt-feat-groups
+#   automation/ai-workflow/scripts/setup-worktree.sh ci/ai-dev-workflow
+#   automation/ai-workflow/scripts/setup-worktree.sh feat/groups ../wt-feat-groups
 
 if [[ $# -lt 1 || $# -gt 2 ]]; then
   echo "usage: $0 <branch> [worktree-path]" >&2

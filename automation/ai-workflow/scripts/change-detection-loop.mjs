@@ -174,7 +174,7 @@ function releaseBranchLock(lockPath) {
 
 function remediateFailedWorkflowRuns({ failedWorkflowRuns, ghRepo, statePath }) {
   const remediationCommand =
-    process.env.AI_DEV_WORKFLOW_CI_REMEDIATION_CMD ?? "node scripts/ai-dev-workflow/ci-remediate.mjs";
+    process.env.AI_DEV_WORKFLOW_CI_REMEDIATION_CMD ?? "node automation/ai-workflow/scripts/ci-remediate.mjs";
   if (failedWorkflowRuns.length === 0) {
     return;
   }
