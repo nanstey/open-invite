@@ -64,7 +64,7 @@ describe('notificationService', () => {
               data: [
                 {
                   id: 'n1',
-                  type: 'event_created',
+                  type: 'SYSTEM',
                   title: 'Created',
                   message: 'An event was created',
                   timestamp: '2024-01-01T00:00:00.000Z',
@@ -84,7 +84,7 @@ describe('notificationService', () => {
       expect(result).toEqual([
         {
           id: 'n1',
-          type: 'event_created',
+          type: 'SYSTEM',
           title: 'Created',
           message: 'An event was created',
           timestamp: '2024-01-01T00:00:00.000Z',
@@ -183,7 +183,7 @@ describe('notificationService', () => {
       const single = vi.fn(async () => ({
         data: {
           id: 'n1',
-          type: 'event_created',
+          type: 'SYSTEM',
           title: 'Created',
           message: 'Message',
           timestamp: '2024-01-01T00:00:00.000Z',
@@ -197,11 +197,11 @@ describe('notificationService', () => {
       const insert = vi.fn(() => ({ select }));
       mockNotificationsTable(() => ({ insert }));
 
-      const result = await createNotification('user-1', 'event_created', 'Created', 'Message');
+      const result = await createNotification('user-1', 'SYSTEM', 'Created', 'Message');
 
       expect(insert).toHaveBeenCalledWith({
         user_id: 'user-1',
-        type: 'event_created',
+        type: 'SYSTEM',
         title: 'Created',
         message: 'Message',
         related_event_id: null,
@@ -209,7 +209,7 @@ describe('notificationService', () => {
       });
       expect(result).toEqual({
         id: 'n1',
-        type: 'event_created',
+        type: 'SYSTEM',
         title: 'Created',
         message: 'Message',
         timestamp: '2024-01-01T00:00:00.000Z',
@@ -226,7 +226,7 @@ describe('notificationService', () => {
             single: async () => ({
               data: {
                 id: 'n2',
-                type: 'event_updated',
+                type: 'COMMENT',
                 title: 'Updated',
                 message: 'Updated message',
                 timestamp: '2024-01-02T00:00:00.000Z',
@@ -242,7 +242,7 @@ describe('notificationService', () => {
 
       const result = await createNotification(
         'user-1',
-        'event_updated',
+        'COMMENT',
         'Updated',
         'Updated message',
         'event-1',
@@ -251,7 +251,7 @@ describe('notificationService', () => {
 
       expect(result).toEqual({
         id: 'n2',
-        type: 'event_updated',
+        type: 'COMMENT',
         title: 'Updated',
         message: 'Updated message',
         timestamp: '2024-01-02T00:00:00.000Z',
@@ -270,7 +270,7 @@ describe('notificationService', () => {
         }),
       }));
 
-      const result = await createNotification('user-1', 'event_created', 'Title', 'Message');
+      const result = await createNotification('user-1', 'SYSTEM', 'Title', 'Message');
 
       expect(result).toBeNull();
     });
@@ -284,7 +284,7 @@ describe('notificationService', () => {
         }),
       }));
 
-      const result = await createNotification('user-1', 'event_created', 'Title', 'Message');
+      const result = await createNotification('user-1', 'SYSTEM', 'Title', 'Message');
 
       expect(result).toBeNull();
     });
