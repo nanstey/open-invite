@@ -216,7 +216,7 @@ Parallelism rule:
    - new PR comments/reviews on tracked proposal/implementation PRs,
    - newly failed GitHub Actions runs since last checkpoint.
 2. PR comment ingestion must ignore comments/threads already marked resolved or already included in prior batch checkpoints.
-3. Execute cycle steps using `automation/ai-workflow/cycle-checklist.md`.
+3. Execute cycle steps using `automation/ai-workflow/02-cycle-checklist.md`.
 4. If no changes, do nothing (no noisy notification).
 5. Spawn sub-agent work **only when changes are detected**.
    - Workflow failure handling: when a new failed CI run is detected, automatically generate and execute a remediation batch on the relevant working branch (or defer with explicit rationale if blocked).
@@ -248,8 +248,8 @@ Parallelism rule:
 - Keep `AI_DEV_WORKFLOW_AUTO_FIX_ALL_BRANCHES` disabled in normal operation.
 
 ## 6.4 Local Supabase + Browser Validation Requirements
-- For backend/integration-affecting changes, local Supabase validation must follow `automation/ai-workflow/supabase-local-runbook.md`.
-- For UI-affecting changes, browser validation must follow `automation/ai-workflow/browser-validation-runbook.md`.
+- For backend/integration-affecting changes, local Supabase validation must follow `automation/ai-workflow/runbooks/supabase-local.md`.
+- For UI-affecting changes, browser validation must follow `automation/ai-workflow/runbooks/browser-validation.md`.
 - PR summary comments should include concise validation evidence from these runbooks when applicable.
 - Migration safety rules are mandatory:
   - branch migration files must remain the final migration(s),
@@ -257,7 +257,7 @@ Parallelism rule:
   - use newer timestamped migration files not earlier than latest applied migration timestamp.
 
 ## 6.5 Autonomy Guardrails (Required)
-- All autonomous execution must comply with `automation/ai-workflow/autonomy-guardrails.md`.
+- All autonomous execution must comply with `automation/ai-workflow/04-autonomy-guardrails.md`.
 - Budget breaches, low-confidence states, or repeated-failure states must stop mutation and escalate.
 - Human override modes (`PAUSE_AUTONOMY`, `NO_COMMIT_MODE`, `REVIEW_ONLY_MODE`) take precedence over normal execution.
 - Behavior-changing updates require corresponding test additions/updates unless explicitly justified in PR summary.
@@ -266,9 +266,9 @@ Parallelism rule:
 - After functional + visual goals, a mandatory post-goal refactor pass must evaluate DRY/composability/reuse opportunities in touched files.
 
 ## 6.6 Dedicated Quality Review Jobs
-- UI/UX consistency review job spec: `automation/ai-workflow/ui-ux-consistency-job.md`.
-- System architect refactor review job spec: `automation/ai-workflow/system-architect-review-job.md`.
-- These jobs are intended for recurring deep-pass improvements and backlog generation.
+- Combined job spec: `automation/ai-workflow/05-quality-review-jobs.md`.
+- Includes both UI/UX consistency and system-architect refactor review tracks.
+- Intended for recurring deep-pass improvements and backlog generation.
 
 ## 7) Quality/Definition-of-Done Gates
 

@@ -1,6 +1,6 @@
 # AI Dev Workflow Bootstrap (Phase 1)
 
-This doc bootstraps implementation from operational policy `automation/ai-workflow/policy.md`.
+This doc bootstraps implementation from operational policy `automation/ai-workflow/01-policy.md`.
 
 ## Scope of this bootstrap PR
 

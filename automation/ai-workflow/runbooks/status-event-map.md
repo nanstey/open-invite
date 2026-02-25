@@ -1,6 +1,6 @@
 # Status Sync Event Map (Bootstrap Scaffold)
 
-Source of truth: `automation/ai-workflow/policy.md`.
+Source of truth: `automation/ai-workflow/01-policy.md`.
 
 ## Event -> Status transition map
 

@@ -53,15 +53,15 @@ For each candidate unresolved comment:
 
 ## 5) Execute One Batch
 - [ ] Build a single consolidated plan: Address / Defer / Need-clarification.
-- [ ] Check autonomy budget limits from `automation/ai-workflow/autonomy-guardrails.md` before mutating.
+- [ ] Check autonomy budget limits from `automation/ai-workflow/04-autonomy-guardrails.md` before mutating.
 - [ ] For newly failed GitHub Actions runs, include a failure-response plan (root cause, impacted paths, remediation change).
-- [ ] For backend/integration-sensitive changes, follow `automation/ai-workflow/supabase-local-runbook.md` before final validation.
+- [ ] For backend/integration-sensitive changes, follow `automation/ai-workflow/runbooks/supabase-local.md` before final validation.
 - [ ] Run migration guardrail check (`corepack pnpm ai-workflow:check-migrations`) before DB validation.
-- [ ] For UI-facing changes, follow `automation/ai-workflow/browser-validation-runbook.md` and capture concise evidence.
+- [ ] For UI-facing changes, follow `automation/ai-workflow/runbooks/browser-validation.md` and capture concise evidence.
 - [ ] Apply all code/doc changes in one batch.
 - [ ] Add/update tests when behavior changed (or record explicit rationale if no test added).
 - [ ] Perform **mandatory post-goal refactor pass** on touched files (DRY/extract/reuse/composability).
-- [ ] Perform self-review gate from `automation/ai-workflow/autonomy-guardrails.md` before commit/push.
+- [ ] Perform self-review gate from `automation/ai-workflow/04-autonomy-guardrails.md` before commit/push.
 - [ ] Run required checks:
   - [ ] lint
   - [ ] typecheck

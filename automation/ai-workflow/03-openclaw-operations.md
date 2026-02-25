@@ -4,13 +4,13 @@ This document explains how OpenClaw schedules and runs the Open Invite AI workfl
 
 ## 1) Components and Responsibilities
 
-- `automation/ai-workflow/policy.md`
+- `automation/ai-workflow/01-policy.md`
   - Behavioral source of truth (rules, transitions, escalation, retry policy).
-- `automation/ai-workflow/cycle-checklist.md`
+- `automation/ai-workflow/02-cycle-checklist.md`
   - Deterministic per-cycle run procedure.
-- `automation/ai-workflow/status-event-map.md`
+- `automation/ai-workflow/runbooks/status-event-map.md`
   - Event -> status transition contract for coordinator logic.
-- `automation/ai-workflow/autonomy-guardrails.md`
+- `automation/ai-workflow/04-autonomy-guardrails.md`
   - Hard autonomy limits, escalation ladder, and override controls.
 - `automation/ai-workflow/scripts/change-detection-loop.mjs`
   - Change detector entrypoint for each cycle.
@@ -56,12 +56,12 @@ Run one loop instance per worktree path.
 3. If no changes are detected:
    - Exit quietly (no alert).
 4. If changes are detected:
-   - Execute using `automation/ai-workflow/cycle-checklist.md`
-   - Apply policy from `automation/ai-workflow/policy.md`
-   - Enforce limits from `automation/ai-workflow/autonomy-guardrails.md`
-   - Use transition semantics from `automation/ai-workflow/status-event-map.md`
-   - Use `automation/ai-workflow/supabase-local-runbook.md` for local DB-backed checks
-   - Use `automation/ai-workflow/browser-validation-runbook.md` for agent browser validation
+   - Execute using `automation/ai-workflow/02-cycle-checklist.md`
+   - Apply policy from `automation/ai-workflow/01-policy.md`
+   - Enforce limits from `automation/ai-workflow/04-autonomy-guardrails.md`
+   - Use transition semantics from `automation/ai-workflow/runbooks/status-event-map.md`
+   - Use `automation/ai-workflow/runbooks/supabase-local.md` for local DB-backed checks
+   - Use `automation/ai-workflow/runbooks/browser-validation.md` for agent browser validation
 5. Ensure branch freshness before final gate checks (rebase onto `main` when behind; resolve conflicts in-branch).
 6. Post PR updates safely via body-file pattern.
 7. Resolve addressed threads (or post permission fallback message).

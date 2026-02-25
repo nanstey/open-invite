@@ -68,7 +68,15 @@ PR summary should clearly state:
 
 ## 10) Source of Truth for Automation
 For automation behavior, refer to:
-- `automation/ai-workflow/policy.md`
-- `automation/ai-workflow/cycle-checklist.md`
-- `automation/ai-workflow/autonomy-guardrails.md`
-- `automation/ai-workflow/openclaw-operations.md`
+- `automation/ai-workflow/01-policy.md`
+- `automation/ai-workflow/02-cycle-checklist.md`
+- `automation/ai-workflow/04-autonomy-guardrails.md`
+- `automation/ai-workflow/03-openclaw-operations.md`
+
+## 11) Conflict Resolution Order
+If instructions conflict, resolve in this order:
+1. `AGENTS.md`
+2. `automation/ai-workflow/01-policy.md`
+3. `automation/ai-workflow/02-cycle-checklist.md`
+4. `automation/ai-workflow/runbooks/*`
+5. script-level defaults in `automation/ai-workflow/scripts/*`
