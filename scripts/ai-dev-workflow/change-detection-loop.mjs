@@ -2,6 +2,7 @@
 import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname } from "node:path";
+import process from "node:process";
 
 const defaultStatePath = ".ai-dev-workflow/state.json";
 
@@ -128,6 +129,63 @@ function detectFailedWorkflowRuns(sinceIso, ghRepo) {
     }));
 }
 
+function getCurrentBranch() {
+  const output = execSync("git rev-parse --abbrev-ref HEAD", {
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+  });
+
+  return output.trim();
+}
+
+function remediateFailedWorkflowRuns({ failedWorkflowRuns, ghRepo, statePath }) {
+  const remediationCommand = process.env.AI_DEV_WORKFLOW_CI_REMEDIATION_CMD;
+  if (!remediationCommand || failedWorkflowRuns.length === 0) {
+    return;
+  }
+
+  const currentBranch = getCurrentBranch();
+  const autoFixAllBranches = process.env.AI_DEV_WORKFLOW_AUTO_FIX_ALL_BRANCHES === "1";
+  const eligibleRuns = autoFixAllBranches
+    ? failedWorkflowRuns
+    : failedWorkflowRuns.filter((run) => run.branch === currentBranch);
+
+  if (eligibleRuns.length === 0) {
+    console.log("[ai-dev-workflow] CI failures detected, but none match current branch; skipping auto-remediation", {
+      currentBranch,
+      detectedBranches: [...new Set(failedWorkflowRuns.map((run) => run.branch).filter(Boolean))],
+    });
+    return;
+  }
+
+  const failurePayload = {
+    repo: ghRepo ?? null,
+    currentBranch,
+    statePath,
+    failedWorkflowRuns: eligibleRuns,
+  };
+
+  const payloadPath = ".ai-dev-workflow/ci-failures-latest.json";
+  writeJsonFile(payloadPath, failurePayload);
+
+  console.log("[ai-dev-workflow] running CI remediation command", {
+    remediationCommand,
+    eligibleRunCount: eligibleRuns.length,
+    payloadPath,
+  });
+
+  execSync(remediationCommand, {
+    stdio: "inherit",
+    env: {
+      ...process.env,
+      GH_REPO: ghRepo ?? process.env.GH_REPO ?? "",
+      AI_DEV_WORKFLOW_CURRENT_BRANCH: currentBranch,
+      AI_DEV_WORKFLOW_FAILED_RUNS_FILE: payloadPath,
+      AI_DEV_WORKFLOW_FAILED_RUNS_JSON: JSON.stringify(failurePayload),
+    },
+  });
+}
+
 function notifyError(message, error) {
   console.error(`[ai-dev-workflow:error] ${message}`);
   if (error) {
@@ -161,10 +219,9 @@ function main() {
     onDeckProjects,
   };
 
-  writeJsonFile(statePath, nextState);
-
   if (!hasChanges) {
-    console.log("[ai-dev-workflow] no-op: no on_deck project changes or new PR comments");
+    writeJsonFile(statePath, nextState);
+    console.log("[ai-dev-workflow] no-op: no on_deck project changes, PR comment changes, or CI failures");
     return;
   }
 
@@ -173,7 +230,15 @@ function main() {
     newComments,
     failedWorkflowRuns,
   });
-  console.log("[ai-dev-workflow] bootstrap mode: no worker spawn yet");
+
+  remediateFailedWorkflowRuns({
+    failedWorkflowRuns,
+    ghRepo,
+    statePath,
+  });
+
+  writeJsonFile(statePath, nextState);
+  console.log("[ai-dev-workflow] bootstrap mode: change detected and state persisted");
 }
 
 try {

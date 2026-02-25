@@ -213,7 +213,7 @@ Parallelism rule:
 3. Execute cycle steps using `automation/ai-workflow/cycle-checklist.md`.
 4. If no changes, do nothing (no noisy notification).
 5. Spawn sub-agent work **only when changes are detected**.
-   - Workflow failure handling: when a new failed CI run is detected, generate and execute a remediation batch (or defer with explicit rationale if blocked).
+   - Workflow failure handling: when a new failed CI run is detected, automatically generate and execute a remediation batch on the relevant working branch (or defer with explicit rationale if blocked).
 6. Max retries per cycle for failing checks/actions: 2 retries per failing step, then mark deferred (`deferred_due_to_ci_failure`) and continue to summary.
 7. Notify Noel only on errors/exceptions or when human decision is required.
 
