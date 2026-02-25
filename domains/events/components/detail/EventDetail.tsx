@@ -18,6 +18,7 @@ import { MobileActionsBar } from './actions/MobileActionsBar';
 import type { EventActionsModel } from './actions/types';
 import { ChatTab } from './chat/ChatTab';
 import { DetailsTab } from './details/DetailsTab';
+import type { ExpenseApi } from './expenses/types';
 import { GuestsTab } from './guests/GuestsTab';
 import { HeroHeader } from './header/HeroHeader';
 import { KeyFactsCard } from './header/KeyFactsCard';
@@ -93,6 +94,7 @@ interface EventDetailProps {
         patch: Partial<Omit<EventExpense, 'id' | 'eventId'>>
       ) => Promise<void> | void;
       onDelete: (id: string) => Promise<void> | void;
+      onReorder: (orderedExpenseIds: string[]) => void;
     };
     onSave: () => void;
     onCancel: () => void;

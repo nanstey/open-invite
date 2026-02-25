@@ -18,7 +18,7 @@
     "supabase:logs:auth": "docker logs supabase_auth_open-invite --tail 100 -f",
     "supabase:logs:all": "docker logs $(docker ps --filter 'name=supabase' --format '{{.Names}}' | tr '\\n' ' ') --tail 100 -f",
     "prepare": "husky",
-    "type-check": "tsc --noEmit",
+    "types": "tsc --noEmit",
     "lint": "biome lint .",
     "lint:fix": "biome lint . --write",
     "format": "biome format . --write",
