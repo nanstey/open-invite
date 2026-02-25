@@ -23,13 +23,19 @@ Run manually:
 corepack pnpm ai-workflow:loop
 ```
 
-Quick local validation chain:
+Quick local validation chain (context-aware reset logic):
 
 ```bash
 corepack pnpm ai-workflow:validate-local
-# or skip supabase lifecycle if already running
+# skip supabase lifecycle if already running
 SKIP_SUPABASE=1 corepack pnpm ai-workflow:validate-local
+# force reset (override auto-detection)
+FORCE_SUPABASE_RESET=1 corepack pnpm ai-workflow:validate-local
 ```
+
+Reset behavior:
+- reset when `supabase/migrations/**` or `supabase/seed.sql` changed vs merge-base (`origin/main` by default)
+- otherwise run forward migration only (`supabase:migrate`)
 
 Create branch-isolated worktrees quickly:
 

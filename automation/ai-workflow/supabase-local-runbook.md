@@ -17,15 +17,14 @@ This runbook defines how automation should use the local Supabase stack safely a
 ```bash
 corepack pnpm supabase:start
 ```
-2. Apply migrations
+2. Context-aware schema step
+- If migration/seed changed on this branch vs merge-base: run reset.
+- Otherwise: run forward migrate.
 ```bash
-corepack pnpm supabase:migrate
+# auto-decided by validation helper
+corepack pnpm ai-workflow:validate-local
 ```
-3. (Optional) reset when needed
-```bash
-corepack pnpm supabase:reset
-```
-4. Inspect logs when failing tests/dev flows
+3. Inspect logs when failing tests/dev flows
 ```bash
 corepack pnpm supabase:logs
 corepack pnpm supabase:logs:auth
@@ -38,10 +37,13 @@ corepack pnpm supabase:stop
 ## Automation usage guidance
 - Pre-check before integration tests:
   - Ensure local Supabase is running.
-  - Ensure migrations are applied.
-- On reproducible schema drift:
+  - Ensure migrations are applied (or reset when schema/seed changed).
+- Reset decision rule:
+  - reset when `supabase/migrations/**` or `supabase/seed.sql` changed on branch
+  - otherwise avoid reset and use forward migration
+- On reproducible schema drift despite no detected schema changes:
   - Capture reason in PR comment summary.
-  - Perform reset once, then re-run checks.
+  - Perform forced reset once, then re-run checks.
 
 ## Failure triage
 - Migration failure:
