@@ -1,6 +1,6 @@
-import { supabase } from '../lib/supabase';
-import type { User, Group, GroupRole } from '../lib/types';
 import type { Database } from '../lib/database.types';
+import { supabase } from '../lib/supabase';
+import type { Group, GroupRole, User } from '../lib/types';
 import { fetchUsers } from './userService';
 
 type GroupRow = Database['public']['Tables']['groups']['Row'];
@@ -56,8 +56,10 @@ export async function fetchGroups(_userId: string): Promise<Group[]> {
     id: g.id,
     name: g.name,
     createdBy: g.created_by,
-    allowMembersCreateEvents: g.allow_members_create_events ?? DEFAULT_GROUP_SETTINGS.allowMembersCreateEvents,
-    allowMembersAddMembers: g.allow_members_add_members ?? DEFAULT_GROUP_SETTINGS.allowMembersAddMembers,
+    allowMembersCreateEvents:
+      g.allow_members_create_events ?? DEFAULT_GROUP_SETTINGS.allowMembersCreateEvents,
+    allowMembersAddMembers:
+      g.allow_members_add_members ?? DEFAULT_GROUP_SETTINGS.allowMembersAddMembers,
     newMembersRequireAdminApproval:
       g.new_members_require_admin_approval ?? DEFAULT_GROUP_SETTINGS.newMembersRequireAdminApproval,
     deletedAt: g.deleted_at || undefined,
@@ -82,19 +84,27 @@ export async function fetchUserGroups(userId: string): Promise<Group[]> {
     groups: GroupRow | null;
   };
 
-  return (userGroups as UserGroupWithGroup[])
-    .filter(ug => ug.groups && !ug.groups.deleted_at)
-    .map(ug => ({
-      id: ug.groups!.id,
-      name: ug.groups!.name,
-      createdBy: ug.groups!.created_by,
+  const activeMemberships = (userGroups as UserGroupWithGroup[]).filter(
+    (ug): ug is Pick<UserGroupRow, 'group_id'> & { groups: GroupRow } =>
+      !!ug.groups && !ug.groups.deleted_at
+  );
+
+  return activeMemberships.map(ug => {
+    const group = ug.groups;
+    return {
+      id: group.id,
+      name: group.name,
+      createdBy: group.created_by,
       allowMembersCreateEvents:
-        ug.groups!.allow_members_create_events ?? DEFAULT_GROUP_SETTINGS.allowMembersCreateEvents,
-      allowMembersAddMembers: ug.groups!.allow_members_add_members ?? DEFAULT_GROUP_SETTINGS.allowMembersAddMembers,
+        group.allow_members_create_events ?? DEFAULT_GROUP_SETTINGS.allowMembersCreateEvents,
+      allowMembersAddMembers:
+        group.allow_members_add_members ?? DEFAULT_GROUP_SETTINGS.allowMembersAddMembers,
       newMembersRequireAdminApproval:
-        ug.groups!.new_members_require_admin_approval ?? DEFAULT_GROUP_SETTINGS.newMembersRequireAdminApproval,
-      deletedAt: ug.groups!.deleted_at || undefined,
-    }));
+        group.new_members_require_admin_approval ??
+        DEFAULT_GROUP_SETTINGS.newMembersRequireAdminApproval,
+      deletedAt: group.deleted_at || undefined,
+    };
+  });
 }
 
 /**
@@ -106,9 +116,11 @@ export async function createGroup(
     allowMembersCreateEvents: boolean;
     allowMembersAddMembers: boolean;
     newMembersRequireAdminApproval: boolean;
-  } = DEFAULT_GROUP_SETTINGS,
+  } = DEFAULT_GROUP_SETTINGS
 ): Promise<Group | null> {
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   const userId = session?.user?.id;
   if (!userId) {
     return null;
@@ -121,8 +133,7 @@ export async function createGroup(
     allow_members_add_members: settings.allowMembersAddMembers,
     new_members_require_admin_approval: settings.newMembersRequireAdminApproval,
   };
-  const { data: group, error } = await (supabase
-    .from('groups') as any)
+  const { data: group, error } = await (supabase.from('groups') as any)
     .insert(insertData)
     .select()
     .single();
@@ -161,7 +172,7 @@ export async function updateGroup(
     allowMembersCreateEvents: boolean;
     allowMembersAddMembers: boolean;
     newMembersRequireAdminApproval: boolean;
-  }>,
+  }>
 ): Promise<Group | null> {
   const payload: GroupUpdate = {};
   if (updates.name !== undefined) payload.name = updates.name;
@@ -175,8 +186,7 @@ export async function updateGroup(
     payload.new_members_require_admin_approval = updates.newMembersRequireAdminApproval;
   }
 
-  const { data: updated, error } = await (supabase
-    .from('groups') as any)
+  const { data: updated, error } = await (supabase.from('groups') as any)
     .update(payload)
     .eq('id', groupId)
     .select()
@@ -194,9 +204,11 @@ export async function updateGroup(
     createdBy: row.created_by,
     allowMembersCreateEvents:
       row.allow_members_create_events ?? DEFAULT_GROUP_SETTINGS.allowMembersCreateEvents,
-    allowMembersAddMembers: row.allow_members_add_members ?? DEFAULT_GROUP_SETTINGS.allowMembersAddMembers,
+    allowMembersAddMembers:
+      row.allow_members_add_members ?? DEFAULT_GROUP_SETTINGS.allowMembersAddMembers,
     newMembersRequireAdminApproval:
-      row.new_members_require_admin_approval ?? DEFAULT_GROUP_SETTINGS.newMembersRequireAdminApproval,
+      row.new_members_require_admin_approval ??
+      DEFAULT_GROUP_SETTINGS.newMembersRequireAdminApproval,
     deletedAt: row.deleted_at || undefined,
   };
 }
@@ -221,9 +233,10 @@ export async function addUserToGroup(userId: string, groupId: string): Promise<b
     group_id: groupId,
     role: 'MEMBER',
   };
-  const { error } = await (supabase
-    .from('user_groups') as any)
-    .upsert(insertData, { onConflict: 'user_id,group_id', ignoreDuplicates: true });
+  const { error } = await (supabase.from('user_groups') as any).upsert(insertData, {
+    onConflict: 'user_id,group_id',
+    ignoreDuplicates: true,
+  });
 
   if (error) {
     console.error('Error adding user to group:', error);
@@ -264,9 +277,10 @@ export async function fetchGroupMembers(groupId: string): Promise<User[]> {
   return fetchUsers(userIds);
 }
 
-
 export async function fetchGroupMembershipsForCurrentUser(): Promise<GroupMembership[]> {
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   const userId = session?.user?.id;
   if (!userId) {
     return [];
@@ -286,29 +300,38 @@ export async function fetchGroupMembershipsForCurrentUser(): Promise<GroupMember
     groups: GroupRow | null;
   };
 
-  return (userGroups as UserGroupWithGroup[])
-    .filter((ug) => ug.groups && !ug.groups.deleted_at)
-    .map((ug) => ({
+  const activeMemberships = (userGroups as UserGroupWithGroup[]).filter(
+    (ug): ug is Pick<UserGroupRow, 'role'> & { groups: GroupRow } =>
+      !!ug.groups && !ug.groups.deleted_at
+  );
+
+  return activeMemberships.map(ug => {
+    const group = ug.groups;
+    return {
       role: (ug.role ?? 'MEMBER') as GroupRole,
       group: {
-        id: ug.groups!.id,
-        name: ug.groups!.name,
-        createdBy: ug.groups!.created_by,
+        id: group.id,
+        name: group.name,
+        createdBy: group.created_by,
         allowMembersCreateEvents:
-          ug.groups!.allow_members_create_events ?? DEFAULT_GROUP_SETTINGS.allowMembersCreateEvents,
+          group.allow_members_create_events ?? DEFAULT_GROUP_SETTINGS.allowMembersCreateEvents,
         allowMembersAddMembers:
-          ug.groups!.allow_members_add_members ?? DEFAULT_GROUP_SETTINGS.allowMembersAddMembers,
+          group.allow_members_add_members ?? DEFAULT_GROUP_SETTINGS.allowMembersAddMembers,
         newMembersRequireAdminApproval:
-          ug.groups!.new_members_require_admin_approval ?? DEFAULT_GROUP_SETTINGS.newMembersRequireAdminApproval,
-        deletedAt: ug.groups!.deleted_at || undefined,
+          group.new_members_require_admin_approval ??
+          DEFAULT_GROUP_SETTINGS.newMembersRequireAdminApproval,
+        deletedAt: group.deleted_at || undefined,
       },
-    }));
+    };
+  });
 }
 
 /**
  * Fetch roles for the current user across all groups they belong to.
  */
-export async function fetchCurrentUserGroupRoles(userId: string): Promise<Record<string, GroupMembershipRole>> {
+export async function fetchCurrentUserGroupRoles(
+  userId: string
+): Promise<Record<string, GroupMembershipRole>> {
   const { data: memberships, error } = await supabase
     .from('user_groups')
     .select('group_id, role')
@@ -342,12 +365,12 @@ export async function fetchGroupMembersWithRoles(groupId: string): Promise<Group
   }
 
   const rows = userGroups as Pick<UserGroupRow, 'user_id' | 'role'>[];
-  const userIds = rows.map((row) => row.user_id);
+  const userIds = rows.map(row => row.user_id);
   const users = await fetchUsers(userIds);
-  const userMap = new Map(users.map((u) => [u.id, u]));
+  const userMap = new Map(users.map(u => [u.id, u]));
 
   return rows
-    .map((row) => {
+    .map(row => {
       const user = userMap.get(row.user_id);
       if (!user) return null;
       return {
@@ -359,7 +382,11 @@ export async function fetchGroupMembersWithRoles(groupId: string): Promise<Group
     .filter((row): row is GroupMember => !!row);
 }
 
-export async function updateGroupMemberRole(groupId: string, userId: string, role: GroupRole): Promise<boolean> {
+export async function updateGroupMemberRole(
+  groupId: string,
+  userId: string,
+  role: GroupRole
+): Promise<boolean> {
   const { error } = await supabase
     .from('user_groups')
     .update({ role })
@@ -373,7 +400,10 @@ export async function updateGroupMemberRole(groupId: string, userId: string, rol
   return !error;
 }
 
-export async function createGroupMemberRequest(groupId: string, requesterId: string): Promise<boolean> {
+export async function createGroupMemberRequest(
+  groupId: string,
+  requesterId: string
+): Promise<boolean> {
   const { error } = await supabase
     .from('group_member_requests')
     .insert({ group_id: groupId, requester_id: requesterId, status: 'PENDING' });
@@ -399,12 +429,12 @@ export async function fetchGroupMemberRequests(groupId: string): Promise<GroupMe
   }
 
   const rows = requests as GroupMemberRequestRow[];
-  const requesterIds = rows.map((row) => row.requester_id);
+  const requesterIds = rows.map(row => row.requester_id);
   const requesters = await fetchUsers(requesterIds);
-  const requesterMap = new Map(requesters.map((u) => [u.id, u]));
+  const requesterMap = new Map(requesters.map(u => [u.id, u]));
 
   return rows
-    .map((row) => {
+    .map(row => {
       const requester = requesterMap.get(row.requester_id);
       if (!requester) return null;
       return {
@@ -419,18 +449,20 @@ export async function fetchGroupMemberRequests(groupId: string): Promise<GroupMe
     .filter((row): row is GroupMemberRequest => !!row);
 }
 
-export async function approveGroupMemberRequest(requestId: string, userId: string, groupId: string): Promise<boolean> {
-  const { error: updateError } = await supabase
-    .from('group_member_requests')
-    .update({ status: 'APPROVED' })
-    .eq('id', requestId);
+export async function approveGroupMemberRequest(requestId: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc('approve_group_member_request', {
+    request_id_param: requestId,
+  });
 
-  if (updateError) {
-    console.error('Error approving group member request:', updateError);
+  if (error || !data) {
+    console.error(
+      'Error approving group member request:',
+      error ?? new Error('approve_group_member_request returned false')
+    );
     return false;
   }
 
-  return addUserToGroup(userId, groupId);
+  return true;
 }
 
 export async function denyGroupMemberRequest(requestId: string): Promise<boolean> {
