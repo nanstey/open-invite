@@ -31,7 +31,7 @@ It is intentionally non-automator-specific.
 - New migration files should use fresh timestamps and preserve ordering.
 - If branch migration ordering drifts after rebases/merges, fix by creating/renaming to newer migrations.
 
-## 5) Branch and PR hygiene
+## 7) Branch and PR hygiene
 - Rebase when branch is behind `main` and resolve conflicts cleanly.
 - If commit history is noisy, squash when it improves reviewability.
 - PR summaries should clearly include:
@@ -41,6 +41,6 @@ It is intentionally non-automator-specific.
   - notable refactors
   - known follow-ups/risks
 
-## 6) Where automation-specific policy lives
+## 8) Where automation-specific policy lives
 Automation workflow details are intentionally separated under:
 - `automation/ai-workflow/`
