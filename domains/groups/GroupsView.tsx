@@ -1,6 +1,16 @@
-import { ArrowLeft, Lock, MessageSquare, Plus, Settings, Users } from 'lucide-react';
+import {
+  ArrowLeft,
+  Lock,
+  MessageSquare,
+  MoreVertical,
+  Plus,
+  Settings,
+  UserMinus,
+  Users,
+} from 'lucide-react';
 import * as React from 'react';
 
+import { useClickOutside } from '../../lib/hooks/useClickOutside';
 import type { Group } from '../../lib/types';
 import {
   AlertDialog,
@@ -42,6 +52,7 @@ import {
   fetchGroups,
   type GroupMember,
   type GroupMemberRequest,
+  removeUserFromGroup,
   updateGroup,
 } from '../../services/groupService';
 import { useAuth } from '../auth/AuthProvider';
@@ -93,15 +104,23 @@ export function GroupsView() {
   );
   const [savingSettings, setSavingSettings] = React.useState(false);
   const [settingsMessage, setSettingsMessage] = React.useState<string | null>(null);
+  const [membersMessage, setMembersMessage] = React.useState<string | null>(null);
   const [pendingRequests, setPendingRequests] = React.useState<GroupMemberRequest[]>([]);
   const [loadingRequests, setLoadingRequests] = React.useState(false);
   const [processingRequestId, setProcessingRequestId] = React.useState<string | null>(null);
+  const [removeTargetMember, setRemoveTargetMember] = React.useState<GroupMember | null>(null);
+  const [isRemoveDialogOpen, setIsRemoveDialogOpen] = React.useState(false);
+  const [removingMemberId, setRemovingMemberId] = React.useState<string | null>(null);
+  const [openMemberMenuId, setOpenMemberMenuId] = React.useState<string | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
   const [deleteConfirmationInput, setDeleteConfirmationInput] = React.useState('');
   const [deletingGroup, setDeletingGroup] = React.useState(false);
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
+  const memberMenuRef = React.useRef<HTMLDivElement | null>(null);
   const lastSelectionResetGroupIdRef = React.useRef<string | null>(null);
   const groupNameInputId = React.useId();
+
+  useClickOutside(memberMenuRef, () => setOpenMemberMenuId(null), openMemberMenuId !== null);
 
   React.useEffect(() => {
     const load = async () => {
@@ -283,6 +302,11 @@ export function GroupsView() {
   }, [selectedGroupId]);
 
   React.useEffect(() => {
+    setMembersMessage(null);
+    setRemoveTargetMember(null);
+    setIsRemoveDialogOpen(false);
+    setRemovingMemberId(null);
+    setOpenMemberMenuId(null);
     if (!selectedGroup) {
       setGroupSettingsDraft(null);
       return;
@@ -399,6 +423,49 @@ export function GroupsView() {
     if (!open) {
       setDeletingGroup(false);
     }
+  };
+
+  const handleRemoveDialogOpenChange = (open: boolean) => {
+    setIsRemoveDialogOpen(open);
+    if (!open) {
+      setRemoveTargetMember(null);
+      setRemovingMemberId(null);
+    }
+  };
+
+  const handleOpenRemoveMemberDialog = (member: GroupMember) => {
+    if (!selectedGroup || !isAdmin) return;
+    const isCreatorRow = member.id === selectedGroup.createdBy;
+    const isSelfRow = member.id === user?.id;
+    if (isCreatorRow || isSelfRow) return;
+
+    setOpenMemberMenuId(null);
+    setMembersMessage(null);
+    setRemoveTargetMember(member);
+    setIsRemoveDialogOpen(true);
+  };
+
+  const handleConfirmRemoveMember = async () => {
+    if (!selectedGroup || !removeTargetMember || removingMemberId) return;
+    const isCreatorRow = removeTargetMember.id === selectedGroup.createdBy;
+    const isSelfRow = removeTargetMember.id === user?.id;
+    if (!isAdmin || isCreatorRow || isSelfRow) return;
+
+    setMembersMessage(null);
+    setRemovingMemberId(removeTargetMember.id);
+    const removed = await removeUserFromGroup(removeTargetMember.id, selectedGroup.id);
+
+    if (!removed) {
+      setMembersMessage('Failed to remove member. Please try again.');
+      setRemovingMemberId(null);
+      return;
+    }
+
+    setMembers(prev => prev.filter(member => member.id !== removeTargetMember.id));
+    setMembersMessage(`${removeTargetMember.name} removed from this group.`);
+    setRemovingMemberId(null);
+    setRemoveTargetMember(null);
+    setIsRemoveDialogOpen(false);
   };
 
   const handleDeleteGroup = async () => {
@@ -658,30 +725,81 @@ export function GroupsView() {
                       Only admins can add members for this group.
                     </div>
                   )}
+                  {membersMessage ? (
+                    <div
+                      className={`text-xs ${
+                        membersMessage.startsWith('Failed') ? 'text-red-300' : 'text-slate-300'
+                      }`}
+                    >
+                      {membersMessage}
+                    </div>
+                  ) : null}
 
                   {loadingMembers ? (
                     <div className="text-sm text-slate-400">Loading members...</div>
                   ) : (
                     <div className="space-y-3">
-                      {members.map(member => (
-                        <div
-                          key={member.id}
-                          className="bg-slate-900/40 border border-slate-700 rounded-xl p-3 flex items-center gap-3"
-                        >
-                          <UserAvatar
-                            src={member.avatar}
-                            alt={member.name}
-                            size="sm"
-                            className="border-slate-500"
-                          />
-                          <div className="min-w-0 flex-1">
-                            <div className="font-semibold text-white truncate">{member.name}</div>
+                      {members.map(member => {
+                        const isCreatorRow = member.id === selectedGroup.createdBy;
+                        const isSelfRow = member.id === user?.id;
+                        const canRemoveMember = isAdmin && !isSelfRow && !isCreatorRow;
+                        const isRemovingThisMember = removingMemberId === member.id;
+
+                        return (
+                          <div
+                            key={member.id}
+                            className="bg-slate-900/40 border border-slate-700 rounded-xl p-3 flex items-center gap-3"
+                          >
+                            <UserAvatar
+                              src={member.avatar}
+                              alt={member.name}
+                              size="sm"
+                              className="border-slate-500"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="font-semibold text-white truncate">{member.name}</div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-slate-300 tracking-wide">
+                                {member.role}
+                              </span>
+                              {canRemoveMember ? (
+                                <div
+                                  className="relative shrink-0"
+                                  ref={openMemberMenuId === member.id ? memberMenuRef : null}
+                                >
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      setOpenMemberMenuId(prev =>
+                                        prev === member.id ? null : member.id
+                                      )
+                                    }
+                                    disabled={!!removingMemberId}
+                                    className="p-2 hover:bg-slate-700 rounded-full text-slate-400 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                    aria-label={`Open actions menu for ${member.name}`}
+                                  >
+                                    <MoreVertical className="w-4 h-4" />
+                                  </button>
+                                  {openMemberMenuId === member.id ? (
+                                    <div className="absolute right-0 top-full mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-10 min-w-[140px] py-1">
+                                      <button
+                                        type="button"
+                                        className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-slate-700 flex items-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                        onClick={() => handleOpenRemoveMemberDialog(member)}
+                                        disabled={!!removingMemberId}
+                                      >
+                                        <UserMinus className="w-4 h-4" />
+                                        {isRemovingThisMember ? 'Removing...' : 'Remove'}
+                                      </button>
+                                    </div>
+                                  ) : null}
+                                </div>
+                              ) : null}
+                            </div>
                           </div>
-                          <span className="text-xs text-slate-300 tracking-wide">
-                            {member.role}
-                          </span>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>
@@ -917,6 +1035,36 @@ export function GroupsView() {
               className="px-4 py-2 rounded-xl text-sm font-semibold bg-red-500/20 text-red-200 border border-red-500/40 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {deletingGroup ? 'Deleting...' : 'Delete'}
+            </button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={isRemoveDialogOpen} onOpenChange={handleRemoveDialogOpenChange}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove member?</AlertDialogTitle>
+            <AlertDialogDescription className="pt-4">
+              {removeTargetMember && selectedGroup
+                ? `Remove ${removeTargetMember.name} from ${selectedGroup.name}?`
+                : 'Remove this member from the group?'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+
+          <AlertDialogFooter>
+            <AlertDialogClose
+              disabled={!!removingMemberId}
+              className="px-4 py-2 rounded-xl text-slate-200 hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-semibold"
+            >
+              Cancel
+            </AlertDialogClose>
+            <button
+              type="button"
+              onClick={() => void handleConfirmRemoveMember()}
+              disabled={!removeTargetMember || !!removingMemberId}
+              className="px-4 py-2 rounded-xl text-sm font-semibold bg-red-500/20 text-red-200 border border-red-500/40 hover:bg-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {removingMemberId ? 'Removing...' : 'Remove'}
             </button>
           </AlertDialogFooter>
         </AlertDialogContent>
