@@ -1,6 +1,6 @@
 # AI Dev Workflow Bootstrap (Phase 1)
 
-This doc bootstraps implementation from RFC `docs/projects/2026-02-23_ai-dev-workflow.md`.
+This doc bootstraps implementation from operational policy `automation/ai-workflow/policy.md`.
 
 ## Scope of this bootstrap PR
 

@@ -1,6 +1,6 @@
 # Status Sync Event Map (Bootstrap Scaffold)
 
-Source of truth: `docs/projects/2026-02-23_ai-dev-workflow.md`.
+Source of truth: `automation/ai-workflow/policy.md`.
 
 ## Event -> Status transition map
 
@@ -15,6 +15,8 @@ Source of truth: `docs/projects/2026-02-23_ai-dev-workflow.md`.
 | `implementation_started` | `in_progress` | `in_progress` | Idempotent confirmation |
 | `implementation_waiting_review` | `in_progress` | `review` | Impl PR waiting |
 | `implementation_changes_requested` | `review` | `in_progress` | Resume implementation edits |
+| `implementation_batch_pushed` | `in_progress` | `in_progress` | Address/defer batch done; summary posted |
+| `implementation_rewaiting_review` | `in_progress` | `review` | Returned to waiting review after batch |
 | `implementation_merged` | `review` | `completed` | Noel merge authority |
 
 ## Coordinator scaffold contract
