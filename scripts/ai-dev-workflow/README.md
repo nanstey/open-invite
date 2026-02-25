@@ -20,7 +20,14 @@ This avoids shell interpolation issues with backticks, `$`, and multiline markdo
 Run manually:
 
 ```bash
-pnpm ai-workflow:loop
+corepack pnpm ai-workflow:loop
+```
+
+Create branch-isolated worktrees quickly:
+
+```bash
+scripts/ai-dev-workflow/setup-worktree.sh ci/ai-dev-workflow
+scripts/ai-dev-workflow/setup-worktree.sh feat/groups ../wt-feat-groups
 ```
 
 Behavior in bootstrap phase:

@@ -39,8 +39,8 @@ Why isolated:
 
 Example worktree setup:
 ```bash
-git worktree add ../wt-ci-ai-dev-workflow ci/ai-dev-workflow
-git worktree add ../wt-feat-groups feat/groups
+scripts/ai-dev-workflow/setup-worktree.sh ci/ai-dev-workflow
+scripts/ai-dev-workflow/setup-worktree.sh feat/groups ../wt-feat-groups
 ```
 Run one loop instance per worktree path.
 
