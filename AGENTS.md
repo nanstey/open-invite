@@ -1,82 +1,46 @@
-# AGENTS.md — Open Invite Agent Operating Rules
+# AGENTS.md — Open Invite Codebase Guide
 
-This file is the repository-level contract for all agents (OpenClaw, IDE agents, CI agents).
+This file provides **general repository guidance** for any coding agent (IDE agents, CLI agents, CI assistants).
+It is intentionally non-automator-specific.
 
-## 1) Execution Goals
-- Ship correct product behavior.
-- Maintain consistent UX/UI patterns across the app.
-- Increase reuse and composability over time.
-- Keep changes reversible and reviewable.
+## 1) Repository map
+- `domains/` — domain-driven feature modules (UI + domain logic)
+- `services/` — service-layer integrations and shared app services
+- `pages/` — route/page entry points
+- `lib/` — shared utilities/framework helpers
+- `supabase/` — DB config, migrations, and seed data
+- `test/` — test utilities and test modules
+- `automation/ai-workflow/` — automation policy/runbooks/scripts (for autonomous workflow operators)
+- `.github/` — PR templates and GitHub automation
 
-## 2) Required Delivery Sequence
-For any task/PR, run work in this order:
-1. Functional correctness
-2. Visual/UX correctness
-3. Validation gates (lint/tests/build + relevant DB/browser checks)
-4. **Post-goal refactor pass** (mandatory)
+## 2) Organization rules
+- Keep domain logic near its owning domain.
+- Prefer extending existing modules over creating near-duplicates.
+- Extract reusable UI/patterns when repeated in multiple places.
+- Keep commits scoped and reversible.
 
-## 3) Mandatory Post-goal Refactor Pass
-After functional + visual goals are met, agents must review all touched files and:
-- DRY repeated logic and markup
-- extract repeated UI sections into composable sub-components
-- extract list/loop-rendered structures into reusable units where sensible
-- prefer shared primitives for common visuals/behavior
-- reduce cross-domain duplication where APIs/semantics align
+## 3) Code quality expectations
+- Run lint/typecheck/tests/build before marking work ready.
+- Behavior-changing updates should include or update tests.
+- Keep naming and APIs consistent with existing patterns.
+- Avoid speculative abstractions; extract generics from real repeated use-cases.
 
-### Heuristics for extraction
-- Distinct page section repeated in 2+ places -> candidate component
-- Similar loop item rendering in multiple views -> candidate reusable list item/row
-- Similar interactions with slight variant behavior -> candidate generic + adapter props
+## 4) Migrations and data safety
+- Treat migrations as append-only history.
+- Do not edit old migration files in place.
+- New migration files should use fresh timestamps and preserve ordering.
+- If branch migration ordering drifts after rebases/merges, fix by creating/renaming to newer migrations.
 
-## 4) Refactor Scope Guardrails
-- Refactor touched files/modules first.
-- Cross-cutting refactors are allowed only when low-risk and clearly bounded.
-- Large architectural refactors should be split into dedicated PRs.
-- Do not mix broad refactor + large feature delta unless explicitly requested.
+## 5) Branch and PR hygiene
+- Rebase when branch is behind `main` and resolve conflicts cleanly.
+- If commit history is noisy, squash when it improves reviewability.
+- PR summaries should clearly include:
+  - functional changes
+  - UI/UX impact
+  - validation evidence
+  - notable refactors
+  - known follow-ups/risks
 
-## 5) UI/UX Consistency Rules
-- Preserve a consistent look/feel/interaction across domains.
-- Prefer existing shared UI patterns before creating new variants.
-- If introducing a new visual pattern, justify why existing primitives are insufficient.
-- Normalize naming and prop contracts for similar components.
-
-## 6) Generic Component Policy
-- Generic abstraction is encouraged only with real repeated use-cases.
-- Avoid speculative over-generalization.
-- Keep domain semantics explicit at boundaries.
-- Favor composition over inheritance-like prop complexity.
-
-## 7) Testing + Validation Expectations
-- Lint/typecheck/tests/build must pass (or be explicitly justified).
-- Behavior-changing updates should include/adjust tests.
-- Backend/integration-sensitive changes should follow local Supabase runbook.
-- UI-affecting changes should follow browser validation runbook with concise evidence.
-
-## 8) Branch + Migration Safety
-- Keep PR branches fresh against `main` (rebase + resolve conflicts when behind).
-- If commit history is noisy, squash before rebase when it improves clarity.
-- Migration files must remain latest/final in order.
-- Do not modify historical migration files in place; create newer timestamped migrations.
-
-## 9) PR Reporting Contract
-PR summary should clearly state:
-- Functional changes
-- Visual/UX changes
-- Refactors performed (what was extracted/reused)
-- Validation evidence run
-- Deferred follow-ups/risks
-
-## 10) Source of Truth for Automation
-For automation behavior, refer to:
-- `automation/ai-workflow/01-policy.md`
-- `automation/ai-workflow/02-cycle-checklist.md`
-- `automation/ai-workflow/04-autonomy-guardrails.md`
-- `automation/ai-workflow/03-openclaw-operations.md`
-
-## 11) Conflict Resolution Order
-If instructions conflict, resolve in this order:
-1. `AGENTS.md`
-2. `automation/ai-workflow/01-policy.md`
-3. `automation/ai-workflow/02-cycle-checklist.md`
-4. `automation/ai-workflow/runbooks/*`
-5. script-level defaults in `automation/ai-workflow/scripts/*`
+## 6) Where automation-specific policy lives
+Automation workflow details are intentionally separated under:
+- `automation/ai-workflow/`

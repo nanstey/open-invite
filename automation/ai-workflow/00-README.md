@@ -13,13 +13,13 @@ This folder is the self-contained operational source for agent automation behavi
 - `runbooks/supabase-local.md` — local DB validation procedure
 - `runbooks/browser-validation.md` — browser validation procedure
 - `runbooks/status-event-map.md` — event/status implementation map
-- `bootstrap.md` — historical bootstrap notes and rollout TODOs
 - `scripts/` — executable helpers (loop/remediation/migration checks/worktrees)
 
 ## Intent boundaries
 - Policy and guardrails are canonical.
 - Runbooks define conditional procedures.
 - Scripts implement behavior and must remain aligned with policy.
+- Automation-specific autonomy/review/refactor rules belong here (not in root `AGENTS.md`).
 
 ## Proposal vs Automation
 Project proposal docs may evolve independently.
