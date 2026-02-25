@@ -33,9 +33,9 @@ function AppShellLayout() {
   const isEventsChildRoute = pathname.startsWith('/events/') && !isEventsIndex
   const hideShellHeaderForRoute =
     (activeSection === 'EVENTS' && isEventsChildRoute) ||
-    activeSection === 'PROFILE' ||
-    activeSection === 'FRIENDS'
+    activeSection === 'PROFILE'
   const hideMobileBottomNavForRoute = activeSection === 'EVENTS' && isEventsChildRoute
+  const constrainHeaderToContent = activeSection === 'FRIENDS'
 
   const eventsView = React.useMemo<EventsView>(() => coerceEventsView((search as any)?.view), [search])
 
@@ -88,7 +88,7 @@ function AppShellLayout() {
         {/* Desktop Header */}
         {!hideShellHeaderForRoute && (
           <header className="hidden md:flex flex-col gap-4 p-4 md:p-6 pb-2 shrink-0 border-b border-transparent z-10">
-            <div className="flex items-center justify-between w-full">
+            <div className={`flex items-center justify-between w-full ${constrainHeaderToContent ? 'max-w-6xl mx-auto' : ''}`}>
               <h1 className="text-2xl font-bold text-white whitespace-nowrap">{pageTitle}</h1>
               <div className="block">
                 {headerTabs && (
