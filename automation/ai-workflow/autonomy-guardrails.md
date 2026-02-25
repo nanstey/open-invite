@@ -36,6 +36,23 @@ Every autonomous mutation must be:
 - clearly labeled in commit message (`fix(ci): ...`, `chore(ai): ...`)
 - reversible without cross-branch side effects
 
+## 4.1 Test Addition Policy
+- Running tests is mandatory; adding/updating tests is required when behavior changes.
+- If behavior changed and no test was added, PR summary must include explicit rationale.
+- CI-remediation-only formatting/lint fixes may skip new tests when no behavior changed.
+
+## 4.2 Self Review Gate (before push)
+- Validate diff scope matches intended change.
+- Check for accidental unrelated edits.
+- Verify edge cases for touched logic paths.
+- For DB/auth changes: verify migration/seed implications and rollback safety.
+- Ensure PR summary includes what changed, what was tested, and any deferred risks.
+
+## 4.3 Refactor Scope Limits
+- Opportunistic refactors are allowed only in touched files/modules and must reduce risk/readability debt.
+- Cross-cutting refactors require explicit approval or a separate refactor PR.
+- Do not mix broad refactor + behavior change in one autonomous batch unless explicitly requested.
+
 ## 5) Locking + State Durability
 - Per-branch lock is required before mutation.
 - Lock must be released in `finally` paths.

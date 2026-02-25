@@ -56,6 +56,8 @@ For each candidate unresolved comment:
 - [ ] For backend/integration-sensitive changes, follow `automation/ai-workflow/supabase-local-runbook.md` before final validation.
 - [ ] For UI-facing changes, follow `automation/ai-workflow/browser-validation-runbook.md` and capture concise evidence.
 - [ ] Apply all code/doc changes in one batch.
+- [ ] Add/update tests when behavior changed (or record explicit rationale if no test added).
+- [ ] Perform self-review gate from `automation/ai-workflow/autonomy-guardrails.md` before commit/push.
 - [ ] Run required checks:
   - [ ] lint
   - [ ] typecheck

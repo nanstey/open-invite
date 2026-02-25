@@ -250,6 +250,9 @@ Parallelism rule:
 - All autonomous execution must comply with `automation/ai-workflow/autonomy-guardrails.md`.
 - Budget breaches, low-confidence states, or repeated-failure states must stop mutation and escalate.
 - Human override modes (`PAUSE_AUTONOMY`, `NO_COMMIT_MODE`, `REVIEW_ONLY_MODE`) take precedence over normal execution.
+- Behavior-changing updates require corresponding test additions/updates unless explicitly justified in PR summary.
+- Self-review gate is required before autonomous commit/push.
+- Refactor scope is limited to touched modules unless explicitly approved.
 
 ## 7) Quality/Definition-of-Done Gates
 
