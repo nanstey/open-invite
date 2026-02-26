@@ -24,6 +24,41 @@ import {
   updateProject,
 } from './feedbackProjectService';
 
+describe('moveProjectToStatus - regression tests for lane behavior', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.useRealTimers();
+  });
+
+  it('moves project to target status with correct sort order', async () => {
+    const eqFn = vi.fn(async () => ({ error: null }));
+    const updateFn = vi.fn(() => ({ eq: eqFn }));
+
+    mockFromQueues({
+      feedback_projects: [{ update: updateFn }],
+    });
+
+    await moveProjectToStatus('proj-123', 'in_progress', 2);
+
+    expect(updateFn).toHaveBeenCalledWith({ status: 'in_progress', sort_order: 2 });
+    expect(eqFn).toHaveBeenCalledWith('id', 'proj-123');
+  });
+
+  it('handles move to empty column correctly', async () => {
+    const eqFn = vi.fn(async () => ({ error: null }));
+    const updateFn = vi.fn(() => ({ eq: eqFn }));
+
+    mockFromQueues({
+      feedback_projects: [{ update: updateFn }],
+    });
+
+    await moveProjectToStatus('proj-456', 'review', 0);
+
+    expect(updateFn).toHaveBeenCalledWith({ status: 'review', sort_order: 0 });
+    expect(eqFn).toHaveBeenCalledWith('id', 'proj-456');
+  });
+});
+
 function mockFromQueues(queues: Record<string, any[]>) {
   supabase.from.mockImplementation((table: string) => {
     const queue = queues[table];

@@ -1,15 +1,26 @@
-import React, { useState } from 'react'
-import { GripVertical, MoreVertical, Trash2, Github, ExternalLink, MessageSquare } from 'lucide-react'
-import type { Project } from '../../projectTypes'
-import { Card } from '../../../../lib/ui/9ui/card'
+import {
+  ExternalLink,
+  Github,
+  GripVertical,
+  MessageSquare,
+  MoreVertical,
+  Trash2,
+} from 'lucide-react';
+import type React from 'react';
+import { useState } from 'react';
+import { Card } from '../../../../lib/ui/9ui/card';
+import type { Project } from '../../projectTypes';
+import { CARD_STATUS_STYLES } from '../../projectTypes';
 
 export interface ProjectCardProps {
-  project: Project
-  isDragging: boolean
-  onDragStart: () => void
-  onDragEnd: () => void
-  onClick: () => void
-  onDelete: () => void
+  project: Project;
+  isDragging: boolean;
+  onDragStart: () => void;
+  onDragEnd: () => void;
+  onTouchDragStart: () => void;
+  onTouchDragEnd: () => void;
+  onClick: () => void;
+  onDelete: () => void;
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
@@ -17,29 +28,65 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   isDragging,
   onDragStart,
   onDragEnd,
+  onTouchDragStart,
+  onTouchDragEnd,
   onClick,
   onDelete,
 }) => {
-  const [showMenu, setShowMenu] = useState(false)
+  const [showMenu, setShowMenu] = useState(false);
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
 
   const handleDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.setData('projectId', project.id)
-    e.dataTransfer.setData('sourceStatus', project.status)
-    onDragStart()
-  }
+    e.dataTransfer.setData('projectId', project.id);
+    e.dataTransfer.setData('sourceStatus', project.status);
+    onDragStart();
+  };
+
+  // Touch handlers for mobile long-press drag
+  const handleTouchStart = () => {
+    const timer = setTimeout(() => {
+      onTouchDragStart();
+    }, 300); // 300ms long press to start drag
+    setLongPressTimer(timer);
+  };
+
+  const handleTouchEnd = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+    if (isDragging) {
+      onTouchDragEnd();
+    }
+  };
+
+  const handleTouchMove = () => {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      setLongPressTimer(null);
+    }
+  };
+
+  // Derive card styling from canonical project status (not local state)
+  const cardStatusStyle = CARD_STATUS_STYLES[project.status] || CARD_STATUS_STYLES.backlog;
 
   return (
     <Card
       draggable
       onDragStart={handleDragStart}
       onDragEnd={onDragEnd}
-      className={`bg-slate-800 border border-slate-700 rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all ${
-        isDragging ? 'opacity-50 scale-95' : 'hover:border-slate-600'
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchMove}
+      className={`${cardStatusStyle} rounded-lg p-3 cursor-grab active:cursor-grabbing transition-all touch-none ${
+        isDragging ? 'opacity-50 scale-95 ring-2 ring-primary' : 'hover:border-slate-600'
       }`}
     >
       <div className="flex items-start gap-2">
-        <GripVertical className="w-4 h-4 text-slate-600 mt-0.5 shrink-0" />
-        <button onClick={onClick} className="flex-1 min-w-0 text-left">
+        <GripVertical
+          className={`w-4 h-4 mt-0.5 shrink-0 ${isDragging ? 'text-primary' : 'text-slate-600'}`}
+        />
+        <button type="button" onClick={onClick} className="flex-1 min-w-0 text-left">
           <div className="text-sm font-bold text-white mb-1">{project.title}</div>
           {project.description && (
             <p className="text-xs text-slate-400 line-clamp-2 mb-2">{project.description}</p>
@@ -56,7 +103,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 href={project.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
+                onClick={e => e.stopPropagation()}
                 className="flex items-center gap-1 hover:text-primary transition-colors"
               >
                 <Github className="w-3 h-3" />
@@ -67,9 +114,10 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </button>
         <div className="relative">
           <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setShowMenu(!showMenu)
+            type="button"
+            onClick={e => {
+              e.stopPropagation();
+              setShowMenu(!showMenu);
             }}
             className="p-1 text-slate-500 hover:text-white rounded transition-colors"
           >
@@ -77,15 +125,26 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           </button>
           {showMenu && (
             <>
-              <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+              <button
+                type="button"
+                aria-label="Close menu"
+                className="fixed inset-0 z-10 bg-transparent"
+                onClick={() => setShowMenu(false)}
+                onKeyDown={e => {
+                  if (e.key === 'Escape' || e.key === 'Enter') {
+                    setShowMenu(false);
+                  }
+                }}
+              />
               <div className="absolute right-0 top-full mt-1 bg-slate-700 border border-slate-600 rounded-lg shadow-xl z-20 py-1 min-w-[120px]">
                 <button
-                  onClick={(e) => {
-                    e.stopPropagation()
+                  type="button"
+                  onClick={e => {
+                    e.stopPropagation();
                     if (confirm('Delete this project?')) {
-                      onDelete()
+                      onDelete();
                     }
-                    setShowMenu(false)
+                    setShowMenu(false);
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-slate-600 transition-colors"
                 >
@@ -98,5 +157,5 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
       </div>
     </Card>
-  )
-}
+  );
+};

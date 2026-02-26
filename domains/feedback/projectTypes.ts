@@ -90,6 +90,18 @@ export const PROJECT_STATUS_COLORS: Record<ProjectStatus, string> = {
   completed: 'bg-green-500/20 text-green-300 border-green-500/40',
 };
 
+// Card styling by status - used for immediate visual consistency after moves
+export const CARD_STATUS_STYLES: Record<ProjectStatus, string> = {
+  backlog: 'bg-slate-800 border border-slate-700',
+  on_deck: 'bg-amber-900/40 border border-amber-700/60',
+  research: 'bg-cyan-900/40 border border-cyan-700/60',
+  proposal: 'bg-fuchsia-900/40 border border-fuchsia-700/60',
+  in_progress: 'bg-blue-900/40 border border-blue-700/60',
+  review: 'bg-violet-900/40 border border-violet-700/60',
+  blocked: 'bg-red-900/40 border border-red-700/60',
+  completed: 'bg-green-900/40 border border-green-700/60',
+};
+
 // Simplified project for pickers and lists
 export interface SimpleProject {
   id: string;
