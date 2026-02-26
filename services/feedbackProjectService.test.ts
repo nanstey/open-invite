@@ -40,8 +40,7 @@ describe('feedbackProjectService', () => {
   });
 
   describe('Transform + fetch', () => {
-    it('fetchProjects excludes archived status, orders by sort_order, and computes feedbackCount', async () => {
-      const neq = vi.fn(() => ({ order }));
+    it('fetchProjects orders by sort_order and computes feedbackCount', async () => {
       const order = vi.fn(async () => ({
         data: [
           {
@@ -76,13 +75,12 @@ describe('feedbackProjectService', () => {
       }));
 
       mockFromQueues({
-        feedback_projects: [{ select: vi.fn(() => ({ neq })) }],
+        feedback_projects: [{ select: vi.fn(() => ({ order })) }],
         feedback_project_items: [{ select: vi.fn(() => ({ in: inFn })) }],
       });
 
       const result = await fetchProjects();
 
-      expect(neq).toHaveBeenCalledWith('status', 'archived');
       expect(order).toHaveBeenCalledWith('sort_order', { ascending: true });
       expect(inFn).toHaveBeenCalledWith('project_id', ['p1', 'p2']);
       expect(result).toEqual([
@@ -404,20 +402,18 @@ describe('feedbackProjectService', () => {
       expect(result).toEqual([{ id: 'p1', title: 'Project One', status: 'backlog' }]);
     });
 
-    it('fetchAllProjects excludes archived and sorts by title', async () => {
-      const neq = vi.fn(() => ({ order }));
+    it('fetchAllProjects sorts by title', async () => {
       const order = vi.fn(async () => ({
         data: [{ id: 'p1', title: 'A', status: 'backlog' }],
         error: null,
       }));
 
       mockFromQueues({
-        feedback_projects: [{ select: vi.fn(() => ({ neq })) }],
+        feedback_projects: [{ select: vi.fn(() => ({ order })) }],
       });
 
       const result = await fetchAllProjects();
 
-      expect(neq).toHaveBeenCalledWith('status', 'archived');
       expect(order).toHaveBeenCalledWith('title', { ascending: true });
       expect(result).toEqual([{ id: 'p1', title: 'A', status: 'backlog' }]);
     });
