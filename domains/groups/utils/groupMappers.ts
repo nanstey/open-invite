@@ -21,7 +21,6 @@ export function mapGroupRowToDomain(row: {
     allowMembersCreateEvents: row.allow_members_create_events,
     allowMembersAddMembers: row.allow_members_add_members,
     newMembersRequireAdminApproval: row.new_members_require_admin_approval,
-    createdAt: row.created_at,
   };
 }
 
@@ -34,10 +33,14 @@ export function mapMemberRowToDomain(row: {
   avatar: string | null;
   role: 'ADMIN' | 'MEMBER';
 }): GroupMember {
-  return {
+  const user = {
     id: row.id,
     name: row.name,
     avatar: row.avatar ?? '',
+  };
+  return {
+    ...user,
+    user,
     role: row.role,
   };
 }
@@ -51,16 +54,20 @@ export function mapMemberRequestRowToDomain(row: {
   requester_name: string;
   requester_avatar: string | null;
   group_id: string;
+  status: 'PENDING' | 'APPROVED' | 'DENIED';
   created_at: string;
 }): GroupMemberRequest {
+  const requester = {
+    id: row.requester_id,
+    name: row.requester_name,
+    avatar: row.requester_avatar ?? '',
+  };
   return {
     id: row.id,
-    requester: {
-      id: row.requester_id,
-      name: row.requester_name,
-      avatar: row.requester_avatar ?? '',
-    },
+    requester,
+    requesterId: row.requester_id,
     groupId: row.group_id,
+    status: row.status,
     createdAt: row.created_at,
   };
 }

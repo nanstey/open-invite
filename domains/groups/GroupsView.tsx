@@ -1,7 +1,12 @@
 import * as React from 'react';
 
 import { useClickOutside } from '../../lib/hooks/useClickOutside';
-import { deleteGroup, type GroupMember, removeUserFromGroup } from '../../services/groupService';
+import {
+  deleteGroup,
+  type GroupMember,
+  type GroupMemberRequest,
+  removeUserFromGroup,
+} from '../../services/groupService';
 import { useAuth } from '../auth/AuthProvider';
 import { DeleteGroupDialog } from './components/DeleteGroupDialog';
 import { GroupDetailPane } from './components/GroupDetailPane';
@@ -61,7 +66,7 @@ export function GroupsView() {
   const [membersMessage, setMembersMessage] = React.useState<string | null>(null);
   const [addingMembers, setAddingMembers] = React.useState(false);
 
-  const memberMenuRef = React.useRef<HTMLDivElement | null>(null);
+  const memberMenuRef = React.useRef<HTMLDivElement>(null);
   const lastSelectionResetGroupIdRef = React.useRef<string | null>(null);
 
   useClickOutside(memberMenuRef, dialogs.closeMemberMenu, dialogs.openMemberMenuId !== null);

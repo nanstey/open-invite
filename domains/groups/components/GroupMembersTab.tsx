@@ -36,7 +36,7 @@ type GroupMembersTabProps = {
   onOpenRemoveMemberDialog: (member: GroupMember) => void;
   onOpenMemberMenu: (memberId: string) => void;
   onCloseMemberMenu: () => void;
-  memberMenuRef: RefObject<HTMLDivElement>;
+  memberMenuRef: RefObject<HTMLDivElement | null>;
 };
 
 export function GroupMembersTab({

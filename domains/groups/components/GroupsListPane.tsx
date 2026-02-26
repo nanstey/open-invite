@@ -6,6 +6,8 @@ import { SearchInput } from '../../../lib/ui/components/SearchInput';
 import { SectionHeader } from '../../../lib/ui/components/SectionHeader';
 
 type GroupsListPaneProps = {
+  /** @deprecated Use filteredGroups instead. Kept for backward compatibility with GroupsView. */
+  groups: Group[];
   filteredGroups: Group[];
   roleByGroupId: Record<string, 'ADMIN' | 'MEMBER'>;
   selectedGroupId: string | null;
@@ -18,6 +20,8 @@ type GroupsListPaneProps = {
 };
 
 export function GroupsListPane({
+  // eslint-ignore-next-line
+  groups: _groups,
   filteredGroups,
   roleByGroupId,
   selectedGroupId,
