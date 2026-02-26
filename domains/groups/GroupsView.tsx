@@ -1,13 +1,4 @@
-import {
-  ArrowLeft,
-  Lock,
-  MessageSquare,
-  MoreVertical,
-  Plus,
-  Settings,
-  UserMinus,
-  Users,
-} from 'lucide-react';
+import { ArrowLeft, Lock, MoreVertical, Plus, Settings, UserMinus, Users } from 'lucide-react';
 import * as React from 'react';
 
 import { useClickOutside } from '../../lib/hooks/useClickOutside';
@@ -57,18 +48,11 @@ import {
 } from '../../services/groupService';
 import { useAuth } from '../auth/AuthProvider';
 
+// Chat tab disabled - coming soon (ARCH-001: Unified messaging table for future implementation)
 const groupTabs: TabOption[] = [
   { id: 'members', label: 'Members', icon: <Users className="w-4 h-4" /> },
-  { id: 'chat', label: 'Chat', icon: <MessageSquare className="w-4 h-4" /> },
   { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
 ];
-
-type GroupChatMessage = {
-  id: string;
-  userName: string;
-  text: string;
-  timestamp: string;
-};
 
 type GroupSettingsDraft = {
   name: string;
@@ -96,10 +80,6 @@ export function GroupsView() {
   const [loadingMembers, setLoadingMembers] = React.useState(false);
   const [addingMembers, setAddingMembers] = React.useState(false);
   const [activeTab, setActiveTab] = React.useState('members');
-  const [messagesByGroup, setMessagesByGroup] = React.useState<Record<string, GroupChatMessage[]>>(
-    {}
-  );
-  const [draftMessage, setDraftMessage] = React.useState('');
   const [groupSettingsDraft, setGroupSettingsDraft] = React.useState<GroupSettingsDraft | null>(
     null
   );
@@ -208,8 +188,6 @@ export function GroupsView() {
     return addableFriends.filter(friend => !selectedIds.has(friend.id));
   }, [addableFriends, selectedFriendIds]);
 
-  const chatMessages = selectedGroup ? (messagesByGroup[selectedGroup.id] ?? []) : [];
-
   const settingsDirty = React.useMemo(() => {
     if (!selectedGroup || !groupSettingsDraft) return false;
     return (
@@ -228,22 +206,6 @@ export function GroupsView() {
     setGroups(prev => [created, ...prev]);
     setRoleByGroupId(prev => ({ ...prev, [created.id]: 'ADMIN' }));
     setSelectedGroupId(created.id);
-  };
-
-  const handleSendMessage = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    if (!selectedGroup || !draftMessage.trim()) return;
-    const newMessage: GroupChatMessage = {
-      id: `msg-${Date.now()}`,
-      userName: user?.name ?? 'You',
-      text: draftMessage.trim(),
-      timestamp: new Date().toISOString(),
-    };
-    setMessagesByGroup(prev => ({
-      ...prev,
-      [selectedGroup.id]: [...(prev[selectedGroup.id] ?? []), newMessage],
-    }));
-    setDraftMessage('');
   };
 
   const handleSelectFriend = (friend: { id: string; name: string; avatar: string } | null) => {
@@ -635,49 +597,6 @@ export function GroupsView() {
               </div>
 
               <TabGroup tabs={groupTabs} activeTab={activeTab} onChange={setActiveTab} />
-
-              {activeTab === 'chat' ? (
-                <div className="space-y-4">
-                  <div className="space-y-3 max-h-[420px] overflow-y-auto custom-scrollbar pr-1">
-                    {chatMessages.length === 0 ? (
-                      <div className="text-center text-slate-500 py-12 border border-dashed border-slate-700 rounded-xl">
-                        No messages yet. Start the group chat.
-                      </div>
-                    ) : (
-                      chatMessages.map(message => (
-                        <div
-                          key={message.id}
-                          className="bg-slate-800 rounded-2xl rounded-tl-none p-4"
-                        >
-                          <div className="text-sm font-semibold text-white">{message.userName}</div>
-                          <div className="text-slate-200 mt-1">{message.text}</div>
-                          <div className="text-[11px] text-slate-500 mt-2">
-                            {new Date(message.timestamp).toLocaleTimeString([], {
-                              hour: 'numeric',
-                              minute: '2-digit',
-                            })}
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  <form onSubmit={handleSendMessage} className="flex gap-2">
-                    <input
-                      value={draftMessage}
-                      onChange={event => setDraftMessage(event.target.value)}
-                      placeholder="Write a message..."
-                      className="flex-1 bg-slate-900 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white placeholder:text-slate-500"
-                    />
-                    <button
-                      type="submit"
-                      className="px-4 rounded-xl bg-primary hover:bg-primary/90 font-semibold text-white"
-                    >
-                      Send
-                    </button>
-                  </form>
-                </div>
-              ) : null}
 
               {activeTab === 'members' ? (
                 <div className="space-y-4">
