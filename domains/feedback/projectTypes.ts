@@ -20,6 +20,7 @@ export interface Project {
   githubUrl: string | null;
   createdAt: string;
   updatedAt: string;
+  archivedAt?: string | null;
   // Aggregated data
   feedbackCount?: number;
   feedbackItems?: ProjectFeedbackItem[];

@@ -199,12 +199,18 @@ describe('feedbackProjectService', () => {
       expect(result).toBe(true);
     });
 
-    it('deleteProject returns false on error, true on success', async () => {
+    it('deleteProject soft-archives (archived_at) and returns false on error, true on success', async () => {
+      const updateErr = vi.fn((payload: any) => {
+        expect(payload.archived_at).toBeTruthy();
+        return { eq: vi.fn(async () => ({ error: new Error('bad') })) };
+      });
+      const updateOk = vi.fn((payload: any) => {
+        expect(payload.archived_at).toBeTruthy();
+        return { eq: vi.fn(async () => ({ error: null })) };
+      });
+
       mockFromQueues({
-        feedback_projects: [
-          { delete: vi.fn(() => ({ eq: vi.fn(async () => ({ error: new Error('bad') })) })) },
-          { delete: vi.fn(() => ({ eq: vi.fn(async () => ({ error: null })) })) },
-        ],
+        feedback_projects: [{ update: updateErr }, { update: updateOk }],
       });
 
       await expect(deleteProject('p1')).resolves.toBe(false);

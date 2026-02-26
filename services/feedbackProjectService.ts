@@ -26,7 +26,12 @@ function transformProjectRow(row: any): Project {
     githubUrl: row.github_url,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    archivedAt: row.archived_at,
   };
+}
+
+function activeProjectsQuery() {
+  return supabase.from('feedback_projects').select('*');
 }
 
 // ============================================================================
@@ -34,17 +39,16 @@ function transformProjectRow(row: any): Project {
 // ============================================================================
 
 export async function fetchProjects(): Promise<Project[]> {
-  const { data, error } = await supabase
-    .from('feedback_projects')
-    .select('*')
-    .order('sort_order', { ascending: true });
+  const { data, error } = await activeProjectsQuery().order('sort_order', { ascending: true });
 
   if (error) {
     console.error('Error fetching projects:', error);
     return [];
   }
 
-  const projects: Project[] = (data || []).map(transformProjectRow);
+  const projects: Project[] = (data || [])
+    .filter((row: any) => !row.archived_at)
+    .map(transformProjectRow);
 
   // Fetch feedback counts for each project
   if (projects.length > 0) {
@@ -69,13 +73,9 @@ export async function fetchProjects(): Promise<Project[]> {
 }
 
 export async function fetchProject(projectId: string): Promise<Project | null> {
-  const { data, error } = await supabase
-    .from('feedback_projects')
-    .select('*')
-    .eq('id', projectId)
-    .single();
+  const { data, error } = await activeProjectsQuery().eq('id', projectId).single();
 
-  if (error || !data) {
+  if (error || !data || data.archived_at) {
     console.error('Error fetching project:', error);
     return null;
   }
@@ -140,10 +140,14 @@ export async function updateProject(
 }
 
 export async function deleteProject(projectId: string): Promise<boolean> {
-  const { error } = await supabase.from('feedback_projects').delete().eq('id', projectId);
+  // Soft-delete behavior: archive instead of hard delete.
+  const { error } = await supabase
+    .from('feedback_projects')
+    .update({ archived_at: new Date().toISOString() } as any)
+    .eq('id', projectId);
 
   if (error) {
-    console.error('Error deleting project:', error);
+    console.error('Error archiving project:', error);
     return false;
   }
 
@@ -330,7 +334,8 @@ export async function fetchProjectsForFeedback(feedbackId: string): Promise<Simp
       feedback_projects (
         id,
         title,
-        status
+        status,
+        archived_at
       )
     `)
     .eq('feedback_id', feedbackId);
@@ -341,7 +346,7 @@ export async function fetchProjectsForFeedback(feedbackId: string): Promise<Simp
   }
 
   return (data || [])
-    .filter((row: any) => row.feedback_projects)
+    .filter((row: any) => row.feedback_projects && !row.feedback_projects.archived_at)
     .map(
       (row: any): SimpleProject => ({
         id: row.feedback_projects.id,
@@ -358,7 +363,7 @@ export async function fetchProjectsForFeedback(feedbackId: string): Promise<Simp
 export async function fetchAllProjects(): Promise<SimpleProject[]> {
   const { data, error } = await supabase
     .from('feedback_projects')
-    .select('id, title, status')
+    .select('id, title, status, archived_at')
     .order('title', { ascending: true });
 
   if (error) {
@@ -366,7 +371,9 @@ export async function fetchAllProjects(): Promise<SimpleProject[]> {
     return [];
   }
 
-  return (data || []) as SimpleProject[];
+  return (data || [])
+    .filter((row: any) => !row.archived_at)
+    .map((row: any) => ({ id: row.id, title: row.title, status: row.status })) as SimpleProject[];
 }
 
 // ============================================================================
@@ -387,7 +394,8 @@ export async function fetchAllFeedbackProjectMappings(): Promise<FeedbackProject
       feedback_projects (
         id,
         title,
-        status
+        status,
+        archived_at
       )
     `);
 
@@ -397,7 +405,7 @@ export async function fetchAllFeedbackProjectMappings(): Promise<FeedbackProject
   }
 
   return (data || [])
-    .filter((row: any) => row.feedback_projects)
+    .filter((row: any) => row.feedback_projects && !row.feedback_projects.archived_at)
     .map((row: any) => ({
       feedbackId: row.feedback_id,
       projectId: row.feedback_projects.id,

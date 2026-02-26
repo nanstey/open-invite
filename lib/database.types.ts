@@ -482,6 +482,7 @@ export type Database = {
       };
       feedback_projects: {
         Row: {
+          archived_at: string | null;
           created_at: string | null;
           description: string | null;
           github_repo: string | null;
@@ -493,6 +494,7 @@ export type Database = {
           updated_at: string | null;
         };
         Insert: {
+          archived_at?: string | null;
           created_at?: string | null;
           description?: string | null;
           github_repo?: string | null;
@@ -504,6 +506,7 @@ export type Database = {
           updated_at?: string | null;
         };
         Update: {
+          archived_at?: string | null;
           created_at?: string | null;
           description?: string | null;
           github_repo?: string | null;
