@@ -31,45 +31,31 @@ describe('moveProjectToStatus - regression tests for lane behavior', () => {
   });
 
   it('moves project to target status with correct sort order', async () => {
-    const updateFn = vi.fn(async () => ({ data: null, error: null }));
-    const eqFn = vi.fn(() => ({ update: updateFn }));
-    const orderFn = vi.fn(async () => ({
-      data: [{ sort_order: 0 }, { sort_order: 1 }],
-      error: null,
-    }));
+    const eqFn = vi.fn(async () => ({ error: null }));
+    const updateFn = vi.fn(() => ({ eq: eqFn }));
 
     mockFromQueues({
-      projects: [
-        { select: vi.fn(() => ({ eq: eqFn })) },
-        { select: vi.fn(() => ({ eq: orderFn })) },
-      ],
+      feedback_projects: [{ update: updateFn }],
     });
 
     await moveProjectToStatus('proj-123', 'in_progress', 2);
 
-    expect(eqFn).toHaveBeenCalledWith('status', 'in_progress');
-    expect(orderFn).toHaveBeenCalledWith('sort_order', { ascending: true });
     expect(updateFn).toHaveBeenCalledWith({ status: 'in_progress', sort_order: 2 });
+    expect(eqFn).toHaveBeenCalledWith('id', 'proj-123');
   });
 
   it('handles move to empty column correctly', async () => {
-    const updateFn = vi.fn(async () => ({ data: null, error: null }));
-    const eqFn = vi.fn(() => ({ update: updateFn }));
-    const orderFn = vi.fn(async () => ({
-      data: [],
-      error: null,
-    }));
+    const eqFn = vi.fn(async () => ({ error: null }));
+    const updateFn = vi.fn(() => ({ eq: eqFn }));
 
     mockFromQueues({
-      projects: [
-        { select: vi.fn(() => ({ eq: eqFn })) },
-        { select: vi.fn(() => ({ eq: orderFn })) },
-      ],
+      feedback_projects: [{ update: updateFn }],
     });
 
     await moveProjectToStatus('proj-456', 'review', 0);
 
     expect(updateFn).toHaveBeenCalledWith({ status: 'review', sort_order: 0 });
+    expect(eqFn).toHaveBeenCalledWith('id', 'proj-456');
   });
 });
 
