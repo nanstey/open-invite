@@ -34,9 +34,16 @@ function mockFromQueues(queues: Record<string, any[]>) {
   });
 }
 
+function mockVisibleProjectsSelect(nextStepFactory: () => any) {
+  const or = vi.fn(() => nextStepFactory());
+  const is = vi.fn(() => ({ or }));
+  return { select: vi.fn(() => ({ is })), is, or };
+}
+
 describe('feedbackProjectService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.useRealTimers();
   });
 
   describe('Transform + fetch', () => {
@@ -68,6 +75,7 @@ describe('feedbackProjectService', () => {
         ],
         error: null,
       }));
+      const visibleQuery = mockVisibleProjectsSelect(() => ({ order }));
 
       const inFn = vi.fn(async () => ({
         data: [{ project_id: 'p1' }, { project_id: 'p1' }, { project_id: 'p2' }],
@@ -75,17 +83,74 @@ describe('feedbackProjectService', () => {
       }));
 
       mockFromQueues({
-        feedback_projects: [{ select: vi.fn(() => ({ order })) }],
+        feedback_projects: [visibleQuery],
         feedback_project_items: [{ select: vi.fn(() => ({ in: inFn })) }],
       });
 
       const result = await fetchProjects();
 
+      expect(visibleQuery.is).toHaveBeenCalledWith('archived_at', null);
+      expect(visibleQuery.or).toHaveBeenCalledWith(expect.stringContaining('status.neq.completed'));
       expect(order).toHaveBeenCalledWith('sort_order', { ascending: true });
       expect(inFn).toHaveBeenCalledWith('project_id', ['p1', 'p2']);
       expect(result).toEqual([
         expect.objectContaining({ id: 'p1', sortOrder: 0, feedbackCount: 2 }),
         expect.objectContaining({ id: 'p2', sortOrder: 1, feedbackCount: 1 }),
+      ]);
+    });
+
+    it('fetchProjects applies visibility filter in DB query', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-03-15T00:00:00.000Z'));
+
+      const order = vi.fn(async () => ({
+        data: [
+          {
+            id: 'p2',
+            title: 'Recent done',
+            description: null,
+            status: 'completed',
+            sort_order: 1,
+            github_repo: null,
+            github_url: null,
+            created_at: '2026-03-01T00:00:00.000Z',
+            updated_at: '2026-03-10T00:00:00.000Z',
+            archived_at: null,
+          },
+          {
+            id: 'p4',
+            title: 'Active',
+            description: null,
+            status: 'in_progress',
+            sort_order: 2,
+            github_repo: null,
+            github_url: null,
+            created_at: '2026-03-01T00:00:00.000Z',
+            updated_at: '2026-03-10T00:00:00.000Z',
+            archived_at: null,
+          },
+        ],
+        error: null,
+      }));
+      const visibleQuery = mockVisibleProjectsSelect(() => ({ order }));
+
+      const inFn = vi.fn(async () => ({
+        data: [{ project_id: 'p2' }, { project_id: 'p4' }, { project_id: 'p4' }],
+        error: null,
+      }));
+
+      mockFromQueues({
+        feedback_projects: [visibleQuery],
+        feedback_project_items: [{ select: vi.fn(() => ({ in: inFn })) }],
+      });
+
+      const result = await fetchProjects();
+
+      expect(visibleQuery.or).toHaveBeenCalledWith(expect.stringContaining('updated_at.gte.'));
+      expect(inFn).toHaveBeenCalledWith('project_id', ['p2', 'p4']);
+      expect(result).toEqual([
+        expect.objectContaining({ id: 'p2', feedbackCount: 1 }),
+        expect.objectContaining({ id: 'p4', feedbackCount: 2 }),
       ]);
     });
 
@@ -104,9 +169,11 @@ describe('feedbackProjectService', () => {
         },
         error: null,
       }));
+      const eq = vi.fn(() => ({ single }));
+      const visibleQuery = mockVisibleProjectsSelect(() => ({ eq }));
 
       mockFromQueues({
-        feedback_projects: [{ select: vi.fn(() => ({ eq: vi.fn(() => ({ single })) })) }],
+        feedback_projects: [visibleQuery],
       });
 
       const result = await fetchProject('p1');
@@ -122,6 +189,25 @@ describe('feedbackProjectService', () => {
         createdAt: '2026-01-01',
         updatedAt: '2026-01-02',
       });
+      expect(eq).toHaveBeenCalledWith('id', 'p1');
+    });
+
+    it('fetchProject returns null for stale completed projects', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-03-15T00:00:00.000Z'));
+
+      const single = vi.fn(async () => ({
+        data: null,
+        error: new Error('No rows'),
+      }));
+      const eq = vi.fn(() => ({ single }));
+      const visibleQuery = mockVisibleProjectsSelect(() => ({ eq }));
+
+      mockFromQueues({
+        feedback_projects: [visibleQuery],
+      });
+
+      await expect(fetchProject('p1')).resolves.toBeNull();
     });
 
     it('fetchProject returns null on error or missing row', async () => {
@@ -129,12 +215,11 @@ describe('feedbackProjectService', () => {
         single: vi.fn(async () => ({ data: null, error: new Error('db') })),
       }));
       const eqMissing = vi.fn(() => ({ single: vi.fn(async () => ({ data: null, error: null })) }));
+      const visibleQueryErr = mockVisibleProjectsSelect(() => ({ eq: eqError }));
+      const visibleQueryMissing = mockVisibleProjectsSelect(() => ({ eq: eqMissing }));
 
       mockFromQueues({
-        feedback_projects: [
-          { select: vi.fn(() => ({ eq: eqError })) },
-          { select: vi.fn(() => ({ eq: eqMissing })) },
-        ],
+        feedback_projects: [visibleQueryErr, visibleQueryMissing],
       });
 
       await expect(fetchProject('p1')).resolves.toBeNull();
@@ -384,38 +469,49 @@ describe('feedbackProjectService', () => {
       await expect(fetchAllFeedbackSimple()).resolves.toEqual([]);
     });
 
-    it('fetchProjectsForFeedback maps nested feedback_projects join', async () => {
+    it('fetchProjectsForFeedback returns only visible linked projects', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-03-15T00:00:00.000Z'));
+
+      const order = vi.fn(async () => ({
+        data: [{ id: 'p1', title: 'Project One', status: 'backlog' }],
+        error: null,
+      }));
+      const inFn = vi.fn(() => ({ order }));
+      const visibleQuery = mockVisibleProjectsSelect(() => ({ in: inFn }));
+
       mockFromQueues({
         feedback_project_items: [
           {
             select: vi.fn(() => ({
               eq: vi.fn(async () => ({
-                data: [
-                  {
-                    project_id: 'p1',
-                    feedback_projects: { id: 'p1', title: 'Project One', status: 'backlog' },
-                  },
-                  { project_id: 'p2', feedback_projects: null },
-                ],
+                data: [{ project_id: 'p1' }, { project_id: 'p3' }, { project_id: 'p2' }],
                 error: null,
               })),
             })),
           },
         ],
+        feedback_projects: [visibleQuery],
       });
 
       const result = await fetchProjectsForFeedback('f1');
+      expect(inFn).toHaveBeenCalledWith('id', ['p1', 'p3', 'p2']);
+      expect(order).toHaveBeenCalledWith('title', { ascending: true });
       expect(result).toEqual([{ id: 'p1', title: 'Project One', status: 'backlog' }]);
     });
 
     it('fetchAllProjects sorts by title', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-03-15T00:00:00.000Z'));
+
       const order = vi.fn(async () => ({
         data: [{ id: 'p1', title: 'A', status: 'backlog' }],
         error: null,
       }));
+      const visibleQuery = mockVisibleProjectsSelect(() => ({ order }));
 
       mockFromQueues({
-        feedback_projects: [{ select: vi.fn(() => ({ order })) }],
+        feedback_projects: [visibleQuery],
       });
 
       const result = await fetchAllProjects();
@@ -425,6 +521,15 @@ describe('feedbackProjectService', () => {
     });
 
     it('fetchAllFeedbackProjectMappings maps relationship rows into FeedbackProjectMapping', async () => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-03-15T00:00:00.000Z'));
+
+      const inFn = vi.fn(async () => ({
+        data: [{ id: 'p1', title: 'Project', status: 'done' }],
+        error: null,
+      }));
+      const visibleQuery = mockVisibleProjectsSelect(() => ({ in: inFn }));
+
       mockFromQueues({
         feedback_project_items: [
           {
@@ -433,21 +538,25 @@ describe('feedbackProjectService', () => {
                 {
                   feedback_id: 'f1',
                   project_id: 'p1',
-                  feedback_projects: { id: 'p1', title: 'Project', status: 'done' },
+                },
+                {
+                  feedback_id: 'f3',
+                  project_id: 'p3',
                 },
                 {
                   feedback_id: 'f2',
                   project_id: 'p2',
-                  feedback_projects: null,
                 },
               ],
               error: null,
             })),
           },
         ],
+        feedback_projects: [visibleQuery],
       });
 
       const result = await fetchAllFeedbackProjectMappings();
+      expect(inFn).toHaveBeenCalledWith('id', ['p1', 'p3', 'p2']);
       expect(result).toEqual([
         {
           feedbackId: 'f1',

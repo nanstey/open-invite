@@ -12,6 +12,8 @@ import { supabase } from '../lib/supabase';
 // Transform Helpers
 // ============================================================================
 
+const TWO_WEEKS_MS = 14 * 24 * 60 * 60 * 1000;
+
 /**
  * Transform database row to Project type
  */
@@ -30,8 +32,22 @@ function transformProjectRow(row: any): Project {
   };
 }
 
-function activeProjectsQuery() {
-  return supabase.from('feedback_projects').select('*');
+function visibleProjectsOrClause(cutoffIso: string): string {
+  return [
+    'status.neq.completed',
+    `and(status.eq.completed,updated_at.gte.${cutoffIso})`,
+    'and(status.eq.completed,updated_at.is.null)',
+  ].join(',');
+}
+
+function visibleProjectsQuery(selectClause = '*') {
+  const cutoffIso = new Date(Date.now() - TWO_WEEKS_MS).toISOString();
+
+  return supabase
+    .from('feedback_projects')
+    .select(selectClause)
+    .is('archived_at', null)
+    .or(visibleProjectsOrClause(cutoffIso));
 }
 
 // ============================================================================
@@ -39,16 +55,14 @@ function activeProjectsQuery() {
 // ============================================================================
 
 export async function fetchProjects(): Promise<Project[]> {
-  const { data, error } = await activeProjectsQuery().order('sort_order', { ascending: true });
+  const { data, error } = await visibleProjectsQuery().order('sort_order', { ascending: true });
 
   if (error) {
     console.error('Error fetching projects:', error);
     return [];
   }
 
-  const projects: Project[] = (data || [])
-    .filter((row: any) => !row.archived_at)
-    .map(transformProjectRow);
+  const projects: Project[] = (data || []).map(transformProjectRow);
 
   // Fetch feedback counts for each project
   if (projects.length > 0) {
@@ -73,9 +87,9 @@ export async function fetchProjects(): Promise<Project[]> {
 }
 
 export async function fetchProject(projectId: string): Promise<Project | null> {
-  const { data, error } = await activeProjectsQuery().eq('id', projectId).single();
+  const { data, error } = await visibleProjectsQuery().eq('id', projectId).single();
 
-  if (error || !data || data.archived_at) {
+  if (error || !data) {
     console.error('Error fetching project:', error);
     return null;
   }
@@ -327,33 +341,35 @@ export async function fetchAllFeedbackSimple(): Promise<SimpleFeedbackItem[]> {
 // ============================================================================
 
 export async function fetchProjectsForFeedback(feedbackId: string): Promise<SimpleProject[]> {
-  const { data, error } = await supabase
+  const { data: links, error: linksError } = await supabase
     .from('feedback_project_items')
-    .select(`
-      project_id,
-      feedback_projects (
-        id,
-        title,
-        status,
-        archived_at
-      )
-    `)
+    .select('project_id')
     .eq('feedback_id', feedbackId);
+
+  if (linksError) {
+    console.error('Error fetching projects for feedback:', linksError);
+    return [];
+  }
+
+  const projectIds = [...new Set((links || []).map((row: any) => row.project_id))];
+  if (projectIds.length === 0) {
+    return [];
+  }
+
+  const { data: projects, error } = await visibleProjectsQuery('id, title, status')
+    .in('id', projectIds)
+    .order('title', { ascending: true });
 
   if (error) {
     console.error('Error fetching projects for feedback:', error);
     return [];
   }
 
-  return (data || [])
-    .filter((row: any) => row.feedback_projects && !row.feedback_projects.archived_at)
-    .map(
-      (row: any): SimpleProject => ({
-        id: row.feedback_projects.id,
-        title: row.feedback_projects.title,
-        status: row.feedback_projects.status,
-      })
-    );
+  return (projects || []).map((row: any) => ({
+    id: row.id,
+    title: row.title,
+    status: row.status,
+  }));
 }
 
 // ============================================================================
@@ -361,19 +377,20 @@ export async function fetchProjectsForFeedback(feedbackId: string): Promise<Simp
 // ============================================================================
 
 export async function fetchAllProjects(): Promise<SimpleProject[]> {
-  const { data, error } = await supabase
-    .from('feedback_projects')
-    .select('id, title, status, archived_at')
-    .order('title', { ascending: true });
+  const { data, error } = await visibleProjectsQuery('id, title, status').order('title', {
+    ascending: true,
+  });
 
   if (error) {
     console.error('Error fetching all projects:', error);
     return [];
   }
 
-  return (data || [])
-    .filter((row: any) => !row.archived_at)
-    .map((row: any) => ({ id: row.id, title: row.title, status: row.status })) as SimpleProject[];
+  return (data || []).map((row: any) => ({
+    id: row.id,
+    title: row.title,
+    status: row.status,
+  })) as SimpleProject[];
 }
 
 // ============================================================================
@@ -388,28 +405,42 @@ export interface FeedbackProjectMapping {
 }
 
 export async function fetchAllFeedbackProjectMappings(): Promise<FeedbackProjectMapping[]> {
-  const { data, error } = await supabase.from('feedback_project_items').select(`
-      feedback_id,
-      project_id,
-      feedback_projects (
-        id,
-        title,
-        status,
-        archived_at
-      )
-    `);
+  const { data: links, error: linksError } = await supabase
+    .from('feedback_project_items')
+    .select('feedback_id, project_id');
+
+  if (linksError) {
+    console.error('Error fetching feedback-project mappings:', linksError);
+    return [];
+  }
+
+  const projectIds = [...new Set((links || []).map((row: any) => row.project_id))];
+  if (projectIds.length === 0) {
+    return [];
+  }
+
+  const { data: projects, error } = await visibleProjectsQuery('id, title, status').in(
+    'id',
+    projectIds
+  );
 
   if (error) {
     console.error('Error fetching feedback-project mappings:', error);
     return [];
   }
 
-  return (data || [])
-    .filter((row: any) => row.feedback_projects && !row.feedback_projects.archived_at)
-    .map((row: any) => ({
-      feedbackId: row.feedback_id,
-      projectId: row.feedback_projects.id,
-      projectTitle: row.feedback_projects.title,
-      projectStatus: row.feedback_projects.status,
-    }));
+  const projectMap = new Map((projects || []).map((row: any) => [row.id, row]));
+
+  return (links || [])
+    .filter((row: any) => projectMap.has(row.project_id))
+    .map((row: any) => {
+      const project = projectMap.get(row.project_id);
+
+      return {
+        feedbackId: row.feedback_id,
+        projectId: row.project_id,
+        projectTitle: project.title,
+        projectStatus: project.status,
+      };
+    });
 }
