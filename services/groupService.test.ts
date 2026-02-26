@@ -15,6 +15,7 @@ import {
   addUserToGroup,
   approveGroupMemberRequest,
   createGroup,
+  createGroupMemberRequest,
   deleteGroup,
   removeUserFromGroup,
   updateGroup,
@@ -246,6 +247,41 @@ describe('groupService', () => {
       const result = await removeUserFromGroup('user-1', 'group-1');
 
       expect(result).toBe(false);
+    });
+  });
+
+  describe('createGroupMemberRequest', () => {
+    it('uses authenticated user id as requester id', async () => {
+      supabase.auth.getSession.mockResolvedValue({
+        data: { session: { user: { id: 'auth-user-1' } } },
+        error: null,
+      });
+
+      const insert = vi.fn(async () => ({ error: null }));
+      mockFrom({
+        group_member_requests: () => ({ insert }),
+      });
+
+      const result = await createGroupMemberRequest('group-1');
+
+      expect(result).toBe(true);
+      expect(insert).toHaveBeenCalledWith({
+        group_id: 'group-1',
+        requester_id: 'auth-user-1',
+        status: 'PENDING',
+      });
+    });
+
+    it('returns false when user is not authenticated', async () => {
+      supabase.auth.getSession.mockResolvedValue({
+        data: { session: { user: null } },
+        error: null,
+      });
+
+      const result = await createGroupMemberRequest('group-1');
+
+      expect(result).toBe(false);
+      expect(supabase.from).not.toHaveBeenCalled();
     });
   });
 

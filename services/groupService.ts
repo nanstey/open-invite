@@ -400,10 +400,15 @@ export async function updateGroupMemberRole(
   return !error;
 }
 
-export async function createGroupMemberRequest(
-  groupId: string,
-  requesterId: string
-): Promise<boolean> {
+export async function createGroupMemberRequest(groupId: string): Promise<boolean> {
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+  const requesterId = session?.user?.id;
+  if (!requesterId) {
+    return false;
+  }
+
   const { error } = await supabase
     .from('group_member_requests')
     .insert({ group_id: groupId, requester_id: requesterId, status: 'PENDING' });

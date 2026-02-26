@@ -5,16 +5,11 @@ CREATE POLICY "Users can request to join groups"
   FOR INSERT
   WITH CHECK (
     requester_id = auth.uid()
-    OR (
-      EXISTS (
-        SELECT 1
-        FROM public.groups g
-        WHERE g.id = group_member_requests.group_id
-          AND g.deleted_at IS NULL
-          AND g.allow_members_add_members = true
-          AND g.new_members_require_admin_approval = true
-      )
-      AND public.is_group_member(group_member_requests.group_id, auth.uid())
+    AND EXISTS (
+      SELECT 1
+      FROM public.groups g
+      WHERE g.id = group_member_requests.group_id
+        AND g.deleted_at IS NULL
     )
   );
 

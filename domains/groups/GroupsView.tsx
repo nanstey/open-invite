@@ -47,6 +47,11 @@ import {
   updateGroup,
 } from '../../services/groupService';
 import { useAuth } from '../auth/AuthProvider';
+import {
+  canAddMembersToGroup,
+  canManageGroupSettings,
+  canRemoveGroupMember,
+} from './utils/groupPermissions';
 
 // Chat tab disabled - coming soon (ARCH-001: Unified messaging table for future implementation)
 const groupTabs: TabOption[] = [
@@ -166,10 +171,8 @@ export function GroupsView() {
     [groups, selectedGroupId]
   );
 
-  const isAdmin = selectedGroup
-    ? roleByGroupId[selectedGroup.id] === 'ADMIN' || selectedGroup.createdBy === user?.id
-    : false;
-  const canAddMembers = selectedGroup ? isAdmin || selectedGroup.allowMembersAddMembers : false;
+  const isAdmin = canManageGroupSettings(selectedGroup, roleByGroupId, user?.id);
+  const canAddMembers = canAddMembersToGroup(selectedGroup, roleByGroupId, user?.id);
 
   const addableFriends = React.useMemo(() => {
     const memberIds = new Set(members.map(member => member.id));
@@ -230,7 +233,7 @@ export function GroupsView() {
 
       for (const friendId of pendingFriendIds) {
         const added = requiresApproval
-          ? await createGroupMemberRequest(groupId, friendId)
+          ? await createGroupMemberRequest(groupId)
           : await addUserToGroup(friendId, groupId);
         if (added) {
           addedFriendIds.push(friendId);
@@ -413,10 +416,7 @@ export function GroupsView() {
   };
 
   const handleOpenRemoveMemberDialog = (member: GroupMember) => {
-    if (!selectedGroup || !isAdmin) return;
-    const isCreatorRow = member.id === selectedGroup.createdBy;
-    const isSelfRow = member.id === user?.id;
-    if (isCreatorRow || isSelfRow) return;
+    if (!canRemoveGroupMember(selectedGroup, member, roleByGroupId, user?.id)) return;
 
     setOpenMemberMenuId(null);
     setMembersMessage(null);
@@ -426,9 +426,7 @@ export function GroupsView() {
 
   const handleConfirmRemoveMember = async () => {
     if (!selectedGroup || !removeTargetMember || removingMemberId) return;
-    const isCreatorRow = removeTargetMember.id === selectedGroup.createdBy;
-    const isSelfRow = removeTargetMember.id === user?.id;
-    if (!isAdmin || isCreatorRow || isSelfRow) return;
+    if (!canRemoveGroupMember(selectedGroup, removeTargetMember, roleByGroupId, user?.id)) return;
 
     setMembersMessage(null);
     setRemovingMemberId(removeTargetMember.id);
