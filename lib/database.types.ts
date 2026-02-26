@@ -880,8 +880,11 @@ export type Database = {
       feedback_project_status:
         | 'backlog'
         | 'on_deck'
+        | 'research'
+        | 'proposal'
         | 'in_progress'
         | 'review'
+        | 'blocked'
         | 'completed'
         | 'archived';
       feedback_status: 'new' | 'reviewed' | 'planned' | 'done' | 'declined';
@@ -1621,8 +1624,11 @@ export const Constants = {
       feedback_project_status: [
         'backlog',
         'on_deck',
+        'research',
+        'proposal',
         'in_progress',
         'review',
+        'blocked',
         'completed',
         'archived',
       ],
