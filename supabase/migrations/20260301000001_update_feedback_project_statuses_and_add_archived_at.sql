@@ -31,9 +31,16 @@ CREATE TYPE public.feedback_project_status AS ENUM (
 );
 
 ALTER TABLE public.feedback_projects
+  ALTER COLUMN status DROP DEFAULT;
+
+ALTER TABLE public.feedback_projects
   ALTER COLUMN status
   TYPE public.feedback_project_status
   USING status::text::public.feedback_project_status;
+
+ALTER TABLE public.feedback_projects
+  ALTER COLUMN status
+  SET DEFAULT 'on_deck'::public.feedback_project_status;
 
 DROP TYPE public.feedback_project_status_old;
 
