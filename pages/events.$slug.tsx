@@ -57,7 +57,7 @@ export const Route = createFileRoute('/events/$slug')({
     React.useEffect(() => {
       if (!user) return
       markEventViewedFromRouteParam(slug).catch((e) => console.warn('markEventViewedFromRouteParam failed:', e))
-    }, [slug, user?.id])
+    }, [slug, user?.id, user])
 
     const { event, setEvent, isLoading } = useEventRouteData({
       slugOrId: slug,

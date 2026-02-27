@@ -1,5 +1,6 @@
 
-import React, { useState, useRef } from 'react';
+import type React from 'react';
+import { useState, useRef } from 'react';
 import type { User } from '../../../../lib/types';
 import type { SocialEvent } from '../../types';
 import { getTheme } from '../../../../lib/constants';

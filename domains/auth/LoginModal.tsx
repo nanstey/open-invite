@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { X } from 'lucide-react';
 import { GoogleIcon } from '@/lib/ui/icons/GoogleIcon';

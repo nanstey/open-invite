@@ -1,57 +1,78 @@
-import React from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { useForm, useStore } from '@tanstack/react-form'
+import { useForm, useStore } from '@tanstack/react-form';
+import { useMutation } from '@tanstack/react-query';
+import React from 'react';
 
-import type { User } from '../../../lib/types'
-import type { EventExpense, ItineraryItem, ItineraryTimeDisplay, LocationData, SocialEvent } from '../types'
-import { EventVisibility } from '../types'
-import { createEvent, fetchEventById, updateEvent } from '../../../services/eventService'
-import { ensureItineraryAttendanceForAllAttendees } from '../../../services/itineraryAttendanceService'
-import { createItineraryItem, deleteItineraryItem, updateItineraryItem } from '../../../services/itineraryService'
-import { createEventExpense, deleteEventExpense, updateEventExpense } from '../../../services/expenseService'
-import { toLocalDateTimeInputValue } from '../../../lib/ui/utils/datetime'
-import { validateEventEditor } from '../components/detail/utils/validateEventEditor'
-import { computeEventTimes, diffItineraryItems, mapDraftItineraryItems, type DraftItineraryItem } from '../components/detail/utils/eventEditorUtils'
+import type { Group, GroupRole, User } from '../../../lib/types';
+import { toLocalDateTimeInputValue } from '../../../lib/ui/utils/datetime';
+import { createEvent, fetchEventById, updateEvent } from '../../../services/eventService';
+import {
+  createEventExpense,
+  deleteEventExpense,
+  updateEventExpense,
+} from '../../../services/expenseService';
+import { fetchGroupMembershipsForCurrentUser } from '../../../services/groupService';
+import { ensureItineraryAttendanceForAllAttendees } from '../../../services/itineraryAttendanceService';
+import {
+  createItineraryItem,
+  deleteItineraryItem,
+  updateItineraryItem,
+} from '../../../services/itineraryService';
+import {
+  computeEventTimes,
+  type DraftItineraryItem,
+  diffItineraryItems,
+  mapDraftItineraryItems,
+} from '../components/detail/utils/eventEditorUtils';
+import { validateEventEditor } from '../components/detail/utils/validateEventEditor';
+import type {
+  EventExpense,
+  ItineraryItem,
+  ItineraryTimeDisplay,
+  LocationData,
+  SocialEvent,
+} from '../types';
+import { EventVisibility } from '../types';
 
-type EditorMode = 'create' | 'update'
+type EditorMode = 'create' | 'update';
 
-const EMPTY_STRING_ARR: string[] = []
-const EMPTY_REACTIONS: SocialEvent['reactions'] = {}
-const EMPTY_COMMENTS: SocialEvent['comments'] = []
+const EMPTY_STRING_ARR: string[] = [];
+const EMPTY_REACTIONS: SocialEvent['reactions'] = {};
+const EMPTY_COMMENTS: SocialEvent['comments'] = [];
 
 type EventEditorValues = {
-  title: string
-  headerImageUrl: string
-  headerImagePositionY: number
-  location: string
-  description: string
-  startDateTimeLocal: string
-  durationHours: number | ''
-  activityType: string
-  isFlexibleStart: boolean
-  isFlexibleEnd: boolean
-  itineraryAttendanceEnabled: boolean
-  noPhones: boolean
-  maxSeats: number | ''
-  coordinates: { lat: number; lng: number } | undefined
-  locationData: LocationData | undefined
-  itineraryTimeDisplay: ItineraryTimeDisplay
-  visibilityType: EventVisibility
-}
+  title: string;
+  headerImageUrl: string;
+  headerImagePositionY: number;
+  location: string;
+  description: string;
+  startDateTimeLocal: string;
+  durationHours: number | '';
+  activityType: string;
+  isFlexibleStart: boolean;
+  isFlexibleEnd: boolean;
+  itineraryAttendanceEnabled: boolean;
+  noPhones: boolean;
+  maxSeats: number | '';
+  coordinates: { lat: number; lng: number } | undefined;
+  locationData: LocationData | undefined;
+  itineraryTimeDisplay: ItineraryTimeDisplay;
+  visibilityType: EventVisibility;
+  groupIds: string[];
+};
 
-type DraftExpense = Omit<EventExpense, 'eventId'>
+type DraftExpense = Omit<EventExpense, 'eventId'>;
 
 async function persistItineraryChanges(args: {
-  eventId: string
-  initialItems: ItineraryItem[]
-  currentDrafts: DraftItineraryItem[]
+  eventId: string;
+  initialItems: ItineraryItem[];
+  currentDrafts: DraftItineraryItem[];
 }): Promise<void> {
-  const { deletes, creates, updates } = diffItineraryItems(args.initialItems, args.currentDrafts)
+  const { deletes, creates, updates } = diffItineraryItems(args.initialItems, args.currentDrafts);
 
   await Promise.all([
-    ...deletes.map((id) => deleteItineraryItem(id)),
-    ...updates.map((u) => updateItineraryItem(u.id, u.patch)),
-    ...creates.map((c) =>
+    ...deletes.map(id => deleteItineraryItem(id)),
+    ...updates.map(u => updateItineraryItem(u.id, u.patch)),
+    ...creates.map(c =>
       createItineraryItem({
         eventId: args.eventId,
         title: c.title,
@@ -59,31 +80,34 @@ async function persistItineraryChanges(args: {
         durationMinutes: c.durationMinutes,
         location: c.location,
         description: c.description,
-      }),
+      })
     ),
-  ])
+  ]);
 }
 
 function mapDraftExpenses(drafts: DraftExpense[], eventId: string): EventExpense[] {
-  return drafts.map((e) => ({ ...e, eventId }))
+  return drafts.map(e => ({ ...e, eventId }));
 }
 
-type ExpenseCreate = Omit<EventExpense, 'id'>
-type ExpenseUpdate = { id: string; patch: Partial<Omit<EventExpense, 'id' | 'eventId'>> }
+type ExpenseCreate = Omit<EventExpense, 'id'>;
+type ExpenseUpdate = { id: string; patch: Partial<Omit<EventExpense, 'id' | 'eventId'>> };
 
-export function diffExpenses(initial: EventExpense[], current: DraftExpense[]): {
-  deletes: string[]
-  creates: ExpenseCreate[]
-  updates: ExpenseUpdate[]
+export function diffExpenses(
+  initial: EventExpense[],
+  current: DraftExpense[]
+): {
+  deletes: string[];
+  creates: ExpenseCreate[];
+  updates: ExpenseUpdate[];
 } {
-  const initialById = new Map(initial.map((e) => [e.id, e] as const))
-  const currentById = new Map(current.map((e) => [e.id, e] as const))
+  const initialById = new Map(initial.map(e => [e.id, e] as const));
+  const currentById = new Map(current.map(e => [e.id, e] as const));
 
-  const deletes = initial.filter((e) => !currentById.has(e.id)).map((e) => e.id)
+  const deletes = initial.filter(e => !currentById.has(e.id)).map(e => e.id);
 
   const creates: ExpenseCreate[] = current
-    .filter((e) => !initialById.has(e.id))
-    .map((e) => ({
+    .filter(e => !initialById.has(e.id))
+    .map(e => ({
       eventId: '', // filled by caller
       sortOrder: e.sortOrder,
       title: e.title,
@@ -95,75 +119,77 @@ export function diffExpenses(initial: EventExpense[], current: DraftExpense[]): 
       currency: e.currency,
       participantIds: e.participantIds,
       itineraryItemId: e.itineraryItemId ?? null,
-    }))
+    }));
 
-  const updates: ExpenseUpdate[] = []
+  const updates: ExpenseUpdate[] = [];
   for (const cur of current) {
-    const prev = initialById.get(cur.id)
-    if (!prev) continue
+    const prev = initialById.get(cur.id);
+    if (!prev) continue;
 
-    const patch: Partial<Omit<EventExpense, 'id' | 'eventId'>> = {}
-    if (prev.sortOrder !== cur.sortOrder) patch.sortOrder = cur.sortOrder
-    if (prev.title !== cur.title) patch.title = cur.title
-    if (prev.appliesTo !== cur.appliesTo) patch.appliesTo = cur.appliesTo
-    if (prev.splitType !== cur.splitType) patch.splitType = cur.splitType
-    if (prev.timing !== cur.timing) patch.timing = cur.timing
-    if (prev.settledKind !== cur.settledKind) patch.settledKind = cur.settledKind
-    if (prev.amountCents !== cur.amountCents) patch.amountCents = cur.amountCents
-    if (prev.currency !== cur.currency) patch.currency = cur.currency
-    if (prev.participantIds.join(',') !== cur.participantIds.join(',')) patch.participantIds = cur.participantIds
-    if ((prev.itineraryItemId ?? null) !== (cur.itineraryItemId ?? null)) patch.itineraryItemId = cur.itineraryItemId ?? null
+    const patch: Partial<Omit<EventExpense, 'id' | 'eventId'>> = {};
+    if (prev.sortOrder !== cur.sortOrder) patch.sortOrder = cur.sortOrder;
+    if (prev.title !== cur.title) patch.title = cur.title;
+    if (prev.appliesTo !== cur.appliesTo) patch.appliesTo = cur.appliesTo;
+    if (prev.splitType !== cur.splitType) patch.splitType = cur.splitType;
+    if (prev.timing !== cur.timing) patch.timing = cur.timing;
+    if (prev.settledKind !== cur.settledKind) patch.settledKind = cur.settledKind;
+    if (prev.amountCents !== cur.amountCents) patch.amountCents = cur.amountCents;
+    if (prev.currency !== cur.currency) patch.currency = cur.currency;
+    if (prev.participantIds.join(',') !== cur.participantIds.join(','))
+      patch.participantIds = cur.participantIds;
+    if ((prev.itineraryItemId ?? null) !== (cur.itineraryItemId ?? null))
+      patch.itineraryItemId = cur.itineraryItemId ?? null;
 
-    if (Object.keys(patch).length > 0) updates.push({ id: cur.id, patch })
+    if (Object.keys(patch).length > 0) updates.push({ id: cur.id, patch });
   }
 
-  return { deletes, creates, updates }
+  return { deletes, creates, updates };
 }
 
 async function persistExpenseChanges(args: {
-  eventId: string
-  initialItems: EventExpense[]
-  currentDrafts: DraftExpense[]
+  eventId: string;
+  initialItems: EventExpense[];
+  currentDrafts: DraftExpense[];
 }): Promise<void> {
-  const { deletes, creates, updates } = diffExpenses(args.initialItems, args.currentDrafts)
+  const { deletes, creates, updates } = diffExpenses(args.initialItems, args.currentDrafts);
 
   await Promise.all([
-    ...deletes.map((id) => deleteEventExpense(id)),
-    ...updates.map((u) => updateEventExpense(u.id, u.patch)),
-    ...creates.map((c) =>
+    ...deletes.map(id => deleteEventExpense(id)),
+    ...updates.map(u => updateEventExpense(u.id, u.patch)),
+    ...creates.map(c =>
       createEventExpense({
         ...c,
         eventId: args.eventId,
-      }),
+      })
     ),
-  ])
+  ]);
 }
 
 export function useEventEditorController(props: {
-  mode: EditorMode
-  currentUser: User
-  initialEvent?: SocialEvent
-  onCancel: () => void
-  onSuccess: (event: SocialEvent) => void
+  mode: EditorMode;
+  currentUser: User;
+  initialEvent?: SocialEvent;
+  onCancel: () => void;
+  onSuccess: (event: SocialEvent) => void;
 }) {
-  const isUpdate = props.mode === 'update'
-  const draftIdRef = React.useRef<string>(globalThis.crypto?.randomUUID?.() ?? String(Date.now()))
-  const defaultStartTimeIsoRef = React.useRef<string>(new Date().toISOString())
+  const isUpdate = props.mode === 'update';
+  const draftIdRef = React.useRef<string>(globalThis.crypto?.randomUUID?.() ?? String(Date.now()));
+  const defaultStartTimeIsoRef = React.useRef<string>(new Date().toISOString());
 
   const [itineraryItems, setItineraryItems] = React.useState<DraftItineraryItem[]>(() => {
-    const existing = props.initialEvent?.itineraryItems ?? []
-    return existing.map((i) => ({
+    const existing = props.initialEvent?.itineraryItems ?? [];
+    return existing.map(i => ({
       id: i.id,
       title: i.title,
       startTime: i.startTime,
       durationMinutes: i.durationMinutes,
       location: i.location,
       description: i.description,
-    }))
-  })
+    }));
+  });
 
   const [expenseItems, setExpenseItems] = React.useState<DraftExpense[]>(() => {
-    const existing = props.initialEvent?.expenses ?? []
+    const existing = props.initialEvent?.expenses ?? [];
     return existing.map((e, idx) => ({
       id: e.id,
       sortOrder: e.sortOrder ?? idx + 1,
@@ -176,21 +202,22 @@ export function useEventEditorController(props: {
       currency: e.currency,
       participantIds: e.participantIds,
       itineraryItemId: e.itineraryItemId ?? null,
-    }))
-  })
+    }));
+  });
 
-  const hasItinerary = itineraryItems.length > 0
+  const hasItinerary = itineraryItems.length > 0;
 
   const defaultValues = React.useMemo<EventEditorValues>(() => {
-    const ev = props.initialEvent
+    const ev = props.initialEvent;
     if (ev) {
-      const durationHours =
-        ev.endTime
-          ? Math.max(
-              0,
-              Math.round(((new Date(ev.endTime).getTime() - new Date(ev.startTime).getTime()) / 3_600_000) * 4) / 4,
-            )
-          : ''
+      const durationHours = ev.endTime
+        ? Math.max(
+            0,
+            Math.round(
+              ((new Date(ev.endTime).getTime() - new Date(ev.startTime).getTime()) / 3_600_000) * 4
+            ) / 4
+          )
+        : '';
       return {
         title: ev.title,
         headerImageUrl: ev.headerImageUrl ?? '',
@@ -208,11 +235,9 @@ export function useEventEditorController(props: {
         coordinates: ev.coordinates,
         locationData: ev.locationData,
         itineraryTimeDisplay: ev.itineraryTimeDisplay,
-        visibilityType:
-          ev.visibilityType === EventVisibility.GROUPS
-            ? EventVisibility.INVITE_ONLY
-            : ev.visibilityType ?? EventVisibility.INVITE_ONLY,
-      }
+        visibilityType: ev.visibilityType ?? EventVisibility.INVITE_ONLY,
+        groupIds: ev.groupIds ?? [],
+      };
     }
 
     return {
@@ -233,38 +258,49 @@ export function useEventEditorController(props: {
       locationData: undefined,
       itineraryTimeDisplay: 'START_AND_END',
       visibilityType: EventVisibility.INVITE_ONLY,
-    }
-  }, [
-    props.initialEvent?.activityType,
-    props.initialEvent?.coordinates?.lat,
-    props.initialEvent?.coordinates?.lng,
-    props.initialEvent?.locationData,
-    props.initialEvent?.description,
-    props.initialEvent?.headerImageUrl,
-    props.initialEvent?.headerImagePositionY,
-    props.initialEvent?.id,
-    props.initialEvent?.isFlexibleEnd,
-    props.initialEvent?.isFlexibleStart,
-    props.initialEvent?.itineraryAttendanceEnabled,
-    props.initialEvent?.location,
-    props.initialEvent?.maxSeats,
-    props.initialEvent?.noPhones,
-    props.initialEvent?.startTime,
-    props.initialEvent?.title,
-    props.initialEvent?.itineraryTimeDisplay,
-    props.initialEvent?.visibilityType,
-  ])
+      groupIds: [],
+    };
+  }, [props.initialEvent]);
+
+  const [groups, setGroups] = React.useState<Group[]>([]);
+  const [groupsLoading, setGroupsLoading] = React.useState(false);
+  const [groupRoles, setGroupRoles] = React.useState<Map<string, GroupRole>>(new Map());
+
+  React.useEffect(() => {
+    let isMounted = true;
+    const loadGroups = async () => {
+      setGroupsLoading(true);
+      const memberships = await fetchGroupMembershipsForCurrentUser();
+      if (!isMounted) return;
+      const nextGroups = memberships.map(m => m.group);
+      const nextRoles = new Map(memberships.map(m => [m.group.id, m.role] as const));
+      setGroups(nextGroups);
+      setGroupRoles(nextRoles);
+      setGroupsLoading(false);
+    };
+    loadGroups();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const eligibleGroups = React.useMemo(() => {
+    return groups.filter(group => {
+      const role = groupRoles.get(group.id);
+      return role === 'ADMIN' || group.allowMembersCreateEvents;
+    });
+  }, [groupRoles, groups]);
 
   const onSubmit = React.useCallback(
     async ({ value }: { value: EventEditorValues }) => {
-      const title = value.title.trim()
-      const location = value.location.trim()
-      const description = value.description.trim()
-      const activityType = String(value.activityType ?? '').trim()
-      const startDateTimeLocal = value.startDateTimeLocal
+      const title = value.title.trim();
+      const location = value.location.trim();
+      const description = value.description.trim();
+      const activityType = String(value.activityType ?? '').trim();
+      const startDateTimeLocal = value.startDateTimeLocal;
 
-      const errors = validateEventEditor(value, hasItinerary)
-      if (Object.values(errors).some(Boolean)) throw new Error('Missing required fields')
+      const errors = validateEventEditor(value, hasItinerary);
+      if (Object.values(errors).some(Boolean)) throw new Error('Missing required fields');
 
       const times = computeEventTimes({
         hasItinerary,
@@ -273,13 +309,13 @@ export function useEventEditorController(props: {
         startDateTimeLocal,
         durationHours: value.durationHours,
         fallbackStartIso: defaultStartTimeIsoRef.current,
-      })
-      if (!times) throw new Error('Missing required fields')
-      if (!hasItinerary && !times.endTime) throw new Error('Missing required fields')
-      if (hasItinerary && !times.endTime) throw new Error('Itinerary is missing required fields')
+      });
+      if (!times) throw new Error('Missing required fields');
+      if (!hasItinerary && !times.endTime) throw new Error('Missing required fields');
+      if (hasItinerary && !times.endTime) throw new Error('Itinerary is missing required fields');
 
-      const maxSeats = value.maxSeats === '' ? undefined : Number(value.maxSeats)
-      const normalizedMaxSeats = maxSeats && maxSeats > 0 ? maxSeats : undefined
+      const maxSeats = value.maxSeats === '' ? undefined : Number(value.maxSeats);
+      const normalizedMaxSeats = maxSeats && maxSeats > 0 ? maxSeats : undefined;
 
       if (!isUpdate) {
         const created = await createEvent({
@@ -297,13 +333,13 @@ export function useEventEditorController(props: {
           noPhones: value.noPhones,
           maxSeats: normalizedMaxSeats,
           visibilityType: value.visibilityType,
-          groupIds: [],
           allowFriendInvites: false,
           coordinates: value.coordinates,
           locationData: value.locationData,
           itineraryTimeDisplay: value.itineraryTimeDisplay,
-        })
-        if (!created) throw new Error('createEvent returned null')
+          groupIds: value.visibilityType === EventVisibility.GROUPS ? value.groupIds : [],
+        });
+        if (!created) throw new Error('createEvent returned null');
 
         await Promise.all([
           hasItinerary
@@ -320,14 +356,14 @@ export function useEventEditorController(props: {
                 currentDrafts: expenseItems,
               })
             : Promise.resolve(),
-        ])
+        ]);
 
-        const refreshed = await fetchEventById(created.id)
-        props.onSuccess(refreshed ?? created)
-        return
+        const refreshed = await fetchEventById(created.id);
+        props.onSuccess(refreshed ?? created);
+        return;
       }
 
-      if (!props.initialEvent) throw new Error('Missing initialEvent for update mode')
+      if (!props.initialEvent) throw new Error('Missing initialEvent for update mode');
 
       const updated = await updateEvent(props.initialEvent.id, {
         title,
@@ -343,14 +379,14 @@ export function useEventEditorController(props: {
         noPhones: value.noPhones,
         maxSeats: normalizedMaxSeats,
         visibilityType: value.visibilityType,
-        groupIds: [],
         allowFriendInvites: false,
         coordinates: value.coordinates,
         locationData: value.locationData,
         itineraryTimeDisplay: value.itineraryTimeDisplay,
-      })
+        groupIds: value.visibilityType === EventVisibility.GROUPS ? value.groupIds : [],
+      });
 
-      if (!updated) throw new Error('updateEvent returned null')
+      if (!updated) throw new Error('updateEvent returned null');
 
       await Promise.all([
         persistItineraryChanges({
@@ -363,56 +399,51 @@ export function useEventEditorController(props: {
           initialItems: props.initialEvent.expenses ?? [],
           currentDrafts: expenseItems,
         }),
-      ])
+      ]);
 
-      let refreshed = await fetchEventById(props.initialEvent.id)
+      let refreshed = await fetchEventById(props.initialEvent.id);
 
-      const wasAttendanceEnabled = props.initialEvent.itineraryAttendanceEnabled ?? false
-      const isAttendanceEnabled = value.itineraryAttendanceEnabled
+      const wasAttendanceEnabled = props.initialEvent.itineraryAttendanceEnabled ?? false;
+      const isAttendanceEnabled = value.itineraryAttendanceEnabled;
       if (!wasAttendanceEnabled && isAttendanceEnabled && refreshed?.itineraryItems?.length) {
         await ensureItineraryAttendanceForAllAttendees({
           eventId: refreshed.id,
           attendeeIds: refreshed.attendees ?? [],
-          itineraryItemIds: refreshed.itineraryItems.map((item) => item.id),
-        })
+          itineraryItemIds: refreshed.itineraryItems.map(item => item.id),
+        });
         // Re-fetch so UI reflects the backfilled attendance rows.
-        refreshed = await fetchEventById(props.initialEvent.id)
+        refreshed = await fetchEventById(props.initialEvent.id);
       }
 
-      props.onSuccess(refreshed ?? updated)
+      props.onSuccess(refreshed ?? updated);
     },
-    [
-      hasItinerary,
-      isUpdate,
-      itineraryItems,
-      expenseItems,
-      props.initialEvent,
-      props.onSuccess,
-    ],
-  )
+    [hasItinerary, isUpdate, itineraryItems, expenseItems, props.initialEvent, props.onSuccess]
+  );
 
   const form = useForm({
     defaultValues,
     onSubmit,
-  })
+  });
 
-  const values = useStore(form.store, (s) => s.values)
+  const values = useStore(form.store, s => s.values);
 
   const detailErrors = React.useMemo(() => {
-    const hasItinerary = itineraryItems.length > 0
-    return validateEventEditor(values, hasItinerary)
-  }, [itineraryItems.length, values.activityType, values.description, values.durationHours, values.location, values.startDateTimeLocal, values.title])
+    const hasItinerary = itineraryItems.length > 0;
+    return validateEventEditor(values, hasItinerary);
+  }, [itineraryItems.length, values]);
 
-  const canSubmit = Object.values(detailErrors).every((v) => !v)
-  const [showValidation, setShowValidation] = React.useState(false)
+  const canSubmit = Object.values(detailErrors).every(v => !v);
+  const [showValidation, setShowValidation] = React.useState(false);
 
   const submitMutation = useMutation({
     mutationFn: async () => {
-      await form.handleSubmit()
+      await form.handleSubmit();
     },
-  })
+  });
 
-  const editingEventId = isUpdate ? (props.initialEvent?.id ?? draftIdRef.current) : draftIdRef.current
+  const editingEventId = isUpdate
+    ? (props.initialEvent?.id ?? draftIdRef.current)
+    : draftIdRef.current;
 
   const previewEvent: SocialEvent = React.useMemo(() => {
     const times = computeEventTimes({
@@ -422,7 +453,7 @@ export function useEventEditorController(props: {
       startDateTimeLocal: values.startDateTimeLocal,
       durationHours: values.durationHours,
       fallbackStartIso: defaultStartTimeIsoRef.current,
-    })
+    });
 
     return {
       id: editingEventId,
@@ -441,7 +472,7 @@ export function useEventEditorController(props: {
       isFlexibleStart: values.isFlexibleStart,
       isFlexibleEnd: values.isFlexibleEnd,
       visibilityType: values.visibilityType,
-      groupIds: EMPTY_STRING_ARR,
+      groupIds: values.groupIds,
       allowFriendInvites: false,
       maxSeats:
         values.maxSeats === ''
@@ -457,7 +488,7 @@ export function useEventEditorController(props: {
       reactions: props.initialEvent?.reactions ?? EMPTY_REACTIONS,
       itineraryItems: mapDraftItineraryItems(itineraryItems, editingEventId),
       expenses: mapDraftExpenses(expenseItems, editingEventId),
-    }
+    };
   }, [
     editingEventId,
     expenseItems,
@@ -482,119 +513,144 @@ export function useEventEditorController(props: {
     values.itineraryAttendanceEnabled,
     values.itineraryTimeDisplay,
     values.visibilityType,
+    values.groupIds,
     values.location,
     values.maxSeats,
     values.noPhones,
     values.startDateTimeLocal,
     values.title,
-  ])
+  ]);
 
   const applyPatch = React.useCallback(
     (patch: Partial<SocialEvent>) => {
-      if (patch.title !== undefined) form.setFieldValue('title', patch.title)
-      if (patch.headerImageUrl !== undefined) form.setFieldValue('headerImageUrl', patch.headerImageUrl ?? '')
-      if (patch.headerImagePositionY !== undefined) form.setFieldValue('headerImagePositionY', patch.headerImagePositionY)
-      if (patch.location !== undefined) form.setFieldValue('location', patch.location)
-      if (patch.description !== undefined) form.setFieldValue('description', patch.description)
-      if (patch.activityType !== undefined) form.setFieldValue('activityType', patch.activityType)
-      if (patch.isFlexibleStart !== undefined) form.setFieldValue('isFlexibleStart', patch.isFlexibleStart)
-      if (patch.isFlexibleEnd !== undefined) form.setFieldValue('isFlexibleEnd', patch.isFlexibleEnd)
-      if (patch.itineraryAttendanceEnabled !== undefined) form.setFieldValue('itineraryAttendanceEnabled', patch.itineraryAttendanceEnabled)
-      if (patch.visibilityType !== undefined) form.setFieldValue('visibilityType', patch.visibilityType)
-      if (patch.noPhones !== undefined) form.setFieldValue('noPhones', patch.noPhones)
+      if (patch.title !== undefined) form.setFieldValue('title', patch.title);
+      if (patch.headerImageUrl !== undefined)
+        form.setFieldValue('headerImageUrl', patch.headerImageUrl ?? '');
+      if (patch.headerImagePositionY !== undefined)
+        form.setFieldValue('headerImagePositionY', patch.headerImagePositionY);
+      if (patch.location !== undefined) form.setFieldValue('location', patch.location);
+      if (patch.description !== undefined) form.setFieldValue('description', patch.description);
+      if (patch.activityType !== undefined) form.setFieldValue('activityType', patch.activityType);
+      if (patch.isFlexibleStart !== undefined)
+        form.setFieldValue('isFlexibleStart', patch.isFlexibleStart);
+      if (patch.isFlexibleEnd !== undefined)
+        form.setFieldValue('isFlexibleEnd', patch.isFlexibleEnd);
+      if (patch.itineraryAttendanceEnabled !== undefined)
+        form.setFieldValue('itineraryAttendanceEnabled', patch.itineraryAttendanceEnabled);
+      if (patch.visibilityType !== undefined)
+        form.setFieldValue('visibilityType', patch.visibilityType);
+      if (patch.groupIds !== undefined) form.setFieldValue('groupIds', patch.groupIds);
+      if (patch.noPhones !== undefined) form.setFieldValue('noPhones', patch.noPhones);
       if ('maxSeats' in patch) {
-        const n = patch.maxSeats === undefined ? undefined : Number(patch.maxSeats)
-        form.setFieldValue('maxSeats', n && n > 0 ? n : '')
+        const n = patch.maxSeats === undefined ? undefined : Number(patch.maxSeats);
+        form.setFieldValue('maxSeats', n && n > 0 ? n : '');
       }
-      if ('coordinates' in patch) form.setFieldValue('coordinates', patch.coordinates)
-      if ('locationData' in patch) form.setFieldValue('locationData', patch.locationData)
-      if (patch.startTime !== undefined) form.setFieldValue('startDateTimeLocal', toLocalDateTimeInputValue(patch.startTime))
-      if (patch.itineraryTimeDisplay !== undefined) form.setFieldValue('itineraryTimeDisplay', patch.itineraryTimeDisplay)
+      if ('coordinates' in patch) form.setFieldValue('coordinates', patch.coordinates);
+      if ('locationData' in patch) form.setFieldValue('locationData', patch.locationData);
+      if (patch.startTime !== undefined)
+        form.setFieldValue('startDateTimeLocal', toLocalDateTimeInputValue(patch.startTime));
+      if (patch.itineraryTimeDisplay !== undefined)
+        form.setFieldValue('itineraryTimeDisplay', patch.itineraryTimeDisplay);
     },
-    [form],
-  )
+    [form]
+  );
 
   const onChangeStartDateTimeLocal = React.useCallback(
     (value: string) => form.setFieldValue('startDateTimeLocal', value),
-    [form],
-  )
+    [form]
+  );
 
   const onChangeDurationHours = React.useCallback(
     (value: number | '') => form.setFieldValue('durationHours', value),
-    [form],
-  )
+    [form]
+  );
 
   const itineraryEditItems = React.useMemo(() => {
-    return mapDraftItineraryItems(itineraryItems, editingEventId)
-  }, [editingEventId, itineraryItems])
+    return mapDraftItineraryItems(itineraryItems, editingEventId);
+  }, [editingEventId, itineraryItems]);
 
   const expenseEditItems = React.useMemo(() => {
-    return mapDraftExpenses(expenseItems, editingEventId)
-  }, [editingEventId, expenseItems])
+    return mapDraftExpenses(expenseItems, editingEventId);
+  }, [editingEventId, expenseItems]);
 
   const onAddItineraryItem = React.useCallback(
-    (input: { title: string; startTime: string; durationMinutes: number; location?: string; description?: string }) => {
-      const id = globalThis.crypto?.randomUUID?.() ?? String(Date.now())
-      setItineraryItems((prev) => [...prev, { id, ...input }])
-      return id
+    (input: {
+      title: string;
+      startTime: string;
+      durationMinutes: number;
+      location?: string;
+      description?: string;
+    }) => {
+      const id = globalThis.crypto?.randomUUID?.() ?? String(Date.now());
+      setItineraryItems(prev => [...prev, { id, ...input }]);
+      return id;
     },
-    [],
-  )
+    []
+  );
 
   const onUpdateItineraryItem = React.useCallback(
     (
       id: string,
-      patch: Partial<{ title: string; startTime: string; durationMinutes: number; location?: string; description?: string }>,
+      patch: Partial<{
+        title: string;
+        startTime: string;
+        durationMinutes: number;
+        location?: string;
+        description?: string;
+      }>
     ) => {
-      setItineraryItems((prev) => prev.map((i) => (i.id === id ? { ...i, ...patch } : i)))
+      setItineraryItems(prev => prev.map(i => (i.id === id ? { ...i, ...patch } : i)));
     },
-    [],
-  )
+    []
+  );
 
   const onDeleteItineraryItem = React.useCallback((id: string) => {
-    setItineraryItems((prev) => prev.filter((i) => i.id !== id))
-  }, [])
+    setItineraryItems(prev => prev.filter(i => i.id !== id));
+  }, []);
 
   const onAddExpense = React.useCallback((input: Omit<DraftExpense, 'id'>) => {
-    const id = globalThis.crypto?.randomUUID?.() ?? String(Date.now())
-    setExpenseItems((prev) => {
-      const maxSortOrder = prev.reduce((max, e) => Math.max(max, e.sortOrder ?? 0), 0)
-      const sortOrder = input.sortOrder ?? maxSortOrder + 1
-      return [...prev, { id, ...input, sortOrder }]
-    })
-    return id
-  }, [])
+    const id = globalThis.crypto?.randomUUID?.() ?? String(Date.now());
+    setExpenseItems(prev => {
+      const maxSortOrder = prev.reduce((max, e) => Math.max(max, e.sortOrder ?? 0), 0);
+      const sortOrder = input.sortOrder ?? maxSortOrder + 1;
+      return [...prev, { id, ...input, sortOrder }];
+    });
+    return id;
+  }, []);
 
-  const onUpdateExpense = React.useCallback((id: string, patch: Partial<Omit<DraftExpense, 'id'>>) => {
-    setExpenseItems((prev) => prev.map((e) => (e.id === id ? { ...e, ...patch } : e)))
-  }, [])
+  const onUpdateExpense = React.useCallback(
+    (id: string, patch: Partial<Omit<DraftExpense, 'id'>>) => {
+      setExpenseItems(prev => prev.map(e => (e.id === id ? { ...e, ...patch } : e)));
+    },
+    []
+  );
 
   const onDeleteExpense = React.useCallback((id: string) => {
-    setExpenseItems((prev) => prev.filter((e) => e.id !== id))
-  }, [])
+    setExpenseItems(prev => prev.filter(e => e.id !== id));
+  }, []);
 
   const onReorderExpenses = React.useCallback((orderedExpenseIds: string[]) => {
-    setExpenseItems((prev) => {
-      if (!Array.isArray(orderedExpenseIds) || orderedExpenseIds.length === 0) return prev
+    setExpenseItems(prev => {
+      if (!Array.isArray(orderedExpenseIds) || orderedExpenseIds.length === 0) return prev;
 
-      const prevById = new Map(prev.map((e) => [e.id, e] as const))
-      const orderedSet = new Set(orderedExpenseIds)
+      const prevById = new Map(prev.map(e => [e.id, e] as const));
+      const orderedSet = new Set(orderedExpenseIds);
 
-      const nextOrdered: DraftExpense[] = []
+      const nextOrdered: DraftExpense[] = [];
       for (const id of orderedExpenseIds) {
-        const item = prevById.get(id)
-        if (item) nextOrdered.push(item as DraftExpense)
+        const item = prevById.get(id);
+        if (item) nextOrdered.push(item as DraftExpense);
       }
 
       // Append any expenses not included (e.g. new ones added since the list was built).
       for (const item of prev) {
-        if (!orderedSet.has(item.id)) nextOrdered.push(item)
+        if (!orderedSet.has(item.id)) nextOrdered.push(item);
       }
 
       // Normalize sort order to the new display order.
-      return nextOrdered.map((e, idx) => ({ ...e, sortOrder: idx + 1 }))
-    })
-  }, [])
+      return nextOrdered.map((e, idx) => ({ ...e, sortOrder: idx + 1 }));
+    });
+  }, []);
 
   const itineraryApi = React.useMemo(() => {
     return {
@@ -602,8 +658,8 @@ export function useEventEditorController(props: {
       onAdd: onAddItineraryItem,
       onUpdate: onUpdateItineraryItem,
       onDelete: onDeleteItineraryItem,
-    }
-  }, [itineraryEditItems, onAddItineraryItem, onDeleteItineraryItem, onUpdateItineraryItem])
+    };
+  }, [itineraryEditItems, onAddItineraryItem, onDeleteItineraryItem, onUpdateItineraryItem]);
 
   const expenseApi = React.useMemo(() => {
     return {
@@ -612,18 +668,18 @@ export function useEventEditorController(props: {
       onUpdate: onUpdateExpense,
       onDelete: onDeleteExpense,
       onReorder: onReorderExpenses,
-    }
-  }, [expenseEditItems, onAddExpense, onDeleteExpense, onReorderExpenses, onUpdateExpense])
+    };
+  }, [expenseEditItems, onAddExpense, onDeleteExpense, onReorderExpenses, onUpdateExpense]);
 
-  const primaryLabel = isUpdate ? 'Save changes' : 'Publish invite'
+  const primaryLabel = isUpdate ? 'Save changes' : 'Publish invite';
 
   const onSave = React.useCallback(() => {
     if (!canSubmit) {
-      setShowValidation(true)
-      return
+      setShowValidation(true);
+      return;
     }
-    submitMutation.mutate()
-  }, [canSubmit, submitMutation])
+    submitMutation.mutate();
+  }, [canSubmit, submitMutation]);
 
   const editModel = React.useMemo(() => {
     return {
@@ -636,16 +692,20 @@ export function useEventEditorController(props: {
       durationHours: values.durationHours,
       onChangeDurationHours,
       onChange: applyPatch,
+      groups: eligibleGroups,
+      groupsLoading,
       itinerary: itineraryApi,
       expenses: expenseApi,
       onSave,
       onCancel: props.onCancel,
-    }
+    };
   }, [
     applyPatch,
     canSubmit,
     detailErrors,
+    eligibleGroups,
     expenseApi,
+    groupsLoading,
     itineraryApi,
     onChangeDurationHours,
     onChangeStartDateTimeLocal,
@@ -656,7 +716,7 @@ export function useEventEditorController(props: {
     submitMutation.isPending,
     values.durationHours,
     values.startDateTimeLocal,
-  ])
+  ]);
 
-  return { previewEvent, editModel }
+  return { previewEvent, editModel };
 }

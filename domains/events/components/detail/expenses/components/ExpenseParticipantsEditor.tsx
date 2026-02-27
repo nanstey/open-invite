@@ -105,8 +105,7 @@ export function ExpenseParticipantsEditor(props: {
       {people.length === 0 ? (
         <div className="text-sm text-slate-500 italic">No participants available.</div>
       ) : (
-        <>
-          {!isItineraryMode && e.appliesTo === 'CUSTOM' ? (
+        !isItineraryMode && e.appliesTo === 'CUSTOM' ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {people.map((p) => {
                 const checked = e.participantIds.includes(p.id)
@@ -128,8 +127,7 @@ export function ExpenseParticipantsEditor(props: {
             </div>
           ) : (
             <div className="text-sm text-slate-400">{e.participantIds.length} selected</div>
-          )}
-        </>
+          )
       )}
       {!isItineraryMode && e.appliesTo === 'CUSTOM' ? (
         <div className="mt-2 text-xs text-slate-500">{e.participantIds.length} selected</div>

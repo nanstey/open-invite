@@ -1,4 +1,4 @@
-import React from 'react'
+import type React from 'react'
 import { ExternalLink, X } from 'lucide-react'
 import { PROJECT_STATUS_COLORS, type ProjectStatus } from '../../projectTypes'
 import { Badge } from '../../../../lib/ui/components/Badge'

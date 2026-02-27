@@ -1,5 +1,5 @@
 
-import React from 'react';
+import type React from 'react';
 import { Tabs, TabsList, TabsTrigger } from '../9ui/tabs';
 
 export interface TabOption {

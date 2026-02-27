@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react'
+import type React from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { X, Send, Loader2 } from 'lucide-react'
 import { FormInput, FormSelect } from '../../../../lib/ui/components/FormControls'
 import { Button } from '../../../../lib/ui/9ui/button'

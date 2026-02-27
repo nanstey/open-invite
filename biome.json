@@ -3,10 +3,10 @@
   "files": {
     "includes": [
       "**",
-      "!dist/**",
-      "!node_modules/**",
-      "!supabase/.branches/**",
-      "!supabase/.temp/**",
+      "!dist",
+      "!node_modules",
+      "!supabase/.branches",
+      "!supabase/.temp",
       "!routeTree.gen.ts"
     ]
   },

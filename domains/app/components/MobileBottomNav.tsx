@@ -1,4 +1,4 @@
-import React from 'react'
+import type React from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Bell, CalendarDays, Plus, Users as UsersIcon } from 'lucide-react'
 

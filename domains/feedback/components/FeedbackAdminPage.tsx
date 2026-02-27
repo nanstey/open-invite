@@ -127,11 +127,12 @@ export function FeedbackAdminPage({ initialFeedbackId }: FeedbackAdminPageProps)
           aVal = a.type
           bVal = b.type
           break
-        case 'importance':
+        case 'importance': {
           const importanceOrder = { critical: 4, high: 3, medium: 2, low: 1 }
           aVal = importanceOrder[a.importance]
           bVal = importanceOrder[b.importance]
           break
+        }
         case 'status':
           aVal = a.status
           bVal = b.status

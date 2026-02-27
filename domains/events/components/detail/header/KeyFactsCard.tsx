@@ -147,7 +147,7 @@ export function KeyFactsCard(props: {
             <div className="min-w-0">
               <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Seats</div>
               {/* Seats are editable elsewhere; keep this overview read-only. */}
-              <>
+              
                 <div className="font-bold text-white truncate">
                   {seats.maxSeats ? `${seats.goingLabel} going` : `${seats.attendeeCount} going`}
                 </div>
@@ -156,7 +156,7 @@ export function KeyFactsCard(props: {
                 ) : (
                   <div className="text-sm text-slate-500">No limit</div>
                 )}
-              </>
+              
             </div>
           </div>
         </div>

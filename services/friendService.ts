@@ -1,15 +1,11 @@
 import { supabase } from '../lib/supabase';
-import type { User, Group } from '../lib/types';
+import type { User } from '../lib/types';
 import type { Database } from '../lib/database.types';
 import { fetchUsers } from './userService';
 
 type UserFriendRow = Database['public']['Tables']['user_friends']['Row'];
 type UserFriendInsert = Database['public']['Tables']['user_friends']['Insert'];
 type FriendRequestRow = Database['public']['Tables']['friend_requests']['Row'];
-type GroupRow = Database['public']['Tables']['groups']['Row'];
-type GroupInsert = Database['public']['Tables']['groups']['Insert'];
-type UserGroupRow = Database['public']['Tables']['user_groups']['Row'];
-type UserGroupInsert = Database['public']['Tables']['user_groups']['Insert'];
 
 export type PendingFriendRequest = {
   id: string;
@@ -276,149 +272,4 @@ export async function removeFriend(friendId: string): Promise<boolean> {
   }
 
   return true;
-}
-
-/**
- * Fetch groups that the user can access (groups they created or are members of)
- */
-export async function fetchGroups(userId: string): Promise<Group[]> {
-  const { data: groups, error } = await supabase
-    .from('groups')
-    .select('*')
-    .or(`created_by.eq.${userId},id.in.(select group_id from user_groups where user_id.eq.${userId})`)
-    .is('deleted_at', null)
-    .order('name', { ascending: true });
-
-  if (error || !groups) {
-    console.error('Error fetching groups:', error);
-    return [];
-  }
-
-  return (groups as GroupRow[]).map(g => ({
-    id: g.id,
-    name: g.name,
-    createdBy: g.created_by,
-    isOpen: g.is_open,
-    deletedAt: g.deleted_at || undefined,
-  }));
-}
-
-/**
- * Fetch user groups for the current user (groups they are members of)
- */
-export async function fetchUserGroups(userId: string): Promise<Group[]> {
-  const { data: userGroups, error } = await supabase
-    .from('user_groups')
-    .select('group_id, groups(*)')
-    .eq('user_id', userId);
-
-  if (error || !userGroups) {
-    console.error('Error fetching user groups:', error);
-    return [];
-  }
-
-  type UserGroupWithGroup = Pick<UserGroupRow, 'group_id'> & {
-    groups: GroupRow | null;
-  };
-
-  return (userGroups as UserGroupWithGroup[])
-    .filter(ug => ug.groups && !ug.groups.deleted_at)
-    .map(ug => ({
-      id: ug.groups!.id,
-      name: ug.groups!.name,
-      createdBy: ug.groups!.created_by,
-      isOpen: ug.groups!.is_open,
-      deletedAt: ug.groups!.deleted_at || undefined,
-    }));
-}
-
-/**
- * Create a new group
- */
-export async function createGroup(name: string, isOpen: boolean): Promise<Group | null> {
-  const { data: { session } } = await supabase.auth.getSession();
-  const userId = session?.user?.id;
-  if (!userId) {
-    return null;
-  }
-
-  const insertData: GroupInsert = {
-    name,
-    created_by: userId,
-    is_open: isOpen,
-  };
-  const { data: group, error } = await (supabase
-    .from('groups') as any)
-    .insert(insertData)
-    .select()
-    .single();
-
-  if (error || !group) {
-    console.error('Error creating group:', error);
-    return null;
-  }
-
-  // Add creator as admin member
-  const userGroupInsert: UserGroupInsert = {
-    user_id: userId,
-    group_id: (group as GroupRow).id,
-    role: 'ADMIN',
-  };
-  await (supabase.from('user_groups') as any).insert(userGroupInsert);
-
-  const groupRow = group as GroupRow;
-  return {
-    id: groupRow.id,
-    name: groupRow.name,
-    createdBy: groupRow.created_by,
-    isOpen: groupRow.is_open,
-    deletedAt: groupRow.deleted_at || undefined,
-  };
-}
-
-/**
- * Add user to a group
- */
-export async function addUserToGroup(userId: string, groupId: string): Promise<boolean> {
-  const insertData: UserGroupInsert = {
-    user_id: userId,
-    group_id: groupId,
-    role: 'MEMBER',
-  };
-  const { error } = await (supabase
-    .from('user_groups') as any)
-    .insert(insertData);
-
-  return !error;
-}
-
-/**
- * Remove user from a group
- */
-export async function removeUserFromGroup(userId: string, groupId: string): Promise<boolean> {
-  const { error } = await supabase
-    .from('user_groups')
-    .delete()
-    .eq('user_id', userId)
-    .eq('group_id', groupId);
-
-  return !error;
-}
-
-/**
- * Fetch group members
- */
-export async function fetchGroupMembers(groupId: string): Promise<User[]> {
-  const { data: userGroups, error } = await supabase
-    .from('user_groups')
-    .select('user_id')
-    .eq('group_id', groupId);
-
-  if (error || !userGroups) {
-    console.error('Error fetching group members:', error);
-    return [];
-  }
-
-  const userIds = (userGroups as Pick<UserGroupRow, 'user_id'>[]).map(ug => ug.user_id);
-  return fetchUsers(userIds);
 }

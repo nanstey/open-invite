@@ -1,4 +1,4 @@
-import * as React from 'react'
+import type * as React from 'react'
 import { Search } from 'lucide-react'
 
 function cx(...parts: Array<string | false | null | undefined>) {
@@ -18,7 +18,6 @@ function sizeClasses(size: SearchInputProps['size']) {
       return { input: 'pl-9 pr-4 py-2 text-sm rounded-lg', icon: 'left-3 w-4 h-4' }
     case 'lg':
       return { input: 'pl-12 pr-4 py-3 text-base rounded-xl', icon: 'left-4 w-5 h-5' }
-    case 'md':
     default:
       return { input: 'pl-10 pr-4 py-2.5 text-sm rounded-lg', icon: 'left-3 w-4 h-4' }
   }

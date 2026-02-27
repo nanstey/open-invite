@@ -41,13 +41,13 @@ export function useEventRouteData(args: {
     return () => {
       cancelled = true
     }
-  }, [event?.id, event?.slug, slugOrId])
+  }, [event?.id, event?.slug, slugOrId, event])
 
   React.useEffect(() => {
     if (!event) return
     if (!isUuid(slugOrId)) return
     onCanonicalSlug?.(event.slug)
-  }, [event?.slug, slugOrId, onCanonicalSlug])
+  }, [event?.slug, slugOrId, onCanonicalSlug, event])
 
   React.useEffect(() => {
     if (!event) return
@@ -61,7 +61,7 @@ export function useEventRouteData(args: {
       },
     })
     return () => unsubscribe()
-  }, [event?.id, pauseRealtime, onDelete])
+  }, [event?.id, pauseRealtime, onDelete, event])
 
   return { event, setEvent, isLoading }
 }

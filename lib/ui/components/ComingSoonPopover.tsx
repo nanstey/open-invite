@@ -83,7 +83,7 @@ export function ComingSoonPopover(props: { state: ComingSoonState }) {
     const top = clamp(y, margin + rect.height, window.innerHeight - margin)
 
     setPos({ left, top })
-  }, [open, x, y, message])
+  }, [open, x, y])
 
   if (!open) return null
 

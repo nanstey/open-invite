@@ -1,4 +1,4 @@
-import React from 'react'
+import type React from 'react'
 import { Badge } from '../../../../lib/ui/components/Badge'
 import { ProjectLinkCard } from '../projects/ProjectLinkCard'
 import { formatDateShort } from '../../../../lib/ui/utils/datetime'

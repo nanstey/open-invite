@@ -1,4 +1,4 @@
-import React from 'react'
+import type React from 'react'
 import { Link } from '@tanstack/react-router'
 import { ClipboardList, FolderKanban } from 'lucide-react'
 import { FeedbackAdminPage } from './components/FeedbackAdminPage'

@@ -114,10 +114,6 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
     setSavingGithub(false)
   }
 
-  useEffect(() => {
-    loadLinkedFeedback()
-  }, [project.id])
-
   const loadLinkedFeedback = async () => {
     setLoadingFeedback(true)
     const items = await fetchProjectFeedback(project.id)
@@ -125,16 +121,20 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
       items
         .filter((item) => item.feedback)
         .map((item): SimpleFeedbackItem => ({
-          id: item.feedback!.id,
-          title: item.feedback!.title,
+          id: item.feedback?.id ?? '',
+          title: item.feedback?.title ?? '',
           description: (item.feedback as any)?.description,
-          type: item.feedback!.type as any,
-          importance: item.feedback!.importance as any,
-          status: item.feedback!.status as any,
+          type: item.feedback?.type as any,
+          importance: item.feedback?.importance as any,
+          status: item.feedback?.status as any,
         }))
     )
     setLoadingFeedback(false)
   }
+
+  useEffect(() => {
+    loadLinkedFeedback()
+  }, [])
 
   const handleRemoveFeedback = async (feedbackId: string) => {
     const success = await removeFeedbackFromProject(project.id, feedbackId)
@@ -192,7 +192,6 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
               value={editTitle}
               onChange={(e) => setEditTitle(e.target.value)}
               className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-primary"
-              autoFocus
             />
             <div className="flex gap-2">
               <button
@@ -294,7 +293,6 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
                 onChange={(e) => setGithubUrl(e.target.value)}
                 placeholder="https://github.com/..."
                 className="flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-primary"
-                autoFocus
               />
             </div>
             <div className="flex gap-2">

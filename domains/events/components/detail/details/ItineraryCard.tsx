@@ -1,4 +1,4 @@
-import * as React from 'react'
+import type * as React from 'react'
 import { Card } from '../../../../../lib/ui/9ui/card'
 import { FormSelect } from '../../../../../lib/ui/components/FormControls'
 

@@ -48,10 +48,6 @@ export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProje
     navigate({ to: '/admin/projects', search: { projectId } })
   }
 
-  useEffect(() => {
-    loadProjects()
-  }, [feedback.id])
-
   const loadProjects = async () => {
     setLoadingProjects(true)
     const [linked, all] = await Promise.all([
@@ -62,6 +58,10 @@ export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProje
     setAllProjects(all)
     setLoadingProjects(false)
   }
+
+  useEffect(() => {
+    loadProjects()
+  }, [])
 
   const handleAddToProject = async (projectId: string) => {
     setAddingProjectId(projectId)

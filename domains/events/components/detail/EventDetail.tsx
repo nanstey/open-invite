@@ -56,7 +56,7 @@ interface EventDetailProps {
     groupsLoading?: boolean;
     errors?: Partial<
       Record<
-        'title' | 'description' | 'startTime' | 'location' | 'activityType' | 'durationHours',
+        'title' | 'description' | 'startTime' | 'location' | 'activityType' | 'durationHours' | 'groupIds',
         string
       >
     >;
@@ -438,12 +438,14 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               isEditMode={isEditMode}
               itineraryFilterId={guestItineraryFilterId}
               onChangeItineraryFilterId={setGuestItineraryFilterId}
-              onChangeAttendees={nextAttendees => edit?.onChange({ attendees: nextAttendees })}
-              onChangeMaxSeats={next => edit?.onChange({ maxSeats: next })}
-              onChangeVisibility={next => edit?.onChange({ visibilityType: next })}
-              onChangeItineraryAttendanceEnabled={next =>
-                edit?.onChange({ itineraryAttendanceEnabled: next })
-              }
+              onChangeAttendees={(nextAttendees) => edit?.onChange({ attendees: nextAttendees })}
+              onChangeMaxSeats={(next) => edit?.onChange({ maxSeats: next })}
+              onChangeVisibility={(next) => edit?.onChange({ visibilityType: next })}
+              onChangeGroupIds={(nextGroupIds) => edit?.onChange({ groupIds: nextGroupIds })}
+              groupOptions={edit?.groups}
+              groupsLoading={edit?.groupsLoading}
+              groupError={edit?.errors?.groupIds}
+              onChangeItineraryAttendanceEnabled={(next) => edit?.onChange({ itineraryAttendanceEnabled: next })}
             />
           ) : null}
 

@@ -295,7 +295,7 @@ export const FullScreenMapModal: React.FC<FullScreenMapModalProps> = ({
     }
 
     const bounds = layer.getBounds?.()
-    if (bounds && bounds.isValid?.()) {
+    if (bounds?.isValid?.()) {
       try {
         map.fitBounds(bounds, { padding: [36, 36], maxZoom: 16, animate: false })
       } catch {

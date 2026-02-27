@@ -1,4 +1,4 @@
-import * as React from 'react'
+import type * as React from 'react'
 import { UserPlus } from 'lucide-react'
 import { EmptyState } from '../../../lib/ui/components/EmptyState'
 import { SectionHeader } from '../../../lib/ui/components/SectionHeader'

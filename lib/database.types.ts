@@ -482,7 +482,6 @@ export type Database = {
       };
       feedback_projects: {
         Row: {
-          archived_at: string | null;
           created_at: string | null;
           description: string | null;
           github_repo: string | null;
@@ -494,7 +493,6 @@ export type Database = {
           updated_at: string | null;
         };
         Insert: {
-          archived_at?: string | null;
           created_at?: string | null;
           description?: string | null;
           github_repo?: string | null;
@@ -506,7 +504,6 @@ export type Database = {
           updated_at?: string | null;
         };
         Update: {
-          archived_at?: string | null;
           created_at?: string | null;
           description?: string | null;
           github_repo?: string | null;
@@ -548,36 +545,80 @@ export type Database = {
       };
       groups: {
         Row: {
+          allow_members_add_members: boolean | null;
+          allow_members_create_events: boolean | null;
           created_at: string | null;
           created_by: string;
           deleted_at: string | null;
           id: string;
           is_open: boolean;
           name: string;
+          new_members_require_admin_approval: boolean | null;
           updated_at: string | null;
           updated_by: string | null;
         };
         Insert: {
+          allow_members_add_members?: boolean | null;
+          allow_members_create_events?: boolean | null;
           created_at?: string | null;
           created_by: string;
           deleted_at?: string | null;
           id?: string;
           is_open?: boolean;
           name: string;
+          new_members_require_admin_approval?: boolean | null;
           updated_at?: string | null;
           updated_by?: string | null;
         };
         Update: {
+          allow_members_add_members?: boolean | null;
+          allow_members_create_events?: boolean | null;
           created_at?: string | null;
           created_by?: string;
           deleted_at?: string | null;
           id?: string;
           is_open?: boolean;
           name?: string;
+          new_members_require_admin_approval?: boolean | null;
           updated_at?: string | null;
           updated_by?: string | null;
         };
         Relationships: [];
+      };
+      group_member_requests: {
+        Row: {
+          created_at: string | null;
+          group_id: string;
+          id: string;
+          requester_id: string;
+          status: string;
+          updated_at: string | null;
+        };
+        Insert: {
+          created_at?: string | null;
+          group_id: string;
+          id?: string;
+          requester_id: string;
+          status?: string;
+          updated_at?: string | null;
+        };
+        Update: {
+          created_at?: string | null;
+          group_id?: string;
+          id?: string;
+          requester_id?: string;
+          status?: string;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'group_member_requests_group_id_fkey';
+            columns: ['group_id'];
+            isOneToOne: false;
+            referencedRelation: 'groups';
+            referencedColumns: ['id'];
+          },
+        ];
       };
       notifications: {
         Row: {
@@ -783,6 +824,10 @@ export type Database = {
     };
     Functions: {
       accept_friend_request: { Args: { request_id: string }; Returns: boolean };
+      approve_group_member_request: {
+        Args: { request_id_param: string };
+        Returns: boolean;
+      };
       can_view_event: {
         Args: {
           event_host_id_param: string;
@@ -822,6 +867,7 @@ export type Database = {
         Args: { slug_param: string };
         Returns: string;
       };
+      soft_delete_group: { Args: { group_id_param: string }; Returns: boolean };
       recompute_event_time_from_itinerary: {
         Args: { event_id_param: string };
         Returns: undefined;
@@ -839,7 +885,8 @@ export type Database = {
         | 'in_progress'
         | 'review'
         | 'blocked'
-        | 'completed';
+        | 'completed'
+        | 'archived';
       feedback_status: 'new' | 'reviewed' | 'planned' | 'done' | 'declined';
       feedback_type: 'bug' | 'feature' | 'ux' | 'other';
       notification_type: 'INVITE' | 'COMMENT' | 'REACTION' | 'REMINDER' | 'SYSTEM';
@@ -1583,6 +1630,7 @@ export const Constants = {
         'review',
         'blocked',
         'completed',
+        'archived',
       ],
       feedback_status: ['new', 'reviewed', 'planned', 'done', 'declined'],
       feedback_type: ['bug', 'feature', 'ux', 'other'],

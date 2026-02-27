@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import { execSync, spawnSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname } from "node:path";
 
 function shell(command, { allowFail = false } = {}) {
   const result = spawnSync(command, {

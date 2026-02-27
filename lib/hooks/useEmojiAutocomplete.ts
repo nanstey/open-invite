@@ -133,7 +133,7 @@ export function useEmojiAutocomplete({ value, onChange, inputRef }: UseEmojiAuto
 
   React.useEffect(() => {
     setHighlightedIndex(0)
-  }, [search])
+  }, [])
 
   React.useEffect(() => {
     return () => {
@@ -188,7 +188,7 @@ export function useEmojiAutocomplete({ value, onChange, inputRef }: UseEmojiAuto
         setIsOpen(true)
       }, 300)
     },
-    [setSearch, updatePopoverPosition],
+    [updatePopoverPosition],
   )
 
   const replaceRange = React.useCallback(
@@ -287,7 +287,7 @@ export function useEmojiAutocomplete({ value, onChange, inputRef }: UseEmojiAuto
         closePicker()
       }
     },
-    [closePicker, emojis, gridColumns, handleEmojiSelect, highlightedIndex, isOpen],
+    [closePicker, emojis, handleEmojiSelect, highlightedIndex, isOpen],
   )
 
   return {

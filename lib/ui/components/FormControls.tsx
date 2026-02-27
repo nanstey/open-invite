@@ -1,4 +1,4 @@
-import * as React from 'react'
+import type * as React from 'react'
 import { Input } from '../9ui/input'
 import { Select } from '../9ui/select'
 import { cn } from '../9ui/utils'
@@ -15,7 +15,6 @@ function sizeClasses(size: Size | undefined) {
       return 'text-sm rounded-lg px-3 py-2.5'
     case 'lg':
       return 'text-base rounded-lg px-4 py-3'
-    case 'md':
     default:
       return 'text-sm rounded-lg px-3 py-2'
   }
@@ -25,7 +24,6 @@ function variantClasses(variant: 'surface' | 'muted' | undefined) {
   switch (variant) {
     case 'muted':
       return 'bg-slate-800 border-slate-700'
-    case 'surface':
     default:
       return 'bg-slate-900 border-slate-700'
   }

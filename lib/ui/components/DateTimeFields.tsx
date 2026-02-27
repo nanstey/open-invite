@@ -12,7 +12,6 @@ function inputPadding(size: Size | undefined) {
   switch (size) {
     case 'compact':
       return 'py-2.5 px-3'
-    case 'lg':
     default:
       return 'py-3 px-4'
   }

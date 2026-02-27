@@ -195,8 +195,7 @@ export async function signInWithGoogle(redirectPath?: string) {
   const origin = window.location.origin
 
   const safeRedirect =
-    redirectPath &&
-    redirectPath.startsWith('/') &&
+    redirectPath?.startsWith('/') &&
     !redirectPath.startsWith('//') &&
     !redirectPath.includes('://')
       ? redirectPath

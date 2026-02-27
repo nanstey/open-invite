@@ -1,8 +1,8 @@
 import * as React from 'react'
 
-import type { User } from '../../../../../lib/types'
+import type { Group, User } from '../../../../../lib/types'
 import type { SocialEvent } from '../../../types'
-import { EventVisibility } from '../../../types'
+import type { EventVisibility } from '../../../types'
 import { useGuestsEditActions } from '../../../hooks/useGuestsEditActions'
 import { useGuestFriendRequests } from '../../../hooks/useGuestFriendRequests'
 import { GuestsSettingsCard } from './GuestsSettingsCard'
@@ -22,6 +22,10 @@ export function GuestsTab(props: {
   onChangeAttendees?: (nextAttendees: string[]) => void
   onChangeMaxSeats?: (next: number | undefined) => void
   onChangeVisibility?: (next: EventVisibility) => void
+  onChangeGroupIds?: (nextGroupIds: string[]) => void
+  groupOptions?: Group[]
+  groupsLoading?: boolean
+  groupError?: string
   onChangeItineraryAttendanceEnabled?: (next: boolean) => void
 }) {
   const {
@@ -37,6 +41,10 @@ export function GuestsTab(props: {
     onChangeAttendees,
     onChangeMaxSeats,
     onChangeVisibility,
+    onChangeGroupIds,
+    groupOptions,
+    groupsLoading,
+    groupError,
     onChangeItineraryAttendanceEnabled,
   } = props
   const { pendingRequestIds, sendingRequestIds, handleSendFriendRequest } = useGuestFriendRequests()
@@ -54,7 +62,7 @@ export function GuestsTab(props: {
 
   const selectedAttendeeIds = React.useMemo(() => {
     return getSelectedAttendeeIds({ event, activeFilterId })
-  }, [activeFilterId, event.itineraryAttendance])
+  }, [activeFilterId, event.itineraryAttendance, event])
 
   const orderedAttendeesList = React.useMemo(() => {
     return orderAttendees({
@@ -75,6 +83,10 @@ export function GuestsTab(props: {
           event={event}
           onChangeMaxSeats={onChangeMaxSeats}
           onChangeVisibility={onChangeVisibility}
+          onChangeGroupIds={onChangeGroupIds}
+          groupOptions={groupOptions}
+          groupsLoading={groupsLoading}
+          groupError={groupError}
           onChangeItineraryAttendanceEnabled={onChangeItineraryAttendanceEnabled}
         />
       ) : null}
