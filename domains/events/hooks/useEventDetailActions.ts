@@ -1,12 +1,21 @@
 import * as React from 'react'
-
+import {
+  addComment,
+  fetchEventById,
+  joinEvent,
+  leaveEvent,
+  toggleCommentReaction,
+} from '../../../services/eventService'
 import type { SocialEvent } from '../types'
-import { addComment, fetchEventById, joinEvent, leaveEvent, toggleCommentReaction } from '../../../services/eventService'
 
 type SetEvent = React.Dispatch<React.SetStateAction<SocialEvent | null>>
 
-function updateEventById(setEvent: SetEvent, eventId: string, updater: (event: SocialEvent) => SocialEvent) {
-  setEvent((prev) => {
+function updateEventById(
+  setEvent: SetEvent,
+  eventId: string,
+  updater: (event: SocialEvent) => SocialEvent
+) {
+  setEvent(prev => {
     if (!prev) return prev
     if (prev.id !== eventId) return prev
     return updater(prev)
@@ -24,71 +33,92 @@ export function useEventDetailActions(args: {
 }) {
   const { userId, setEvent } = args
 
-  const onUpdateEvent = React.useCallback((updated: SocialEvent) => {
-    setEvent(updated)
-  }, [setEvent])
-
-  const addSelfAsAttendee = React.useCallback((event: SocialEvent) => {
-    if (event.attendees.includes(userId)) return event
-    return { ...event, attendees: [...event.attendees, userId] }
-  }, [userId])
-
-  const removeSelfAsAttendee = React.useCallback((event: SocialEvent) => {
-    return { ...event, attendees: event.attendees.filter((id) => id !== userId) }
-  }, [userId])
-
-  const runOptimisticAttendanceChange = React.useCallback(async (args: {
-    eventId: string
-    actionLabel: 'joining' | 'leaving'
-    optimisticUpdate: (event: SocialEvent) => SocialEvent
-    rollbackUpdate: (event: SocialEvent) => SocialEvent
-    apiCall: (eventId: string) => Promise<boolean>
-  }) => {
-    const { eventId, actionLabel, optimisticUpdate, rollbackUpdate, apiCall } = args
-
-    updateEventById(setEvent, eventId, optimisticUpdate)
-
-    try {
-      const success = await apiCall(eventId)
-      if (success) {
-        await refreshEventById(setEvent, eventId)
-        return
-      }
-
-      updateEventById(setEvent, eventId, rollbackUpdate)
-    } catch (error) {
-      console.error(`Error ${actionLabel} event:`, error)
-      updateEventById(setEvent, eventId, rollbackUpdate)
-    }
-  }, [setEvent])
-
-  const updateEventComments = React.useCallback(
-    (eventId: string, updateComments: (comments: SocialEvent['comments']) => SocialEvent['comments']) => {
-      updateEventById(setEvent, eventId, (event) => ({ ...event, comments: updateComments(event.comments) }))
+  const onUpdateEvent = React.useCallback(
+    (updated: SocialEvent) => {
+      setEvent(updated)
     },
-    [setEvent],
+    [setEvent]
   )
 
-  const cloneReactions = React.useCallback((reactions: SocialEvent['comments'][number]['reactions']) => {
-    if (!reactions) return undefined
-    return Object.fromEntries(
-      Object.entries(reactions).map(([emoji, reaction]) => [
-        emoji,
-        { ...reaction, userIds: reaction.userIds ? [...reaction.userIds] : undefined },
-      ]),
-    )
-  }, [])
+  const addSelfAsAttendee = React.useCallback(
+    (event: SocialEvent) => {
+      if (event.attendees.includes(userId)) return event
+      return { ...event, attendees: [...event.attendees, userId] }
+    },
+    [userId]
+  )
+
+  const removeSelfAsAttendee = React.useCallback(
+    (event: SocialEvent) => {
+      return { ...event, attendees: event.attendees.filter(id => id !== userId) }
+    },
+    [userId]
+  )
+
+  const runOptimisticAttendanceChange = React.useCallback(
+    async (args: {
+      eventId: string
+      actionLabel: 'joining' | 'leaving'
+      optimisticUpdate: (event: SocialEvent) => SocialEvent
+      rollbackUpdate: (event: SocialEvent) => SocialEvent
+      apiCall: (eventId: string) => Promise<boolean>
+    }) => {
+      const { eventId, actionLabel, optimisticUpdate, rollbackUpdate, apiCall } = args
+
+      updateEventById(setEvent, eventId, optimisticUpdate)
+
+      try {
+        const success = await apiCall(eventId)
+        if (success) {
+          await refreshEventById(setEvent, eventId)
+          return
+        }
+
+        updateEventById(setEvent, eventId, rollbackUpdate)
+      } catch (error) {
+        console.error(`Error ${actionLabel} event:`, error)
+        updateEventById(setEvent, eventId, rollbackUpdate)
+      }
+    },
+    [setEvent]
+  )
+
+  const updateEventComments = React.useCallback(
+    (
+      eventId: string,
+      updateComments: (comments: SocialEvent['comments']) => SocialEvent['comments']
+    ) => {
+      updateEventById(setEvent, eventId, event => ({
+        ...event,
+        comments: updateComments(event.comments),
+      }))
+    },
+    [setEvent]
+  )
+
+  const cloneReactions = React.useCallback(
+    (reactions: SocialEvent['comments'][number]['reactions']) => {
+      if (!reactions) return undefined
+      return Object.fromEntries(
+        Object.entries(reactions).map(([emoji, reaction]) => [
+          emoji,
+          { ...reaction, userIds: reaction.userIds ? [...reaction.userIds] : undefined },
+        ])
+      )
+    },
+    []
+  )
 
   const applyCommentReaction = React.useCallback(
     (reactions: NonNullable<SocialEvent['comments'][number]['reactions']>, emoji: string) => {
       const next = cloneReactions(reactions) ?? {}
-      const currentEmoji = Object.keys(next).find((key) => next[key]?.userReacted)
+      const currentEmoji = Object.keys(next).find(key => next[key]?.userReacted)
 
       if (currentEmoji && next[currentEmoji]) {
         next[currentEmoji].count -= 1
         next[currentEmoji].userReacted = false
         if (next[currentEmoji].userIds) {
-          next[currentEmoji].userIds = next[currentEmoji].userIds.filter((id) => id !== userId)
+          next[currentEmoji].userIds = next[currentEmoji].userIds.filter(id => id !== userId)
         }
         if (next[currentEmoji].count <= 0) {
           delete next[currentEmoji]
@@ -110,7 +140,7 @@ export function useEventDetailActions(args: {
 
       return next
     },
-    [cloneReactions, userId],
+    [cloneReactions, userId]
   )
 
   const handleJoinEvent = React.useCallback(
@@ -123,7 +153,7 @@ export function useEventDetailActions(args: {
         apiCall: joinEvent,
       })
     },
-    [addSelfAsAttendee, removeSelfAsAttendee, runOptimisticAttendanceChange],
+    [addSelfAsAttendee, removeSelfAsAttendee, runOptimisticAttendanceChange]
   )
 
   const handleLeaveEvent = React.useCallback(
@@ -136,7 +166,7 @@ export function useEventDetailActions(args: {
         apiCall: leaveEvent,
       })
     },
-    [addSelfAsAttendee, removeSelfAsAttendee, runOptimisticAttendanceChange],
+    [addSelfAsAttendee, removeSelfAsAttendee, runOptimisticAttendanceChange]
   )
 
   const handlePostComment = React.useCallback(
@@ -149,40 +179,40 @@ export function useEventDetailActions(args: {
         timestamp: new Date().toISOString(),
       }
 
-      updateEventComments(eventId, (comments) => [...comments, optimistic])
+      updateEventComments(eventId, comments => [...comments, optimistic])
 
       try {
         const inserted = await addComment(eventId, text)
         if (!inserted) {
           // Roll back optimistic comment on failure.
-          updateEventComments(eventId, (comments) => comments.filter((c) => c.id !== optimisticId))
+          updateEventComments(eventId, comments => comments.filter(c => c.id !== optimisticId))
           return
         }
 
         // Replace optimistic comment with the real one (real id + server timestamp).
-        updateEventComments(eventId, (comments) => {
-          const withoutOptimistic = comments.filter((c) => c.id !== optimisticId)
+        updateEventComments(eventId, comments => {
+          const withoutOptimistic = comments.filter(c => c.id !== optimisticId)
           return [...withoutOptimistic, inserted]
         })
       } catch (error) {
         console.error('Error posting comment:', error)
-        updateEventComments(eventId, (comments) => comments.filter((c) => c.id !== optimisticId))
+        updateEventComments(eventId, comments => comments.filter(c => c.id !== optimisticId))
       }
     },
-    [updateEventComments, userId],
+    [updateEventComments, userId]
   )
 
   const handleToggleCommentReaction = React.useCallback(
     async (eventId: string, commentId: string, emoji: string) => {
       let previousReactions: SocialEvent['comments'][number]['reactions'] | undefined
 
-      updateEventComments(eventId, (comments) =>
-        comments.map((comment) => {
+      updateEventComments(eventId, comments =>
+        comments.map(comment => {
           if (comment.id !== commentId) return comment
           previousReactions = cloneReactions(comment.reactions)
           const updated = applyCommentReaction(comment.reactions ?? {}, emoji)
           return { ...comment, reactions: Object.keys(updated).length ? updated : undefined }
-        }),
+        })
       )
 
       try {
@@ -192,17 +222,21 @@ export function useEventDetailActions(args: {
         }
       } catch (error) {
         console.error('Error toggling comment reaction:', error)
-        updateEventComments(eventId, (comments) =>
-          comments.map((comment) =>
-            comment.id === commentId
-              ? { ...comment, reactions: previousReactions }
-              : comment,
-          ),
+        updateEventComments(eventId, comments =>
+          comments.map(comment =>
+            comment.id === commentId ? { ...comment, reactions: previousReactions } : comment
+          )
         )
       }
     },
-    [applyCommentReaction, cloneReactions, updateEventComments],
+    [applyCommentReaction, cloneReactions, updateEventComments]
   )
 
-  return { onUpdateEvent, handleJoinEvent, handleLeaveEvent, handlePostComment, handleToggleCommentReaction }
+  return {
+    onUpdateEvent,
+    handleJoinEvent,
+    handleLeaveEvent,
+    handlePostComment,
+    handleToggleCommentReaction,
+  }
 }

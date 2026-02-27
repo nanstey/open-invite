@@ -1,6 +1,6 @@
-import { supabase } from '../lib/supabase'
-import type { Database } from '../lib/database.types'
 import type { ItineraryItem } from '../domains/events/types'
+import type { Database } from '../lib/database.types'
+import { supabase } from '../lib/supabase'
 
 type ItineraryRow = Database['public']['Tables']['event_itinerary_items']['Row']
 
@@ -31,7 +31,9 @@ export async function fetchItineraryItems(eventId: string): Promise<ItineraryIte
   return (data ?? []).map(transformRow)
 }
 
-export async function createItineraryItem(input: Omit<ItineraryItem, 'id'>): Promise<ItineraryItem | null> {
+export async function createItineraryItem(
+  input: Omit<ItineraryItem, 'id'>
+): Promise<ItineraryItem | null> {
   type Insert = Database['public']['Tables']['event_itinerary_items']['Insert']
   const insert: Insert = {
     event_id: input.eventId,
@@ -42,7 +44,11 @@ export async function createItineraryItem(input: Omit<ItineraryItem, 'id'>): Pro
     description: input.description ?? null,
   }
 
-  const result = await supabase.from('event_itinerary_items').insert(insert as unknown as never).select().single()
+  const result = await supabase
+    .from('event_itinerary_items')
+    .insert(insert as unknown as never)
+    .select()
+    .single()
   const { data, error } = result as unknown as { data: ItineraryRow | null; error: any }
   if (error || !data) {
     console.error('Error creating itinerary item:', error)
@@ -53,7 +59,7 @@ export async function createItineraryItem(input: Omit<ItineraryItem, 'id'>): Pro
 
 export async function updateItineraryItem(
   itemId: string,
-  patch: Partial<Omit<ItineraryItem, 'id' | 'eventId'>>,
+  patch: Partial<Omit<ItineraryItem, 'id' | 'eventId'>>
 ): Promise<ItineraryItem | null> {
   const update: any = {}
   if (patch.title !== undefined) update.title = patch.title
@@ -62,7 +68,12 @@ export async function updateItineraryItem(
   if ('location' in patch) update.location = patch.location ?? null
   if ('description' in patch) update.description = patch.description ?? null
 
-  const result = await supabase.from('event_itinerary_items').update(update as unknown as never).eq('id', itemId).select().single()
+  const result = await supabase
+    .from('event_itinerary_items')
+    .update(update as unknown as never)
+    .eq('id', itemId)
+    .select()
+    .single()
   const { data, error } = result as unknown as { data: ItineraryRow | null; error: any }
   if (error || !data) {
     console.error('Error updating itinerary item:', error)
@@ -80,6 +91,3 @@ export async function deleteItineraryItem(itemId: string): Promise<boolean> {
   }
   return true
 }
-
-
-

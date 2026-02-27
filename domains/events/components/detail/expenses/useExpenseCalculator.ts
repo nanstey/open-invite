@@ -34,7 +34,7 @@ export type { ExpenseDetails, ExpenseSummary } from './types'
 export function computeEffectiveParticipantIds(
   expense: EventExpense,
   currentUserId: string | undefined,
-  hostId: string | undefined,
+  hostId: string | undefined
 ): string[] {
   if (!currentUserId) return expense.participantIds
 
@@ -58,7 +58,10 @@ export function computeEffectiveParticipantIds(
 /**
  * Computes per-person cost for a given expense based on effective participants.
  */
-function computePerPersonCentsForViewer(expense: EventExpense, effectiveParticipantCount: number): number {
+function computePerPersonCentsForViewer(
+  expense: EventExpense,
+  effectiveParticipantCount: number
+): number {
   if (effectiveParticipantCount === 0) return 0
 
   if (expense.splitType === 'PER_PERSON') {
@@ -76,11 +79,13 @@ function computePerPersonCentsForViewer(expense: EventExpense, effectiveParticip
 export function computeExpenseDetails(
   expense: EventExpense,
   currentUserId: string | undefined,
-  hostId: string | undefined,
+  hostId: string | undefined
 ): ExpenseDetails {
   const effectiveParticipantIds = computeEffectiveParticipantIds(expense, currentUserId, hostId)
   const isParticipant = currentUserId ? expense.participantIds.includes(currentUserId) : false
-  const isEffectiveParticipant = currentUserId ? effectiveParticipantIds.includes(currentUserId) : false
+  const isEffectiveParticipant = currentUserId
+    ? effectiveParticipantIds.includes(currentUserId)
+    : false
   const totalCents = computeTotalCents(expense)
   const perPersonCents = computePerPersonCentsForViewer(expense, effectiveParticipantIds.length)
   const isEstimate = isEstimateExpense(expense)
@@ -128,9 +133,9 @@ export function computeExpenseSummary(allDetails: ExpenseDetails[]): ExpenseSumm
 export function computeExpenseSummaryForExpenses(
   expenses: EventExpense[],
   currentUserId: string | undefined,
-  hostId: string | undefined,
+  hostId: string | undefined
 ): ExpenseSummary {
-  const details = expenses.map((expense) => computeExpenseDetails(expense, currentUserId, hostId))
+  const details = expenses.map(expense => computeExpenseDetails(expense, currentUserId, hostId))
   return computeExpenseSummary(details)
 }
 
@@ -168,12 +173,12 @@ export function useExpenseCalculator(context: ExpenseCalculatorContext): Expense
 
   // Compute all expense details once
   const allDetails = React.useMemo(() => {
-    return expenses.map((expense) => computeExpenseDetails(expense, currentUserId, hostId))
+    return expenses.map(expense => computeExpenseDetails(expense, currentUserId, hostId))
   }, [expenses, currentUserId, hostId])
 
   // Index by expense ID for fast lookup
   const detailsById = React.useMemo(() => {
-    return new Map(allDetails.map((d) => [d.expense.id, d]))
+    return new Map(allDetails.map(d => [d.expense.id, d]))
   }, [allDetails])
 
   // Compute summary
@@ -183,7 +188,7 @@ export function useExpenseCalculator(context: ExpenseCalculatorContext): Expense
 
   const getExpenseDetails = React.useCallback(
     (expenseId: string) => detailsById.get(expenseId),
-    [detailsById],
+    [detailsById]
   )
 
   const getAllExpenseDetails = React.useCallback(() => allDetails, [allDetails])
@@ -202,18 +207,18 @@ export function useExpenseCalculator(context: ExpenseCalculatorContext): Expense
       if (typeof draft === 'string') return draft
       return centsToInputValue(fallbackCents)
     },
-    [amountDrafts],
+    [amountDrafts]
   )
 
   const setDraftValue = React.useCallback((expenseId: string, value: string) => {
-    setAmountDrafts((prev) => ({
+    setAmountDrafts(prev => ({
       ...prev,
       [expenseId]: { ...(prev[expenseId] ?? {}), amount: value },
     }))
   }, [])
 
   const normalizeDraftValue = React.useCallback((expenseId: string, cents: number | undefined) => {
-    setAmountDrafts((prev) => ({
+    setAmountDrafts(prev => ({
       ...prev,
       [expenseId]: { ...(prev[expenseId] ?? {}), amount: centsToInputValue(cents) },
     }))

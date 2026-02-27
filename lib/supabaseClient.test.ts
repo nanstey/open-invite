@@ -13,10 +13,7 @@ vi.mock('./supabase', () => ({ supabase }))
 
 import { getCurrentUser, onAuthStateChange, signUp } from './supabaseClient'
 
-const userProfilesBuilder = (options: {
-  selectResult: any
-  insertResult?: any
-}) => {
+const userProfilesBuilder = (options: { selectResult: any; insertResult?: any }) => {
   const select = vi.fn(() => ({
     eq: vi.fn(() => ({
       single: vi.fn(async () => options.selectResult),
@@ -167,7 +164,10 @@ describe('supabaseClient', () => {
     supabase.from.mockImplementation((table: string) => {
       if (table === 'user_profiles') {
         return userProfilesBuilder({
-          selectResult: { data: { id: 'user-5', name: 'User Five', avatar: 'avatar' }, error: null },
+          selectResult: {
+            data: { id: 'user-5', name: 'User Five', avatar: 'avatar' },
+            error: null,
+          },
         })
       }
       throw new Error(`Unexpected table ${table}`)

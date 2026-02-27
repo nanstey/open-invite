@@ -33,9 +33,9 @@ const filterEmojis = (query: string): EmojiItem[] => {
   if (!query) return []
   const normalized = normalizeQuery(query)
 
-  return EMOJI_DATA.filter((item) => {
-    const matchesShortcode = item.shortcodes.some((shortcode) => shortcode.includes(normalized))
-    const matchesKeyword = item.keywords?.some((keyword) => keyword.includes(normalized))
+  return EMOJI_DATA.filter(item => {
+    const matchesShortcode = item.shortcodes.some(shortcode => shortcode.includes(normalized))
+    const matchesKeyword = item.keywords?.some(keyword => keyword.includes(normalized))
     return matchesShortcode || matchesKeyword
   })
 }
@@ -50,7 +50,7 @@ type CaretCoords = { left: number; top: number; height: number }
 
 const getCaretCoordinates = (
   input: HTMLInputElement | HTMLTextAreaElement,
-  position: number,
+  position: number
 ): CaretCoords => {
   const style = window.getComputedStyle(input)
   const div = document.createElement('div')
@@ -82,8 +82,9 @@ const getCaretCoordinates = (
     'MozTabSize',
   ] as const
 
-  properties.forEach((prop) => {
-    ;const styleRecord = style as unknown as Record<string, string>; (div.style as unknown as Record<string, string>)[prop] = styleRecord[prop]
+  properties.forEach(prop => {
+    const styleRecord = style as unknown as Record<string, string>
+    ;(div.style as unknown as Record<string, string>)[prop] = styleRecord[prop]
   })
 
   div.style.position = 'absolute'
@@ -100,7 +101,7 @@ const getCaretCoordinates = (
   const marker = document.createElement('span')
   marker.textContent = '\u200B' // zero-width space as cursor marker
   const afterText = document.createTextNode(input.value.slice(position) || '.')
-  
+
   div.appendChild(beforeText)
   div.appendChild(marker)
   div.appendChild(afterText)
@@ -164,7 +165,7 @@ export function useEmojiAutocomplete({ value, onChange, inputRef }: UseEmojiAuto
         top: inputOffsetTop + caret.top + caret.height + offset - input.scrollTop,
       })
     },
-    [inputRef],
+    [inputRef]
   )
 
   const closePicker = React.useCallback(() => {
@@ -188,7 +189,7 @@ export function useEmojiAutocomplete({ value, onChange, inputRef }: UseEmojiAuto
         setIsOpen(true)
       }, 300)
     },
-    [updatePopoverPosition],
+    [updatePopoverPosition]
   )
 
   const replaceRange = React.useCallback(
@@ -204,7 +205,7 @@ export function useEmojiAutocomplete({ value, onChange, inputRef }: UseEmojiAuto
         }
       })
     },
-    [inputRef, onChange],
+    [inputRef, onChange]
   )
 
   const handleEmojiSelect = React.useCallback(
@@ -215,7 +216,7 @@ export function useEmojiAutocomplete({ value, onChange, inputRef }: UseEmojiAuto
       replaceRange(value, range, item.emoji)
       closePicker()
     },
-    [closePicker, inputRef, replaceRange, value],
+    [closePicker, inputRef, replaceRange, value]
   )
 
   const handleChange = React.useCallback(
@@ -242,7 +243,7 @@ export function useEmojiAutocomplete({ value, onChange, inputRef }: UseEmojiAuto
         closePicker()
       }
     },
-    [closePicker, onChange, replaceRange, scheduleSearch],
+    [closePicker, onChange, replaceRange, scheduleSearch]
   )
 
   const handleKeyDown = React.useCallback(
@@ -251,25 +252,25 @@ export function useEmojiAutocomplete({ value, onChange, inputRef }: UseEmojiAuto
 
       if (event.key === 'ArrowRight') {
         event.preventDefault()
-        setHighlightedIndex((prev) => (prev + 1) % emojis.length)
+        setHighlightedIndex(prev => (prev + 1) % emojis.length)
         return
       }
 
       if (event.key === 'ArrowLeft') {
         event.preventDefault()
-        setHighlightedIndex((prev) => (prev - 1 + emojis.length) % emojis.length)
+        setHighlightedIndex(prev => (prev - 1 + emojis.length) % emojis.length)
         return
       }
 
       if (event.key === 'ArrowDown') {
         event.preventDefault()
-        setHighlightedIndex((prev) => (prev + gridColumns) % emojis.length)
+        setHighlightedIndex(prev => (prev + gridColumns) % emojis.length)
         return
       }
 
       if (event.key === 'ArrowUp') {
         event.preventDefault()
-        setHighlightedIndex((prev) => (prev - gridColumns + emojis.length) % emojis.length)
+        setHighlightedIndex(prev => (prev - gridColumns + emojis.length) % emojis.length)
         return
       }
 
@@ -287,7 +288,7 @@ export function useEmojiAutocomplete({ value, onChange, inputRef }: UseEmojiAuto
         closePicker()
       }
     },
-    [closePicker, emojis, handleEmojiSelect, highlightedIndex, isOpen],
+    [closePicker, emojis, handleEmojiSelect, highlightedIndex, isOpen]
   )
 
   return {

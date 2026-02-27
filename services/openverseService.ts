@@ -30,7 +30,7 @@ type OpenverseApiResponse = {
 
 export async function searchOpenverseImages(
   query: string,
-  opts?: { pageSize?: number; maxPages?: number },
+  opts?: { pageSize?: number; maxPages?: number }
 ): Promise<OpenverseImage[]> {
   const trimmed = query.trim()
   if (!trimmed) return []
@@ -41,7 +41,7 @@ export async function searchOpenverseImages(
 
   const mapImages = (results: OpenverseApiImage[]): OpenverseImage[] => {
     return results
-      .filter((r) => {
+      .filter(r => {
         const source = (r.source ?? r.provider ?? '').toString().toLowerCase()
         return source !== 'flickr'
       })
@@ -76,7 +76,9 @@ export async function searchOpenverseImages(
 
     if (!resp.ok) {
       const text = await resp.text().catch(() => '')
-      throw new Error(`Openverse request failed: ${resp.status} ${resp.statusText}${text ? ` - ${text}` : ''}`)
+      throw new Error(
+        `Openverse request failed: ${resp.status} ${resp.statusText}${text ? ` - ${text}` : ''}`
+      )
     }
 
     return (await resp.json()) as OpenverseApiResponse
@@ -97,5 +99,3 @@ export async function searchOpenverseImages(
 
   return collected.slice(0, desiredCount)
 }
-
-

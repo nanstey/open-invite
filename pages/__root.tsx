@@ -1,22 +1,21 @@
-import React from 'react'
 import {
-  Outlet,
   createRootRouteWithContext,
+  Outlet,
   useNavigate,
   useRouterState,
 } from '@tanstack/react-router'
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools'
-
-import type { RouterContext } from '../routerContext'
+import React from 'react'
+import { DesktopSidebar } from '../domains/app/components/DesktopSidebar'
+import { MobileBottomNav } from '../domains/app/components/MobileBottomNav'
+import { MobileTopHeader } from '../domains/app/components/MobileTopHeader'
+import { HeaderTabsProvider, useHeaderTabs } from '../domains/app/HeaderTabsContext'
+import { getActiveSection, getPageTitle } from '../domains/app/routing'
 import { useAuth } from '../domains/auth/AuthProvider'
+import { coerceEventsView, type EventsView } from '../domains/events/hooks/useEventNavigation'
 import { ComingSoonPopover, useComingSoonPopover } from '../lib/ui/components/ComingSoonPopover'
 import { TabGroup } from '../lib/ui/components/TabGroup'
-import { getActiveSection, getPageTitle } from '../domains/app/routing'
-import { DesktopSidebar } from '../domains/app/components/DesktopSidebar'
-import { MobileTopHeader } from '../domains/app/components/MobileTopHeader'
-import { MobileBottomNav } from '../domains/app/components/MobileBottomNav'
-import { HeaderTabsProvider, useHeaderTabs } from '../domains/app/HeaderTabsContext'
-import { coerceEventsView, type EventsView } from '../domains/events/hooks/useEventNavigation'
+import type { RouterContext } from '../routerContext'
 
 function AppShellLayout() {
   const { user, loading } = useAuth()
@@ -24,7 +23,7 @@ function AppShellLayout() {
   const comingSoon = useComingSoonPopover()
   const headerTabs = useHeaderTabs()
   const { pathname, search } = useRouterState({
-    select: (s) => ({ pathname: s.location.pathname, search: s.location.search }),
+    select: s => ({ pathname: s.location.pathname, search: s.location.search }),
   })
 
   const activeSection = getActiveSection(pathname)
@@ -32,19 +31,26 @@ function AppShellLayout() {
   const isEventsIndex = pathname === '/events'
   const isEventsChildRoute = pathname.startsWith('/events/') && !isEventsIndex
   const hideShellHeaderForRoute =
-    (activeSection === 'EVENTS' && isEventsChildRoute) ||
-    activeSection === 'PROFILE'
+    (activeSection === 'EVENTS' && isEventsChildRoute) || activeSection === 'PROFILE'
   const hideMobileBottomNavForRoute = activeSection === 'EVENTS' && isEventsChildRoute
   const constrainHeaderToContent = activeSection === 'FRIENDS'
 
-  const eventsView = React.useMemo<EventsView>(() => coerceEventsView((search as any)?.view), [search])
+  const eventsView = React.useMemo<EventsView>(
+    () => coerceEventsView((search as any)?.view),
+    [search]
+  )
 
   React.useEffect(() => {
     if (!loading && !user && activeSection !== 'PUBLIC') {
       if (pathname.startsWith('/events/') && pathname !== '/events/new') {
         const eventId = pathname.slice('/events/'.length).split('/')[0]
         if (eventId) {
-          navigate({ to: '/e/$slug', params: { slug: eventId }, search: { tab: undefined }, replace: true })
+          navigate({
+            to: '/e/$slug',
+            params: { slug: eventId },
+            search: { tab: undefined },
+            replace: true,
+          })
           return
         }
       }
@@ -88,7 +94,9 @@ function AppShellLayout() {
         {/* Desktop Header */}
         {!hideShellHeaderForRoute && (
           <header className="hidden md:flex flex-col gap-4 p-4 md:p-6 pb-2 shrink-0 border-b border-transparent z-10">
-            <div className={`flex items-center justify-between w-full ${constrainHeaderToContent ? 'max-w-6xl mx-auto' : ''}`}>
+            <div
+              className={`flex items-center justify-between w-full ${constrainHeaderToContent ? 'max-w-6xl mx-auto' : ''}`}
+            >
               <h1 className="text-2xl font-bold text-white whitespace-nowrap">{pageTitle}</h1>
               <div className="block">
                 {headerTabs && (
@@ -125,18 +133,23 @@ function AppShellLayout() {
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   component: function RootComponent() {
-    const { pathname } = useRouterState({ select: (s) => ({ pathname: s.location.pathname }) })
+    const { pathname } = useRouterState({ select: s => ({ pathname: s.location.pathname }) })
 
     const activeSection = getActiveSection(pathname)
 
     return (
       <>
-        {activeSection === 'PUBLIC' ? <Outlet /> : (
+        {activeSection === 'PUBLIC' ? (
+          <Outlet />
+        ) : (
           <HeaderTabsProvider>
             <AppShellLayout />
           </HeaderTabsProvider>
         )}
-        {import.meta.env.VITE_SHOW_DEVTOOLS === 'true' || (import.meta.env.VITE_SHOW_DEVTOOLS === undefined && import.meta.env.DEV) ? <TanStackRouterDevtools position="bottom-right" /> : null}
+        {import.meta.env.VITE_SHOW_DEVTOOLS === 'true' ||
+        (import.meta.env.VITE_SHOW_DEVTOOLS === undefined && import.meta.env.DEV) ? (
+          <TanStackRouterDevtools position="bottom-right" />
+        ) : null}
       </>
     )
   },

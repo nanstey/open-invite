@@ -71,9 +71,7 @@ describe('reactionService', () => {
         reactions: () => ({
           select: () => ({
             eq: async () => ({
-              data: [
-                { id: 'r1', event_id: 'event-1', user_id: 'user-1', emoji: '🎉' },
-              ],
+              data: [{ id: 'r1', event_id: 'event-1', user_id: 'user-1', emoji: '🎉' }],
               error: null,
             }),
           }),
@@ -91,9 +89,7 @@ describe('reactionService', () => {
         reactions: () => ({
           select: () => ({
             eq: async () => ({
-              data: [
-                { id: 'r1', event_id: 'event-1', user_id: 'user-2', emoji: '🎉' },
-              ],
+              data: [{ id: 'r1', event_id: 'event-1', user_id: 'user-2', emoji: '🎉' }],
               error: null,
             }),
           }),
@@ -111,9 +107,7 @@ describe('reactionService', () => {
         reactions: () => ({
           select: () => ({
             eq: async () => ({
-              data: [
-                { id: 'r1', event_id: 'event-1', user_id: 'user-2', emoji: '🎉' },
-              ],
+              data: [{ id: 'r1', event_id: 'event-1', user_id: 'user-2', emoji: '🎉' }],
               error: null,
             }),
           }),

@@ -1,5 +1,5 @@
-import { supabase } from '../lib/supabase';
-import type { Reaction } from '../domains/events/types';
+import type { Reaction } from '../domains/events/types'
+import { supabase } from '../lib/supabase'
 
 /**
  * Fetch reactions for an event
@@ -8,17 +8,19 @@ export async function fetchReactions(eventId: string): Promise<Record<string, Re
   const { data: reactions, error } = await supabase
     .from('reactions')
     .select('*')
-    .eq('event_id', eventId);
+    .eq('event_id', eventId)
 
   if (error || !reactions) {
-    console.error('Error fetching reactions:', error);
-    return {};
+    console.error('Error fetching reactions:', error)
+    return {}
   }
 
-  const { data: { user } } = await supabase.auth.getUser();
-  const currentUserId = user?.id;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  const currentUserId = user?.id
 
-  const reactionsMap: Record<string, Reaction> = {};
+  const reactionsMap: Record<string, Reaction> = {}
 
   reactions.forEach(reaction => {
     if (!reactionsMap[reaction.emoji]) {
@@ -26,24 +28,26 @@ export async function fetchReactions(eventId: string): Promise<Record<string, Re
         emoji: reaction.emoji,
         count: 0,
         userReacted: false,
-      };
+      }
     }
-    reactionsMap[reaction.emoji].count++;
+    reactionsMap[reaction.emoji].count++
     if (currentUserId && reaction.user_id === currentUserId) {
-      reactionsMap[reaction.emoji].userReacted = true;
+      reactionsMap[reaction.emoji].userReacted = true
     }
-  });
+  })
 
-  return reactionsMap;
+  return reactionsMap
 }
 
 /**
  * Toggle a reaction on an event
  */
 export async function toggleReaction(eventId: string, emoji: string): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) {
-    return false;
+    return false
   }
 
   // Check if reaction exists
@@ -53,25 +57,19 @@ export async function toggleReaction(eventId: string, emoji: string): Promise<bo
     .eq('event_id', eventId)
     .eq('user_id', user.id)
     .eq('emoji', emoji)
-    .single();
+    .single()
 
   if (existing) {
     // Remove reaction
-    const { error } = await supabase
-      .from('reactions')
-      .delete()
-      .eq('id', existing.id);
-    return !error;
+    const { error } = await supabase.from('reactions').delete().eq('id', existing.id)
+    return !error
   } else {
     // Add reaction
-    const { error } = await supabase
-      .from('reactions')
-      .insert({
-        event_id: eventId,
-        user_id: user.id,
-        emoji,
-      });
-    return !error;
+    const { error } = await supabase.from('reactions').insert({
+      event_id: eventId,
+      user_id: user.id,
+      emoji,
+    })
+    return !error
   }
 }
-

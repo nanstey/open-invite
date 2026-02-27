@@ -1,6 +1,6 @@
-import type { RefObject } from 'react';
-import { useClickOutside } from '../../../lib/hooks/useClickOutside';
-import type { Group } from '../../../lib/types';
+import type { RefObject } from 'react'
+import { useClickOutside } from '../../../lib/hooks/useClickOutside'
+import type { Group } from '../../../lib/types'
 import {
   Combobox,
   ComboboxChip,
@@ -11,33 +11,33 @@ import {
   ComboboxInput,
   ComboboxItem,
   ComboboxList,
-} from '../../../lib/ui/9ui/combobox';
-import { UserAvatar } from '../../../lib/ui/components/UserAvatar';
-import type { GroupMember } from '../../../services/groupService';
-import { GroupMemberActionsMenu } from './GroupMemberActionsMenu';
+} from '../../../lib/ui/9ui/combobox'
+import { UserAvatar } from '../../../lib/ui/components/UserAvatar'
+import type { GroupMember } from '../../../services/groupService'
+import { GroupMemberActionsMenu } from './GroupMemberActionsMenu'
 
 type GroupMembersTabProps = {
-  selectedGroup: Group;
-  members: GroupMember[];
-  friends: { id: string; name: string; avatar: string }[];
-  canAddMembers: boolean;
-  isAdmin: boolean;
-  userId: string | undefined;
-  loadingMembers: boolean;
-  addingMembers: boolean;
-  selectedFriendIds: string[];
-  memberPickerValue: { id: string; name: string; avatar: string } | null;
-  membersMessage: string | null;
-  removingMemberId: string | null;
-  openMemberMenuId: string | null;
-  onAddFriend: (friend: { id: string; name: string; avatar: string } | null) => void;
-  onRemoveSelectedFriend: (friendId: string) => void;
-  onHandleAddMembers: () => void;
-  onOpenRemoveMemberDialog: (member: GroupMember) => void;
-  onOpenMemberMenu: (memberId: string) => void;
-  onCloseMemberMenu: () => void;
-  memberMenuRef: RefObject<HTMLDivElement | null>;
-};
+  selectedGroup: Group
+  members: GroupMember[]
+  friends: { id: string; name: string; avatar: string }[]
+  canAddMembers: boolean
+  isAdmin: boolean
+  userId: string | undefined
+  loadingMembers: boolean
+  addingMembers: boolean
+  selectedFriendIds: string[]
+  memberPickerValue: { id: string; name: string; avatar: string } | null
+  membersMessage: string | null
+  removingMemberId: string | null
+  openMemberMenuId: string | null
+  onAddFriend: (friend: { id: string; name: string; avatar: string } | null) => void
+  onRemoveSelectedFriend: (friendId: string) => void
+  onHandleAddMembers: () => void
+  onOpenRemoveMemberDialog: (member: GroupMember) => void
+  onOpenMemberMenu: (memberId: string) => void
+  onCloseMemberMenu: () => void
+  memberMenuRef: RefObject<HTMLDivElement | null>
+}
 
 export function GroupMembersTab({
   selectedGroup,
@@ -59,16 +59,16 @@ export function GroupMembersTab({
   onCloseMemberMenu,
   memberMenuRef,
 }: GroupMembersTabProps) {
-  const memberIds = new Set(members.map(member => member.id));
-  const addableFriends = friends.filter(friend => !memberIds.has(friend.id));
-  const friendsById = new Map(friends.map(friend => [friend.id, friend] as const));
+  const memberIds = new Set(members.map(member => member.id))
+  const addableFriends = friends.filter(friend => !memberIds.has(friend.id))
+  const friendsById = new Map(friends.map(friend => [friend.id, friend] as const))
   const selectedFriends = selectedFriendIds
     .map(friendId => friendsById.get(friendId))
-    .filter((friend): friend is { id: string; name: string; avatar: string } => !!friend);
-  const selectedIds = new Set(selectedFriendIds);
-  const selectableFriends = addableFriends.filter(friend => !selectedIds.has(friend.id));
+    .filter((friend): friend is { id: string; name: string; avatar: string } => !!friend)
+  const selectedIds = new Set(selectedFriendIds)
+  const selectableFriends = addableFriends.filter(friend => !selectedIds.has(friend.id))
 
-  useClickOutside(memberMenuRef, onCloseMemberMenu, openMemberMenuId !== null);
+  useClickOutside(memberMenuRef, onCloseMemberMenu, openMemberMenuId !== null)
 
   return (
     <div className="space-y-4">
@@ -95,8 +95,8 @@ export function GroupMembersTab({
                         <span>{friend.name}</span>
                         <ComboboxChipRemove
                           onClick={event => {
-                            event.stopPropagation();
-                            onRemoveSelectedFriend(friend.id);
+                            event.stopPropagation()
+                            onRemoveSelectedFriend(friend.id)
                           }}
                           aria-label={`Remove ${friend.name}`}
                         />
@@ -152,11 +152,11 @@ export function GroupMembersTab({
       ) : (
         <div className="space-y-3">
           {members.map(member => {
-            const isCreatorRow = member.id === selectedGroup.createdBy;
-            const isSelfRow = member.id === selectedGroup.createdBy;
-            const memberRole = isCreatorRow ? 'OWNER' : member.role === 'ADMIN' ? 'ADMIN' : null;
-            const canRemoveMember = !isCreatorRow && !isSelfRow;
-            const isRemovingThisMember = removingMemberId === member.id;
+            const isCreatorRow = member.id === selectedGroup.createdBy
+            const isSelfRow = member.id === selectedGroup.createdBy
+            const memberRole = isCreatorRow ? 'OWNER' : member.role === 'ADMIN' ? 'ADMIN' : null
+            const canRemoveMember = !isCreatorRow && !isSelfRow
+            const isRemovingThisMember = removingMemberId === member.id
 
             return (
               <div
@@ -189,10 +189,10 @@ export function GroupMembersTab({
                   ) : null}
                 </div>
               </div>
-            );
+            )
           })}
         </div>
       )}
     </div>
-  );
+  )
 }

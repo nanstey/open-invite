@@ -1,4 +1,4 @@
-import { RouterProvider, createRouter } from '@tanstack/react-router'
+import { createRouter, RouterProvider } from '@tanstack/react-router'
 
 import type { AuthContextType } from './domains/auth/AuthProvider'
 import { routeTree } from './routeTree.gen'
@@ -19,5 +19,3 @@ declare module '@tanstack/react-router' {
 export function AppRouterProvider(props: { auth: AuthContextType }) {
   return <RouterProvider router={router} context={{ auth: props.auth }} />
 }
-
-

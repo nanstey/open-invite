@@ -10,10 +10,13 @@ export function useItineraryGeocoding(args: {
 }) {
   const { enabled, uniqueLocations, eventLocation, eventCoordinates } = args
 
-  const [geoByLocation, setGeoByLocation] = React.useState<Record<string, { lat: number; lng: number }>>({})
+  const [geoByLocation, setGeoByLocation] = React.useState<
+    Record<string, { lat: number; lng: number }>
+  >({})
   const [loading, setLoading] = React.useState(false)
 
-  const hasCoordinates = typeof eventCoordinates?.lat === 'number' && typeof eventCoordinates?.lng === 'number'
+  const hasCoordinates =
+    typeof eventCoordinates?.lat === 'number' && typeof eventCoordinates?.lng === 'number'
 
   React.useEffect(() => {
     if (!enabled) {
@@ -61,9 +64,15 @@ export function useItineraryGeocoding(args: {
       cancelled = true
       controller.abort()
     }
-  }, [enabled, uniqueLocations, eventLocation, eventCoordinates?.lat, eventCoordinates?.lng, hasCoordinates, eventCoordinates])
+  }, [
+    enabled,
+    uniqueLocations,
+    eventLocation,
+    eventCoordinates?.lat,
+    eventCoordinates?.lng,
+    hasCoordinates,
+    eventCoordinates,
+  ])
 
   return { geoByLocation, loading }
 }
-
-

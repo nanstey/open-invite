@@ -1,49 +1,59 @@
-import { supabase } from '../lib/supabase';
-import type { SocialEvent, Comment, Reaction, EventVisibility, LocationData, ItineraryTimeDisplay } from '../domains/events/types';
-import type { Database } from '../lib/database.types';
-import { fetchItineraryItems } from './itineraryService'
-import { fetchEventExpenses } from './expenseService'
-import { fetchEventItineraryAttendance, deleteItineraryAttendance } from './itineraryAttendanceService'
 import { isUuid } from '../domains/events/components/detail/route/routing'
+import type {
+  Comment,
+  EventVisibility,
+  ItineraryTimeDisplay,
+  LocationData,
+  Reaction,
+  SocialEvent,
+} from '../domains/events/types'
+import type { Database } from '../lib/database.types'
+import { supabase } from '../lib/supabase'
+import { fetchEventExpenses } from './expenseService'
+import {
+  deleteItineraryAttendance,
+  fetchEventItineraryAttendance,
+} from './itineraryAttendanceService'
+import { fetchItineraryItems } from './itineraryService'
 
-type EventRow = Database['public']['Tables']['events']['Row'];
-type EventAttendeeRow = Database['public']['Tables']['event_attendees']['Row'];
-type CommentRow = Database['public']['Tables']['comments']['Row'];
-type CommentReactionRow = Database['public']['Tables']['comment_reactions']['Row'];
-type ReactionRow = Database['public']['Tables']['reactions']['Row'];
-type EventGroupRow = Database['public']['Tables']['event_groups']['Row'];
+type EventRow = Database['public']['Tables']['events']['Row']
+type EventAttendeeRow = Database['public']['Tables']['event_attendees']['Row']
+type CommentRow = Database['public']['Tables']['comments']['Row']
+type CommentReactionRow = Database['public']['Tables']['comment_reactions']['Row']
+type ReactionRow = Database['public']['Tables']['reactions']['Row']
+type EventGroupRow = Database['public']['Tables']['event_groups']['Row']
 
 function isNoRowsError(error: any): boolean {
-  return error?.code === 'PGRST116' || error?.message?.includes('No rows');
+  return error?.code === 'PGRST116' || error?.message?.includes('No rows')
 }
 
 async function markEventViewedById(eventId: string): Promise<boolean> {
   try {
-    const result = await (supabase as any).rpc('mark_event_viewed', { event_id_param: eventId });
-    const { data, error } = result as { data: boolean | null; error: any };
+    const result = await (supabase as any).rpc('mark_event_viewed', { event_id_param: eventId })
+    const { data, error } = result as { data: boolean | null; error: any }
     if (error) {
-      console.error('Error marking event viewed by id:', error);
-      return false;
+      console.error('Error marking event viewed by id:', error)
+      return false
     }
-    return !!data;
+    return !!data
   } catch (e) {
-    console.error('Error marking event viewed by id (exception):', e);
-    return false;
+    console.error('Error marking event viewed by id (exception):', e)
+    return false
   }
 }
 
 async function markEventViewedBySlug(slug: string): Promise<string | null> {
   try {
-    const result = await (supabase as any).rpc('mark_event_viewed_by_slug', { slug_param: slug });
-    const { data, error } = result as { data: string | null; error: any };
+    const result = await (supabase as any).rpc('mark_event_viewed_by_slug', { slug_param: slug })
+    const { data, error } = result as { data: string | null; error: any }
     if (error) {
-      console.error('Error marking event viewed by slug:', error);
-      return null;
+      console.error('Error marking event viewed by slug:', error)
+      return null
     }
-    return data ?? null;
+    return data ?? null
   } catch (e) {
-    console.error('Error marking event viewed by slug (exception):', e);
-    return null;
+    console.error('Error marking event viewed by slug (exception):', e)
+    return null
   }
 }
 
@@ -52,15 +62,17 @@ async function markEventViewedBySlug(slug: string): Promise<string | null> {
  * Safe to call repeatedly (idempotent).
  */
 export async function markEventViewedFromRouteParam(slugOrId: string): Promise<void> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return
 
   if (isUuid(slugOrId)) {
-    await markEventViewedById(slugOrId);
-    return;
+    await markEventViewedById(slugOrId)
+    return
   }
 
-  await markEventViewedBySlug(slugOrId);
+  await markEventViewedBySlug(slugOrId)
 }
 
 /**
@@ -74,7 +86,7 @@ function transformEventRow(
   groupIds: string[],
   itineraryItems?: SocialEvent['itineraryItems'],
   expenses?: SocialEvent['expenses'],
-  itineraryAttendance?: SocialEvent['itineraryAttendance'],
+  itineraryAttendance?: SocialEvent['itineraryAttendance']
 ): SocialEvent {
   return {
     id: row.id,
@@ -105,7 +117,7 @@ function transformEventRow(
     itineraryItems,
     itineraryAttendance,
     expenses,
-  };
+  }
 }
 
 /**
@@ -115,107 +127,111 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
   const { data: eventsData, error } = await supabase
     .from('events')
     .select('*')
-    .order('start_time', { ascending: true });
+    .order('start_time', { ascending: true })
 
   if (error) {
-    console.error('Error fetching events:', error);
-    return [];
+    console.error('Error fetching events:', error)
+    return []
   }
 
-  const events = (eventsData || []) as EventRow[];
+  const events = (eventsData || []) as EventRow[]
 
   if (events.length === 0) {
-    return [];
+    return []
   }
 
   // Fetch attendees, comments, reactions, and event groups for all events
-  const eventIds = events.map(e => e.id);
-  
+  const eventIds = events.map(e => e.id)
+
   const [attendeesResult, commentsResult, reactionsResult, eventGroupsResult] = await Promise.all([
     supabase.from('event_attendees').select('*').in('event_id', eventIds),
-    supabase.from('comments').select('*').in('event_id', eventIds).order('timestamp', { ascending: true }),
+    supabase
+      .from('comments')
+      .select('*')
+      .in('event_id', eventIds)
+      .order('timestamp', { ascending: true }),
     supabase.from('reactions').select('*').in('event_id', eventIds),
     supabase.from('event_groups').select('*').in('event_id', eventIds),
-  ]);
+  ])
 
-  const attendeesData = attendeesResult.data as EventAttendeeRow[] | null;
-  const commentsData = commentsResult.data as CommentRow[] | null;
-  const reactionsData = reactionsResult.data as ReactionRow[] | null;
-  const eventGroupsData = eventGroupsResult.data as EventGroupRow[] | null;
+  const attendeesData = attendeesResult.data as EventAttendeeRow[] | null
+  const commentsData = commentsResult.data as CommentRow[] | null
+  const reactionsData = reactionsResult.data as ReactionRow[] | null
+  const eventGroupsData = eventGroupsResult.data as EventGroupRow[] | null
 
-  const attendeesMap = new Map<string, string[]>();
-  const commentsMap = new Map<string, Comment[]>();
-  const reactionsMap = new Map<string, Map<string, Reaction>>();
-  const groupIdsMap = new Map<string, string[]>();
-  const commentReactionsMap = new Map<string, Map<string, Reaction>>();
+  const attendeesMap = new Map<string, string[]>()
+  const commentsMap = new Map<string, Comment[]>()
+  const reactionsMap = new Map<string, Map<string, Reaction>>()
+  const groupIdsMap = new Map<string, string[]>()
+  const commentReactionsMap = new Map<string, Map<string, Reaction>>()
 
   // Process attendees
   if (attendeesData) {
     attendeesData.forEach(att => {
       if (!attendeesMap.has(att.event_id)) {
-        attendeesMap.set(att.event_id, []);
+        attendeesMap.set(att.event_id, [])
       }
-      attendeesMap.get(att.event_id)?.push(att.user_id);
-    });
+      attendeesMap.get(att.event_id)?.push(att.user_id)
+    })
   }
 
   // Process event groups
   if (eventGroupsData) {
     eventGroupsData.forEach(eg => {
       if (!groupIdsMap.has(eg.event_id)) {
-        groupIdsMap.set(eg.event_id, []);
+        groupIdsMap.set(eg.event_id, [])
       }
-      groupIdsMap.get(eg.event_id)?.push(eg.group_id);
-    });
+      groupIdsMap.get(eg.event_id)?.push(eg.group_id)
+    })
   }
 
   // Process comments
-  const commentIds: string[] = [];
+  const commentIds: string[] = []
   if (commentsData) {
     commentsData.forEach(comment => {
-      commentIds.push(comment.id);
+      commentIds.push(comment.id)
       if (!commentsMap.has(comment.event_id)) {
-        commentsMap.set(comment.event_id, []);
+        commentsMap.set(comment.event_id, [])
       }
       commentsMap.get(comment.event_id)?.push({
         id: comment.id,
         userId: comment.user_id,
         text: comment.text,
         timestamp: comment.timestamp ?? '',
-      });
-    });
+      })
+    })
   }
 
   if (commentIds.length > 0) {
     const { data: commentReactionsData } = await supabase
       .from('comment_reactions')
       .select('*')
-      .in('comment_id', commentIds);
+      .in('comment_id', commentIds)
 
-    const commentReactions = commentReactionsData as CommentReactionRow[] | null;
+    const commentReactions = commentReactionsData as CommentReactionRow[] | null
     if (commentReactions) {
-      commentReactions.forEach((reaction) => {
+      commentReactions.forEach(reaction => {
         if (!commentReactionsMap.has(reaction.comment_id)) {
-          commentReactionsMap.set(reaction.comment_id, new Map());
+          commentReactionsMap.set(reaction.comment_id, new Map())
         }
-        const reactions = commentReactionsMap.get(reaction.comment_id)!;
+        const reactions = commentReactionsMap.get(reaction.comment_id)!
         if (!reactions.has(reaction.emoji)) {
           reactions.set(reaction.emoji, {
             emoji: reaction.emoji,
             count: 0,
             userReacted: false,
             userIds: [],
-          });
+          })
         }
-        const current = reactions.get(reaction.emoji)!;
-        current.count++;
+        const current = reactions.get(reaction.emoji)!
+        current.count++
         if (current.userIds && !current.userIds.includes(reaction.user_id)) {
-          current.userIds.push(reaction.user_id);
+          current.userIds.push(reaction.user_id)
         }
         if (currentUserId && reaction.user_id === currentUserId) {
-          current.userReacted = true;
+          current.userReacted = true
         }
-      });
+      })
     }
   }
 
@@ -223,47 +239,47 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
   if (reactionsData) {
     reactionsData.forEach(reaction => {
       if (!reactionsMap.has(reaction.event_id)) {
-        reactionsMap.set(reaction.event_id, new Map());
+        reactionsMap.set(reaction.event_id, new Map())
       }
-      const eventReactions = reactionsMap.get(reaction.event_id)!;
-      
+      const eventReactions = reactionsMap.get(reaction.event_id)!
+
       if (!eventReactions.has(reaction.emoji)) {
         eventReactions.set(reaction.emoji, {
           emoji: reaction.emoji,
           count: 0,
           userReacted: false,
-        });
+        })
       }
-      
-      const r = eventReactions.get(reaction.emoji)!;
-      r.count++;
+
+      const r = eventReactions.get(reaction.emoji)!
+      r.count++
       if (currentUserId && reaction.user_id === currentUserId) {
-        r.userReacted = true;
+        r.userReacted = true
       }
-    });
+    })
   }
 
   // Transform events
   return events.map((event: EventRow) => {
-    const attendees = attendeesMap.get(event.id) || [];
-    const comments = (commentsMap.get(event.id) || []).map((comment) => {
-      const reactionsRecord: Record<string, Reaction> = {};
+    const attendees = attendeesMap.get(event.id) || []
+    const comments = (commentsMap.get(event.id) || []).map(comment => {
+      const reactionsRecord: Record<string, Reaction> = {}
       commentReactionsMap.get(comment.id)?.forEach((reaction, emoji) => {
-        reactionsRecord[emoji] = reaction;
-      });
+        reactionsRecord[emoji] = reaction
+      })
       return {
         ...comment,
         reactions: Object.keys(reactionsRecord).length ? reactionsRecord : undefined,
-      };
-    });
-    const groupIds = groupIdsMap.get(event.id) || [];
-    const reactionsObj: Record<string, Reaction> = {};
+      }
+    })
+    const groupIds = groupIdsMap.get(event.id) || []
+    const reactionsObj: Record<string, Reaction> = {}
     reactionsMap.get(event.id)?.forEach((reaction, emoji) => {
-      reactionsObj[emoji] = reaction;
-    });
+      reactionsObj[emoji] = reaction
+    })
 
-    return transformEventRow(event, attendees, comments, reactionsObj, groupIds);
-  });
+    return transformEventRow(event, attendees, comments, reactionsObj, groupIds)
+  })
 }
 
 /**
@@ -271,105 +287,126 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
  */
 export async function fetchEventById(eventId: string): Promise<SocialEvent | null> {
   const fetchOnce = async (): Promise<EventRow | null> => {
-    const { data: event, error } = await supabase.from('events').select('*').eq('id', eventId).single();
+    const { data: event, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('id', eventId)
+      .single()
     if (error || !event) {
-      console.error('Error fetching event:', error);
-      return null;
+      console.error('Error fetching event:', error)
+      return null
     }
-    return event as EventRow;
-  };
+    return event as EventRow
+  }
 
-  let eventRow = await fetchOnce();
+  let eventRow = await fetchOnce()
   if (!eventRow) {
     // If authenticated, treat "trying to view by id" as accepting/invited-by-link and retry once.
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (user) {
-      const marked = await markEventViewedById(eventId);
+      const marked = await markEventViewedById(eventId)
       if (marked) {
-        eventRow = await fetchOnce();
+        eventRow = await fetchOnce()
       }
     }
   }
 
-  if (!eventRow) return null;
+  if (!eventRow) return null
 
   // Fetch related data
-  const [attendeesResult, commentsResult, reactionsResult, eventGroupsResult, itineraryItems, expenses, itineraryAttendance] = await Promise.all([
+  const [
+    attendeesResult,
+    commentsResult,
+    reactionsResult,
+    eventGroupsResult,
+    itineraryItems,
+    expenses,
+    itineraryAttendance,
+  ] = await Promise.all([
     supabase.from('event_attendees').select('*').eq('event_id', eventId),
-    supabase.from('comments').select('*').eq('event_id', eventId).order('timestamp', { ascending: true }),
+    supabase
+      .from('comments')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('timestamp', { ascending: true }),
     supabase.from('reactions').select('*').eq('event_id', eventId),
     supabase.from('event_groups').select('*').eq('event_id', eventId),
     fetchItineraryItems(eventId),
     fetchEventExpenses(eventId),
     fetchEventItineraryAttendance(eventId),
-  ]);
+  ])
 
-  const attendeesData = attendeesResult.data as EventAttendeeRow[] | null;
-  const commentsData = commentsResult.data as CommentRow[] | null;
-  const reactionsData = reactionsResult.data as ReactionRow[] | null;
-  const eventGroupsData = eventGroupsResult.data as EventGroupRow[] | null;
+  const attendeesData = attendeesResult.data as EventAttendeeRow[] | null
+  const commentsData = commentsResult.data as CommentRow[] | null
+  const reactionsData = reactionsResult.data as ReactionRow[] | null
+  const eventGroupsData = eventGroupsResult.data as EventGroupRow[] | null
 
-  const attendees = attendeesData?.map(a => a.user_id) || [];
-  const comments: Comment[] = commentsData?.map(c => ({
-    id: c.id,
-    userId: c.user_id,
-    text: c.text,
-    timestamp: c.timestamp ?? '',
-  })) || [];
-  const groupIds = eventGroupsData?.map(eg => eg.group_id) || [];
+  const attendees = attendeesData?.map(a => a.user_id) || []
+  const comments: Comment[] =
+    commentsData?.map(c => ({
+      id: c.id,
+      userId: c.user_id,
+      text: c.text,
+      timestamp: c.timestamp ?? '',
+    })) || []
+  const groupIds = eventGroupsData?.map(eg => eg.group_id) || []
 
-  const { data: { user } } = await supabase.auth.getUser();
-  const currentUserId = user?.id;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  const currentUserId = user?.id
 
-  const commentReactionsMap = new Map<string, Map<string, Reaction>>();
-  const commentIds = comments.map((comment) => comment.id);
+  const commentReactionsMap = new Map<string, Map<string, Reaction>>()
+  const commentIds = comments.map(comment => comment.id)
   if (commentIds.length > 0) {
     const { data: commentReactionsData } = await supabase
       .from('comment_reactions')
       .select('*')
-      .in('comment_id', commentIds);
+      .in('comment_id', commentIds)
 
-    const commentReactions = commentReactionsData as CommentReactionRow[] | null;
+    const commentReactions = commentReactionsData as CommentReactionRow[] | null
     if (commentReactions) {
-      commentReactions.forEach((reaction) => {
+      commentReactions.forEach(reaction => {
         if (!commentReactionsMap.has(reaction.comment_id)) {
-          commentReactionsMap.set(reaction.comment_id, new Map());
+          commentReactionsMap.set(reaction.comment_id, new Map())
         }
-        const reactions = commentReactionsMap.get(reaction.comment_id)!;
+        const reactions = commentReactionsMap.get(reaction.comment_id)!
         if (!reactions.has(reaction.emoji)) {
           reactions.set(reaction.emoji, {
             emoji: reaction.emoji,
             count: 0,
             userReacted: false,
             userIds: [],
-          });
+          })
         }
-        const current = reactions.get(reaction.emoji)!;
-        current.count++;
+        const current = reactions.get(reaction.emoji)!
+        current.count++
         if (current.userIds && !current.userIds.includes(reaction.user_id)) {
-          current.userIds.push(reaction.user_id);
+          current.userIds.push(reaction.user_id)
         }
         if (currentUserId && reaction.user_id === currentUserId) {
-          current.userReacted = true;
+          current.userReacted = true
         }
-      });
+      })
     }
   }
 
-  const commentsWithReactions = comments.map((comment) => {
-    const reactionsRecord: Record<string, Reaction> = {};
+  const commentsWithReactions = comments.map(comment => {
+    const reactionsRecord: Record<string, Reaction> = {}
     commentReactionsMap.get(comment.id)?.forEach((reaction, emoji) => {
-      reactionsRecord[emoji] = reaction;
-    });
+      reactionsRecord[emoji] = reaction
+    })
     return {
       ...comment,
       reactions: Object.keys(reactionsRecord).length ? reactionsRecord : undefined,
-    };
-  });
+    }
+  })
 
   // Process reactions
-  const reactions: Record<string, Reaction> = {};
-  
+  const reactions: Record<string, Reaction> = {}
+
   if (reactionsData) {
     reactionsData.forEach(reaction => {
       if (!reactions[reaction.emoji]) {
@@ -377,16 +414,25 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
           emoji: reaction.emoji,
           count: 0,
           userReacted: false,
-        };
+        }
       }
-      reactions[reaction.emoji].count++;
+      reactions[reaction.emoji].count++
       if (currentUserId && reaction.user_id === currentUserId) {
-        reactions[reaction.emoji].userReacted = true;
+        reactions[reaction.emoji].userReacted = true
       }
-    });
+    })
   }
 
-  return transformEventRow(eventRow, attendees, commentsWithReactions, reactions, groupIds, itineraryItems, expenses, itineraryAttendance);
+  return transformEventRow(
+    eventRow,
+    attendees,
+    commentsWithReactions,
+    reactions,
+    groupIds,
+    itineraryItems,
+    expenses,
+    itineraryAttendance
+  )
 }
 
 /**
@@ -396,50 +442,55 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
 export async function fetchEventBySlug(slug: string): Promise<SocialEvent | null> {
   // Supabase select typing can fall back to `never` for narrow selects; cast to the row shape we need.
   const tryDirect = async (): Promise<string | null> => {
-    const result = await supabase.from('events').select('id').eq('slug', slug).single();
-    const { data, error } = result as unknown as { data: Pick<EventRow, 'id'> | null; error: any };
+    const result = await supabase.from('events').select('id').eq('slug', slug).single()
+    const { data, error } = result as unknown as { data: Pick<EventRow, 'id'> | null; error: any }
     if (error) {
       // This can be either "not found" OR "blocked by RLS (returns 0 rows)".
       if (!isNoRowsError(error)) {
-        console.error('Error fetching event by slug:', error);
+        console.error('Error fetching event by slug:', error)
       }
-      return null;
+      return null
     }
-    return data?.id ?? null;
-  };
+    return data?.id ?? null
+  }
 
-  let id = await tryDirect();
+  let id = await tryDirect()
 
   if (!id) {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (user) {
       // Treat "view by link" as invited-by-link and resolve via SECURITY DEFINER RPC.
-      id = await markEventViewedBySlug(slug);
+      id = await markEventViewedBySlug(slug)
     }
   }
 
-  if (!id) return null;
-  return fetchEventById(id);
+  if (!id) return null
+  return fetchEventById(id)
 }
 
 /**
  * Create a new event
  */
 export async function createEvent(
-  eventData: Omit<SocialEvent, 'id' | 'slug' | 'hostId' | 'attendees' | 'comments' | 'reactions'>,
+  eventData: Omit<SocialEvent, 'id' | 'slug' | 'hostId' | 'attendees' | 'comments' | 'reactions'>
 ): Promise<SocialEvent | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) {
-    throw new Error('User must be authenticated to create events');
+    throw new Error('User must be authenticated to create events')
   }
 
-  type EventInsert = Database['public']['Tables']['events']['Insert'];
-  
-  const slug = eventData.title
+  type EventInsert = Database['public']['Tables']['events']['Insert']
+
+  const slug =
+    eventData.title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
-      .substring(0, 100) || 'event';
+      .substring(0, 100) || 'event'
 
   const insertData: EventInsert = {
     slug,
@@ -463,97 +514,108 @@ export async function createEvent(
     itinerary_attendance_enabled: eventData.itineraryAttendanceEnabled ?? false,
     no_phones: eventData.noPhones,
     itinerary_time_display: eventData.itineraryTimeDisplay,
-  };
-  
+  }
+
   const result = await supabase
     .from('events')
     .insert(insertData as unknown as never)
     .select()
-    .single();
-  const { data: event, error } = result as unknown as { data: EventRow | null; error: any };
+    .single()
+  const { data: event, error } = result as unknown as { data: EventRow | null; error: any }
 
   if (error || !event) {
-    console.error('Error creating event:', error);
-    return null;
+    console.error('Error creating event:', error)
+    return null
   }
 
-  const eventRow = event as EventRow;
+  const eventRow = event as EventRow
 
   // Add host as attendee
-  type EventAttendeeInsert = Database['public']['Tables']['event_attendees']['Insert'];
+  type EventAttendeeInsert = Database['public']['Tables']['event_attendees']['Insert']
   const attendeeData: EventAttendeeInsert = {
     event_id: eventRow.id,
     user_id: user.id,
-  };
-  await supabase.from('event_attendees').insert(attendeeData as unknown as never);
+  }
+  await supabase.from('event_attendees').insert(attendeeData as unknown as never)
 
   // Add event groups if visibility is GROUPS
-  if (eventData.visibilityType === 'GROUPS' && eventData.groupIds && eventData.groupIds.length > 0) {
-    type EventGroupInsert = Database['public']['Tables']['event_groups']['Insert'];
+  if (
+    eventData.visibilityType === 'GROUPS' &&
+    eventData.groupIds &&
+    eventData.groupIds.length > 0
+  ) {
+    type EventGroupInsert = Database['public']['Tables']['event_groups']['Insert']
     const groupData: EventGroupInsert[] = eventData.groupIds.map(groupId => ({
       event_id: eventRow.id,
       group_id: groupId,
-    }));
-    await supabase.from('event_groups').insert(groupData as unknown as never);
+    }))
+    await supabase.from('event_groups').insert(groupData as unknown as never)
   }
 
-  return fetchEventById(eventRow.id);
+  return fetchEventById(eventRow.id)
 }
 
 /**
  * Update an existing event
  */
-export async function updateEvent(eventId: string, updates: Partial<SocialEvent>): Promise<SocialEvent | null> {
-  const updateData: any = {};
-  
-  if (updates.title !== undefined) updateData.title = updates.title;
-  if (updates.description !== undefined) updateData.description = updates.description;
-  if (updates.activityType !== undefined) updateData.activity_type = updates.activityType;
-  if (updates.headerImageUrl !== undefined) updateData.header_image_url = updates.headerImageUrl;
-  if (updates.headerImagePositionY !== undefined) updateData.header_image_position_y = updates.headerImagePositionY;
-  if (updates.location !== undefined) updateData.location = updates.location;
-  if (updates.coordinates !== undefined) updateData.coordinates = updates.coordinates;
-  if (updates.locationData !== undefined) updateData.location_data = updates.locationData;
-  if (updates.startTime !== undefined) updateData.start_time = updates.startTime;
-  if (updates.endTime !== undefined) updateData.end_time = updates.endTime;
-  if (updates.isFlexibleStart !== undefined) updateData.is_flexible_start = updates.isFlexibleStart;
-  if (updates.isFlexibleEnd !== undefined) updateData.is_flexible_end = updates.isFlexibleEnd;
-  if (updates.visibilityType !== undefined) updateData.visibility_type = updates.visibilityType;
-  if (updates.allowFriendInvites !== undefined) updateData.allow_friend_invites = updates.allowFriendInvites;
-  if (updates.maxSeats !== undefined) updateData.max_seats = updates.maxSeats;
-  if (updates.itineraryAttendanceEnabled !== undefined) updateData.itinerary_attendance_enabled = updates.itineraryAttendanceEnabled;
-  if (updates.noPhones !== undefined) updateData.no_phones = updates.noPhones;
-  if (updates.itineraryTimeDisplay !== undefined) updateData.itinerary_time_display = updates.itineraryTimeDisplay;
+export async function updateEvent(
+  eventId: string,
+  updates: Partial<SocialEvent>
+): Promise<SocialEvent | null> {
+  const updateData: any = {}
+
+  if (updates.title !== undefined) updateData.title = updates.title
+  if (updates.description !== undefined) updateData.description = updates.description
+  if (updates.activityType !== undefined) updateData.activity_type = updates.activityType
+  if (updates.headerImageUrl !== undefined) updateData.header_image_url = updates.headerImageUrl
+  if (updates.headerImagePositionY !== undefined)
+    updateData.header_image_position_y = updates.headerImagePositionY
+  if (updates.location !== undefined) updateData.location = updates.location
+  if (updates.coordinates !== undefined) updateData.coordinates = updates.coordinates
+  if (updates.locationData !== undefined) updateData.location_data = updates.locationData
+  if (updates.startTime !== undefined) updateData.start_time = updates.startTime
+  if (updates.endTime !== undefined) updateData.end_time = updates.endTime
+  if (updates.isFlexibleStart !== undefined) updateData.is_flexible_start = updates.isFlexibleStart
+  if (updates.isFlexibleEnd !== undefined) updateData.is_flexible_end = updates.isFlexibleEnd
+  if (updates.visibilityType !== undefined) updateData.visibility_type = updates.visibilityType
+  if (updates.allowFriendInvites !== undefined)
+    updateData.allow_friend_invites = updates.allowFriendInvites
+  if (updates.maxSeats !== undefined) updateData.max_seats = updates.maxSeats
+  if (updates.itineraryAttendanceEnabled !== undefined)
+    updateData.itinerary_attendance_enabled = updates.itineraryAttendanceEnabled
+  if (updates.noPhones !== undefined) updateData.no_phones = updates.noPhones
+  if (updates.itineraryTimeDisplay !== undefined)
+    updateData.itinerary_time_display = updates.itineraryTimeDisplay
 
   // type EventUpdate = Database['public']['Tables']['events']['Update']; // unused
   const result = await supabase
     .from('events')
     .update(updateData as unknown as never)
-    .eq('id', eventId);
-  const { error } = result as unknown as { error: any };
+    .eq('id', eventId)
+  const { error } = result as unknown as { error: any }
 
   if (error) {
-    console.error('Error updating event:', error);
-    return null;
+    console.error('Error updating event:', error)
+    return null
   }
 
   // Update event groups if groupIds is provided
   if (updates.groupIds !== undefined) {
     // Delete existing event groups
-    await supabase.from('event_groups').delete().eq('event_id', eventId);
-    
+    await supabase.from('event_groups').delete().eq('event_id', eventId)
+
     // Insert new event groups if visibility is GROUPS and groupIds are provided
     if (updates.visibilityType === 'GROUPS' && updates.groupIds.length > 0) {
-      type EventGroupInsert = Database['public']['Tables']['event_groups']['Insert'];
+      type EventGroupInsert = Database['public']['Tables']['event_groups']['Insert']
       const groupData: EventGroupInsert[] = updates.groupIds.map(groupId => ({
         event_id: eventId,
         group_id: groupId,
-      }));
-      await supabase.from('event_groups').insert(groupData as unknown as never);
+      }))
+      await supabase.from('event_groups').insert(groupData as unknown as never)
     }
   }
 
-  return fetchEventById(eventId);
+  return fetchEventById(eventId)
 }
 
 /**
@@ -562,103 +624,112 @@ export async function updateEvent(eventId: string, updates: Partial<SocialEvent>
 export async function joinEvent(eventId: string): Promise<boolean> {
   // Prefer session (no network) vs auth.getUser() (network). This also avoids
   // transient "no user" cases where the app has user state but getUser fails.
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
-  const user = session?.user;
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession()
+  const user = session?.user
   if (!user) {
-    console.warn('joinEvent: no session user:', sessionError);
-    return false;
+    console.warn('joinEvent: no session user:', sessionError)
+    return false
   }
 
-  type EventAttendeeInsert = Database['public']['Tables']['event_attendees']['Insert'];
+  type EventAttendeeInsert = Database['public']['Tables']['event_attendees']['Insert']
   const attendeeData: EventAttendeeInsert = {
     event_id: eventId,
     user_id: user.id,
-  };
+  }
   // Make join idempotent: if the row already exists, do nothing and treat it as success.
   // (This avoids requiring UPDATE permissions/policies for the conflict path.)
   const result = await supabase
     .from('event_attendees')
-    .upsert(attendeeData as any, { onConflict: 'event_id,user_id', ignoreDuplicates: true });
-  const { error } = result as unknown as { error: any };
+    .upsert(attendeeData as any, { onConflict: 'event_id,user_id', ignoreDuplicates: true })
+  const { error } = result as unknown as { error: any }
   if (error) {
-    console.error('Error joining event:', error);
-    return false;
+    console.error('Error joining event:', error)
+    return false
   }
 
-  return true;
+  return true
 }
 
 /**
  * Leave an event
  */
 export async function leaveEvent(eventId: string): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) {
-    return false;
+    return false
   }
 
   const { error } = await supabase
     .from('event_attendees')
     .delete()
     .eq('event_id', eventId)
-    .eq('user_id', user.id);
+    .eq('user_id', user.id)
 
   if (error) {
-    return false;
+    return false
   }
 
-  const attendanceDeleted = await deleteItineraryAttendance(eventId);
+  const attendanceDeleted = await deleteItineraryAttendance(eventId)
   if (!attendanceDeleted) {
-    console.warn('Failed to clear itinerary attendance on leave for event:', eventId);
+    console.warn('Failed to clear itinerary attendance on leave for event:', eventId)
   }
 
-  return true;
+  return true
 }
 
 /**
  * Add a comment to an event
  */
 export async function addComment(eventId: string, text: string): Promise<Comment | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) {
-    return null;
+    return null
   }
 
-  type CommentInsert = Database['public']['Tables']['comments']['Insert'];
+  type CommentInsert = Database['public']['Tables']['comments']['Insert']
   const commentData: CommentInsert = {
     event_id: eventId,
     user_id: user.id,
     text,
-  };
+  }
   const result = await supabase
     .from('comments')
     .insert(commentData as unknown as never)
     .select()
-    .single();
-  const { data: comment, error } = result as unknown as { data: CommentRow | null; error: any };
+    .single()
+  const { data: comment, error } = result as unknown as { data: CommentRow | null; error: any }
 
   if (error || !comment) {
-    console.error('Error adding comment:', error);
-    return null;
+    console.error('Error adding comment:', error)
+    return null
   }
 
-  const commentRow = comment as CommentRow;
+  const commentRow = comment as CommentRow
 
   return {
     id: commentRow.id,
     userId: commentRow.user_id,
     text: commentRow.text,
     timestamp: commentRow.timestamp ?? '',
-  };
+  }
 }
 
 /**
  * Add or remove a reaction to an event
  */
 export async function toggleReaction(eventId: string, emoji: string): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) {
-    return false;
+    return false
   }
 
   // Check if reaction exists
@@ -668,29 +739,24 @@ export async function toggleReaction(eventId: string, emoji: string): Promise<bo
     .eq('event_id', eventId)
     .eq('user_id', user.id)
     .eq('emoji', emoji)
-    .single();
+    .single()
 
   if (existing) {
-    const existingRow = existing as Pick<ReactionRow, 'id'>;
+    const existingRow = existing as Pick<ReactionRow, 'id'>
     // Remove reaction
-    const { error } = await supabase
-      .from('reactions')
-      .delete()
-      .eq('id', existingRow.id);
-    return !error;
+    const { error } = await supabase.from('reactions').delete().eq('id', existingRow.id)
+    return !error
   } else {
     // Add reaction
-    type ReactionInsert = Database['public']['Tables']['reactions']['Insert'];
+    type ReactionInsert = Database['public']['Tables']['reactions']['Insert']
     const reactionData: ReactionInsert = {
       event_id: eventId,
       user_id: user.id,
       emoji,
-    };
-    const result = await supabase
-      .from('reactions')
-      .insert(reactionData as unknown as never);
-    const { error } = result as unknown as { error: any };
-    return !error;
+    }
+    const result = await supabase.from('reactions').insert(reactionData as unknown as never)
+    const { error } = result as unknown as { error: any }
+    return !error
   }
 }
 
@@ -698,9 +764,11 @@ export async function toggleReaction(eventId: string, emoji: string): Promise<bo
  * Add, replace, or remove a reaction on a comment (one per user).
  */
 export async function toggleCommentReaction(commentId: string, emoji: string): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) {
-    return false;
+    return false
   }
 
   const { data: existing } = await supabase
@@ -708,34 +776,32 @@ export async function toggleCommentReaction(commentId: string, emoji: string): P
     .select('id, emoji')
     .eq('comment_id', commentId)
     .eq('user_id', user.id)
-    .maybeSingle();
+    .maybeSingle()
 
-  const existingReaction = existing as Pick<CommentReactionRow, 'id' | 'emoji'> | null;
+  const existingReaction = existing as Pick<CommentReactionRow, 'id' | 'emoji'> | null
 
   if (existingReaction) {
     const { error: deleteError } = await supabase
       .from('comment_reactions')
       .delete()
-      .eq('id', existingReaction.id);
+      .eq('id', existingReaction.id)
 
     if (deleteError) {
-      return false;
+      return false
     }
 
     if (existingReaction.emoji === emoji) {
-      return true;
+      return true
     }
   }
 
-  type CommentReactionInsert = Database['public']['Tables']['comment_reactions']['Insert'];
+  type CommentReactionInsert = Database['public']['Tables']['comment_reactions']['Insert']
   const reactionData: CommentReactionInsert = {
     comment_id: commentId,
     user_id: user.id,
     emoji,
-  };
-  const result = await supabase
-    .from('comment_reactions')
-    .insert(reactionData as unknown as never);
-  const { error } = result as unknown as { error: any };
-  return !error;
+  }
+  const result = await supabase.from('comment_reactions').insert(reactionData as unknown as never)
+  const { error } = result as unknown as { error: any }
+  return !error
 }

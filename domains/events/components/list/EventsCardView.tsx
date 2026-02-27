@@ -1,9 +1,7 @@
-
-
 import type { User } from '../../../../lib/types'
 import type { SocialEvent } from '../../types'
-import type { StatusFilter } from './EventsFilterBar'
 import { EventCard } from './EventCard'
+import type { StatusFilter } from './EventsFilterBar'
 
 type EventsGroup = { title: string; events: SocialEvent[] }
 
@@ -30,13 +28,13 @@ export function EventsCardView({
 }: EventsCardViewProps) {
   return (
     <div className="pb-20 space-y-8">
-      {groupedEvents.map((group) => (
+      {groupedEvents.map(group => (
         <div key={group.title}>
           <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3 mt-6 first:mt-0 py-1">
             {group.title}
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
-            {group.events.map((event) => (
+            {group.events.map(event => (
               <div key={event.id} className="relative group">
                 <EventCard
                   event={event}
@@ -49,7 +47,7 @@ export function EventsCardView({
                 />
                 {statusFilter === 'DISMISSED' ? (
                   <button
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation()
                       onRestore(event.id)
                     }}
@@ -72,5 +70,3 @@ export function EventsCardView({
     </div>
   )
 }
-
-

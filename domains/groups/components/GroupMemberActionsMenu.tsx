@@ -1,17 +1,17 @@
-import { MoreVertical, UserMinus } from 'lucide-react';
-import type * as React from 'react';
+import { MoreVertical, UserMinus } from 'lucide-react'
+import type * as React from 'react'
 
-import type { GroupMember } from '../../../services/groupService';
+import type { GroupMember } from '../../../services/groupService'
 
 type GroupMemberActionsMenuProps = {
-  member: GroupMember;
-  isOpen: boolean;
-  isRemoving: boolean;
-  onOpen: () => void;
-  onClose: () => void;
-  onRemove: () => void;
-  menuRef: React.RefObject<HTMLDivElement | null>;
-};
+  member: GroupMember
+  isOpen: boolean
+  isRemoving: boolean
+  onOpen: () => void
+  onClose: () => void
+  onRemove: () => void
+  menuRef: React.RefObject<HTMLDivElement | null>
+}
 
 export function GroupMemberActionsMenu({
   member,
@@ -47,5 +47,5 @@ export function GroupMemberActionsMenu({
         </div>
       ) : null}
     </div>
-  );
+  )
 }

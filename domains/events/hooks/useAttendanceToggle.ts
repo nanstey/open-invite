@@ -27,17 +27,14 @@ export function useAttendanceToggle(input: {
     onUpdateEvent,
   } = input
 
-  const isJoinDisabled =
-    !enabled ||
-    (isFull && !isAttending) ||
-    (!currentUserId && !onRequireAuth)
+  const isJoinDisabled = !enabled || (isFull && !isAttending) || (!currentUserId && !onRequireAuth)
 
   const applyOptimisticUpdate = React.useCallback(
     (next: SocialEvent) => {
       if (!enabled) return
       onUpdateEvent(next)
     },
-    [enabled, onUpdateEvent],
+    [enabled, onUpdateEvent]
   )
 
   const handleJoin = React.useCallback(async () => {
@@ -71,7 +68,7 @@ export function useAttendanceToggle(input: {
 
     applyOptimisticUpdate({
       ...event,
-      attendees: event.attendees.filter((id) => id !== currentUserId),
+      attendees: event.attendees.filter(id => id !== currentUserId),
     })
   }, [applyOptimisticUpdate, currentUserId, event, onLeave, onRequireAuth])
 

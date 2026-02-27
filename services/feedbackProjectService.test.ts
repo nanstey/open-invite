@@ -1,10 +1,10 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const supabase = vi.hoisted(() => ({
   from: vi.fn(),
-}));
+}))
 
-vi.mock('../lib/supabase', () => ({ supabase }));
+vi.mock('../lib/supabase', () => ({ supabase }))
 
 import {
   addFeedbackToProject,
@@ -22,64 +22,64 @@ import {
   removeFeedbackFromProject,
   reorderProjectsInColumn,
   updateProject,
-} from './feedbackProjectService';
+} from './feedbackProjectService'
 
 describe('moveProjectToStatus - regression tests for lane behavior', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.useRealTimers();
-  });
+    vi.clearAllMocks()
+    vi.useRealTimers()
+  })
 
   it('moves project to target status with correct sort order', async () => {
-    const eqFn = vi.fn(async () => ({ error: null }));
-    const updateFn = vi.fn(() => ({ eq: eqFn }));
+    const eqFn = vi.fn(async () => ({ error: null }))
+    const updateFn = vi.fn(() => ({ eq: eqFn }))
 
     mockFromQueues({
       feedback_projects: [{ update: updateFn }],
-    });
+    })
 
-    await moveProjectToStatus('proj-123', 'in_progress', 2);
+    await moveProjectToStatus('proj-123', 'in_progress', 2)
 
-    expect(updateFn).toHaveBeenCalledWith({ status: 'in_progress', sort_order: 2 });
-    expect(eqFn).toHaveBeenCalledWith('id', 'proj-123');
-  });
+    expect(updateFn).toHaveBeenCalledWith({ status: 'in_progress', sort_order: 2 })
+    expect(eqFn).toHaveBeenCalledWith('id', 'proj-123')
+  })
 
   it('handles move to empty column correctly', async () => {
-    const eqFn = vi.fn(async () => ({ error: null }));
-    const updateFn = vi.fn(() => ({ eq: eqFn }));
+    const eqFn = vi.fn(async () => ({ error: null }))
+    const updateFn = vi.fn(() => ({ eq: eqFn }))
 
     mockFromQueues({
       feedback_projects: [{ update: updateFn }],
-    });
+    })
 
-    await moveProjectToStatus('proj-456', 'review', 0);
+    await moveProjectToStatus('proj-456', 'review', 0)
 
-    expect(updateFn).toHaveBeenCalledWith({ status: 'review', sort_order: 0 });
-    expect(eqFn).toHaveBeenCalledWith('id', 'proj-456');
-  });
-});
+    expect(updateFn).toHaveBeenCalledWith({ status: 'review', sort_order: 0 })
+    expect(eqFn).toHaveBeenCalledWith('id', 'proj-456')
+  })
+})
 
 function mockFromQueues(queues: Record<string, any[]>) {
   supabase.from.mockImplementation((table: string) => {
-    const queue = queues[table];
+    const queue = queues[table]
     if (!queue || queue.length === 0) {
-      throw new Error(`Unhandled table call: ${table}`);
+      throw new Error(`Unhandled table call: ${table}`)
     }
-    return queue.shift();
-  });
+    return queue.shift()
+  })
 }
 
 function mockVisibleProjectsSelect(nextStepFactory: () => any) {
-  const or = vi.fn(() => nextStepFactory());
-  const is = vi.fn(() => ({ or }));
-  return { select: vi.fn(() => ({ is })), is, or };
+  const or = vi.fn(() => nextStepFactory())
+  const is = vi.fn(() => ({ or }))
+  return { select: vi.fn(() => ({ is })), is, or }
 }
 
 describe('feedbackProjectService', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.useRealTimers();
-  });
+    vi.clearAllMocks()
+    vi.useRealTimers()
+  })
 
   describe('Transform + fetch', () => {
     it('fetchProjects orders by sort_order and computes feedbackCount', async () => {
@@ -109,34 +109,34 @@ describe('feedbackProjectService', () => {
           },
         ],
         error: null,
-      }));
-      const visibleQuery = mockVisibleProjectsSelect(() => ({ order }));
+      }))
+      const visibleQuery = mockVisibleProjectsSelect(() => ({ order }))
 
       const inFn = vi.fn(async () => ({
         data: [{ project_id: 'p1' }, { project_id: 'p1' }, { project_id: 'p2' }],
         error: null,
-      }));
+      }))
 
       mockFromQueues({
         feedback_projects: [visibleQuery],
         feedback_project_items: [{ select: vi.fn(() => ({ in: inFn })) }],
-      });
+      })
 
-      const result = await fetchProjects();
+      const result = await fetchProjects()
 
-      expect(visibleQuery.is).toHaveBeenCalledWith('archived_at', null);
-      expect(visibleQuery.or).toHaveBeenCalledWith(expect.stringContaining('status.neq.completed'));
-      expect(order).toHaveBeenCalledWith('sort_order', { ascending: true });
-      expect(inFn).toHaveBeenCalledWith('project_id', ['p1', 'p2']);
+      expect(visibleQuery.is).toHaveBeenCalledWith('archived_at', null)
+      expect(visibleQuery.or).toHaveBeenCalledWith(expect.stringContaining('status.neq.completed'))
+      expect(order).toHaveBeenCalledWith('sort_order', { ascending: true })
+      expect(inFn).toHaveBeenCalledWith('project_id', ['p1', 'p2'])
       expect(result).toEqual([
         expect.objectContaining({ id: 'p1', sortOrder: 0, feedbackCount: 2 }),
         expect.objectContaining({ id: 'p2', sortOrder: 1, feedbackCount: 1 }),
-      ]);
-    });
+      ])
+    })
 
     it('fetchProjects applies visibility filter in DB query', async () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date('2026-03-15T00:00:00.000Z'));
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-03-15T00:00:00.000Z'))
 
       const order = vi.fn(async () => ({
         data: [
@@ -166,28 +166,28 @@ describe('feedbackProjectService', () => {
           },
         ],
         error: null,
-      }));
-      const visibleQuery = mockVisibleProjectsSelect(() => ({ order }));
+      }))
+      const visibleQuery = mockVisibleProjectsSelect(() => ({ order }))
 
       const inFn = vi.fn(async () => ({
         data: [{ project_id: 'p2' }, { project_id: 'p4' }, { project_id: 'p4' }],
         error: null,
-      }));
+      }))
 
       mockFromQueues({
         feedback_projects: [visibleQuery],
         feedback_project_items: [{ select: vi.fn(() => ({ in: inFn })) }],
-      });
+      })
 
-      const result = await fetchProjects();
+      const result = await fetchProjects()
 
-      expect(visibleQuery.or).toHaveBeenCalledWith(expect.stringContaining('updated_at.gte.'));
-      expect(inFn).toHaveBeenCalledWith('project_id', ['p2', 'p4']);
+      expect(visibleQuery.or).toHaveBeenCalledWith(expect.stringContaining('updated_at.gte.'))
+      expect(inFn).toHaveBeenCalledWith('project_id', ['p2', 'p4'])
       expect(result).toEqual([
         expect.objectContaining({ id: 'p2', feedbackCount: 1 }),
         expect.objectContaining({ id: 'p4', feedbackCount: 2 }),
-      ]);
-    });
+      ])
+    })
 
     it('fetchProject returns transformed project', async () => {
       const single = vi.fn(async () => ({
@@ -203,15 +203,15 @@ describe('feedbackProjectService', () => {
           updated_at: '2026-01-02',
         },
         error: null,
-      }));
-      const eq = vi.fn(() => ({ single }));
-      const visibleQuery = mockVisibleProjectsSelect(() => ({ eq }));
+      }))
+      const eq = vi.fn(() => ({ single }))
+      const visibleQuery = mockVisibleProjectsSelect(() => ({ eq }))
 
       mockFromQueues({
         feedback_projects: [visibleQuery],
-      });
+      })
 
-      const result = await fetchProject('p1');
+      const result = await fetchProject('p1')
 
       expect(result).toEqual({
         id: 'p1',
@@ -223,51 +223,51 @@ describe('feedbackProjectService', () => {
         githubUrl: 'https://github.com/org/repo',
         createdAt: '2026-01-01',
         updatedAt: '2026-01-02',
-      });
-      expect(eq).toHaveBeenCalledWith('id', 'p1');
-    });
+      })
+      expect(eq).toHaveBeenCalledWith('id', 'p1')
+    })
 
     it('fetchProject returns null for stale completed projects', async () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date('2026-03-15T00:00:00.000Z'));
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-03-15T00:00:00.000Z'))
 
       const single = vi.fn(async () => ({
         data: null,
         error: new Error('No rows'),
-      }));
-      const eq = vi.fn(() => ({ single }));
-      const visibleQuery = mockVisibleProjectsSelect(() => ({ eq }));
+      }))
+      const eq = vi.fn(() => ({ single }))
+      const visibleQuery = mockVisibleProjectsSelect(() => ({ eq }))
 
       mockFromQueues({
         feedback_projects: [visibleQuery],
-      });
+      })
 
-      await expect(fetchProject('p1')).resolves.toBeNull();
-    });
+      await expect(fetchProject('p1')).resolves.toBeNull()
+    })
 
     it('fetchProject returns null on error or missing row', async () => {
       const eqError = vi.fn(() => ({
         single: vi.fn(async () => ({ data: null, error: new Error('db') })),
-      }));
-      const eqMissing = vi.fn(() => ({ single: vi.fn(async () => ({ data: null, error: null })) }));
-      const visibleQueryErr = mockVisibleProjectsSelect(() => ({ eq: eqError }));
-      const visibleQueryMissing = mockVisibleProjectsSelect(() => ({ eq: eqMissing }));
+      }))
+      const eqMissing = vi.fn(() => ({ single: vi.fn(async () => ({ data: null, error: null })) }))
+      const visibleQueryErr = mockVisibleProjectsSelect(() => ({ eq: eqError }))
+      const visibleQueryMissing = mockVisibleProjectsSelect(() => ({ eq: eqMissing }))
 
       mockFromQueues({
         feedback_projects: [visibleQueryErr, visibleQueryMissing],
-      });
+      })
 
-      await expect(fetchProject('p1')).resolves.toBeNull();
-      await expect(fetchProject('p2')).resolves.toBeNull();
-    });
-  });
+      await expect(fetchProject('p1')).resolves.toBeNull()
+      await expect(fetchProject('p2')).resolves.toBeNull()
+    })
+  })
 
   describe('Create/update/delete/move/reorder', () => {
     it('createProject computes next backlog sort_order and sets optional GitHub fields to null when absent', async () => {
       const insert = vi.fn((payload: any) => {
-        expect(payload.github_repo).toBeNull();
-        expect(payload.github_url).toBeNull();
-        expect(payload.sort_order).toBe(6);
+        expect(payload.github_repo).toBeNull()
+        expect(payload.github_url).toBeNull()
+        expect(payload.sort_order).toBe(6)
         return {
           select: vi.fn(() => ({
             single: vi.fn(async () => ({
@@ -280,8 +280,8 @@ describe('feedbackProjectService', () => {
               error: null,
             })),
           })),
-        };
-      });
+        }
+      })
 
       mockFromQueues({
         feedback_projects: [
@@ -296,85 +296,85 @@ describe('feedbackProjectService', () => {
           },
           { insert },
         ],
-      });
+      })
 
-      const result = await createProject({ title: 'New Project' });
+      const result = await createProject({ title: 'New Project' })
 
       expect(result).toEqual(
         expect.objectContaining({ id: 'new1', sortOrder: 6, feedbackCount: 0 })
-      );
-    });
+      )
+    })
 
     it('updateProject only sends provided fields in update payload', async () => {
       const update = vi.fn((payload: any) => {
-        expect(payload).toEqual({ title: 'Updated', github_repo: 'org/repo' });
-        return { eq: vi.fn(async () => ({ error: null })) };
-      });
+        expect(payload).toEqual({ title: 'Updated', github_repo: 'org/repo' })
+        return { eq: vi.fn(async () => ({ error: null })) }
+      })
 
       mockFromQueues({
         feedback_projects: [{ update }],
-      });
+      })
 
-      const result = await updateProject('p1', { title: 'Updated', githubRepo: 'org/repo' });
-      expect(result).toBe(true);
-    });
+      const result = await updateProject('p1', { title: 'Updated', githubRepo: 'org/repo' })
+      expect(result).toBe(true)
+    })
 
     it('deleteProject soft-archives (archived_at) and returns false on error, true on success', async () => {
       const updateErr = vi.fn((payload: any) => {
-        expect(payload.archived_at).toBeTruthy();
-        return { eq: vi.fn(async () => ({ error: new Error('bad') })) };
-      });
+        expect(payload.archived_at).toBeTruthy()
+        return { eq: vi.fn(async () => ({ error: new Error('bad') })) }
+      })
       const updateOk = vi.fn((payload: any) => {
-        expect(payload.archived_at).toBeTruthy();
-        return { eq: vi.fn(async () => ({ error: null })) };
-      });
+        expect(payload.archived_at).toBeTruthy()
+        return { eq: vi.fn(async () => ({ error: null })) }
+      })
 
       mockFromQueues({
         feedback_projects: [{ update: updateErr }, { update: updateOk }],
-      });
+      })
 
-      await expect(deleteProject('p1')).resolves.toBe(false);
-      await expect(deleteProject('p1')).resolves.toBe(true);
-    });
+      await expect(deleteProject('p1')).resolves.toBe(false)
+      await expect(deleteProject('p1')).resolves.toBe(true)
+    })
 
     it('moveProjectToStatus updates status and sort_order', async () => {
       const update = vi.fn((payload: any) => {
-        expect(payload).toEqual({ status: 'done', sort_order: 3 });
-        return { eq: vi.fn(async () => ({ error: null })) };
-      });
+        expect(payload).toEqual({ status: 'done', sort_order: 3 })
+        return { eq: vi.fn(async () => ({ error: null })) }
+      })
 
       mockFromQueues({
         feedback_projects: [{ update }],
-      });
+      })
 
-      const result = await moveProjectToStatus('p1', 'done' as any, 3);
-      expect(result).toBe(true);
-    });
+      const result = await moveProjectToStatus('p1', 'done' as any, 3)
+      expect(result).toBe(true)
+    })
 
     it('reorderProjectsInColumn issues one update per id and returns false if any update errors', async () => {
-      const eqStatus1 = vi.fn(async () => ({ error: null }));
-      const eqStatus2 = vi.fn(async () => ({ error: new Error('failed') }));
+      const eqStatus1 = vi.fn(async () => ({ error: null }))
+      const eqStatus2 = vi.fn(async () => ({ error: new Error('failed') }))
       const update = vi
         .fn()
         .mockImplementationOnce((payload: any) => {
-          expect(payload).toEqual({ sort_order: 0 });
-          return { eq: vi.fn(() => ({ eq: eqStatus1 })) };
+          expect(payload).toEqual({ sort_order: 0 })
+          return { eq: vi.fn(() => ({ eq: eqStatus1 })) }
         })
         .mockImplementationOnce((payload: any) => {
-          expect(payload).toEqual({ sort_order: 1 });
-          return { eq: vi.fn(() => ({ eq: eqStatus2 })) };
-        });
+          expect(payload).toEqual({ sort_order: 1 })
+          return { eq: vi.fn(() => ({ eq: eqStatus2 })) }
+        })
 
       mockFromQueues({
         feedback_projects: [{ update }, { update }],
-      });
+      })
 
-      const result = await reorderProjectsInColumn('backlog' as any, ['p1', 'p2']);
+      const result = await reorderProjectsInColumn('backlog' as any, ['p1', 'p2'])
 
-      expect(update).toHaveBeenCalledTimes(2);
-      expect(result).toBe(false);
-    });
-  });
+      expect(update).toHaveBeenCalledTimes(2)
+      expect(result).toBe(false)
+    })
+  })
 
   describe('Feedback linkage APIs', () => {
     it('fetchProjectFeedback maps joined user_feedback and handles missing join objects', async () => {
@@ -411,12 +411,12 @@ describe('feedbackProjectService', () => {
             })),
           },
         ],
-      });
+      })
 
-      const result = await fetchProjectFeedback('p1');
-      expect(result[0].feedback?.title).toBe('Feedback');
-      expect(result[1].feedback).toBeUndefined();
-    });
+      const result = await fetchProjectFeedback('p1')
+      expect(result[0].feedback?.title).toBe('Feedback')
+      expect(result[1].feedback).toBeUndefined()
+    })
 
     it('addFeedbackToProject and removeFeedbackFromProject return success/error properly', async () => {
       mockFromQueues({
@@ -434,13 +434,13 @@ describe('feedbackProjectService', () => {
             })),
           },
         ],
-      });
+      })
 
-      await expect(addFeedbackToProject('p1', 'f1')).resolves.toBe(true);
-      await expect(addFeedbackToProject('p1', 'f1')).resolves.toBe(false);
-      await expect(removeFeedbackFromProject('p1', 'f1')).resolves.toBe(true);
-      await expect(removeFeedbackFromProject('p1', 'f1')).resolves.toBe(false);
-    });
+      await expect(addFeedbackToProject('p1', 'f1')).resolves.toBe(true)
+      await expect(addFeedbackToProject('p1', 'f1')).resolves.toBe(false)
+      await expect(removeFeedbackFromProject('p1', 'f1')).resolves.toBe(true)
+      await expect(removeFeedbackFromProject('p1', 'f1')).resolves.toBe(false)
+    })
 
     it('fetchFeedbackNotInProject filters out already-linked feedback IDs', async () => {
       mockFromQueues({
@@ -464,11 +464,11 @@ describe('feedbackProjectService', () => {
             })),
           },
         ],
-      });
+      })
 
-      const result = await fetchFeedbackNotInProject('p1');
-      expect(result).toEqual([{ id: 'f2', title: 'Available' }]);
-    });
+      const result = await fetchFeedbackNotInProject('p1')
+      expect(result).toEqual([{ id: 'f2', title: 'Available' }])
+    })
 
     it('fetchAllFeedbackSimple returns typed simple list or [] on error', async () => {
       mockFromQueues({
@@ -496,24 +496,24 @@ describe('feedbackProjectService', () => {
             })),
           },
         ],
-      });
+      })
 
       await expect(fetchAllFeedbackSimple()).resolves.toEqual([
         { id: 'f1', title: 't', description: null, type: 'bug', importance: 2, status: 'open' },
-      ]);
-      await expect(fetchAllFeedbackSimple()).resolves.toEqual([]);
-    });
+      ])
+      await expect(fetchAllFeedbackSimple()).resolves.toEqual([])
+    })
 
     it('fetchProjectsForFeedback returns only visible linked projects', async () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date('2026-03-15T00:00:00.000Z'));
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-03-15T00:00:00.000Z'))
 
       const order = vi.fn(async () => ({
         data: [{ id: 'p1', title: 'Project One', status: 'backlog' }],
         error: null,
-      }));
-      const inFn = vi.fn(() => ({ order }));
-      const visibleQuery = mockVisibleProjectsSelect(() => ({ in: inFn }));
+      }))
+      const inFn = vi.fn(() => ({ order }))
+      const visibleQuery = mockVisibleProjectsSelect(() => ({ in: inFn }))
 
       mockFromQueues({
         feedback_project_items: [
@@ -527,43 +527,43 @@ describe('feedbackProjectService', () => {
           },
         ],
         feedback_projects: [visibleQuery],
-      });
+      })
 
-      const result = await fetchProjectsForFeedback('f1');
-      expect(inFn).toHaveBeenCalledWith('id', ['p1', 'p3', 'p2']);
-      expect(order).toHaveBeenCalledWith('title', { ascending: true });
-      expect(result).toEqual([{ id: 'p1', title: 'Project One', status: 'backlog' }]);
-    });
+      const result = await fetchProjectsForFeedback('f1')
+      expect(inFn).toHaveBeenCalledWith('id', ['p1', 'p3', 'p2'])
+      expect(order).toHaveBeenCalledWith('title', { ascending: true })
+      expect(result).toEqual([{ id: 'p1', title: 'Project One', status: 'backlog' }])
+    })
 
     it('fetchAllProjects sorts by title', async () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date('2026-03-15T00:00:00.000Z'));
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-03-15T00:00:00.000Z'))
 
       const order = vi.fn(async () => ({
         data: [{ id: 'p1', title: 'A', status: 'backlog' }],
         error: null,
-      }));
-      const visibleQuery = mockVisibleProjectsSelect(() => ({ order }));
+      }))
+      const visibleQuery = mockVisibleProjectsSelect(() => ({ order }))
 
       mockFromQueues({
         feedback_projects: [visibleQuery],
-      });
+      })
 
-      const result = await fetchAllProjects();
+      const result = await fetchAllProjects()
 
-      expect(order).toHaveBeenCalledWith('title', { ascending: true });
-      expect(result).toEqual([{ id: 'p1', title: 'A', status: 'backlog' }]);
-    });
+      expect(order).toHaveBeenCalledWith('title', { ascending: true })
+      expect(result).toEqual([{ id: 'p1', title: 'A', status: 'backlog' }])
+    })
 
     it('fetchAllFeedbackProjectMappings maps relationship rows into FeedbackProjectMapping', async () => {
-      vi.useFakeTimers();
-      vi.setSystemTime(new Date('2026-03-15T00:00:00.000Z'));
+      vi.useFakeTimers()
+      vi.setSystemTime(new Date('2026-03-15T00:00:00.000Z'))
 
       const inFn = vi.fn(async () => ({
         data: [{ id: 'p1', title: 'Project', status: 'done' }],
         error: null,
-      }));
-      const visibleQuery = mockVisibleProjectsSelect(() => ({ in: inFn }));
+      }))
+      const visibleQuery = mockVisibleProjectsSelect(() => ({ in: inFn }))
 
       mockFromQueues({
         feedback_project_items: [
@@ -588,10 +588,10 @@ describe('feedbackProjectService', () => {
           },
         ],
         feedback_projects: [visibleQuery],
-      });
+      })
 
-      const result = await fetchAllFeedbackProjectMappings();
-      expect(inFn).toHaveBeenCalledWith('id', ['p1', 'p3', 'p2']);
+      const result = await fetchAllFeedbackProjectMappings()
+      expect(inFn).toHaveBeenCalledWith('id', ['p1', 'p3', 'p2'])
       expect(result).toEqual([
         {
           feedbackId: 'f1',
@@ -599,7 +599,7 @@ describe('feedbackProjectService', () => {
           projectTitle: 'Project',
           projectStatus: 'done',
         },
-      ]);
-    });
-  });
-});
+      ])
+    })
+  })
+})

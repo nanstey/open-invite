@@ -74,7 +74,9 @@ describe('eventService', () => {
         }),
       }),
       event_attendees: () => ({ select: () => ({ in: async () => ({ data: [], error: null }) }) }),
-      comments: () => ({ select: () => ({ in: () => ({ order: async () => ({ data: [], error: null }) }) }) }),
+      comments: () => ({
+        select: () => ({ in: () => ({ order: async () => ({ data: [], error: null }) }) }),
+      }),
       reactions: () => ({ select: () => ({ in: async () => ({ data: [], error: null }) }) }),
       event_groups: () => ({ select: () => ({ in: async () => ({ data: [], error: null }) }) }),
     })
@@ -92,13 +94,23 @@ describe('eventService', () => {
         }),
       }),
       event_attendees: () => ({
-        select: () => ({ in: async () => ({ data: [{ event_id: 'event-1', user_id: 'user-1' }], error: null }) }),
+        select: () => ({
+          in: async () => ({ data: [{ event_id: 'event-1', user_id: 'user-1' }], error: null }),
+        }),
       }),
       comments: () => ({
         select: () => ({
           in: () => ({
             order: async () => ({
-              data: [{ id: 'comment-1', event_id: 'event-1', user_id: 'user-2', text: 'hi', timestamp: '2025-01-01' }],
+              data: [
+                {
+                  id: 'comment-1',
+                  event_id: 'event-1',
+                  user_id: 'user-2',
+                  text: 'hi',
+                  timestamp: '2025-01-01',
+                },
+              ],
               error: null,
             }),
           }),
@@ -116,7 +128,9 @@ describe('eventService', () => {
         }),
       }),
       event_groups: () => ({
-        select: () => ({ in: async () => ({ data: [{ event_id: 'event-1', group_id: 'group-1' }], error: null }) }),
+        select: () => ({
+          in: async () => ({ data: [{ event_id: 'event-1', group_id: 'group-1' }], error: null }),
+        }),
       }),
       comment_reactions: () => ({
         select: () => ({ in: async () => ({ data: [], error: null }) }),
@@ -143,7 +157,9 @@ describe('eventService', () => {
         }),
       }),
       event_attendees: () => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) }),
-      comments: () => ({ select: () => ({ eq: () => ({ order: async () => ({ data: [], error: null }) }) }) }),
+      comments: () => ({
+        select: () => ({ eq: () => ({ order: async () => ({ data: [], error: null }) }) }),
+      }),
       reactions: () => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) }),
       event_groups: () => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) }),
     })
@@ -171,7 +187,9 @@ describe('eventService', () => {
         }),
       }),
       event_attendees: () => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) }),
-      comments: () => ({ select: () => ({ eq: () => ({ order: async () => ({ data: [], error: null }) }) }) }),
+      comments: () => ({
+        select: () => ({ eq: () => ({ order: async () => ({ data: [], error: null }) }) }),
+      }),
       reactions: () => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) }),
       event_groups: () => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) }),
     })
@@ -199,7 +217,9 @@ describe('eventService', () => {
         }),
       }),
       event_attendees: () => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) }),
-      comments: () => ({ select: () => ({ eq: () => ({ order: async () => ({ data: [], error: null }) }) }) }),
+      comments: () => ({
+        select: () => ({ eq: () => ({ order: async () => ({ data: [], error: null }) }) }),
+      }),
       reactions: () => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) }),
       event_groups: () => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) }),
     })
@@ -218,15 +238,25 @@ describe('eventService', () => {
     mockFrom({
       events: () => ({
         insert: () => ({
-          select: () => ({ single: async () => ({ data: { id: 'event-1', slug: 'event-1' }, error: null }) }),
+          select: () => ({
+            single: async () => ({ data: { id: 'event-1', slug: 'event-1' }, error: null }),
+          }),
         }),
         select: () => ({
           eq: () => ({ single: async () => ({ data: baseEventRow, error: null }) }),
         }),
       }),
-      event_attendees: () => ({ insert: attendeeInsert, select: () => ({ eq: async () => ({ data: [], error: null }) }) }),
-      event_groups: () => ({ insert: groupInsert, select: () => ({ eq: async () => ({ data: [], error: null }) }) }),
-      comments: () => ({ select: () => ({ eq: () => ({ order: async () => ({ data: [], error: null }) }) }) }),
+      event_attendees: () => ({
+        insert: attendeeInsert,
+        select: () => ({ eq: async () => ({ data: [], error: null }) }),
+      }),
+      event_groups: () => ({
+        insert: groupInsert,
+        select: () => ({ eq: async () => ({ data: [], error: null }) }),
+      }),
+      comments: () => ({
+        select: () => ({ eq: () => ({ order: async () => ({ data: [], error: null }) }) }),
+      }),
       reactions: () => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) }),
     })
 
@@ -268,7 +298,9 @@ describe('eventService', () => {
       events: () => ({
         update,
         select: () => ({
-          eq: () => ({ single: async () => ({ data: { ...baseEventRow, title: 'Updated' }, error: null }) }),
+          eq: () => ({
+            single: async () => ({ data: { ...baseEventRow, title: 'Updated' }, error: null }),
+          }),
         }),
       }),
       event_groups: () => ({
@@ -277,7 +309,9 @@ describe('eventService', () => {
         select: () => ({ eq: async () => ({ data: [], error: null }) }),
       }),
       event_attendees: () => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) }),
-      comments: () => ({ select: () => ({ eq: () => ({ order: async () => ({ data: [], error: null }) }) }) }),
+      comments: () => ({
+        select: () => ({ eq: () => ({ order: async () => ({ data: [], error: null }) }) }),
+      }),
       reactions: () => ({ select: () => ({ eq: async () => ({ data: [], error: null }) }) }),
     })
 
@@ -292,7 +326,10 @@ describe('eventService', () => {
   })
 
   it('joinEvent uses upsert and is idempotent', async () => {
-    supabase.auth.getSession.mockResolvedValue({ data: { session: { user: { id: 'user-1' } } }, error: null })
+    supabase.auth.getSession.mockResolvedValue({
+      data: { session: { user: { id: 'user-1' } } },
+      error: null,
+    })
     const upsert = vi.fn(async () => ({ error: null }))
     mockFrom({
       event_attendees: () => ({ upsert }),
@@ -301,7 +338,10 @@ describe('eventService', () => {
     const result = await joinEvent('event-1')
 
     expect(result).toBe(true)
-    expect(upsert).toHaveBeenCalledWith(expect.any(Object), { onConflict: 'event_id,user_id', ignoreDuplicates: true })
+    expect(upsert).toHaveBeenCalledWith(expect.any(Object), {
+      onConflict: 'event_id,user_id',
+      ignoreDuplicates: true,
+    })
   })
 
   it('toggleReaction removes existing reactions and inserts when missing', async () => {
@@ -316,7 +356,10 @@ describe('eventService', () => {
           eq: () => ({
             eq: () => ({
               eq: () => ({
-                single: async () => ({ data: hasExisting ? { id: 'reaction-1' } : null, error: null }),
+                single: async () => ({
+                  data: hasExisting ? { id: 'reaction-1' } : null,
+                  error: null,
+                }),
               }),
             }),
           }),

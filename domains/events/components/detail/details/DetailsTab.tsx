@@ -1,25 +1,31 @@
-
-
 import type { User } from '../../../../../lib/types'
 import type { LocationSuggestion } from '../../../../../lib/ui/components/LocationAutocomplete'
-import type { ItineraryItem, SocialEvent } from '../../../types'
-import type { Person, EventExpense, ExpenseApi } from '../expenses/types'
-import type { DraftStartDateTimeLocalModel } from '../../../hooks/useDraftStartDateTimeLocal'
-import type { EventDateTimeModel } from '../utils/eventDateTimeModel'
-import { buildGoogleMapsSearchUrl } from '../maps/maps'
 import { openExternalUrl } from '../../../../../lib/ui/utils/openExternalUrl'
-import { formatItineraryLocationForDisplay, formatRawLocationForDisplay } from '../utils/locationDisplay'
-import { TitleCard } from './TitleCard'
+import type { DraftStartDateTimeLocalModel } from '../../../hooks/useDraftStartDateTimeLocal'
+import type { ItineraryItem, SocialEvent } from '../../../types'
+import { ExpensesCard } from '../expenses/ExpensesCard'
+import type { EventExpense, ExpenseApi, Person } from '../expenses/types'
+import { ItineraryEditor } from '../itineraries/ItineraryEditor'
+import { ItinerarySection } from '../itineraries/ItinerarySection'
+import { buildGoogleMapsSearchUrl } from '../maps/maps'
+import type { EventDateTimeModel } from '../utils/eventDateTimeModel'
+import {
+  formatItineraryLocationForDisplay,
+  formatRawLocationForDisplay,
+} from '../utils/locationDisplay'
 import { AboutCard } from './AboutCard'
 import { DateTimeCard } from './DateTimeCard'
 import { ItineraryCard } from './ItineraryCard'
 import { LocationCard } from './LocationCard'
-import { ExpensesCard } from '../expenses/ExpensesCard'
-import { ItineraryEditor } from '../itineraries/ItineraryEditor'
-import { ItinerarySection } from '../itineraries/ItinerarySection'
+import { TitleCard } from './TitleCard'
 
 type DetailsTabEditModel = {
-  errors?: Partial<Record<'title' | 'description' | 'startTime' | 'location' | 'activityType' | 'durationHours', string>>
+  errors?: Partial<
+    Record<
+      'title' | 'description' | 'startTime' | 'location' | 'activityType' | 'durationHours',
+      string
+    >
+  >
   durationHours?: number | ''
   onChangeDurationHours?: (value: number | '') => void
   onChange: (patch: Partial<SocialEvent>) => void
@@ -40,7 +46,7 @@ type DetailsTabEditModel = {
         durationMinutes: number
         location?: string
         description?: string
-      }>,
+      }>
     ) => Promise<void> | void
     onDelete: (id: string) => Promise<void> | void
   }
@@ -105,15 +111,19 @@ export function DetailsTab(props: DetailsTabProps) {
         isEditMode={isEditMode}
         title={event.title}
         activityType={event.activityType}
-        onChangeTitle={(next) => edit?.onChange({ title: next })}
-        onChangeActivityType={(next) => edit?.onChange({ activityType: next })}
-        errors={isEditMode ? { title: edit?.errors?.title, activityType: edit?.errors?.activityType } : undefined}
+        onChangeTitle={next => edit?.onChange({ title: next })}
+        onChangeActivityType={next => edit?.onChange({ activityType: next })}
+        errors={
+          isEditMode
+            ? { title: edit?.errors?.title, activityType: edit?.errors?.activityType }
+            : undefined
+        }
       />
 
       <AboutCard
         isEditMode={isEditMode}
         description={event.description}
-        onChangeDescription={(next) => edit?.onChange({ description: next })}
+        onChangeDescription={next => edit?.onChange({ description: next })}
         error={isEditMode ? edit?.errors?.description : undefined}
       />
 
@@ -194,7 +204,7 @@ export function DetailsTab(props: DetailsTabProps) {
         eventCoordinates={event.coordinates}
         isEditMode={isEditMode}
         locationValue={event.location}
-        onChangeLocationText={(text) =>
+        onChangeLocationText={text =>
           edit?.onChange({ location: text, coordinates: undefined, locationData: undefined })
         }
         onSelectLocation={(selection: LocationSuggestion) =>

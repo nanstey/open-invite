@@ -12,7 +12,8 @@ const styles = {
   codeBlock: 'bg-slate-800/80 border border-slate-700/50 rounded-xl p-4 overflow-x-auto',
   codeText: 'text-slate-200 text-sm font-mono',
   inlineCode: 'px-1.5 py-0.5 rounded-md bg-slate-700/70 text-slate-100 font-mono text-[0.9em]',
-  blockquote: 'border-l-4 border-primary pl-4 bg-primary/5 rounded-r-xl py-2 italic text-slate-200 my-4',
+  blockquote:
+    'border-l-4 border-primary pl-4 bg-primary/5 rounded-r-xl py-2 italic text-slate-200 my-4',
 }
 
 function escapeHtml(value: string) {
@@ -40,11 +41,11 @@ function inlineMrkdwn(value: string) {
     // Links: <url|text> or <url> (escaped as &lt;...&gt;)
     .replace(
       /&lt;(https?:\/\/[^|&]+)\|([^&]+)&gt;/g,
-      `<a class="${styles.link}" href="$1" target="_blank" rel="noreferrer">$2</a>`,
+      `<a class="${styles.link}" href="$1" target="_blank" rel="noreferrer">$2</a>`
     )
     .replace(
       /&lt;(https?:\/\/[^&]+)&gt;/g,
-      `<a class="${styles.link}" href="$1" target="_blank" rel="noreferrer">$1</a>`,
+      `<a class="${styles.link}" href="$1" target="_blank" rel="noreferrer">$1</a>`
     )
     // Bold: *text*
     .replace(/\*([^*]+)\*/g, '<strong>$1</strong>')
@@ -99,7 +100,7 @@ function renderMrkdwn(mrkdwn: string) {
       if (inCodeBlock) {
         // Close code block
         html.push(
-          `<pre class="${styles.codeBlock}"><code class="${styles.codeText}">${codeBlockLines.join('\n')}</code></pre>`,
+          `<pre class="${styles.codeBlock}"><code class="${styles.codeText}">${codeBlockLines.join('\n')}</code></pre>`
         )
         codeBlockLines.length = 0
         inCodeBlock = false
@@ -188,7 +189,7 @@ function renderMrkdwn(mrkdwn: string) {
   // Close any remaining open code block
   if (inCodeBlock && codeBlockLines.length > 0) {
     html.push(
-      `<pre class="${styles.codeBlock}"><code class="${styles.codeText}">${codeBlockLines.join('\n')}</code></pre>`,
+      `<pre class="${styles.codeBlock}"><code class="${styles.codeText}">${codeBlockLines.join('\n')}</code></pre>`
     )
   }
 
@@ -204,6 +205,10 @@ export function MrkdwnRenderer({ content }: { content: string }) {
     return <p className="text-slate-500 italic">No description yet.</p>
   }
 
-  return <div className={`text-slate-300 leading-relaxed text-base`} dangerouslySetInnerHTML={{ __html: html }} />
+  return (
+    <div
+      className={`text-slate-300 leading-relaxed text-base`}
+      dangerouslySetInnerHTML={{ __html: html }}
+    />
+  )
 }
-

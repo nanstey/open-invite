@@ -1,5 +1,3 @@
-
-
 export function EventLoadingScreen(props: { label?: string }) {
   const label = props.label ?? 'Loading...'
   return (
@@ -11,5 +9,3 @@ export function EventLoadingScreen(props: { label?: string }) {
     </div>
   )
 }
-
-

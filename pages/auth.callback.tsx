@@ -1,5 +1,5 @@
-import React from 'react'
 import { createFileRoute } from '@tanstack/react-router'
+import React from 'react'
 import { supabase } from '../lib/supabase'
 
 export const Route = createFileRoute('/auth/callback')({
@@ -65,7 +65,7 @@ function AuthCallbackRoute() {
           window.location.replace(redirect)
           return
         }
-        await new Promise((r) => setTimeout(r, 200))
+        await new Promise(r => setTimeout(r, 200))
       }
 
       if (!cancelled) {
@@ -90,4 +90,3 @@ function AuthCallbackRoute() {
 
   return <div style={{ padding: 24 }}>Finishing sign-in…</div>
 }
-

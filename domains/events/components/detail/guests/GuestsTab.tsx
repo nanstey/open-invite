@@ -1,12 +1,11 @@
 import * as React from 'react'
 
 import type { Group, User } from '../../../../../lib/types'
-import type { SocialEvent } from '../../../types'
-import type { EventVisibility } from '../../../types'
-import { useGuestsEditActions } from '../../../hooks/useGuestsEditActions'
 import { useGuestFriendRequests } from '../../../hooks/useGuestFriendRequests'
-import { GuestsSettingsCard } from './GuestsSettingsCard'
+import { useGuestsEditActions } from '../../../hooks/useGuestsEditActions'
+import type { EventVisibility, SocialEvent } from '../../../types'
 import { GuestsListCard } from './GuestsListCard'
+import { GuestsSettingsCard } from './GuestsSettingsCard'
 import { getGoingLabel, getOpenSpots, getSelectedAttendeeIds, orderAttendees } from './guestFilters'
 
 export function GuestsTab(props: {
@@ -58,7 +57,8 @@ export function GuestsTab(props: {
 
   const itineraryItems = event.itineraryItems ?? []
   const activeFilterId = itineraryFilterId ?? ''
-  const shouldShowFilter = !isEditMode && event.itineraryAttendanceEnabled && itineraryItems.length > 0
+  const shouldShowFilter =
+    !isEditMode && event.itineraryAttendanceEnabled && itineraryItems.length > 0
 
   const selectedAttendeeIds = React.useMemo(() => {
     return getSelectedAttendeeIds({ event, activeFilterId })
@@ -111,7 +111,6 @@ export function GuestsTab(props: {
         goingLabel={goingLabel}
         openSpots={openSpots}
       />
-
     </div>
   )
 }

@@ -42,7 +42,7 @@ export function FormInput({ className, size, variant, ...props }: FormInputProps
         'border text-white placeholder:text-slate-500',
         variantClasses(variant),
         sizeClasses(size),
-        className,
+        className
       )}
     />
   )
@@ -74,15 +74,19 @@ export function FormSelect({
           sizeClasses(size),
           // keep text clear of the caret
           'pr-10',
-          className,
+          className
         )}
       >
         {children}
       </Select>
-      <div className={cx('pointer-events-none absolute inset-y-0 right-4 flex items-center', caretClassName)}>
+      <div
+        className={cx(
+          'pointer-events-none absolute inset-y-0 right-4 flex items-center',
+          caretClassName
+        )}
+      >
         <div className="w-2 h-2 border-r border-b border-slate-400 rotate-45" />
       </div>
     </div>
   )
 }
-

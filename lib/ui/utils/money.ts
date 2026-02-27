@@ -18,5 +18,3 @@ export function centsToInputValue(cents: number | undefined): string {
   if (cents === undefined) return ''
   return (cents / 100).toFixed(2)
 }
-
-

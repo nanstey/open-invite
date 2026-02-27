@@ -1,4 +1,3 @@
-
 import { X } from 'lucide-react'
 
 export const FORMATTING_EXAMPLE = `# Welcome to the Event!
@@ -72,7 +71,7 @@ export function FormattingHelpModal({
               </tr>
             </thead>
             <tbody>
-              {FORMATTING_OPTIONS.map((opt) => (
+              {FORMATTING_OPTIONS.map(opt => (
                 <tr key={opt.format} className="border-b border-slate-700/50">
                   <td className="py-2 pr-4 text-white">{opt.format}</td>
                   <td className="py-2 pr-4">
@@ -107,4 +106,3 @@ export function FormattingHelpModal({
     </div>
   )
 }
-

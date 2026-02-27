@@ -4,5 +4,3 @@ export function openExternalUrl(url: string | null | undefined): void {
   if (typeof window === 'undefined') return
   window.open(u, '_blank', 'noopener,noreferrer')
 }
-
-

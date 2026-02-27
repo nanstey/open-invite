@@ -42,7 +42,10 @@ export function getGoingLabel(args: { attendeeCount: number; maxSeats?: number |
   return maxSeats ? `${attendeeCount}/${maxSeats}` : `${attendeeCount}`
 }
 
-export function getOpenSpots(args: { attendeeCount: number; maxSeats?: number | null }): number | null {
+export function getOpenSpots(args: {
+  attendeeCount: number
+  maxSeats?: number | null
+}): number | null {
   const { attendeeCount, maxSeats } = args
   if (!maxSeats) return null
   return Math.max(maxSeats - attendeeCount, 0)

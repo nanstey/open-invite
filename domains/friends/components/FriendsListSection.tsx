@@ -1,9 +1,9 @@
-import type * as React from 'react'
 import { UserPlus } from 'lucide-react'
+import type * as React from 'react'
+import type { User } from '../../../lib/types'
 import { EmptyState } from '../../../lib/ui/components/EmptyState'
 import { SectionHeader } from '../../../lib/ui/components/SectionHeader'
 import { FriendCard } from './FriendCard'
-import type { User } from '../../../lib/types'
 
 export interface FriendsListSectionProps {
   groupedFriends: [string, User[]][]
@@ -46,7 +46,7 @@ export const FriendsListSection: React.FC<FriendsListSectionProps> = ({
               {letter}
             </div>
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-              {friendsInGroup.map((friend) => (
+              {friendsInGroup.map(friend => (
                 <FriendCard
                   key={friend.id}
                   friend={friend}
@@ -67,4 +67,3 @@ export const FriendsListSection: React.FC<FriendsListSectionProps> = ({
     )}
   </>
 )
-

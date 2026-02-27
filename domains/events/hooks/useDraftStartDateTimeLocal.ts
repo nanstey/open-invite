@@ -33,7 +33,7 @@ export function useDraftStartDateTimeLocal(input: {
       const nextLocal = nextDate && draftTime ? `${nextDate}T${draftTime}` : ''
       onChangeStartDateTimeLocal?.(nextLocal)
     },
-    [draftTime, onChangeStartDateTimeLocal],
+    [draftTime, onChangeStartDateTimeLocal]
   )
 
   const onChangeDraftTime = React.useCallback(
@@ -42,7 +42,7 @@ export function useDraftStartDateTimeLocal(input: {
       const nextLocal = draftDate && nextTime ? `${draftDate}T${nextTime}` : ''
       onChangeStartDateTimeLocal?.(nextLocal)
     },
-    [draftDate, onChangeStartDateTimeLocal],
+    [draftDate, onChangeStartDateTimeLocal]
   )
 
   const draftStartIso = React.useMemo(() => {
@@ -54,5 +54,3 @@ export function useDraftStartDateTimeLocal(input: {
 
   return { draftDate, draftTime, onChangeDraftDate, onChangeDraftTime, draftStartIso }
 }
-
-

@@ -26,7 +26,7 @@ export const Route = createFileRoute('/events/new')({
         mode="create"
         currentUser={user}
         onCancel={onClose}
-        onSuccess={(created) =>
+        onSuccess={created =>
           navigate({
             to: '/events/$slug',
             params: { slug: created.slug },
@@ -39,4 +39,3 @@ export const Route = createFileRoute('/events/new')({
     )
   },
 })
-

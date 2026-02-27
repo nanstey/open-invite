@@ -5,5 +5,3 @@ export function buildGoogleMapsLatLngUrl(lat: number, lng: number): string {
 export function buildGoogleMapsSearchUrl(query: string): string {
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(query)}`
 }
-
-

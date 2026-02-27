@@ -1,7 +1,6 @@
 import * as React from 'react'
-
-import type { SocialEvent } from '../types'
 import type { StatusFilter, TimeFilter } from '../components/list/EventsFilterBar'
+import type { SocialEvent } from '../types'
 
 type EventsGroup = { title: string; events: SocialEvent[] }
 
@@ -26,7 +25,11 @@ function isPastEvent(event: SocialEvent, now: Date) {
   return new Date(event.startTime) < now
 }
 
-function isDismissedAllowed(eventId: string, dismissedEventIds: Set<string>, statusFilter: StatusFilter) {
+function isDismissedAllowed(
+  eventId: string,
+  dismissedEventIds: Set<string>,
+  statusFilter: StatusFilter
+) {
   const isDismissed = dismissedEventIds.has(eventId)
   if (statusFilter === 'DISMISSED') return isDismissed
   return !isDismissed
@@ -38,7 +41,10 @@ function isUserHostOrAttending(event: SocialEvent, currentUserId: string) {
   return { isHost, isAttending }
 }
 
-function matchesStatusFilter(event: SocialEvent, params: Pick<EventFilterParams, 'currentUserId' | 'statusFilter' | 'now'>) {
+function matchesStatusFilter(
+  event: SocialEvent,
+  params: Pick<EventFilterParams, 'currentUserId' | 'statusFilter' | 'now'>
+) {
   const { isHost, isAttending } = isUserHostOrAttending(event, params.currentUserId)
   const isPast = isPastEvent(event, params.now)
 
@@ -85,7 +91,10 @@ function matchesOpenOnly(event: SocialEvent, statusFilter: StatusFilter, showOpe
   return hasOpenSeats(event)
 }
 
-function matchesTimeFilter(event: SocialEvent, params: Pick<EventFilterParams, 'timeFilter' | 'statusFilter' | 'now'>) {
+function matchesTimeFilter(
+  event: SocialEvent,
+  params: Pick<EventFilterParams, 'timeFilter' | 'statusFilter' | 'now'>
+) {
   if (params.statusFilter === 'PAST') return true
   if (params.timeFilter === 'ALL') return true
 
@@ -128,7 +137,8 @@ function getGroupTitle(eventStartTime: string, now: Date, statusFilter: StatusFi
   if (eDateOnly.getTime() === today.getTime()) return 'Today'
   if (eDateOnly.getTime() === tomorrow.getTime()) return 'Tomorrow'
   if (eDate < nextWeek) return 'This Week'
-  if (eDate.getMonth() === now.getMonth() && eDate.getFullYear() === now.getFullYear()) return 'This Month'
+  if (eDate.getMonth() === now.getMonth() && eDate.getFullYear() === now.getFullYear())
+    return 'This Month'
 
   return eDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 }
@@ -144,7 +154,7 @@ export function useEventFilters(events: SocialEvent[], currentUserId: string) {
   const [showOpenOnly, setShowOpenOnly] = React.useState(false)
 
   const dismiss = React.useCallback((eventId: string) => {
-    setDismissedEventIds((prev) => {
+    setDismissedEventIds(prev => {
       const next = new Set(prev)
       next.add(eventId)
       return next
@@ -152,7 +162,7 @@ export function useEventFilters(events: SocialEvent[], currentUserId: string) {
   }, [])
 
   const restore = React.useCallback((eventId: string) => {
-    setDismissedEventIds((prev) => {
+    setDismissedEventIds(prev => {
       const next = new Set(prev)
       next.delete(eventId)
       return next
@@ -171,7 +181,7 @@ export function useEventFilters(events: SocialEvent[], currentUserId: string) {
     const now = new Date()
 
     return events
-      .filter((event) => {
+      .filter(event => {
         const params: EventFilterParams = {
           currentUserId,
           dismissedEventIds,
@@ -183,7 +193,8 @@ export function useEventFilters(events: SocialEvent[], currentUserId: string) {
           now,
         }
 
-        if (!isDismissedAllowed(event.id, params.dismissedEventIds, params.statusFilter)) return false
+        if (!isDismissedAllowed(event.id, params.dismissedEventIds, params.statusFilter))
+          return false
         if (!matchesStatusFilter(event, params)) return false
         if (!matchesSearch(event, params.searchTerm)) return false
         if (!matchesCategory(event, params.filterCategory)) return false
@@ -193,7 +204,16 @@ export function useEventFilters(events: SocialEvent[], currentUserId: string) {
         return true
       })
       .sort(compareByStartTime(statusFilter))
-  }, [currentUserId, events, filterCategory, dismissedEventIds, searchTerm, showOpenOnly, statusFilter, timeFilter])
+  }, [
+    currentUserId,
+    events,
+    filterCategory,
+    dismissedEventIds,
+    searchTerm,
+    showOpenOnly,
+    statusFilter,
+    timeFilter,
+  ])
 
   const groupedEvents = React.useMemo<EventsGroup[]>(() => {
     if (filteredEvents.length === 0) return []
@@ -202,7 +222,7 @@ export function useEventFilters(events: SocialEvent[], currentUserId: string) {
 
     const groups: EventsGroup[] = []
 
-    filteredEvents.forEach((event) => {
+    filteredEvents.forEach(event => {
       const title = getGroupTitle(event.startTime, now, statusFilter)
 
       const lastGroup = groups[groups.length - 1]
@@ -242,5 +262,3 @@ export function useEventFilters(events: SocialEvent[], currentUserId: string) {
     clearFilters,
   }
 }
-
-

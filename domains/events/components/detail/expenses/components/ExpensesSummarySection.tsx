@@ -1,5 +1,3 @@
-
-
 import { ChevronDown } from 'lucide-react'
 
 import type { ExpenseCalculator } from '../useExpenseCalculator'
@@ -48,7 +46,10 @@ export function ExpensesSummarySection(props: {
           <div className="flex items-center justify-between gap-3">
             <div className="text-sm text-slate-300 font-bold">Settled After</div>
             <div className="text-sm text-white font-bold text-right">
-              {formatSummaryCents(summary.settledAfterCents, { currency, isEstimate: summary.hasEstimate })}
+              {formatSummaryCents(summary.settledAfterCents, {
+                currency,
+                isEstimate: summary.hasEstimate,
+              })}
             </div>
           </div>
           <hr className="border-slate-800 my-2" />

@@ -20,5 +20,3 @@ export type EventActionsModel = {
   isSaving?: boolean
   primaryLabel?: string
 }
-
-

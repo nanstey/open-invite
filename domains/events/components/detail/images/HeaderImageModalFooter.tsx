@@ -1,5 +1,3 @@
-
-
 type HeaderImageModalFooterProps = {
   onCancel: () => void
   onConfirm: () => void

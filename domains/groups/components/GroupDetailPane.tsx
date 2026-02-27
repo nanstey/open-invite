@@ -1,21 +1,21 @@
-import { ArrowLeft, Settings, Users } from 'lucide-react';
-import type * as React from 'react';
+import { ArrowLeft, Settings, Users } from 'lucide-react'
+import type * as React from 'react'
 
-import type { Group } from '../../../lib/types';
-import { TabGroup, type TabOption } from '../../../lib/ui/components/TabGroup';
+import type { Group } from '../../../lib/types'
+import { TabGroup, type TabOption } from '../../../lib/ui/components/TabGroup'
 
 type GroupDetailPaneProps = {
-  selectedGroup: Group | null;
-  activeTab: string;
-  onTabChange: (tab: string) => void;
-  onBack: () => void;
-  children: React.ReactNode;
-};
+  selectedGroup: Group | null
+  activeTab: string
+  onTabChange: (tab: string) => void
+  onBack: () => void
+  children: React.ReactNode
+}
 
 const groupTabs: TabOption[] = [
   { id: 'members', label: 'Members', icon: <Users className="w-4 h-4" /> },
   { id: 'settings', label: 'Settings', icon: <Settings className="w-4 h-4" /> },
-];
+]
 
 export function GroupDetailPane({
   selectedGroup,
@@ -29,7 +29,7 @@ export function GroupDetailPane({
       <div className="hidden lg:flex items-center justify-center bg-surface border border-slate-700 rounded-2xl h-full text-slate-400">
         Select a group to see details.
       </div>
-    );
+    )
   }
 
   return (
@@ -54,5 +54,5 @@ export function GroupDetailPane({
         {children}
       </div>
     </section>
-  );
+  )
 }

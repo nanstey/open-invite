@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { searchPexelsImages, type PexelsImage } from '../../../services/pexelsService'
+import { type PexelsImage, searchPexelsImages } from '../../../services/pexelsService'
 
 export function useHeaderImageSearch(defaultQuery: string) {
   const initialQuery = React.useMemo(() => defaultQuery?.trim() || '', [defaultQuery])

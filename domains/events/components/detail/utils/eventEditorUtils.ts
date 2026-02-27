@@ -1,5 +1,5 @@
-import { deriveEventTimesFromItinerary } from '../itineraries/itinerary'
 import type { ItineraryItem } from '../../../types'
+import { deriveEventTimesFromItinerary } from '../itineraries/itinerary'
 
 export type DraftItineraryItem = {
   id: string
@@ -29,20 +29,27 @@ export function computeEventTimes(args: {
 
   const startTime =
     derived?.startTime ??
-    (args.startDateTimeLocal ? new Date(args.startDateTimeLocal).toISOString() : args.fallbackStartIso)
+    (args.startDateTimeLocal
+      ? new Date(args.startDateTimeLocal).toISOString()
+      : args.fallbackStartIso)
 
   const durationHours = args.durationHours === '' ? undefined : Number(args.durationHours)
   const endTime =
     derived?.endTime ??
     (args.startDateTimeLocal && durationHours && durationHours > 0
-      ? new Date(new Date(args.startDateTimeLocal).getTime() + durationHours * 3_600_000).toISOString()
+      ? new Date(
+          new Date(args.startDateTimeLocal).getTime() + durationHours * 3_600_000
+        ).toISOString()
       : undefined)
 
   return { startTime, endTime }
 }
 
-export function mapDraftItineraryItems(drafts: DraftItineraryItem[], eventId: string): ItineraryItem[] {
-  return drafts.map((i) => ({
+export function mapDraftItineraryItems(
+  drafts: DraftItineraryItem[],
+  eventId: string
+): ItineraryItem[] {
+  return drafts.map(i => ({
     id: i.id,
     eventId,
     title: i.title,
@@ -71,19 +78,22 @@ function normalizeOptionalText(value: unknown): string | undefined {
   return s ? s : undefined
 }
 
-export function diffItineraryItems(initial: ItineraryItem[], current: DraftItineraryItem[]): {
+export function diffItineraryItems(
+  initial: ItineraryItem[],
+  current: DraftItineraryItem[]
+): {
   deletes: string[]
   creates: ItineraryCreate[]
   updates: ItineraryUpdate[]
 } {
-  const initialById = new Map(initial.map((i) => [i.id, i] as const))
-  const currentById = new Map(current.map((i) => [i.id, i] as const))
+  const initialById = new Map(initial.map(i => [i.id, i] as const))
+  const currentById = new Map(current.map(i => [i.id, i] as const))
 
-  const deletes = initial.filter((i) => !currentById.has(i.id)).map((i) => i.id)
+  const deletes = initial.filter(i => !currentById.has(i.id)).map(i => i.id)
 
   const creates = current
-    .filter((i) => !initialById.has(i.id))
-    .map((i) => ({
+    .filter(i => !initialById.has(i.id))
+    .map(i => ({
       title: i.title,
       startTime: i.startTime,
       durationMinutes: i.durationMinutes,
@@ -115,5 +125,3 @@ export function diffItineraryItems(initial: ItineraryItem[], current: DraftItine
 
   return { deletes, creates, updates }
 }
-
-

@@ -11,7 +11,9 @@ function escapeAttr(value: string): string {
 }
 
 function looksLikeBot(userAgent: string): boolean {
-  return /Twitterbot|facebookexternalhit|Slackbot|LinkedInBot|Discordbot|WhatsApp|TelegramBot|Applebot/i.test(userAgent)
+  return /Twitterbot|facebookexternalhit|Slackbot|LinkedInBot|Discordbot|WhatsApp|TelegramBot|Applebot/i.test(
+    userAgent
+  )
 }
 
 export default async (request: Request, context: any) => {
@@ -28,7 +30,8 @@ export default async (request: Request, context: any) => {
   }
 
   const supabaseUrl = Deno.env.get('SUPABASE_URL') ?? Deno.env.get('VITE_SUPABASE_URL') ?? ''
-  const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY') ?? Deno.env.get('VITE_SUPABASE_ANON_KEY') ?? ''
+  const supabaseAnonKey =
+    Deno.env.get('SUPABASE_ANON_KEY') ?? Deno.env.get('VITE_SUPABASE_ANON_KEY') ?? ''
 
   // Fallback tags (if fetch fails)
   let title = 'Open Invite'
@@ -38,7 +41,9 @@ export default async (request: Request, context: any) => {
 
   if (isEventRoute && supabaseUrl && supabaseAnonKey && slugOrId) {
     const byId = isUuid(slugOrId)
-    const filter = byId ? `id=eq.${encodeURIComponent(slugOrId)}` : `slug=eq.${encodeURIComponent(slugOrId)}`
+    const filter = byId
+      ? `id=eq.${encodeURIComponent(slugOrId)}`
+      : `slug=eq.${encodeURIComponent(slugOrId)}`
     const apiUrl =
       `${supabaseUrl}/rest/v1/events` +
       `?select=id,slug,title,description,location,start_time,header_image_url` +
@@ -58,7 +63,8 @@ export default async (request: Request, context: any) => {
       if (event?.title) {
         const resolvedSlug = event.slug || slugOrId
         title = `${event.title} • Open Invite`
-        description = (event.description || '').slice(0, 180) || `Join me at ${event.location || 'this event'}.`
+        description =
+          (event.description || '').slice(0, 180) || `Join me at ${event.location || 'this event'}.`
         image = event.header_image_url || `https://picsum.photos/seed/${event.id}/1200/630`
         canonical = `${url.origin}/${canonicalPrefix}/${resolvedSlug}`
       }
@@ -98,5 +104,3 @@ export default async (request: Request, context: any) => {
     },
   })
 }
-
-

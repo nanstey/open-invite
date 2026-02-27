@@ -1,6 +1,10 @@
 import * as React from 'react'
 
-import { fetchFriends, fetchOutgoingFriendRequests, fetchPendingFriendRequests } from '../../../services/friendService'
+import {
+  fetchFriends,
+  fetchOutgoingFriendRequests,
+  fetchPendingFriendRequests,
+} from '../../../services/friendService'
 
 export function useFriendsForGuests(args: { enabled: boolean }) {
   const { enabled } = args
@@ -21,9 +25,9 @@ export function useFriendsForGuests(args: { enabled: boolean }) {
           fetchPendingFriendRequests(),
         ])
         if (cancelled) return
-        setFriendIds(new Set(friends.map((f) => f.id)))
-        setOutgoingRequestIds(new Set(outgoingRequests.map((r) => r.recipientId)))
-        setIncomingRequestMap(new Map(incomingRequests.map((r) => [r.requesterId, r.id])))
+        setFriendIds(new Set(friends.map(f => f.id)))
+        setOutgoingRequestIds(new Set(outgoingRequests.map(r => r.recipientId)))
+        setIncomingRequestMap(new Map(incomingRequests.map(r => [r.requesterId, r.id])))
       } catch (err) {
         console.error('Error loading friends:', err)
       }
@@ -36,5 +40,3 @@ export function useFriendsForGuests(args: { enabled: boolean }) {
 
   return { friendIds, outgoingRequestIds, incomingRequestMap }
 }
-
-

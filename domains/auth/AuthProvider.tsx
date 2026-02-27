@@ -1,132 +1,136 @@
-import { createContext, useState, useEffect, useContext } from 'react';
-import type { ReactNode } from 'react';
-import { onAuthStateChange, getCurrentUser } from '../../lib/supabaseClient';
-import type { User } from '../../lib/types';
+import type { ReactNode } from 'react'
+import { createContext, useContext, useEffect, useState } from 'react'
+import { getCurrentUser, onAuthStateChange } from '../../lib/supabaseClient'
+import type { User } from '../../lib/types'
 
-const isDev = (import.meta as any).env?.DEV ?? false;
+const isDev = (import.meta as any).env?.DEV ?? false
 const devLog = (...args: any[]) => {
-  if (isDev) console.log(...args);
-};
+  if (isDev) console.log(...args)
+}
 const devWarn = (...args: any[]) => {
-  if (isDev) console.warn(...args);
-};
+  if (isDev) console.warn(...args)
+}
 const devError = (...args: any[]) => {
-  if (isDev) console.error(...args);
-};
-
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error: any } | null>;
-  signUp: (email: string, password: string, name: string, avatar: string) => Promise<{ error: any } | null>;
-  signInWithGoogle: (redirectPath?: string) => Promise<{ error: any } | null>;
-  signOut: () => Promise<void>;
+  if (isDev) console.error(...args)
 }
 
-export type { AuthContextType };
+interface AuthContextType {
+  user: User | null
+  loading: boolean
+  signIn: (email: string, password: string) => Promise<{ error: any } | null>
+  signUp: (
+    email: string,
+    password: string,
+    name: string,
+    avatar: string
+  ) => Promise<{ error: any } | null>
+  signInWithGoogle: (redirectPath?: string) => Promise<{ error: any } | null>
+  signOut: () => Promise<void>
+}
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export type { AuthContextType }
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     // Safety timeout to ensure loading never gets stuck
     const timeoutId = setTimeout(() => {
-      devWarn('AuthProvider: Loading timeout, forcing loading to false');
-      setLoading(false);
-    }, 5000);
+      devWarn('AuthProvider: Loading timeout, forcing loading to false')
+      setLoading(false)
+    }, 5000)
 
-    let subscription: { unsubscribe: () => void } | null = null;
-    let loadingResolved = false;
+    let subscription: { unsubscribe: () => void } | null = null
+    let loadingResolved = false
 
     const resolveLoading = () => {
       if (!loadingResolved) {
-        loadingResolved = true;
-        clearTimeout(timeoutId);
-        setLoading(false);
+        loadingResolved = true
+        clearTimeout(timeoutId)
+        setLoading(false)
       }
-    };
+    }
 
     // Listen for auth state changes
     try {
-      const result = onAuthStateChange((user) => {
-        devLog('Auth state change callback called with user:', user?.id);
-        setUser(user);
+      const result = onAuthStateChange(user => {
+        devLog('Auth state change callback called with user:', user?.id)
+        setUser(user)
         // Always resolve loading when auth state changes
         if (!loadingResolved) {
-          resolveLoading();
+          resolveLoading()
         }
-      });
-      subscription = result.data.subscription;
+      })
+      subscription = result.data.subscription
     } catch (error) {
-      devError('Error setting up auth state listener:', error);
-      resolveLoading();
+      devError('Error setting up auth state listener:', error)
+      resolveLoading()
     }
 
     return () => {
-      clearTimeout(timeoutId);
+      clearTimeout(timeoutId)
       if (subscription) {
-        subscription.unsubscribe();
+        subscription.unsubscribe()
       }
-    };
-  }, []);
+    }
+  }, [])
 
   const signIn = async (email: string, password: string) => {
-    devLog('Signing in...');
-    const { signIn } = await import('../../lib/supabaseClient');
-    const result = await signIn(email, password);
+    devLog('Signing in...')
+    const { signIn } = await import('../../lib/supabaseClient')
+    const result = await signIn(email, password)
     if (result.error) {
-      devError('Sign in error:', result.error);
-      return { error: result.error };
+      devError('Sign in error:', result.error)
+      return { error: result.error }
     }
-    devLog('Sign in successful, result:', result.data);
-    return null;
-  };
+    devLog('Sign in successful, result:', result.data)
+    return null
+  }
 
   const signUp = async (email: string, password: string, name: string, avatar: string) => {
-    const { signUp } = await import('../../lib/supabaseClient');
-    const result = await signUp(email, password, name, avatar);
+    const { signUp } = await import('../../lib/supabaseClient')
+    const result = await signUp(email, password, name, avatar)
     if (result.error) {
-      return { error: result.error };
+      return { error: result.error }
     }
-    const currentUser = await getCurrentUser();
-    setUser(currentUser);
-    return null;
-  };
+    const currentUser = await getCurrentUser()
+    setUser(currentUser)
+    return null
+  }
 
   const signInWithGoogle = async (redirectPath?: string) => {
-    devLog('Signing in with Google...');
-    const { signInWithGoogle } = await import('../../lib/supabaseClient');
-    const result = await signInWithGoogle(redirectPath);
+    devLog('Signing in with Google...')
+    const { signInWithGoogle } = await import('../../lib/supabaseClient')
+    const result = await signInWithGoogle(redirectPath)
     if (result.error) {
-      devError('Google sign in error:', result.error);
-      return { error: result.error };
+      devError('Google sign in error:', result.error)
+      return { error: result.error }
     }
     // OAuth redirect will happen, so we don't need to update user state here
     // The auth state change listener will handle it when the user returns
-    return null;
-  };
+    return null
+  }
 
   const signOut = async () => {
-    const { signOut } = await import('../../lib/supabaseClient');
-    await signOut();
-    setUser(null);
-  };
+    const { signOut } = await import('../../lib/supabaseClient')
+    await signOut()
+    setUser(null)
+  }
 
   return (
     <AuthContext.Provider value={{ user, loading, signIn, signUp, signInWithGoogle, signOut }}>
       {children}
     </AuthContext.Provider>
-  );
+  )
 }
 
 export function useAuth() {
-  const context = useContext(AuthContext);
+  const context = useContext(AuthContext)
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider')
   }
-  return context;
+  return context
 }
-

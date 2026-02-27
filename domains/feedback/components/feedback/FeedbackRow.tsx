@@ -1,14 +1,14 @@
 import type React from 'react'
 import { Badge } from '../../../../lib/ui/components/Badge'
-import { ProjectLinkCard } from '../projects/ProjectLinkCard'
 import { formatDateShort } from '../../../../lib/ui/utils/datetime'
+import type { FeedbackProjectMapping } from '../../../../services/feedbackProjectService'
 import {
-  FEEDBACK_TYPE_COLORS,
   FEEDBACK_IMPORTANCE_COLORS,
   FEEDBACK_STATUS_COLORS,
+  FEEDBACK_TYPE_COLORS,
   type Feedback,
 } from '../../types'
-import type { FeedbackProjectMapping } from '../../../../services/feedbackProjectService'
+import { ProjectLinkCard } from '../projects/ProjectLinkCard'
 
 export interface FeedbackRowProps {
   feedback: Feedback
@@ -20,11 +20,11 @@ export interface FeedbackRowProps {
   onProjectClick: (projectId: string) => void
 }
 
-export const FeedbackRow: React.FC<FeedbackRowProps> = ({ 
-  feedback, 
-  projectMappings, 
-  onClick, 
-  onProjectClick 
+export const FeedbackRow: React.FC<FeedbackRowProps> = ({
+  feedback,
+  projectMappings,
+  onClick,
+  onProjectClick,
 }) => {
   const firstProject = projectMappings[0]
   const additionalCount = projectMappings.length > 1 ? projectMappings.length - 1 : undefined
@@ -63,7 +63,9 @@ export const FeedbackRow: React.FC<FeedbackRowProps> = ({
           )}
         </div>
         <Badge colorClass={FEEDBACK_TYPE_COLORS[feedback.type]}>{feedback.type}</Badge>
-        <Badge colorClass={FEEDBACK_IMPORTANCE_COLORS[feedback.importance]}>{feedback.importance}</Badge>
+        <Badge colorClass={FEEDBACK_IMPORTANCE_COLORS[feedback.importance]}>
+          {feedback.importance}
+        </Badge>
         <Badge colorClass={FEEDBACK_STATUS_COLORS[feedback.status]}>{feedback.status}</Badge>
         <div className="text-xs text-slate-400">{formatDateShort(feedback.createdAt)}</div>
       </div>
@@ -76,7 +78,9 @@ export const FeedbackRow: React.FC<FeedbackRowProps> = ({
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge colorClass={FEEDBACK_TYPE_COLORS[feedback.type]}>{feedback.type}</Badge>
-          <Badge colorClass={FEEDBACK_IMPORTANCE_COLORS[feedback.importance]}>{feedback.importance}</Badge>
+          <Badge colorClass={FEEDBACK_IMPORTANCE_COLORS[feedback.importance]}>
+            {feedback.importance}
+          </Badge>
         </div>
         {firstProject && (
           <ProjectLinkCard
@@ -95,4 +99,3 @@ export const FeedbackRow: React.FC<FeedbackRowProps> = ({
     </button>
   )
 }
-

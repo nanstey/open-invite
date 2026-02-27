@@ -1,10 +1,7 @@
-
-
-import { FormSelect } from '../../../../../../lib/ui/components/FormControls'
 import { Checkbox } from '../../../../../../lib/ui/9ui/checkbox'
-
-import type { EventExpense, ExpenseApi, ExpenseAppliesTo, Person } from '../types'
+import { FormSelect } from '../../../../../../lib/ui/components/FormControls'
 import type { ItineraryItem } from '../../../../types'
+import type { EventExpense, ExpenseApi, ExpenseAppliesTo, Person } from '../types'
 import { computeParticipantIdsForAppliesTo } from '../utils'
 
 export function ExpenseParticipantsEditor(props: {
@@ -16,10 +13,20 @@ export function ExpenseParticipantsEditor(props: {
   expenseApi?: ExpenseApi
   itineraryItems: ItineraryItem[]
 }) {
-  const { expense: e, people, allPeopleIds, hostId, currentUserId, expenseApi, itineraryItems } = props
+  const {
+    expense: e,
+    people,
+    allPeopleIds,
+    hostId,
+    currentUserId,
+    expenseApi,
+    itineraryItems,
+  } = props
   const hasItineraryItems = itineraryItems.length > 0
   const isItineraryMode = hasItineraryItems && !!e.itineraryItemId
-  const participantPreset: ExpenseAppliesTo | 'ITINERARY_ITEM' = isItineraryMode ? 'ITINERARY_ITEM' : e.appliesTo
+  const participantPreset: ExpenseAppliesTo | 'ITINERARY_ITEM' = isItineraryMode
+    ? 'ITINERARY_ITEM'
+    : e.appliesTo
 
   return (
     <div className="border-t border-slate-800 pt-3">
@@ -27,7 +34,7 @@ export function ExpenseParticipantsEditor(props: {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
         <FormSelect
           value={participantPreset}
-          onChange={(ev) => {
+          onChange={ev => {
             const next = ev.target.value as ExpenseAppliesTo | 'ITINERARY_ITEM'
             if (next === 'ITINERARY_ITEM') {
               const fallbackItemId = itineraryItems[0]?.id ?? null
@@ -84,14 +91,14 @@ export function ExpenseParticipantsEditor(props: {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
           <FormSelect
             value={e.itineraryItemId ?? ''}
-            onChange={(ev) => {
+            onChange={ev => {
               const nextId = ev.target.value || null
               expenseApi?.onUpdate(e.id, { itineraryItemId: nextId })
             }}
             variant="surface"
             size="md"
           >
-            {itineraryItems.map((item) => (
+            {itineraryItems.map(item => (
               <option key={item.id} value={item.id}>
                 {item.title}
               </option>
@@ -104,30 +111,28 @@ export function ExpenseParticipantsEditor(props: {
       ) : null}
       {people.length === 0 ? (
         <div className="text-sm text-slate-500 italic">No participants available.</div>
+      ) : !isItineraryMode && e.appliesTo === 'CUSTOM' ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {people.map(p => {
+            const checked = e.participantIds.includes(p.id)
+            return (
+              <label key={p.id} className="flex items-center gap-2 text-sm text-slate-200">
+                <Checkbox
+                  checked={checked}
+                  onChange={ev => {
+                    const nextRaw = ev.target.checked
+                      ? Array.from(new Set([...e.participantIds, p.id]))
+                      : e.participantIds.filter(id => id !== p.id)
+                    expenseApi?.onUpdate(e.id, { appliesTo: 'CUSTOM', participantIds: nextRaw })
+                  }}
+                />
+                <span className="truncate">{p.name}</span>
+              </label>
+            )
+          })}
+        </div>
       ) : (
-        !isItineraryMode && e.appliesTo === 'CUSTOM' ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {people.map((p) => {
-                const checked = e.participantIds.includes(p.id)
-                return (
-                  <label key={p.id} className="flex items-center gap-2 text-sm text-slate-200">
-                    <Checkbox
-                      checked={checked}
-                      onChange={(ev) => {
-                        const nextRaw = ev.target.checked
-                          ? Array.from(new Set([...e.participantIds, p.id]))
-                          : e.participantIds.filter((id) => id !== p.id)
-                        expenseApi?.onUpdate(e.id, { appliesTo: 'CUSTOM', participantIds: nextRaw })
-                      }}
-                    />
-                    <span className="truncate">{p.name}</span>
-                  </label>
-                )
-              })}
-            </div>
-          ) : (
-            <div className="text-sm text-slate-400">{e.participantIds.length} selected</div>
-          )
+        <div className="text-sm text-slate-400">{e.participantIds.length} selected</div>
       )}
       {!isItineraryMode && e.appliesTo === 'CUSTOM' ? (
         <div className="mt-2 text-xs text-slate-500">{e.participantIds.length} selected</div>

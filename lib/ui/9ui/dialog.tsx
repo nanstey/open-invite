@@ -36,7 +36,7 @@ export function Dialog({ open, defaultOpen = false, onOpenChange, children }: Di
       }
       onOpenChange?.(next)
     },
-    [isControlled, onOpenChange],
+    [isControlled, onOpenChange]
   )
 
   return (
@@ -46,13 +46,16 @@ export function Dialog({ open, defaultOpen = false, onOpenChange, children }: Di
   )
 }
 
-export function DialogTrigger({ className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+export function DialogTrigger({
+  className,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const { setOpen } = useDialogContext()
   return (
     <button
       type="button"
       className={className}
-      onClick={(event) => {
+      onClick={event => {
         props.onClick?.(event)
         if (!event.defaultPrevented) {
           setOpen(true)
@@ -63,13 +66,16 @@ export function DialogTrigger({ className, ...props }: React.ButtonHTMLAttribute
   )
 }
 
-export function DialogClose({ className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+export function DialogClose({
+  className,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const { setOpen } = useDialogContext()
   return (
     <button
       type="button"
       className={className}
-      onClick={(event) => {
+      onClick={event => {
         props.onClick?.(event)
         if (!event.defaultPrevented) {
           setOpen(false)
@@ -97,7 +103,7 @@ export function DialogContent({ className, children }: React.HTMLAttributes<HTML
       <div
         className={cn(
           'relative z-[1001] w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 p-6 text-white shadow-lg',
-          className,
+          className
         )}
         role="dialog"
         aria-modal="true"
@@ -105,7 +111,7 @@ export function DialogContent({ className, children }: React.HTMLAttributes<HTML
         {children}
       </div>
     </div>,
-    document.body,
+    document.body
   )
 }
 
@@ -117,7 +123,10 @@ export function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHe
   return <h2 className={cn('text-lg font-semibold', className)} {...props} />
 }
 
-export function DialogDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
+export function DialogDescription({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLParagraphElement>) {
   return <p className={cn('text-sm text-slate-400', className)} {...props} />
 }
 

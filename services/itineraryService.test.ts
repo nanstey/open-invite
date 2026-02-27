@@ -1,27 +1,27 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const supabase = vi.hoisted(() => ({
   from: vi.fn(),
-}));
+}))
 
-vi.mock('../lib/supabase', () => ({ supabase }));
+vi.mock('../lib/supabase', () => ({ supabase }))
 
 import {
   createItineraryItem,
   deleteItineraryItem,
   fetchItineraryItems,
   updateItineraryItem,
-} from './itineraryService';
+} from './itineraryService'
 
 const mockFrom = (handlers: Record<string, () => any>) => {
   supabase.from.mockImplementation((table: string) => {
-    const handler = handlers[table];
+    const handler = handlers[table]
     if (!handler) {
-      throw new Error(`Unhandled table ${table}`);
+      throw new Error(`Unhandled table ${table}`)
     }
-    return handler();
-  });
-};
+    return handler()
+  })
+}
 
 const baseRow = {
   id: 'item-1',
@@ -31,18 +31,18 @@ const baseRow = {
   duration_minutes: 30,
   location: null as string | null,
   description: null as string | null,
-};
+}
 
 describe('itineraryService', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-  });
+    vi.clearAllMocks()
+  })
 
   describe('fetchItineraryItems', () => {
     it('queries by event_id and orders by start_time asc', async () => {
-      const select = vi.fn();
-      const eq = vi.fn();
-      const order = vi.fn().mockResolvedValue({ data: [], error: null });
+      const select = vi.fn()
+      const eq = vi.fn()
+      const order = vi.fn().mockResolvedValue({ data: [], error: null })
 
       mockFrom({
         event_itinerary_items: () => ({
@@ -52,15 +52,15 @@ describe('itineraryService', () => {
             }),
           }),
         }),
-      });
+      })
 
-      await fetchItineraryItems('event-1');
+      await fetchItineraryItems('event-1')
 
-      expect(supabase.from).toHaveBeenCalledWith('event_itinerary_items');
-      expect(select).toHaveBeenCalledWith('*');
-      expect(eq).toHaveBeenCalledWith('event_id', 'event-1');
-      expect(order).toHaveBeenCalledWith('start_time', { ascending: true });
-    });
+      expect(supabase.from).toHaveBeenCalledWith('event_itinerary_items')
+      expect(select).toHaveBeenCalledWith('*')
+      expect(eq).toHaveBeenCalledWith('event_id', 'event-1')
+      expect(order).toHaveBeenCalledWith('start_time', { ascending: true })
+    })
 
     it('transforms DB row with null-to-undefined mapping for location/description', async () => {
       mockFrom({
@@ -74,9 +74,9 @@ describe('itineraryService', () => {
             }),
           }),
         }),
-      });
+      })
 
-      const result = await fetchItineraryItems('event-1');
+      const result = await fetchItineraryItems('event-1')
 
       expect(result).toEqual([
         {
@@ -88,8 +88,8 @@ describe('itineraryService', () => {
           location: undefined,
           description: undefined,
         },
-      ]);
-    });
+      ])
+    })
 
     it('returns [] on DB error', async () => {
       mockFrom({
@@ -100,13 +100,13 @@ describe('itineraryService', () => {
             }),
           }),
         }),
-      });
+      })
 
-      const result = await fetchItineraryItems('event-1');
+      const result = await fetchItineraryItems('event-1')
 
-      expect(result).toEqual([]);
-    });
-  });
+      expect(result).toEqual([])
+    })
+  })
 
   describe('createItineraryItem', () => {
     it('builds insert payload with DB column names and null handling for optional fields', async () => {
@@ -121,18 +121,18 @@ describe('itineraryService', () => {
             error: null,
           }),
         }),
-      }));
+      }))
 
       mockFrom({
         event_itinerary_items: () => ({ insert }),
-      });
+      })
 
       await createItineraryItem({
         eventId: 'event-1',
         title: 'Dinner',
         startTime: '2026-03-01T18:00:00Z',
         durationMinutes: 90,
-      });
+      })
 
       expect(insert).toHaveBeenCalledWith({
         event_id: 'event-1',
@@ -141,8 +141,8 @@ describe('itineraryService', () => {
         duration_minutes: 90,
         location: null,
         description: null,
-      });
-    });
+      })
+    })
 
     it('returns transformed item on success', async () => {
       mockFrom({
@@ -161,7 +161,7 @@ describe('itineraryService', () => {
             }),
           }),
         }),
-      });
+      })
 
       const result = await createItineraryItem({
         eventId: 'event-1',
@@ -170,7 +170,7 @@ describe('itineraryService', () => {
         durationMinutes: 15,
         location: 'Main Hall',
         description: 'Meet by the entrance',
-      });
+      })
 
       expect(result).toEqual({
         id: 'item-3',
@@ -180,8 +180,8 @@ describe('itineraryService', () => {
         durationMinutes: 30,
         location: 'Main Hall',
         description: 'Meet by the entrance',
-      });
-    });
+      })
+    })
 
     it('returns null when insert errors or no row returned', async () => {
       mockFrom({
@@ -192,16 +192,16 @@ describe('itineraryService', () => {
             }),
           }),
         }),
-      });
+      })
 
       const errorResult = await createItineraryItem({
         eventId: 'event-1',
         title: 'Dinner',
         startTime: '2026-03-01T18:00:00Z',
         durationMinutes: 90,
-      });
+      })
 
-      expect(errorResult).toBeNull();
+      expect(errorResult).toBeNull()
 
       mockFrom({
         event_itinerary_items: () => ({
@@ -211,18 +211,18 @@ describe('itineraryService', () => {
             }),
           }),
         }),
-      });
+      })
 
       const missingRowResult = await createItineraryItem({
         eventId: 'event-1',
         title: 'Dinner',
         startTime: '2026-03-01T18:00:00Z',
         durationMinutes: 90,
-      });
+      })
 
-      expect(missingRowResult).toBeNull();
-    });
-  });
+      expect(missingRowResult).toBeNull()
+    })
+  })
 
   describe('updateItineraryItem', () => {
     it('maps patch keys and supports explicit clearing of location/description to null', async () => {
@@ -242,11 +242,11 @@ describe('itineraryService', () => {
             }),
           }),
         }),
-      }));
+      }))
 
       mockFrom({
         event_itinerary_items: () => ({ update }),
-      });
+      })
 
       await updateItineraryItem('item-1', {
         title: 'Updated title',
@@ -254,7 +254,7 @@ describe('itineraryService', () => {
         durationMinutes: 45,
         location: undefined,
         description: undefined,
-      });
+      })
 
       expect(update).toHaveBeenCalledWith({
         title: 'Updated title',
@@ -262,8 +262,8 @@ describe('itineraryService', () => {
         duration_minutes: 45,
         location: null,
         description: null,
-      });
-    });
+      })
+    })
 
     it('returns transformed row on success', async () => {
       mockFrom({
@@ -284,9 +284,9 @@ describe('itineraryService', () => {
             }),
           }),
         }),
-      });
+      })
 
-      const result = await updateItineraryItem('item-1', { title: 'Lunch' });
+      const result = await updateItineraryItem('item-1', { title: 'Lunch' })
 
       expect(result).toEqual({
         id: 'item-1',
@@ -296,8 +296,8 @@ describe('itineraryService', () => {
         durationMinutes: 30,
         location: 'Cafe',
         description: 'Bring badge',
-      });
-    });
+      })
+    })
 
     it('returns null on DB error/missing row', async () => {
       mockFrom({
@@ -310,10 +310,10 @@ describe('itineraryService', () => {
             }),
           }),
         }),
-      });
+      })
 
-      const errorResult = await updateItineraryItem('item-1', { title: 'Updated' });
-      expect(errorResult).toBeNull();
+      const errorResult = await updateItineraryItem('item-1', { title: 'Updated' })
+      expect(errorResult).toBeNull()
 
       mockFrom({
         event_itinerary_items: () => ({
@@ -325,12 +325,12 @@ describe('itineraryService', () => {
             }),
           }),
         }),
-      });
+      })
 
-      const missingResult = await updateItineraryItem('item-1', { title: 'Updated' });
-      expect(missingResult).toBeNull();
-    });
-  });
+      const missingResult = await updateItineraryItem('item-1', { title: 'Updated' })
+      expect(missingResult).toBeNull()
+    })
+  })
 
   describe('deleteItineraryItem', () => {
     it('returns true on successful delete', async () => {
@@ -340,12 +340,12 @@ describe('itineraryService', () => {
             eq: async () => ({ error: null }),
           }),
         }),
-      });
+      })
 
-      const result = await deleteItineraryItem('item-1');
+      const result = await deleteItineraryItem('item-1')
 
-      expect(result).toBe(true);
-    });
+      expect(result).toBe(true)
+    })
 
     it('returns false on error', async () => {
       mockFrom({
@@ -354,11 +354,11 @@ describe('itineraryService', () => {
             eq: async () => ({ error: new Error('delete failed') }),
           }),
         }),
-      });
+      })
 
-      const result = await deleteItineraryItem('item-1');
+      const result = await deleteItineraryItem('item-1')
 
-      expect(result).toBe(false);
-    });
-  });
-});
+      expect(result).toBe(false)
+    })
+  })
+})

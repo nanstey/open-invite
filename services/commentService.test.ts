@@ -9,7 +9,7 @@ const supabase = vi.hoisted(() => ({
 
 vi.mock('../lib/supabase', () => ({ supabase }))
 
-import { fetchComments, addComment, deleteComment } from './commentService'
+import { addComment, deleteComment, fetchComments } from './commentService'
 
 const mockFrom = (handlers: Record<string, () => any>) => {
   supabase.from.mockImplementation((table: string) => {
@@ -50,8 +50,20 @@ describe('commentService', () => {
             eq: () => ({
               order: async () => ({
                 data: [
-                  { id: 'comment-1', event_id: 'event-1', user_id: 'user-1', text: 'First', timestamp: '2025-01-01T10:00:00Z' },
-                  { id: 'comment-2', event_id: 'event-1', user_id: 'user-2', text: 'Second', timestamp: '2025-01-01T11:00:00Z' },
+                  {
+                    id: 'comment-1',
+                    event_id: 'event-1',
+                    user_id: 'user-1',
+                    text: 'First',
+                    timestamp: '2025-01-01T10:00:00Z',
+                  },
+                  {
+                    id: 'comment-2',
+                    event_id: 'event-1',
+                    user_id: 'user-2',
+                    text: 'Second',
+                    timestamp: '2025-01-01T11:00:00Z',
+                  },
                 ],
                 error: null,
               }),
@@ -63,8 +75,18 @@ describe('commentService', () => {
       const result = await fetchComments('event-1')
 
       expect(result).toHaveLength(2)
-      expect(result[0]).toMatchObject({ id: 'comment-1', userId: 'user-1', text: 'First', timestamp: '2025-01-01T10:00:00Z' })
-      expect(result[1]).toMatchObject({ id: 'comment-2', userId: 'user-2', text: 'Second', timestamp: '2025-01-01T11:00:00Z' })
+      expect(result[0]).toMatchObject({
+        id: 'comment-1',
+        userId: 'user-1',
+        text: 'First',
+        timestamp: '2025-01-01T10:00:00Z',
+      })
+      expect(result[1]).toMatchObject({
+        id: 'comment-2',
+        userId: 'user-2',
+        text: 'Second',
+        timestamp: '2025-01-01T11:00:00Z',
+      })
     })
 
     it('returns empty array when database error occurs', async () => {

@@ -1,23 +1,23 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { searchOpenverseImages } from './openverseService';
+import { searchOpenverseImages } from './openverseService'
 
 type MockApiImage = {
-  id?: string;
-  title?: string;
-  url?: string;
-  thumbnail?: string;
-  foreign_landing_url?: string;
-  source?: string;
-  provider?: string;
-  creator?: string;
-  license?: string;
-};
+  id?: string
+  title?: string
+  url?: string
+  thumbnail?: string
+  foreign_landing_url?: string
+  source?: string
+  provider?: string
+  creator?: string
+  license?: string
+}
 
 type MockApiResponse = {
-  page_count?: number;
-  results?: MockApiImage[];
-};
+  page_count?: number
+  results?: MockApiImage[]
+}
 
 const makeImage = (id: string, overrides: Partial<MockApiImage> = {}): MockApiImage => ({
   id,
@@ -25,7 +25,7 @@ const makeImage = (id: string, overrides: Partial<MockApiImage> = {}): MockApiIm
   url: `https://img.example.com/${id}.jpg`,
   thumbnail: `https://img.example.com/${id}-thumb.jpg`,
   ...overrides,
-});
+})
 
 const mockJsonResponse = (payload: MockApiResponse, ok = true) => ({
   ok,
@@ -33,21 +33,21 @@ const mockJsonResponse = (payload: MockApiResponse, ok = true) => ({
   statusText: ok ? 'OK' : 'Server Error',
   json: vi.fn().mockResolvedValue(payload),
   text: vi.fn().mockResolvedValue(''),
-});
+})
 
 describe('searchOpenverseImages', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.stubGlobal('fetch', vi.fn());
-  });
+    vi.clearAllMocks()
+    vi.stubGlobal('fetch', vi.fn())
+  })
 
   describe('input/options behavior', () => {
     it('returns [] for blank query', async () => {
-      const result = await searchOpenverseImages('   ');
+      const result = await searchOpenverseImages('   ')
 
-      expect(result).toEqual([]);
-      expect(fetch).not.toHaveBeenCalled();
-    });
+      expect(result).toEqual([])
+      expect(fetch).not.toHaveBeenCalled()
+    })
 
     it('clamps pageSize to max 20 and maxPages to valid range', async () => {
       vi.mocked(fetch).mockResolvedValueOnce(
@@ -55,17 +55,17 @@ describe('searchOpenverseImages', () => {
           page_count: 10,
           results: [makeImage('1')],
         }) as unknown as Response
-      );
+      )
 
-      const result = await searchOpenverseImages('flowers', { pageSize: 100, maxPages: 0 });
+      const result = await searchOpenverseImages('flowers', { pageSize: 100, maxPages: 0 })
 
-      expect(result).toHaveLength(1);
-      expect(fetch).toHaveBeenCalledTimes(1);
-      const firstUrl = new URL(vi.mocked(fetch).mock.calls[0][0] as string);
-      expect(firstUrl.searchParams.get('page')).toBe('1');
-      expect(firstUrl.searchParams.get('page_size')).toBe('20');
-    });
-  });
+      expect(result).toHaveLength(1)
+      expect(fetch).toHaveBeenCalledTimes(1)
+      const firstUrl = new URL(vi.mocked(fetch).mock.calls[0][0] as string)
+      expect(firstUrl.searchParams.get('page')).toBe('1')
+      expect(firstUrl.searchParams.get('page_size')).toBe('20')
+    })
+  })
 
   describe('mapping/filtering', () => {
     it('filters Flickr entries, drops invalid items, and maps valid fields with fallbacks', async () => {
@@ -92,9 +92,9 @@ describe('searchOpenverseImages', () => {
             }),
           ],
         }) as unknown as Response
-      );
+      )
 
-      const result = await searchOpenverseImages('nature', { pageSize: 10 });
+      const result = await searchOpenverseImages('nature', { pageSize: 10 })
 
       expect(result).toEqual([
         {
@@ -115,9 +115,9 @@ describe('searchOpenverseImages', () => {
           creator: undefined,
           license: undefined,
         },
-      ]);
-    });
-  });
+      ])
+    })
+  })
 
   describe('paging logic', () => {
     it('fetches page 1 first and continues only until enough non-Flickr images are collected', async () => {
@@ -143,19 +143,19 @@ describe('searchOpenverseImages', () => {
             page_count: 5,
             results: [makeImage('p3-valid-1')],
           }) as unknown as Response
-        );
+        )
 
-      const result = await searchOpenverseImages('sunset', { pageSize: 3, maxPages: 5 });
+      const result = await searchOpenverseImages('sunset', { pageSize: 3, maxPages: 5 })
 
-      expect(result).toHaveLength(3);
-      expect(result.map(x => x.id)).toEqual(['p1-valid-1', 'p2-valid-1', 'p2-valid-2']);
-      expect(fetch).toHaveBeenCalledTimes(2);
+      expect(result).toHaveLength(3)
+      expect(result.map(x => x.id)).toEqual(['p1-valid-1', 'p2-valid-1', 'p2-valid-2'])
+      expect(fetch).toHaveBeenCalledTimes(2)
 
-      const firstUrl = new URL(vi.mocked(fetch).mock.calls[0][0] as string);
-      const secondUrl = new URL(vi.mocked(fetch).mock.calls[1][0] as string);
-      expect(firstUrl.searchParams.get('page')).toBe('1');
-      expect(secondUrl.searchParams.get('page')).toBe('2');
-    });
+      const firstUrl = new URL(vi.mocked(fetch).mock.calls[0][0] as string)
+      const secondUrl = new URL(vi.mocked(fetch).mock.calls[1][0] as string)
+      expect(firstUrl.searchParams.get('page')).toBe('1')
+      expect(secondUrl.searchParams.get('page')).toBe('2')
+    })
 
     it('stops at page/maxPages cap and returns exactly desiredCount when enough are available', async () => {
       vi.mocked(fetch)
@@ -170,15 +170,15 @@ describe('searchOpenverseImages', () => {
             page_count: 2,
             results: [makeImage('b1'), makeImage('b2'), makeImage('b3')],
           }) as unknown as Response
-        );
+        )
 
-      const result = await searchOpenverseImages('ocean', { pageSize: 4, maxPages: 20 });
+      const result = await searchOpenverseImages('ocean', { pageSize: 4, maxPages: 20 })
 
-      expect(fetch).toHaveBeenCalledTimes(2);
-      expect(result).toHaveLength(4);
-      expect(result.map(x => x.id)).toEqual(['a1', 'a2', 'b1', 'b2']);
-    });
-  });
+      expect(fetch).toHaveBeenCalledTimes(2)
+      expect(result).toHaveLength(4)
+      expect(result.map(x => x.id)).toEqual(['a1', 'a2', 'b1', 'b2'])
+    })
+  })
 
   describe('error handling', () => {
     it('throws with status/statusText when response is not ok', async () => {
@@ -187,12 +187,12 @@ describe('searchOpenverseImages', () => {
         status: 503,
         statusText: 'Service Unavailable',
         text: vi.fn().mockResolvedValue(''),
-      } as unknown as Response);
+      } as unknown as Response)
 
       await expect(searchOpenverseImages('clouds')).rejects.toThrow(
         'Openverse request failed: 503 Service Unavailable'
-      );
-    });
+      )
+    })
 
     it('includes response text in thrown error when available', async () => {
       vi.mocked(fetch).mockResolvedValueOnce({
@@ -200,11 +200,11 @@ describe('searchOpenverseImages', () => {
         status: 429,
         statusText: 'Too Many Requests',
         text: vi.fn().mockResolvedValue('Rate limit exceeded'),
-      } as unknown as Response);
+      } as unknown as Response)
 
       await expect(searchOpenverseImages('city')).rejects.toThrow(
         'Openverse request failed: 429 Too Many Requests - Rate limit exceeded'
-      );
-    });
-  });
-});
+      )
+    })
+  })
+})

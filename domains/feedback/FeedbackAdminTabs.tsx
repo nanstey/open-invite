@@ -1,6 +1,6 @@
-import type React from 'react'
 import { Link } from '@tanstack/react-router'
 import { ClipboardList, FolderKanban } from 'lucide-react'
+import type React from 'react'
 import { FeedbackAdminPage } from './components/FeedbackAdminPage'
 import { ProjectsKanbanBoard } from './components/ProjectsKanbanBoard'
 
@@ -24,13 +24,17 @@ interface FeedbackAdminTabsProps {
   initialFeedbackId?: string
 }
 
-export function FeedbackAdminTabs({ initialTab = 'feedback', initialProjectId, initialFeedbackId }: FeedbackAdminTabsProps) {
+export function FeedbackAdminTabs({
+  initialTab = 'feedback',
+  initialProjectId,
+  initialFeedbackId,
+}: FeedbackAdminTabsProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Tab Bar */}
       <div className="shrink-0 border-b border-slate-800 bg-slate-900/50">
         <div className="flex gap-1 px-4 pt-2">
-          {TABS.map((tab) => {
+          {TABS.map(tab => {
             const Icon = tab.icon
             const isActive = initialTab === tab.id
             return (
@@ -67,4 +71,3 @@ export function FeedbackAdminTabs({ initialTab = 'feedback', initialProjectId, i
     </div>
   )
 }
-

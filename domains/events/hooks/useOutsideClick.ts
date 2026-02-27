@@ -1,9 +1,6 @@
 import * as React from 'react'
 
-export function useOutsideClick(args: {
-  enabled: boolean
-  onOutsideClick: () => void
-}): void {
+export function useOutsideClick(args: { enabled: boolean; onOutsideClick: () => void }): void {
   const { enabled, onOutsideClick } = args
   const onOutsideClickRef = React.useRef(onOutsideClick)
 
@@ -18,5 +15,3 @@ export function useOutsideClick(args: {
     return () => document.removeEventListener('click', onDocClick)
   }, [enabled])
 }
-
-

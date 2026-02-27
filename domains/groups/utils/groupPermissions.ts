@@ -1,9 +1,9 @@
-import type { Group } from '../../../lib/types';
-import type { GroupMember } from '../../../services/groupService';
+import type { Group } from '../../../lib/types'
+import type { GroupMember } from '../../../services/groupService'
 
 export function isGroupAdmin(group: Group | null, userId: string | undefined): boolean {
-  if (!group || !userId) return false;
-  return group.createdBy === userId;
+  if (!group || !userId) return false
+  return group.createdBy === userId
 }
 
 export function canManageGroupSettings(
@@ -11,8 +11,8 @@ export function canManageGroupSettings(
   roleByGroupId: Record<string, 'ADMIN' | 'MEMBER'>,
   userId: string | undefined
 ): boolean {
-  if (!group || !userId) return false;
-  return group.createdBy === userId || roleByGroupId[group.id] === 'ADMIN';
+  if (!group || !userId) return false
+  return group.createdBy === userId || roleByGroupId[group.id] === 'ADMIN'
 }
 
 export function canAddMembersToGroup(
@@ -20,16 +20,16 @@ export function canAddMembersToGroup(
   roleByGroupId: Record<string, 'ADMIN' | 'MEMBER'>,
   userId: string | undefined
 ): boolean {
-  if (!group || !userId) return false;
-  const isAdmin = canManageGroupSettings(group, roleByGroupId, userId);
-  if (isAdmin) return true;
-  if (!group.allowMembersAddMembers) return false;
+  if (!group || !userId) return false
+  const isAdmin = canManageGroupSettings(group, roleByGroupId, userId)
+  if (isAdmin) return true
+  if (!group.allowMembersAddMembers) return false
 
   // Security hardening: non-admin members cannot create requests on behalf of others
   // when approval flow is enabled.
-  if (group.newMembersRequireAdminApproval) return false;
+  if (group.newMembersRequireAdminApproval) return false
 
-  return true;
+  return true
 }
 
 export function canRemoveGroupMember(
@@ -38,12 +38,12 @@ export function canRemoveGroupMember(
   roleByGroupId: Record<string, 'ADMIN' | 'MEMBER'>,
   userId: string | undefined
 ): boolean {
-  if (!group || !userId) return false;
-  const isAdmin = canManageGroupSettings(group, roleByGroupId, userId);
-  if (!isAdmin) return false;
+  if (!group || !userId) return false
+  const isAdmin = canManageGroupSettings(group, roleByGroupId, userId)
+  if (!isAdmin) return false
 
-  const isCreatorRow = member.id === group.createdBy;
-  const isSelfRow = member.id === userId;
+  const isCreatorRow = member.id === group.createdBy
+  const isSelfRow = member.id === userId
 
-  return !isCreatorRow && !isSelfRow;
+  return !isCreatorRow && !isSelfRow
 }

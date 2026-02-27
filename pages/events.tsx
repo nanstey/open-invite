@@ -1,21 +1,30 @@
-import type React from 'react'
-import { useMemo, useCallback } from 'react'
-import { Outlet, createFileRoute, redirect, useNavigate, useRouterState } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  useNavigate,
+  useRouterState,
+} from '@tanstack/react-router'
 import { Calendar as CalendarIcon, LayoutGrid, Map as MapIcon } from 'lucide-react'
-
-import { useAuth } from '../domains/auth/AuthProvider'
+import type React from 'react'
+import { useCallback, useMemo } from 'react'
 import { useSetHeaderTabs } from '../domains/app/HeaderTabsContext'
-import type { TabOption } from '../lib/ui/components/TabGroup'
-import { MapView } from '../domains/events/components/list/EventsMapView'
+import { useAuth } from '../domains/auth/AuthProvider'
 import { CalendarView } from '../domains/events/components/list/CalendarView'
 import { EventsCardView } from '../domains/events/components/list/EventsCardView'
-import { FilterBar } from '../domains/events/components/list/EventsFilterBar'
 import { EventsEmptyState } from '../domains/events/components/list/EventsEmptyState'
+import { FilterBar } from '../domains/events/components/list/EventsFilterBar'
 import { EventsLoadingScreen } from '../domains/events/components/list/EventsLoadingScreen'
+import { MapView } from '../domains/events/components/list/EventsMapView'
 import { useEventFilters } from '../domains/events/hooks/useEventFilters'
-import { useEventNavigation, coerceEventsView, type EventsView } from '../domains/events/hooks/useEventNavigation'
+import {
+  coerceEventsView,
+  type EventsView,
+  useEventNavigation,
+} from '../domains/events/hooks/useEventNavigation'
 import { useEventsFeed } from '../domains/events/hooks/useEventsFeed'
 import { useFilterBarVisibility } from '../domains/events/hooks/useFilterBarVisibility'
+import type { TabOption } from '../lib/ui/components/TabGroup'
 
 function parseEventsView(value: unknown): EventsView | undefined {
   if (typeof value !== 'string') return undefined
@@ -35,7 +44,7 @@ export const Route = createFileRoute('/events')({
   },
   component: function EventsRouteComponent() {
     const { pathname } = useRouterState({
-      select: (s) => ({ pathname: s.location.pathname }),
+      select: s => ({ pathname: s.location.pathname }),
     })
 
     const isEventsIndex = pathname === '/events'
@@ -66,7 +75,12 @@ const EventsPage: React.FC = () => {
 
   useSetHeaderTabs(inviteTabs, view, handleTabChange)
 
-  const { events, loading: eventsLoading, join, leave } = useEventsFeed({
+  const {
+    events,
+    loading: eventsLoading,
+    join,
+    leave,
+  } = useEventsFeed({
     currentUserId: currentUser?.id ?? null,
     enabled: !authLoading,
   })
@@ -91,8 +105,11 @@ const EventsPage: React.FC = () => {
     clearFilters,
   } = useEventFilters(events, currentUser?.id ?? '')
 
-  const { isVisible: isFilterBarVisible, onScroll: handleScroll, scrollRef: scrollContainerRef } =
-    useFilterBarVisibility({ enabled: view === 'list', resetKey: view })
+  const {
+    isVisible: isFilterBarVisible,
+    onScroll: handleScroll,
+    scrollRef: scrollContainerRef,
+  } = useFilterBarVisibility({ enabled: view === 'list', resetKey: view })
 
   const contentClass = useMemo(() => {
     if (view === 'calendar' || view === 'map') {
@@ -124,25 +141,21 @@ const EventsPage: React.FC = () => {
       <div ref={scrollContainerRef} className={contentClass} onScroll={handleScroll}>
         {view === 'list' ? (
           filteredEvents.length === 0 ? (
-              <EventsEmptyState onClearFilters={clearFilters} />
-            ) : (
-              <EventsCardView
-                groupedEvents={groupedEvents}
-                currentUser={currentUser}
-                statusFilter={statusFilter}
-                onEventClick={goToEvent}
-                onJoin={join}
-                onLeave={leave}
-                onDismiss={dismiss}
-                onRestore={restore}
-              />
-            )
+            <EventsEmptyState onClearFilters={clearFilters} />
+          ) : (
+            <EventsCardView
+              groupedEvents={groupedEvents}
+              currentUser={currentUser}
+              statusFilter={statusFilter}
+              onEventClick={goToEvent}
+              onJoin={join}
+              onLeave={leave}
+              onDismiss={dismiss}
+              onRestore={restore}
+            />
+          )
         ) : view === 'map' ? (
-          <MapView
-            events={filteredEvents}
-            onEventClick={goToEvent}
-            currentUser={currentUser}
-          />
+          <MapView events={filteredEvents} onEventClick={goToEvent} currentUser={currentUser} />
         ) : (
           <CalendarView
             events={filteredEvents}
@@ -154,4 +167,3 @@ const EventsPage: React.FC = () => {
     </>
   )
 }
-

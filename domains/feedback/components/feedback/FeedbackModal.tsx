@@ -1,16 +1,16 @@
+import { Loader2, Send, X } from 'lucide-react'
 import type React from 'react'
-import { useState, useRef, useEffect } from 'react'
-import { X, Send, Loader2 } from 'lucide-react'
-import { FormInput, FormSelect } from '../../../../lib/ui/components/FormControls'
+import { useEffect, useRef, useState } from 'react'
 import { Button } from '../../../../lib/ui/9ui/button'
 import { Textarea } from '../../../../lib/ui/9ui/textarea'
+import { FormInput, FormSelect } from '../../../../lib/ui/components/FormControls'
 import { submitFeedback } from '../../../../services/feedbackService'
 import {
-  FEEDBACK_TYPE_OPTIONS,
   FEEDBACK_IMPORTANCE_OPTIONS,
-  type FeedbackType,
-  type FeedbackImportance,
+  FEEDBACK_TYPE_OPTIONS,
   type FeedbackFormData,
+  type FeedbackImportance,
+  type FeedbackType,
 } from '../../types'
 
 interface FeedbackModalProps {
@@ -142,7 +142,7 @@ export function FeedbackModal({ onClose, onSuccess }: FeedbackModalProps) {
             <FormInput
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={e => setTitle(e.target.value)}
               placeholder="Brief summary of your feedback"
               size="lg"
               disabled={loading}
@@ -152,16 +152,14 @@ export function FeedbackModal({ onClose, onSuccess }: FeedbackModalProps) {
           {/* Type & Importance Row */}
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
-                Type
-              </label>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Type</label>
               <FormSelect
                 value={type}
-                onChange={(e) => setType(e.target.value as FeedbackType)}
+                onChange={e => setType(e.target.value as FeedbackType)}
                 size="lg"
                 disabled={loading}
               >
-                {FEEDBACK_TYPE_OPTIONS.map((opt) => (
+                {FEEDBACK_TYPE_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
@@ -170,16 +168,14 @@ export function FeedbackModal({ onClose, onSuccess }: FeedbackModalProps) {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-slate-300 mb-1">
-                Importance
-              </label>
+              <label className="block text-sm font-medium text-slate-300 mb-1">Importance</label>
               <FormSelect
                 value={importance}
-                onChange={(e) => setImportance(e.target.value as FeedbackImportance)}
+                onChange={e => setImportance(e.target.value as FeedbackImportance)}
                 size="lg"
                 disabled={loading}
               >
-                {FEEDBACK_IMPORTANCE_OPTIONS.map((opt) => (
+                {FEEDBACK_IMPORTANCE_OPTIONS.map(opt => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}
                   </option>
@@ -195,7 +191,7 @@ export function FeedbackModal({ onClose, onSuccess }: FeedbackModalProps) {
             </label>
             <Textarea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               placeholder="Tell us more about your feedback..."
               rows={4}
               disabled={loading}
@@ -229,7 +225,7 @@ export function FeedbackModal({ onClose, onSuccess }: FeedbackModalProps) {
   return (
     <div className="fixed inset-0 z-[9999]">
       {/* Backdrop */}
-      <div 
+      <div
         className={`absolute inset-0 bg-black/50 backdrop-blur-sm transition-opacity duration-300 ${
           isClosing ? 'opacity-0' : 'opacity-100'
         }`}
@@ -238,7 +234,7 @@ export function FeedbackModal({ onClose, onSuccess }: FeedbackModalProps) {
 
       {/* Desktop: Centered Modal */}
       <div className="hidden md:flex items-center justify-center h-full p-4">
-        <div 
+        <div
           className={`bg-slate-800 rounded-xl shadow-2xl w-full max-w-lg p-6 relative max-h-[90vh] overflow-y-auto transition-all duration-300 ${
             isClosing ? 'opacity-0 scale-95' : 'opacity-100 scale-100 animate-fade-in'
           }`}
@@ -260,7 +256,7 @@ export function FeedbackModal({ onClose, onSuccess }: FeedbackModalProps) {
       </div>
 
       {/* Mobile: Bottom Sheet */}
-      <div 
+      <div
         ref={sheetRef}
         className={`md:hidden absolute bottom-0 left-0 right-0 bg-slate-800 rounded-t-3xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col transition-transform duration-300 ease-out ${
           isClosing ? 'translate-y-full' : 'animate-slide-up'
@@ -271,7 +267,7 @@ export function FeedbackModal({ onClose, onSuccess }: FeedbackModalProps) {
         }}
       >
         {/* Drag Handle */}
-        <div 
+        <div
           className="flex justify-center py-3 cursor-grab active:cursor-grabbing touch-none"
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
@@ -284,9 +280,7 @@ export function FeedbackModal({ onClose, onSuccess }: FeedbackModalProps) {
         <div className="flex items-center justify-between px-5 pb-2">
           <div>
             <h2 className="text-xl font-bold text-white">Submit Feedback</h2>
-            <p className="text-slate-400 text-sm">
-              Help us improve Open Invite
-            </p>
+            <p className="text-slate-400 text-sm">Help us improve Open Invite</p>
           </div>
           <button
             onClick={handleClose}
@@ -297,9 +291,7 @@ export function FeedbackModal({ onClose, onSuccess }: FeedbackModalProps) {
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto px-5 pb-8 pt-2">
-          {formContent}
-        </div>
+        <div className="flex-1 overflow-y-auto px-5 pb-8 pt-2">{formContent}</div>
       </div>
     </div>
   )

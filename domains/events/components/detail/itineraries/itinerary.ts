@@ -19,7 +19,7 @@ export function getItineraryItemEndDate(item: HasStartAndDuration): Date {
 
 export function getNextItineraryItemStartIso(
   items: HasStartAndDuration[],
-  fallbackIso: string = new Date().toISOString(),
+  fallbackIso: string = new Date().toISOString()
 ): string {
   if (!items || items.length === 0) return fallbackIso
   const ordered = sortByStartTime(items)
@@ -29,7 +29,7 @@ export function getNextItineraryItemStartIso(
 
 export function durationHoursToMinutes(
   durationHours: number | '' | null | undefined,
-  defaultMinutes: number = 60,
+  defaultMinutes: number = 60
 ): number {
   if (typeof durationHours === 'number' && Number.isFinite(durationHours) && durationHours > 0) {
     return Math.max(1, Math.round(durationHours * 60))
@@ -43,7 +43,9 @@ export function minutesToQuarterHourHours(durationMinutes: number | null | undef
   return Math.round((minutes / 60) * 4) / 4
 }
 
-export function deriveRangeFromItinerary(items: HasStartAndDuration[]): { start: Date; end: Date } | null {
+export function deriveRangeFromItinerary(
+  items: HasStartAndDuration[]
+): { start: Date; end: Date } | null {
   if (!items || items.length === 0) return null
 
   let minStart: Date | null = null
@@ -62,7 +64,9 @@ export function deriveRangeFromItinerary(items: HasStartAndDuration[]): { start:
   return { start: minStart, end: maxEnd }
 }
 
-export function deriveEventTimesFromItinerary(items: HasStartAndDuration[]): { startTime: string; endTime: string } | null {
+export function deriveEventTimesFromItinerary(
+  items: HasStartAndDuration[]
+): { startTime: string; endTime: string } | null {
   const range = deriveRangeFromItinerary(items)
   if (!range) return null
   return { startTime: range.start.toISOString(), endTime: range.end.toISOString() }
@@ -80,5 +84,3 @@ export function extractUniqueLocations(items: Array<{ location?: string }>): str
   }
   return out
 }
-
-

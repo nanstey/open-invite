@@ -16,7 +16,7 @@ export function useGuestsEditActions(input: {
   const visibleAttendeesList = React.useMemo(() => {
     if (!enabled) return attendeesList
     if (removedAttendeeIds.size === 0) return attendeesList
-    return attendeesList.filter((u) => !removedAttendeeIds.has(u.id))
+    return attendeesList.filter(u => !removedAttendeeIds.has(u.id))
   }, [attendeesList, enabled, removedAttendeeIds])
 
   const onRemoveAttendee = React.useCallback(
@@ -25,18 +25,16 @@ export function useGuestsEditActions(input: {
       if (!attendeeId) return
       if (attendeeId === event.hostId) return
 
-      const nextAttendees = event.attendees.filter((id) => id !== attendeeId)
+      const nextAttendees = event.attendees.filter(id => id !== attendeeId)
       onChangeAttendees?.(nextAttendees)
-      setRemovedAttendeeIds((prev) => {
+      setRemovedAttendeeIds(prev => {
         const next = new Set(prev)
         next.add(attendeeId)
         return next
       })
     },
-    [enabled, event.attendees, event.hostId, onChangeAttendees],
+    [enabled, event.attendees, event.hostId, onChangeAttendees]
   )
 
   return { visibleAttendeesList, onRemoveAttendee }
 }
-
-

@@ -1,43 +1,43 @@
-import * as React from 'react';
+import * as React from 'react'
 
-import { useClickOutside } from '../../lib/hooks/useClickOutside';
+import { useClickOutside } from '../../lib/hooks/useClickOutside'
 import {
   deleteGroup,
   type GroupMember,
   type GroupMemberRequest,
   removeUserFromGroup,
-} from '../../services/groupService';
-import { useAuth } from '../auth/AuthProvider';
-import { DeleteGroupDialog } from './components/DeleteGroupDialog';
-import { GroupDetailPane } from './components/GroupDetailPane';
-import { GroupMembersTab } from './components/GroupMembersTab';
-import { GroupSettingsTab } from './components/GroupSettingsTab';
-import { GroupsListPane } from './components/GroupsListPane';
-import { RemoveMemberDialog } from './components/RemoveMemberDialog';
-import { useGroupDialogs } from './hooks/useGroupDialogs';
-import { useGroupMembers } from './hooks/useGroupMembers';
-import { useGroupRequests } from './hooks/useGroupRequests';
-import { useGroupsData } from './hooks/useGroupsData';
+} from '../../services/groupService'
+import { useAuth } from '../auth/AuthProvider'
+import { DeleteGroupDialog } from './components/DeleteGroupDialog'
+import { GroupDetailPane } from './components/GroupDetailPane'
+import { GroupMembersTab } from './components/GroupMembersTab'
+import { GroupSettingsTab } from './components/GroupSettingsTab'
+import { GroupsListPane } from './components/GroupsListPane'
+import { RemoveMemberDialog } from './components/RemoveMemberDialog'
+import { useGroupDialogs } from './hooks/useGroupDialogs'
+import { useGroupMembers } from './hooks/useGroupMembers'
+import { useGroupRequests } from './hooks/useGroupRequests'
+import { useGroupsData } from './hooks/useGroupsData'
 import {
   canAddMembersToGroup,
   canManageGroupSettings,
   canRemoveGroupMember,
-} from './utils/groupPermissions';
+} from './utils/groupPermissions'
 
 type GroupSettingsDraft = {
-  name: string;
-  allowMembersCreateEvents: boolean;
-  allowMembersAddMembers: boolean;
-  newMembersRequireAdminApproval: boolean;
-};
+  name: string
+  allowMembersCreateEvents: boolean
+  allowMembersAddMembers: boolean
+  newMembersRequireAdminApproval: boolean
+}
 
 export function GroupsView() {
-  const { user } = useAuth();
+  const { user } = useAuth()
 
   // Data hooks
-  const { groups, roleByGroupId, friends, isLoading, refreshGroups } = useGroupsData();
+  const { groups, roleByGroupId, friends, isLoading, refreshGroups } = useGroupsData()
   const { members, membersGroupId, loadingMembers, refreshMembers, clearMembers } =
-    useGroupMembers();
+    useGroupMembers()
   const {
     pendingRequests,
     loadingRequests,
@@ -45,58 +45,58 @@ export function GroupsView() {
     refreshRequests,
     handleApproveRequest: handleApproveRequestHook,
     handleDenyRequest: handleDenyRequestHook,
-  } = useGroupRequests();
-  const dialogs = useGroupDialogs();
+  } = useGroupRequests()
+  const dialogs = useGroupDialogs()
 
   // Local state
-  const [searchTerm, setSearchTerm] = React.useState('');
-  const [selectedGroupId, setSelectedGroupId] = React.useState<string | null>(null);
-  const [selectedFriendIds, setSelectedFriendIds] = React.useState<string[]>([]);
+  const [searchTerm, setSearchTerm] = React.useState('')
+  const [selectedGroupId, setSelectedGroupId] = React.useState<string | null>(null)
+  const [selectedFriendIds, setSelectedFriendIds] = React.useState<string[]>([])
   const [memberPickerValue, setMemberPickerValue] = React.useState<{
-    id: string;
-    name: string;
-    avatar: string;
-  } | null>(null);
-  const [activeTab, setActiveTab] = React.useState('members');
+    id: string
+    name: string
+    avatar: string
+  } | null>(null)
+  const [activeTab, setActiveTab] = React.useState('members')
   const [groupSettingsDraft, setGroupSettingsDraft] = React.useState<GroupSettingsDraft | null>(
     null
-  );
-  const [savingSettings, setSavingSettings] = React.useState(false);
-  const [settingsMessage, setSettingsMessage] = React.useState<string | null>(null);
-  const [membersMessage, setMembersMessage] = React.useState<string | null>(null);
-  const [addingMembers, setAddingMembers] = React.useState(false);
+  )
+  const [savingSettings, setSavingSettings] = React.useState(false)
+  const [settingsMessage, setSettingsMessage] = React.useState<string | null>(null)
+  const [membersMessage, setMembersMessage] = React.useState<string | null>(null)
+  const [addingMembers, setAddingMembers] = React.useState(false)
 
-  const memberMenuRef = React.useRef<HTMLDivElement>(null);
-  const lastSelectionResetGroupIdRef = React.useRef<string | null>(null);
+  const memberMenuRef = React.useRef<HTMLDivElement>(null)
+  const lastSelectionResetGroupIdRef = React.useRef<string | null>(null)
 
-  useClickOutside(memberMenuRef, dialogs.closeMemberMenu, dialogs.openMemberMenuId !== null);
+  useClickOutside(memberMenuRef, dialogs.closeMemberMenu, dialogs.openMemberMenuId !== null)
 
   const filteredGroups = React.useMemo(
     () => groups.filter(group => group.name.toLowerCase().includes(searchTerm.toLowerCase())),
     [groups, searchTerm]
-  );
+  )
 
   const selectedGroup = React.useMemo(
     () => groups.find(group => group.id === selectedGroupId) ?? null,
     [groups, selectedGroupId]
-  );
+  )
 
-  const isAdmin = canManageGroupSettings(selectedGroup, roleByGroupId, user?.id);
-  const canAddMembers = canAddMembersToGroup(selectedGroup, roleByGroupId, user?.id);
+  const isAdmin = canManageGroupSettings(selectedGroup, roleByGroupId, user?.id)
+  const canAddMembers = canAddMembersToGroup(selectedGroup, roleByGroupId, user?.id)
 
   const settingsDirty = React.useMemo(() => {
-    if (!selectedGroup || !groupSettingsDraft) return false;
+    if (!selectedGroup || !groupSettingsDraft) return false
     return (
       selectedGroup.name !== groupSettingsDraft.name ||
       selectedGroup.allowMembersCreateEvents !== groupSettingsDraft.allowMembersCreateEvents ||
       selectedGroup.allowMembersAddMembers !== groupSettingsDraft.allowMembersAddMembers ||
       selectedGroup.newMembersRequireAdminApproval !==
         groupSettingsDraft.newMembersRequireAdminApproval
-    );
-  }, [groupSettingsDraft, selectedGroup]);
+    )
+  }, [groupSettingsDraft, selectedGroup])
 
   const canConfirmDelete =
-    !!selectedGroup && dialogs.deleteConfirmationInput.trim() === selectedGroup.name;
+    !!selectedGroup && dialogs.deleteConfirmationInput.trim() === selectedGroup.name
 
   // Select initial group on desktop when groups load
   React.useEffect(() => {
@@ -104,40 +104,40 @@ export function GroupsView() {
       const isDesktopViewport =
         typeof window !== 'undefined' &&
         typeof window.matchMedia === 'function' &&
-        window.matchMedia('(min-width: 1024px)').matches;
+        window.matchMedia('(min-width: 1024px)').matches
       if (isDesktopViewport) {
-        setSelectedGroupId(groups[0]?.id ?? null);
+        setSelectedGroupId(groups[0]?.id ?? null)
       }
     }
-  }, [isLoading, groups, selectedGroupId]);
+  }, [isLoading, groups, selectedGroupId])
 
   // Reset member state when group selection changes
   React.useEffect(() => {
     if (!selectedGroupId) {
-      clearMembers();
-      return;
+      clearMembers()
+      return
     }
 
     if (membersGroupId !== selectedGroupId) {
-      void refreshMembers(selectedGroupId);
+      void refreshMembers(selectedGroupId)
     }
-  }, [selectedGroupId, membersGroupId, refreshMembers, clearMembers]);
+  }, [selectedGroupId, membersGroupId, refreshMembers, clearMembers])
 
   // Reset friend selection on group change
   React.useEffect(() => {
-    if (lastSelectionResetGroupIdRef.current === selectedGroupId) return;
-    lastSelectionResetGroupIdRef.current = selectedGroupId;
-    setSelectedFriendIds([]);
-    setMemberPickerValue(null);
-  }, [selectedGroupId]);
+    if (lastSelectionResetGroupIdRef.current === selectedGroupId) return
+    lastSelectionResetGroupIdRef.current = selectedGroupId
+    setSelectedFriendIds([])
+    setMemberPickerValue(null)
+  }, [selectedGroupId])
 
   // Initialize settings draft when group changes
   React.useEffect(() => {
-    setMembersMessage(null);
-    dialogs.closeRemoveDialog();
+    setMembersMessage(null)
+    dialogs.closeRemoveDialog()
     if (!selectedGroup) {
-      setGroupSettingsDraft(null);
-      return;
+      setGroupSettingsDraft(null)
+      return
     }
     setGroupSettingsDraft({
       name: selectedGroup.name,
@@ -146,106 +146,105 @@ export function GroupsView() {
       newMembersRequireAdminApproval: selectedGroup.allowMembersAddMembers
         ? selectedGroup.newMembersRequireAdminApproval
         : false,
-    });
-    setSettingsMessage(null);
-  }, [selectedGroup, dialogs.closeRemoveDialog]);
+    })
+    setSettingsMessage(null)
+  }, [selectedGroup, dialogs.closeRemoveDialog])
 
   // Load pending requests when settings tab is active
   React.useEffect(() => {
-    if (activeTab !== 'settings' || !selectedGroup) return;
-    void refreshRequests(selectedGroup.id, isAdmin);
-  }, [activeTab, selectedGroup, isAdmin, refreshRequests]);
+    if (activeTab !== 'settings' || !selectedGroup) return
+    void refreshRequests(selectedGroup.id, isAdmin)
+  }, [activeTab, selectedGroup, isAdmin, refreshRequests])
 
   // Handlers
   const handleCreateGroup = async () => {
-    const fallbackName = `New Group ${groups.length + 1}`;
+    const fallbackName = `New Group ${groups.length + 1}`
     const created = await import('../../services/groupService').then(m =>
       m.createGroup(fallbackName)
-    );
-    if (!created) return;
-    await refreshGroups();
-    setSelectedGroupId(created.id);
-    setActiveTab('members');
-  };
+    )
+    if (!created) return
+    await refreshGroups()
+    setSelectedGroupId(created.id)
+    setActiveTab('members')
+  }
 
   const handleSelectGroup = (groupId: string) => {
-    setSelectedGroupId(groupId);
-    setActiveTab('members');
-  };
+    setSelectedGroupId(groupId)
+    setActiveTab('members')
+  }
 
   const handleBackToList = () => {
-    setSelectedGroupId(null);
-  };
+    setSelectedGroupId(null)
+  }
 
   const handleSelectFriend = (friend: { id: string; name: string; avatar: string } | null) => {
-    setMemberPickerValue(null);
-    if (!friend) return;
-    setSelectedFriendIds(prev => (prev.includes(friend.id) ? prev : [...prev, friend.id]));
-  };
+    setMemberPickerValue(null)
+    if (!friend) return
+    setSelectedFriendIds(prev => (prev.includes(friend.id) ? prev : [...prev, friend.id]))
+  }
 
   const handleRemoveSelectedFriend = (friendId: string) => {
-    setSelectedFriendIds(prev => prev.filter(id => id !== friendId));
-  };
+    setSelectedFriendIds(prev => prev.filter(id => id !== friendId))
+  }
 
   const handleAddMembers = async () => {
-    if (!selectedGroup || selectedFriendIds.length === 0 || addingMembers) return;
-    const requiresApproval = selectedGroup.newMembersRequireAdminApproval && !isAdmin;
-    setAddingMembers(true);
+    if (!selectedGroup || selectedFriendIds.length === 0 || addingMembers) return
+    const requiresApproval = selectedGroup.newMembersRequireAdminApproval && !isAdmin
+    setAddingMembers(true)
     try {
       const { createGroupMemberRequest, addUserToGroup } = await import(
         '../../services/groupService'
-      );
-      const failedFriendIds: string[] = [];
-      const addedFriendIds: string[] = [];
+      )
+      const failedFriendIds: string[] = []
+      const addedFriendIds: string[] = []
 
       for (const friendId of selectedFriendIds) {
         const added = requiresApproval
           ? await createGroupMemberRequest(selectedGroup.id)
-          : await addUserToGroup(friendId, selectedGroup.id);
+          : await addUserToGroup(friendId, selectedGroup.id)
         if (added) {
-          addedFriendIds.push(friendId);
+          addedFriendIds.push(friendId)
         } else {
-          failedFriendIds.push(friendId);
+          failedFriendIds.push(friendId)
         }
       }
 
       if (!requiresApproval && addedFriendIds.length > 0) {
-        await refreshMembers(selectedGroup.id);
+        await refreshMembers(selectedGroup.id)
       }
 
-      setSelectedFriendIds(failedFriendIds);
+      setSelectedFriendIds(failedFriendIds)
     } finally {
-      setAddingMembers(false);
+      setAddingMembers(false)
     }
-  };
+  }
 
   const handleSaveSettings = async () => {
-    if (!selectedGroup || !groupSettingsDraft || savingSettings) return;
-    const trimmedName = groupSettingsDraft.name.trim();
+    if (!selectedGroup || !groupSettingsDraft || savingSettings) return
+    const trimmedName = groupSettingsDraft.name.trim()
     const newMembersRequireAdminApproval =
-      groupSettingsDraft.allowMembersAddMembers &&
-      groupSettingsDraft.newMembersRequireAdminApproval;
+      groupSettingsDraft.allowMembersAddMembers && groupSettingsDraft.newMembersRequireAdminApproval
     if (!trimmedName) {
-      setSettingsMessage('Group name is required.');
-      return;
+      setSettingsMessage('Group name is required.')
+      return
     }
 
-    setSavingSettings(true);
-    setSettingsMessage(null);
-    const { updateGroup } = await import('../../services/groupService');
+    setSavingSettings(true)
+    setSettingsMessage(null)
+    const { updateGroup } = await import('../../services/groupService')
     const updated = await updateGroup(selectedGroup.id, {
       name: trimmedName,
       allowMembersCreateEvents: groupSettingsDraft.allowMembersCreateEvents,
       allowMembersAddMembers: groupSettingsDraft.allowMembersAddMembers,
       newMembersRequireAdminApproval,
-    });
+    })
     if (!updated) {
-      setSettingsMessage('Failed to save settings. Please try again.');
-      setSavingSettings(false);
-      return;
+      setSettingsMessage('Failed to save settings. Please try again.')
+      setSavingSettings(false)
+      return
     }
 
-    await refreshGroups();
+    await refreshGroups()
     setGroupSettingsDraft({
       name: updated.name,
       allowMembersCreateEvents: updated.allowMembersCreateEvents,
@@ -253,87 +252,87 @@ export function GroupsView() {
       newMembersRequireAdminApproval: updated.allowMembersAddMembers
         ? updated.newMembersRequireAdminApproval
         : false,
-    });
-    setSettingsMessage('Settings saved.');
-    setSavingSettings(false);
+    })
+    setSettingsMessage('Settings saved.')
+    setSavingSettings(false)
 
     if (updated.allowMembersAddMembers && updated.newMembersRequireAdminApproval) {
-      void refreshRequests(selectedGroup.id, true);
+      void refreshRequests(selectedGroup.id, true)
     }
-  };
+  }
 
   const handleApprove = async (request: GroupMemberRequest) => {
-    if (!selectedGroup) return;
-    const approved = await handleApproveRequestHook(request);
+    if (!selectedGroup) return
+    const approved = await handleApproveRequestHook(request)
     if (!approved) {
-      setSettingsMessage('Failed to approve request.');
-      return;
+      setSettingsMessage('Failed to approve request.')
+      return
     }
-    await refreshMembers(selectedGroup.id);
-    await refreshRequests(selectedGroup.id, true);
-    setSettingsMessage('Request approved.');
-  };
+    await refreshMembers(selectedGroup.id)
+    await refreshRequests(selectedGroup.id, true)
+    setSettingsMessage('Request approved.')
+  }
 
   const handleDenyInternal = async (requestId: string) => {
-    const denied = await handleDenyRequestHook(requestId);
+    const denied = await handleDenyRequestHook(requestId)
     if (!denied) {
-      setSettingsMessage('Failed to deny request.');
-      return;
+      setSettingsMessage('Failed to deny request.')
+      return
     }
-    setSettingsMessage('Request denied.');
-  };
+    setSettingsMessage('Request denied.')
+  }
 
   const handleOpenRemoveMemberDialog = (member: GroupMember) => {
-    if (!canRemoveGroupMember(selectedGroup, member, roleByGroupId, user?.id)) return;
-    dialogs.closeMemberMenu();
-    setMembersMessage(null);
-    dialogs.openRemoveDialog(member);
-  };
+    if (!canRemoveGroupMember(selectedGroup, member, roleByGroupId, user?.id)) return
+    dialogs.closeMemberMenu()
+    setMembersMessage(null)
+    dialogs.openRemoveDialog(member)
+  }
 
   const handleConfirmRemoveMember = async () => {
-    if (!selectedGroup || !dialogs.removeTargetMember) return;
+    if (!selectedGroup || !dialogs.removeTargetMember) return
     if (!canRemoveGroupMember(selectedGroup, dialogs.removeTargetMember, roleByGroupId, user?.id))
-      return;
+      return
 
-    setMembersMessage(null);
-    dialogs.setRemovingMemberId(dialogs.removeTargetMember.id);
-    const removed = await removeUserFromGroup(dialogs.removeTargetMember.id, selectedGroup.id);
+    setMembersMessage(null)
+    dialogs.setRemovingMemberId(dialogs.removeTargetMember.id)
+    const removed = await removeUserFromGroup(dialogs.removeTargetMember.id, selectedGroup.id)
 
     if (!removed) {
-      setMembersMessage('Failed to remove member. Please try again.');
-      dialogs.setRemovingMemberId(null);
-      return;
+      setMembersMessage('Failed to remove member. Please try again.')
+      dialogs.setRemovingMemberId(null)
+      return
     }
 
-    await refreshMembers(selectedGroup.id);
-    setMembersMessage(`${dialogs.removeTargetMember.name} removed from this group.`);
-    dialogs.setRemovingMemberId(null);
-    dialogs.closeRemoveDialog();
-  };
+    await refreshMembers(selectedGroup.id)
+    setMembersMessage(`${dialogs.removeTargetMember.name} removed from this group.`)
+    dialogs.setRemovingMemberId(null)
+    dialogs.closeRemoveDialog()
+  }
 
   const handleDeleteGroup = async () => {
-    if (!selectedGroup || dialogs.deletingGroup) return;
-    if (dialogs.deleteConfirmationInput.trim() !== selectedGroup.name) return;
+    if (!selectedGroup || dialogs.deletingGroup) return
+    if (dialogs.deleteConfirmationInput.trim() !== selectedGroup.name) return
 
-    const groupId = selectedGroup.id;
-    dialogs.setDeletingGroup(true);
-    dialogs.setDeleteError(null);
+    const groupId = selectedGroup.id
+    dialogs.setDeletingGroup(true)
+    dialogs.setDeleteError(null)
 
-    const deleted = await deleteGroup(groupId);
+    const deleted = await deleteGroup(groupId)
     if (!deleted) {
-      dialogs.setDeleteError('Failed to delete group. Please try again.');
-      dialogs.setDeletingGroup(false);
-      return;
+      dialogs.setDeleteError('Failed to delete group. Please try again.')
+      dialogs.setDeletingGroup(false)
+      return
     }
 
-    await refreshGroups();
-    clearMembers();
-    setSelectedGroupId(null);
-    setActiveTab('members');
-    dialogs.closeDeleteDialog();
-  };
+    await refreshGroups()
+    clearMembers()
+    setSelectedGroupId(null)
+    setActiveTab('members')
+    dialogs.closeDeleteDialog()
+  }
 
-  const showDetailOnMobile = !!selectedGroupId;
+  const showDetailOnMobile = !!selectedGroupId
 
   return (
     <div className="w-full pt-2 pb-20 md:pb-12">
@@ -427,5 +426,5 @@ export function GroupsView() {
         onConfirmRemove={handleConfirmRemoveMember}
       />
     </div>
-  );
+  )
 }

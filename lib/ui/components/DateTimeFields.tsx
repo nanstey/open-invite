@@ -1,5 +1,3 @@
-
-
 import { FormSelect } from './FormControls'
 
 type Size = 'lg' | 'compact'
@@ -60,7 +58,7 @@ export function DateTimeFields(props: DateTimeFieldsProps) {
 
   const inputBase = cx(
     'w-full bg-slate-900 border rounded-lg text-white outline-none border-slate-700 focus:border-primary',
-    inputPadding(size),
+    inputPadding(size)
   )
 
   const inputInvalid = 'border-red-500 focus:border-red-500'
@@ -72,7 +70,7 @@ export function DateTimeFields(props: DateTimeFieldsProps) {
         <input
           type="date"
           value={date}
-          onChange={(e) => onChangeDate(e.target.value)}
+          onChange={e => onChangeDate(e.target.value)}
           required={required}
           className={cx(inputBase, '[color-scheme:dark]', invalidStartTime && inputInvalid)}
         />
@@ -82,7 +80,7 @@ export function DateTimeFields(props: DateTimeFieldsProps) {
         <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Time</div>
         <FormSelect
           value={time}
-          onChange={(e) => onChangeTime(e.target.value)}
+          onChange={e => onChangeTime(e.target.value)}
           required={required}
           size="lg"
           variant="surface"
@@ -90,7 +88,7 @@ export function DateTimeFields(props: DateTimeFieldsProps) {
           wrapperClassName={size === 'compact' ? 'text-sm' : undefined}
         >
           <option value="">Select time</option>
-          {timeOptions.map((t) => (
+          {timeOptions.map(t => (
             <option key={t.value} value={t.value}>
               {t.label}
             </option>
@@ -99,13 +97,15 @@ export function DateTimeFields(props: DateTimeFieldsProps) {
       </div>
 
       <div className="space-y-1">
-        <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Duration (hours)</div>
+        <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">
+          Duration (hours)
+        </div>
         <input
           type="number"
           min={minDurationHours}
           step={durationStepHours}
           value={durationHours}
-          onChange={(e) => {
+          onChange={e => {
             const raw = e.target.value
             const next = raw === '' ? '' : Number(raw)
             onChangeDurationHours(next === '' ? '' : next)
@@ -114,10 +114,10 @@ export function DateTimeFields(props: DateTimeFieldsProps) {
           required={required}
           className={cx(inputBase, invalidDuration && inputInvalid)}
         />
-        {durationErrorText ? <div className="text-xs text-red-400 mt-1">{durationErrorText}</div> : null}
+        {durationErrorText ? (
+          <div className="text-xs text-red-400 mt-1">{durationErrorText}</div>
+        ) : null}
       </div>
     </div>
   )
 }
-
-

@@ -32,8 +32,10 @@ export function buildEventDateTimeModel(input: {
   // Display rule:
   // - If duration < 24h: show single date line + time range (even if it crosses midnight)
   // - If duration >= 24h: show multi-day (start date+time, end date+time)
-  const showMultiDay = !!endDate && typeof durationMs === 'number' && durationMs >= 24 * 60 * 60 * 1000
-  const showItineraryTimesOnly = !!endDate && typeof durationMs === 'number' && durationMs <= 24 * 60 * 60 * 1000
+  const showMultiDay =
+    !!endDate && typeof durationMs === 'number' && durationMs >= 24 * 60 * 60 * 1000
+  const showItineraryTimesOnly =
+    !!endDate && typeof durationMs === 'number' && durationMs <= 24 * 60 * 60 * 1000
 
   const startDateText = formatDateLongEnUS(startDate)
   const startTimeText = formatTime12h(startDate)
@@ -53,5 +55,3 @@ export function buildEventDateTimeModel(input: {
     timeRangeText,
   }
 }
-
-

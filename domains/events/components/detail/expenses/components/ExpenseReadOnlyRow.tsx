@@ -1,5 +1,3 @@
-
-
 import type { EventExpense, Person } from '../types'
 import type { ExpenseDetails } from '../useExpenseCalculator'
 import { formatCentsMaybeEstimate, titleForKind } from '../utils'
@@ -17,7 +15,7 @@ export function ExpenseReadOnlyRow(props: {
   const perLabel = formatCentsMaybeEstimate(perPersonCents, { currency: e.currency, isEstimate })
 
   const participantNames = effectiveParticipantIds
-    .map((id) => peopleById.get(id)?.name ?? 'Unknown')
+    .map(id => peopleById.get(id)?.name ?? 'Unknown')
     .filter(Boolean)
 
   return (
@@ -30,11 +28,14 @@ export function ExpenseReadOnlyRow(props: {
         <div className="text-right">
           <div className="text-white font-extrabold text-lg leading-tight">{perLabel}</div>
           <div className="text-xs text-slate-400 -mt-0.5">/ person</div>
-          {e.splitType === 'GROUP' ? <div className="text-xs text-slate-500 mt-1">{totalLabel} total</div> : null}
+          {e.splitType === 'GROUP' ? (
+            <div className="text-xs text-slate-500 mt-1">{totalLabel} total</div>
+          ) : null}
         </div>
       </div>
       <div className="mt-2 text-xs text-slate-500">
-        {effectiveParticipantIds.length} people{participantNames.length ? ` · ${participantNames.join(', ')}` : ''}
+        {effectiveParticipantIds.length} people
+        {participantNames.length ? ` · ${participantNames.join(', ')}` : ''}
       </div>
     </div>
   )

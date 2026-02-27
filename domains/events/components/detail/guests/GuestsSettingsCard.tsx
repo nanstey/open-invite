@@ -1,6 +1,6 @@
-import * as React from 'react';
-import type { Group } from '../../../../../lib/types';
-import { Checkbox } from '../../../../../lib/ui/9ui/checkbox';
+import * as React from 'react'
+import type { Group } from '../../../../../lib/types'
+import { Checkbox } from '../../../../../lib/ui/9ui/checkbox'
 import {
   Combobox,
   ComboboxChip,
@@ -11,21 +11,21 @@ import {
   ComboboxInput,
   ComboboxItem,
   ComboboxList,
-} from '../../../../../lib/ui/9ui/combobox';
-import { FormSelect } from '../../../../../lib/ui/components/FormControls';
-import type { SocialEvent } from '../../../types';
-import { EventVisibility } from '../../../types';
+} from '../../../../../lib/ui/9ui/combobox'
+import { FormSelect } from '../../../../../lib/ui/components/FormControls'
+import type { SocialEvent } from '../../../types'
+import { EventVisibility } from '../../../types'
 
 type GuestsSettingsCardProps = {
-  event: SocialEvent;
-  onChangeMaxSeats?: (next: number | undefined) => void;
-  onChangeVisibility?: (next: EventVisibility) => void;
-  onChangeGroupIds?: (nextGroupIds: string[]) => void;
-  groupOptions?: Group[];
-  groupsLoading?: boolean;
-  groupError?: string;
-  onChangeItineraryAttendanceEnabled?: (next: boolean) => void;
-};
+  event: SocialEvent
+  onChangeMaxSeats?: (next: number | undefined) => void
+  onChangeVisibility?: (next: EventVisibility) => void
+  onChangeGroupIds?: (nextGroupIds: string[]) => void
+  groupOptions?: Group[]
+  groupsLoading?: boolean
+  groupError?: string
+  onChangeItineraryAttendanceEnabled?: (next: boolean) => void
+}
 
 export function GuestsSettingsCard(props: GuestsSettingsCardProps) {
   const {
@@ -37,42 +37,42 @@ export function GuestsSettingsCard(props: GuestsSettingsCardProps) {
     groupsLoading,
     groupError,
     onChangeItineraryAttendanceEnabled,
-  } = props;
-  const [pickerValue, setPickerValue] = React.useState<Group | null>(null);
+  } = props
+  const [pickerValue, setPickerValue] = React.useState<Group | null>(null)
 
-  const selectedGroupIds = event.groupIds ?? [];
+  const selectedGroupIds = event.groupIds ?? []
   const selectedGroups = React.useMemo(() => {
-    const groupsById = new Map((groupOptions ?? []).map(group => [group.id, group] as const));
+    const groupsById = new Map((groupOptions ?? []).map(group => [group.id, group] as const))
     return selectedGroupIds
       .map(groupId => groupsById.get(groupId))
-      .filter((group): group is Group => !!group);
-  }, [groupOptions, selectedGroupIds]);
+      .filter((group): group is Group => !!group)
+  }, [groupOptions, selectedGroupIds])
   const availableGroups = React.useMemo(
     () => (groupOptions ?? []).filter(group => !selectedGroupIds.includes(group.id)),
     [groupOptions, selectedGroupIds]
-  );
+  )
 
   const addGroup = React.useCallback(
     (group: Group | null) => {
-      setPickerValue(null);
+      setPickerValue(null)
       if (!group) {
-        return;
+        return
       }
       if (selectedGroupIds.includes(group.id)) {
-        return;
+        return
       }
-      onChangeGroupIds?.([...selectedGroupIds, group.id]);
+      onChangeGroupIds?.([...selectedGroupIds, group.id])
     },
     [onChangeGroupIds, selectedGroupIds]
-  );
+  )
 
   const removeGroup = React.useCallback(
     (groupId: string) => {
-      onChangeGroupIds?.(selectedGroupIds.filter(id => id !== groupId));
+      onChangeGroupIds?.(selectedGroupIds.filter(id => id !== groupId))
     },
     [onChangeGroupIds, selectedGroupIds]
-  );
-  const itineraryAttendanceId = React.useId();
+  )
+  const itineraryAttendanceId = React.useId()
 
   return (
     <div className="bg-surface border border-slate-700 rounded-2xl p-5 space-y-4">
@@ -87,9 +87,9 @@ export function GuestsSettingsCard(props: GuestsSettingsCardProps) {
             step={1}
             value={event.maxSeats ?? ''}
             onChange={e => {
-              const raw = e.target.value;
-              const n = raw === '' ? undefined : Number(raw);
-              onChangeMaxSeats?.(n && n > 0 ? n : undefined);
+              const raw = e.target.value
+              const n = raw === '' ? undefined : Number(raw)
+              onChangeMaxSeats?.(n && n > 0 ? n : undefined)
             }}
             placeholder="Unlimited"
             className="w-full bg-slate-900 border rounded-lg py-3 px-4 text-white outline-none border-slate-700 focus:border-primary"
@@ -141,8 +141,8 @@ export function GuestsSettingsCard(props: GuestsSettingsCardProps) {
                         <span>{group.name}</span>
                         <ComboboxChipRemove
                           onClick={event => {
-                            event.stopPropagation();
-                            removeGroup(group.id);
+                            event.stopPropagation()
+                            removeGroup(group.id)
                           }}
                           aria-label={`Remove ${group.name}`}
                         />
@@ -190,5 +190,5 @@ export function GuestsSettingsCard(props: GuestsSettingsCardProps) {
         </div>
       </div>
     </div>
-  );
+  )
 }

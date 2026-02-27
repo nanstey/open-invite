@@ -34,12 +34,12 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
           'inline-flex items-center justify-center gap-2 rounded-lg font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60',
           variantClasses[variant],
           sizeClasses[size],
-          className,
+          className
         )}
         {...props}
       />
     )
-  },
+  }
 )
 
 Button.displayName = 'Button'

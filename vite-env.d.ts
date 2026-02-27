@@ -13,5 +13,3 @@ declare module '@tanstack/history' {
     fromEventsView?: 'list' | 'map' | 'calendar'
   }
 }
-
-

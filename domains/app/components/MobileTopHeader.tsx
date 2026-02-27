@@ -1,5 +1,3 @@
-
-
 import { TabGroup } from '../../../lib/ui/components/TabGroup'
 import { useHeaderTabs } from '../HeaderTabsContext'
 

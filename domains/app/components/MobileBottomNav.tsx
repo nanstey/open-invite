@@ -1,10 +1,10 @@
-import type React from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Bell, CalendarDays, Plus, Users as UsersIcon } from 'lucide-react'
+import type React from 'react'
 
 import type { User } from '../../../lib/types'
-import type { ActiveSection } from '../routing'
 import type { EventsView } from '../../events/hooks/useEventNavigation'
+import type { ActiveSection } from '../routing'
 
 interface MobileBottomNavProps {
   user: User
@@ -44,7 +44,7 @@ export function MobileBottomNav({
         <UsersIcon className="w-6 h-6" />
         <span className="text-[12px] font-medium">Friends</span>
       </Link>
-      
+
       <div className="w-full flex justify-center">
         <button
           onClick={() => navigate({ to: '/events/new', search: { view: eventsView } })}

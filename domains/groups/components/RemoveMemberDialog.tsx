@@ -1,4 +1,4 @@
-import type { Group } from '../../../lib/types';
+import type { Group } from '../../../lib/types'
 import {
   AlertDialog,
   AlertDialogClose,
@@ -7,17 +7,17 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../../../lib/ui/9ui/alert-dialog';
-import type { GroupMember } from '../../../services/groupService';
+} from '../../../lib/ui/9ui/alert-dialog'
+import type { GroupMember } from '../../../services/groupService'
 
 type RemoveMemberDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  removeTargetMember: GroupMember | null;
-  selectedGroup: Group | null;
-  removingMemberId: string | null;
-  onConfirmRemove: () => void;
-};
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  removeTargetMember: GroupMember | null
+  selectedGroup: Group | null
+  removingMemberId: string | null
+  onConfirmRemove: () => void
+}
 
 export function RemoveMemberDialog({
   open,
@@ -57,5 +57,5 @@ export function RemoveMemberDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  );
+  )
 }

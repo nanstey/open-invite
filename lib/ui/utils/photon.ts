@@ -7,7 +7,7 @@ type PhotonSearchResponse = { features?: PhotonFeature[] }
 
 export async function photonSearch(
   query: string,
-  opts?: { limit?: number; signal?: AbortSignal },
+  opts?: { limit?: number; signal?: AbortSignal }
 ): Promise<PhotonFeature[]> {
   const q = String(query ?? '').trim()
   if (!q) return []
@@ -24,7 +24,7 @@ export async function photonSearch(
 
 export async function photonGeocodeOne(
   query: string,
-  opts?: { signal?: AbortSignal },
+  opts?: { signal?: AbortSignal }
 ): Promise<{ lat: number; lng: number } | null> {
   const features = await photonSearch(query, { limit: 1, signal: opts?.signal })
   const coords = features?.[0]?.geometry?.coordinates
@@ -37,7 +37,7 @@ export async function photonGeocodeOne(
 export async function photonReverseOne(
   lat: number,
   lng: number,
-  opts?: { signal?: AbortSignal },
+  opts?: { signal?: AbortSignal }
 ): Promise<{ title?: string; subtitle?: string } | null> {
   if (!Number.isFinite(lat) || !Number.isFinite(lng)) return null
 
@@ -53,7 +53,9 @@ export async function photonReverseOne(
   const props = json?.features?.[0]?.properties ?? null
 
   const title =
-    String(props?.name ?? props?.street ?? props?.housenumber ?? props?.city ?? props?.locality ?? '').trim() || undefined
+    String(
+      props?.name ?? props?.street ?? props?.housenumber ?? props?.city ?? props?.locality ?? ''
+    ).trim() || undefined
 
   const subtitleParts = [
     props?.housenumber && props?.street ? `${props.housenumber} ${props.street}` : props?.street,
@@ -68,5 +70,3 @@ export async function photonReverseOne(
   const subtitle = subtitleParts.length ? subtitleParts.join(', ') : undefined
   return { title, subtitle }
 }
-
-

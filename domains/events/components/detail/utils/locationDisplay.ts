@@ -4,7 +4,10 @@ export function formatRawLocationForDisplay(raw: string): { primary: string; sec
   const value = String(raw ?? '').trim()
   if (!value) return { primary: '' }
 
-  const parts = value.split(',').map((p) => p.trim()).filter(Boolean)
+  const parts = value
+    .split(',')
+    .map(p => p.trim())
+    .filter(Boolean)
   if (parts.length <= 1) return { primary: value }
 
   const primary = parts[0] ?? value
@@ -13,16 +16,17 @@ export function formatRawLocationForDisplay(raw: string): { primary: string; sec
   return { primary, secondary }
 }
 
-export function formatEventLocationForDisplay(args: {
-  raw: string
-  locationData?: LocationData
-}): { primary: string; secondary?: string } {
+export function formatEventLocationForDisplay(args: { raw: string; locationData?: LocationData }): {
+  primary: string
+  secondary?: string
+} {
   const { raw, locationData } = args
 
   const data = locationData
   if (data?.display?.placeName) {
     const primary = data.display.placeName
-    const secondary = [data.display.addressLine, data.display.localityLine].filter(Boolean).join(', ') || undefined
+    const secondary =
+      [data.display.addressLine, data.display.localityLine].filter(Boolean).join(', ') || undefined
     return { primary, secondary }
   }
 
@@ -41,5 +45,3 @@ export function formatItineraryLocationForDisplay(location: string | undefined):
   const label = isReal ? full.split(',')[0]?.trim() || full : full
   return { full, label, isReal }
 }
-
-

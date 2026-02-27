@@ -1,6 +1,5 @@
-
-import { cn } from './utils'
 import type { EmojiItem } from './emoji-data'
+import { cn } from './utils'
 
 export type EmojiPickerProps = {
   emojis: EmojiItem[]
@@ -33,7 +32,7 @@ export function EmojiPicker({
                 title={item.shortcodes[0]}
                 className={cn(
                   'h-9 w-9 rounded-lg text-lg transition-colors',
-                  isActive ? 'bg-slate-700' : 'hover:bg-slate-800',
+                  isActive ? 'bg-slate-700' : 'hover:bg-slate-800'
                 )}
                 onMouseEnter={() => onHighlightChange?.(index)}
                 onClick={() => onSelect(item)}

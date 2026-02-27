@@ -7,53 +7,53 @@ export type ProjectStatus =
   | 'in_progress'
   | 'review'
   | 'blocked'
-  | 'completed';
+  | 'completed'
 
 // Application-level types (camelCase)
 export interface Project {
-  id: string;
-  title: string;
-  description: string | null;
-  status: ProjectStatus;
-  sortOrder: number;
-  githubRepo: string | null;
-  githubUrl: string | null;
-  createdAt: string;
-  updatedAt: string;
-  archivedAt?: string | null;
+  id: string
+  title: string
+  description: string | null
+  status: ProjectStatus
+  sortOrder: number
+  githubRepo: string | null
+  githubUrl: string | null
+  createdAt: string
+  updatedAt: string
+  archivedAt?: string | null
   // Aggregated data
-  feedbackCount?: number;
-  feedbackItems?: ProjectFeedbackItem[];
+  feedbackCount?: number
+  feedbackItems?: ProjectFeedbackItem[]
 }
 
 export interface ProjectFeedbackItem {
-  id: string;
-  projectId: string;
-  feedbackId: string;
-  createdAt: string;
+  id: string
+  projectId: string
+  feedbackId: string
+  createdAt: string
   // Joined feedback data
   feedback?: {
-    id: string;
-    title: string;
-    type: string;
-    importance: string;
-    status: string;
-  };
+    id: string
+    title: string
+    type: string
+    importance: string
+    status: string
+  }
 }
 
 // Form data types
 export interface ProjectFormData {
-  title: string;
-  description?: string;
-  githubRepo?: string;
-  githubUrl?: string;
+  title: string
+  description?: string
+  githubRepo?: string
+  githubUrl?: string
 }
 
 // Kanban column definition (derived from status)
 export interface KanbanColumn {
-  id: ProjectStatus;
-  title: string;
-  color: string;
+  id: ProjectStatus
+  title: string
+  color: string
 }
 
 // UI Constants - these define the kanban columns
@@ -66,7 +66,7 @@ export const KANBAN_COLUMNS: KanbanColumn[] = [
   { id: 'review', title: 'Review', color: '#8b5cf6' },
   { id: 'blocked', title: 'Blocked', color: '#ef4444' },
   { id: 'completed', title: 'Completed', color: '#22c55e' },
-];
+]
 
 export const PROJECT_STATUS_OPTIONS: { value: ProjectStatus; label: string }[] = [
   { value: 'backlog', label: 'Backlog' },
@@ -77,7 +77,7 @@ export const PROJECT_STATUS_OPTIONS: { value: ProjectStatus; label: string }[] =
   { value: 'review', label: 'Review' },
   { value: 'blocked', label: 'Blocked' },
   { value: 'completed', label: 'Completed' },
-];
+]
 
 export const PROJECT_STATUS_COLORS: Record<ProjectStatus, string> = {
   backlog: 'bg-slate-500/20 text-slate-300 border-slate-500/40',
@@ -88,7 +88,7 @@ export const PROJECT_STATUS_COLORS: Record<ProjectStatus, string> = {
   review: 'bg-violet-500/20 text-violet-300 border-violet-500/40',
   blocked: 'bg-red-500/20 text-red-300 border-red-500/40',
   completed: 'bg-green-500/20 text-green-300 border-green-500/40',
-};
+}
 
 // Card styling by status - used for immediate visual consistency after moves
 export const CARD_STATUS_STYLES: Record<ProjectStatus, string> = {
@@ -100,11 +100,11 @@ export const CARD_STATUS_STYLES: Record<ProjectStatus, string> = {
   review: 'bg-violet-900/40 border border-violet-700/60',
   blocked: 'bg-red-900/40 border border-red-700/60',
   completed: 'bg-green-900/40 border border-green-700/60',
-};
+}
 
 // Simplified project for pickers and lists
 export interface SimpleProject {
-  id: string;
-  title: string;
-  status: ProjectStatus;
+  id: string
+  title: string
+  status: ProjectStatus
 }

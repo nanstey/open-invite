@@ -1,11 +1,12 @@
-import type * as React from 'react'
 import { Search } from 'lucide-react'
+import type * as React from 'react'
 
 function cx(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(' ')
 }
 
-export interface SearchInputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
+export interface SearchInputProps
+  extends Omit<React.InputHTMLAttributes<HTMLInputElement>, 'type' | 'size'> {
   /** Size variant */
   size?: 'sm' | 'md' | 'lg'
   /** Container class name */
@@ -25,7 +26,7 @@ function sizeClasses(size: SearchInputProps['size']) {
 
 /**
  * Search input with icon.
- * 
+ *
  * @example
  * <SearchInput
  *   value={searchTerm}
@@ -33,32 +34,26 @@ function sizeClasses(size: SearchInputProps['size']) {
  *   placeholder="Search..."
  * />
  */
-export function SearchInput({ 
-  size = 'md', 
-  wrapperClassName, 
+export function SearchInput({
+  size = 'md',
+  wrapperClassName,
   className,
-  ...props 
+  ...props
 }: SearchInputProps) {
   const classes = sizeClasses(size)
-  
+
   return (
     <div className={cx('relative', wrapperClassName)}>
-      <Search 
-        className={cx(
-          'absolute top-1/2 -translate-y-1/2 text-slate-400',
-          classes.icon
-        )} 
-      />
+      <Search className={cx('absolute top-1/2 -translate-y-1/2 text-slate-400', classes.icon)} />
       <input
         type="text"
         {...props}
         className={cx(
           'w-full bg-slate-900 border border-slate-700 text-white placeholder:text-slate-500 outline-none focus:border-primary',
           classes.input,
-          className,
+          className
         )}
       />
     </div>
   )
 }
-

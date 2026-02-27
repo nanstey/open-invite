@@ -9,7 +9,9 @@ interface HeaderTabsState {
 }
 
 const HeaderTabsContext = React.createContext<HeaderTabsState | null>(null)
-const HeaderTabsSetterContext = React.createContext<React.Dispatch<React.SetStateAction<HeaderTabsState | null>> | null>(null)
+const HeaderTabsSetterContext = React.createContext<React.Dispatch<
+  React.SetStateAction<HeaderTabsState | null>
+> | null>(null)
 
 export function HeaderTabsProvider({ children }: { children: React.ReactNode }) {
   const [headerTabs, setHeaderTabs] = React.useState<HeaderTabsState | null>(null)
@@ -27,7 +29,11 @@ export function useHeaderTabs() {
   return React.useContext(HeaderTabsContext)
 }
 
-export function useSetHeaderTabs(tabs: TabOption[], activeTab: string, onChange: (id: string) => void) {
+export function useSetHeaderTabs(
+  tabs: TabOption[],
+  activeTab: string,
+  onChange: (id: string) => void
+) {
   const setHeaderTabs = React.useContext(HeaderTabsSetterContext)
 
   React.useEffect(() => {
@@ -41,4 +47,3 @@ export function useSetHeaderTabs(tabs: TabOption[], activeTab: string, onChange:
     }
   }, [setHeaderTabs, tabs, activeTab, onChange])
 }
-

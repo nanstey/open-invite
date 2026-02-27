@@ -36,19 +36,24 @@ export function Sheet({ open, defaultOpen = false, onOpenChange, children }: She
       }
       onOpenChange?.(next)
     },
-    [isControlled, onOpenChange],
+    [isControlled, onOpenChange]
   )
 
-  return <SheetContext.Provider value={{ open: currentOpen, setOpen }}>{children}</SheetContext.Provider>
+  return (
+    <SheetContext.Provider value={{ open: currentOpen, setOpen }}>{children}</SheetContext.Provider>
+  )
 }
 
-export function SheetTrigger({ className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+export function SheetTrigger({
+  className,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const { setOpen } = useSheetContext()
   return (
     <button
       type="button"
       className={className}
-      onClick={(event) => {
+      onClick={event => {
         props.onClick?.(event)
         if (!event.defaultPrevented) {
           setOpen(true)
@@ -65,7 +70,7 @@ export function SheetClose({ className, ...props }: React.ButtonHTMLAttributes<H
     <button
       type="button"
       className={className}
-      onClick={(event) => {
+      onClick={event => {
         props.onClick?.(event)
         if (!event.defaultPrevented) {
           setOpen(false)
@@ -105,7 +110,7 @@ export function SheetContent({ className, side = 'right', children, ...props }: 
           'fixed bg-slate-900 text-white shadow-xl border border-slate-700',
           sideClasses[side],
           side === 'bottom' ? 'rounded-t-2xl' : 'rounded-l-2xl',
-          className,
+          className
         )}
         role="dialog"
         aria-modal="true"
@@ -114,7 +119,7 @@ export function SheetContent({ className, side = 'right', children, ...props }: 
         {children}
       </div>
     </div>,
-    document.body,
+    document.body
   )
 }
 
@@ -126,7 +131,10 @@ export function SheetTitle({ className, ...props }: React.HTMLAttributes<HTMLHea
   return <h2 className={cn('text-lg font-semibold', className)} {...props} />
 }
 
-export function SheetDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
+export function SheetDescription({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLParagraphElement>) {
   return <p className={cn('text-sm text-slate-400', className)} {...props} />
 }
 

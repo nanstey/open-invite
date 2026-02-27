@@ -63,8 +63,14 @@ function toSuggestion(f: PhotonFeature): LocationSuggestion | null {
 
   const full = buildLabel(f.properties) || 'Selected location'
   const placeName = f.properties?.name?.trim() || undefined
-  const addressLine = [f.properties?.housenumber?.trim(), f.properties?.street?.trim()].filter(Boolean).join(' ').trim() || undefined
-  const localityLine = [f.properties?.city?.trim(), f.properties?.state?.trim()].filter(Boolean).join(', ').trim() || undefined
+  const addressLine =
+    [f.properties?.housenumber?.trim(), f.properties?.street?.trim()]
+      .filter(Boolean)
+      .join(' ')
+      .trim() || undefined
+  const localityLine =
+    [f.properties?.city?.trim(), f.properties?.state?.trim()].filter(Boolean).join(', ').trim() ||
+    undefined
   const postcode = f.properties?.postcode?.trim() || undefined
   const country = f.properties?.country?.trim() || undefined
 
@@ -125,10 +131,11 @@ export function LocationAutocomplete(props: LocationAutocompleteProps) {
       const controller = new AbortController()
       abortRef.current = controller
       try {
-        const features = (await photonSearch(q, { limit: 6, signal: controller.signal })) as unknown as PhotonFeature[]
-        const next = features
-          .map(toSuggestion)
-          .filter((v): v is LocationSuggestion => !!v)
+        const features = (await photonSearch(q, {
+          limit: 6,
+          signal: controller.signal,
+        })) as unknown as PhotonFeature[]
+        const next = features.map(toSuggestion).filter((v): v is LocationSuggestion => !!v)
 
         setResults(next)
         setHighlighted(0)
@@ -168,14 +175,14 @@ export function LocationAutocomplete(props: LocationAutocompleteProps) {
       props.onSelect(item)
       setOpen(false)
     },
-    [props, results],
+    [props, results]
   )
 
   return (
     <div ref={rootRef} className="relative w-full">
       <input
         value={query}
-        onChange={(e) => props.onChangeText(e.target.value)}
+        onChange={e => props.onChangeText(e.target.value)}
         onFocus={() => {
           setFocused(true)
           if (results.length > 0) setOpen(true)
@@ -184,7 +191,7 @@ export function LocationAutocomplete(props: LocationAutocompleteProps) {
           setFocused(false)
           setOpen(false)
         }}
-        onKeyDown={(e) => {
+        onKeyDown={e => {
           if (!open) return
           if (e.key === 'Escape') {
             e.preventDefault()
@@ -193,12 +200,12 @@ export function LocationAutocomplete(props: LocationAutocompleteProps) {
           }
           if (e.key === 'ArrowDown') {
             e.preventDefault()
-            setHighlighted((h) => Math.min(results.length - 1, h + 1))
+            setHighlighted(h => Math.min(results.length - 1, h + 1))
             return
           }
           if (e.key === 'ArrowUp') {
             e.preventDefault()
-            setHighlighted((h) => Math.max(0, h - 1))
+            setHighlighted(h => Math.max(0, h - 1))
             return
           }
           if (e.key === 'Enter') {
@@ -220,14 +227,16 @@ export function LocationAutocomplete(props: LocationAutocompleteProps) {
               <button
                 key={`${r.lat},${r.lng},${idx}`}
                 type="button"
-                onMouseDown={(e) => {
+                onMouseDown={e => {
                   // Prevent input blur before we select.
                   e.preventDefault()
                   selectAt(idx)
                 }}
                 className={cx(
                   'w-full text-left px-3 py-2 text-sm',
-                  idx === highlighted ? 'bg-slate-800 text-white' : 'text-slate-200 hover:bg-slate-800/70',
+                  idx === highlighted
+                    ? 'bg-slate-800 text-white'
+                    : 'text-slate-200 hover:bg-slate-800/70'
                 )}
               >
                 <div className="truncate">{r.label}</div>
@@ -243,5 +252,3 @@ export function LocationAutocomplete(props: LocationAutocompleteProps) {
     </div>
   )
 }
-
-
