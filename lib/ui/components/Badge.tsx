@@ -1,4 +1,4 @@
-import * as React from 'react'
+import type * as React from 'react'
 import { Badge as BaseBadge } from '../9ui/badge'
 import { cn } from '../9ui/utils'
 

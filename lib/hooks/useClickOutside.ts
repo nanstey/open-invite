@@ -1,4 +1,4 @@
-import { useEffect, RefObject } from 'react'
+import { useEffect, type RefObject } from 'react'
 
 /**
  * Hook that triggers a callback when clicking outside the referenced element.

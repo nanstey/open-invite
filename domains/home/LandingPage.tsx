@@ -1,4 +1,4 @@
-import React from 'react';
+import type React from 'react';
 import { CalendarDays, Map, Users, Bell, MapPin, Sparkles } from 'lucide-react';
 import { Card } from '../../lib/ui/9ui/card';
 

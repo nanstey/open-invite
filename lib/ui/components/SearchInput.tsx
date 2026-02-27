@@ -1,4 +1,4 @@
-import * as React from 'react'
+import type * as React from 'react'
 import { Search } from 'lucide-react'
 
 function cx(...parts: Array<string | false | null | undefined>) {

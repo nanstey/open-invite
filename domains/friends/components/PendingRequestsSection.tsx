@@ -1,4 +1,4 @@
-import * as React from 'react'
+import type * as React from 'react'
 import { SectionHeader } from '../../../lib/ui/components/SectionHeader'
 import { PendingRequestCard } from './PendingRequestCard'
 import { OutgoingRequestCard } from './OutgoingRequestCard'

@@ -1,4 +1,4 @@
-import React from 'react'
+import type React from 'react'
 import { useHeaderImageSearch } from '../../../hooks/useHeaderImageSearch'
 import { useHeaderImageSelection } from '../../../hooks/useHeaderImageSelection'
 import { HeaderImageModalHeader } from './HeaderImageModalHeader'

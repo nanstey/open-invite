@@ -1,4 +1,4 @@
-import * as React from 'react'
+import type * as React from 'react'
 import { Input } from '../9ui/input'
 import { Select } from '../9ui/select'
 import { cn } from '../9ui/utils'

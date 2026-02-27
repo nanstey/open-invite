@@ -1,5 +1,5 @@
 
-import React from 'react';
+import type React from 'react';
 import type { User } from '../../../../lib/types';
 import type { SocialEvent, MyEventsMode } from '../../types';
 import { EventCard } from './EventCard';

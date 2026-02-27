@@ -1,4 +1,5 @@
-import React, { useState } from 'react'
+import type React from 'react'
+import { useState } from 'react'
 import { Loader2, Github } from 'lucide-react'
 import { FeedbackPicker } from '../feedback/FeedbackPicker'
 import type { ProjectFormData } from '../../projectTypes'

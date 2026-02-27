@@ -1,11 +1,12 @@
 
-import React, { useState, useRef, useEffect } from 'react';
+import type React from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { User } from '../../../../lib/types';
 import type { SocialEvent } from '../../types';
 import { getTheme } from '../../../../lib/constants';
 import { Calendar, MapPin, Users, PhoneOff, MessageSquare, Crown, CheckCircle2, X, LogOut } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { StatusFilter } from './EventsFilterBar';
+import type { StatusFilter } from './EventsFilterBar';
 import { fetchUser } from '../../../../services/userService';
 import { Card } from '../../../../lib/ui/9ui/card';
 
@@ -235,7 +236,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   // Color calculation for interpolation
   const themeHex = theme.hex;
   const surfaceHex = '#1e293b'; // Slate 800/Surface color
-  let dynamicBgColor: string | undefined = undefined;
+  let dynamicBgColor: string | undefined ;
 
   if (isDragging) {
     // Interpolate color over a slightly longer distance than the threshold for smoothness

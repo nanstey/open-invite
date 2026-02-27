@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react'
-import { User } from '../../lib/types'
+import type React from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import type { User } from '../../lib/types'
 import {
   acceptFriendRequest,
   cancelFriendRequest,

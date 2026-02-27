@@ -1,5 +1,6 @@
 
-import React, { useState } from 'react';
+import type React from 'react';
+import { useState } from 'react';
 import { Search, CalendarClock, Users, Filter, XCircle, CheckCircle2, Crown, History, Inbox, Layout, ChevronUp, Tag } from 'lucide-react';
 import { FormSelect } from '../../../../lib/ui/components/FormControls';
 

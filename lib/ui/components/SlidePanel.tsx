@@ -1,4 +1,4 @@
-import * as React from 'react'
+import type * as React from 'react'
 import { X } from 'lucide-react'
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle } from '../9ui/sheet'
 

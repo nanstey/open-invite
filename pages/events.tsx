@@ -1,4 +1,5 @@
-import React, { useMemo, useCallback } from 'react'
+import type React from 'react'
+import { useMemo, useCallback } from 'react'
 import { Outlet, createFileRoute, redirect, useNavigate, useRouterState } from '@tanstack/react-router'
 import { Calendar as CalendarIcon, LayoutGrid, Map as MapIcon } from 'lucide-react'
 

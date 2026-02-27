@@ -2,7 +2,7 @@ import * as React from 'react'
 
 import type { Group, User } from '../../../../../lib/types'
 import type { SocialEvent } from '../../../types'
-import { EventVisibility } from '../../../types'
+import type { EventVisibility } from '../../../types'
 import { useGuestsEditActions } from '../../../hooks/useGuestsEditActions'
 import { useGuestFriendRequests } from '../../../hooks/useGuestFriendRequests'
 import { GuestsSettingsCard } from './GuestsSettingsCard'

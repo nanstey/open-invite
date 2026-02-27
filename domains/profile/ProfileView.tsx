@@ -1,7 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import type React from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { User } from '../../lib/types';
+import type { User } from '../../lib/types';
 import { Settings, LogOut, ChevronRight,  Edit2, Shield, BellRing, Moon, MessageSquarePlus, ClipboardList } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { supabase } from '../../lib/supabase';

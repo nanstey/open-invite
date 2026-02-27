@@ -1,4 +1,4 @@
-import * as React from 'react'
+import type * as React from 'react'
 import { MoreVertical, UserMinus } from 'lucide-react'
 import { UserAvatar } from '../../../lib/ui/components/UserAvatar'
 import type { User } from '../../../lib/types'
