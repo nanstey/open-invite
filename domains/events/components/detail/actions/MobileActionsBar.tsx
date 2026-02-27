@@ -1,5 +1,3 @@
-
-
 import { EventActions } from './EventActions'
 import type { EventActionsModel } from './types'
 
@@ -39,5 +37,3 @@ export function MobileActionsBar(props: {
     </div>
   )
 }
-
-

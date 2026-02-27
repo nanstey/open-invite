@@ -1,4 +1,4 @@
-import type { Group } from '../../../lib/types';
+import type { Group } from '../../../lib/types'
 import {
   AlertDialog,
   AlertDialogClose,
@@ -7,19 +7,19 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from '../../../lib/ui/9ui/alert-dialog';
+} from '../../../lib/ui/9ui/alert-dialog'
 
 type DeleteGroupDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  selectedGroup: Group | null;
-  deleteConfirmationInput: string;
-  deletingGroup: boolean;
-  deleteError: string | null;
-  canConfirmDelete: boolean;
-  onInputChange: (value: string) => void;
-  onConfirmDelete: () => void;
-};
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  selectedGroup: Group | null
+  deleteConfirmationInput: string
+  deletingGroup: boolean
+  deleteError: string | null
+  canConfirmDelete: boolean
+  onInputChange: (value: string) => void
+  onConfirmDelete: () => void
+}
 
 export function DeleteGroupDialog({
   open,
@@ -68,5 +68,5 @@ export function DeleteGroupDialog({
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
-  );
+  )
 }

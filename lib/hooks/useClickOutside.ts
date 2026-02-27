@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from 'react'
+import { type RefObject, useEffect } from 'react'
 
 /**
  * Hook that triggers a callback when clicking outside the referenced element.
@@ -25,4 +25,3 @@ export function useClickOutside<T extends HTMLElement>(
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [ref, onClickOutside, enabled])
 }
-

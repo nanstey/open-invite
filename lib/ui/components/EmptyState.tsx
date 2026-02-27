@@ -21,16 +21,10 @@ export interface EmptyStateProps {
  *   message="No friends yet. Add some friends to get started!"
  * />
  */
-export const EmptyState: React.FC<EmptyStateProps> = ({
-  icon,
-  message,
-  children,
-  className,
-}) => (
+export const EmptyState: React.FC<EmptyStateProps> = ({ icon, message, children, className }) => (
   <div className={cn('text-center py-12 text-slate-400', className)}>
     <div className="w-12 h-12 mx-auto mb-4 opacity-50">{icon}</div>
     <p>{message}</p>
     {children}
   </div>
 )
-

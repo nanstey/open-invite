@@ -1,13 +1,11 @@
-import * as React from 'react'
-
 import { SmilePlus } from 'lucide-react'
-
-import type { Reaction } from '../../../types'
+import * as React from 'react'
 import type { User } from '../../../../../lib/types'
 import { EMOJI_DATA } from '../../../../../lib/ui/9ui/emoji-data'
 import { EmojiPicker } from '../../../../../lib/ui/9ui/emoji-picker'
 import { Popover, PopoverContent, PopoverTrigger } from '../../../../../lib/ui/9ui/popover'
 import { cn } from '../../../../../lib/ui/9ui/utils'
+import type { Reaction } from '../../../types'
 
 type CommentReactionBarProps = {
   reactions?: Record<string, Reaction>
@@ -68,7 +66,7 @@ function usePopoverDismiss(args: {
 
 function getReactionUserNames(reaction: Reaction, reactionUsers?: Map<string, User>) {
   const reactionUserIds = reaction.userIds ? [...new Set(reaction.userIds)] : []
-  const reactionUserNames = reactionUserIds.map((id) => {
+  const reactionUserNames = reactionUserIds.map(id => {
     const user = reactionUsers?.get(id)
     if (user?.isCurrentUser) return 'You'
     return user?.name ?? 'Unknown guest'
@@ -102,7 +100,7 @@ function ReactionPopoverItem({
 
   const reactionUserNames = React.useMemo(
     () => getReactionUserNames(reaction, reactionUsers),
-    [reaction, reactionUsers],
+    [reaction, reactionUsers]
   )
   const hasReactionUsers = reactionUserNames.length > 0
   const isUserListLoading = reaction.userIds === undefined && reaction.count > 0
@@ -182,7 +180,7 @@ function ReactionPopoverItem({
             'flex items-center gap-1 rounded-full border px-2 py-1 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-60',
             reaction.userReacted
               ? 'border-primary/60 bg-primary/10 text-primary'
-              : 'border-slate-700 bg-slate-900/60 text-slate-200 hover:border-slate-500',
+              : 'border-slate-700 bg-slate-900/60 text-slate-200 hover:border-slate-500'
           )}
         >
           <span className="text-sm">{reaction.emoji}</span>
@@ -212,7 +210,13 @@ function ReactionPopoverItem({
   )
 }
 
-export function CommentReactionBar({ reactions, reactionUsers, onToggle, disabled, className }: CommentReactionBarProps) {
+export function CommentReactionBar({
+  reactions,
+  reactionUsers,
+  onToggle,
+  disabled,
+  className,
+}: CommentReactionBarProps) {
   const [activeEmoji, setActiveEmoji] = React.useState<string | null>(null)
 
   const reactionItems = React.useMemo(() => {
@@ -222,7 +226,7 @@ export function CommentReactionBar({ reactions, reactionUsers, onToggle, disable
 
   return (
     <div className={cn('mt-3 flex flex-wrap items-center gap-2', className)}>
-      {reactionItems.map((reaction) => (
+      {reactionItems.map(reaction => (
         <React.Fragment key={reaction.emoji}>
           <ReactionPopoverItem
             reaction={reaction}
@@ -230,7 +234,7 @@ export function CommentReactionBar({ reactions, reactionUsers, onToggle, disable
             disabled={disabled}
             isOpen={activeEmoji === reaction.emoji}
             onOpen={() => setActiveEmoji(reaction.emoji)}
-            onClose={() => setActiveEmoji((prev) => (prev === reaction.emoji ? null : prev))}
+            onClose={() => setActiveEmoji(prev => (prev === reaction.emoji ? null : prev))}
             onToggle={onToggle}
           />
         </React.Fragment>
@@ -272,7 +276,7 @@ export function CommentReactionPicker({
       }
       onOpenChange?.(next)
     },
-    [isControlled, onOpenChange],
+    [isControlled, onOpenChange]
   )
   const [highlightedIndex, setHighlightedIndex] = React.useState(0)
   const popoverRef = React.useRef<HTMLDivElement | null>(null)
@@ -295,20 +299,24 @@ export function CommentReactionPicker({
       onToggle(item.emoji)
       setOpen(false)
     },
-    [onToggle, setOpen],
+    [onToggle, setOpen]
   )
 
   return (
     <div className={cn('mt-3 flex flex-wrap items-center gap-2', className)}>
       <div ref={popoverRef} className={cn('relative', addButtonContainerClassName)}>
-        <Popover open={isOpen} onOpenChange={setOpen} className={cn('w-full', addButtonContainerClassName)}>
+        <Popover
+          open={isOpen}
+          onOpenChange={setOpen}
+          className={cn('w-full', addButtonContainerClassName)}
+        >
           <div className={cn('flex', addButtonWrapperClassName)}>
             {showTrigger ? (
               <PopoverTrigger
                 aria-label="Add reaction"
                 className={cn(
                   'flex h-8 w-8 items-center justify-center rounded-full border border-dashed border-slate-600 text-slate-400 transition-opacity hover:text-slate-200',
-                  'opacity-0 group-hover:opacity-100 focus-visible:opacity-100',
+                  'opacity-0 group-hover:opacity-100 focus-visible:opacity-100'
                 )}
                 disabled={disabled}
               >

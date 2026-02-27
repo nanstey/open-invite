@@ -35,10 +35,14 @@ export function Tabs({ value, defaultValue, onValueChange, children }: TabsProps
       }
       onValueChange?.(next)
     },
-    [isControlled, onValueChange],
+    [isControlled, onValueChange]
   )
 
-  return <TabsContext.Provider value={{ value: currentValue, setValue }}>{children}</TabsContext.Provider>
+  return (
+    <TabsContext.Provider value={{ value: currentValue, setValue }}>
+      {children}
+    </TabsContext.Provider>
+  )
 }
 
 export function TabsList({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
@@ -58,9 +62,9 @@ export function TabsTrigger({ value, className, ...props }: TabsTriggerProps) {
       className={cn(
         'px-3 py-1.5 text-xs font-semibold rounded-full transition-colors',
         isActive ? 'bg-primary text-white' : 'text-slate-300 hover:text-white',
-        className,
+        className
       )}
-      onClick={(event) => {
+      onClick={event => {
         props.onClick?.(event)
         if (!event.defaultPrevented) {
           setValue(value)

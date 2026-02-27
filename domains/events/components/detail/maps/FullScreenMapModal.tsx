@@ -1,8 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { ChevronDown, ChevronUp, ExternalLink, X } from 'lucide-react'
-
-import { buildGoogleMapsLatLngUrl } from './maps'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { photonReverseOne } from '../../../../../lib/ui/utils/photon'
+import { buildGoogleMapsLatLngUrl } from './maps'
 
 type LatLng = [number, number]
 
@@ -27,8 +26,14 @@ export const FullScreenMapModal: React.FC<FullScreenMapModalProps> = ({
   const markerLayerRef = useRef<any>(null)
   const polylineRef = useRef<any>(null)
 
-  const [selectedPoint, setSelectedPoint] = useState<{ idx: number; lat: number; lng: number } | null>(null)
-  const [selectedInfo, setSelectedInfo] = useState<{ title?: string; subtitle?: string } | null>(null)
+  const [selectedPoint, setSelectedPoint] = useState<{
+    idx: number
+    lat: number
+    lng: number
+  } | null>(null)
+  const [selectedInfo, setSelectedInfo] = useState<{ title?: string; subtitle?: string } | null>(
+    null
+  )
   const [selectedInfoLoading, setSelectedInfoLoading] = useState(false)
   const reverseCacheRef = useRef<Map<string, { title?: string; subtitle?: string }>>(new Map())
 
@@ -50,7 +55,7 @@ export const FullScreenMapModal: React.FC<FullScreenMapModalProps> = ({
         }
       }
     },
-    [points],
+    [points]
   )
 
   const formatCoord = useCallback((n: number) => {
@@ -105,24 +110,27 @@ export const FullScreenMapModal: React.FC<FullScreenMapModalProps> = ({
     }
   }, [])
 
-  const setMarkerSelectedState = useCallback((idx: number, selected: boolean) => {
-    if (typeof window === 'undefined') return
-    const L = (window as any)?.L
-    if (!L) return
-    const marker = markersRef.current[idx]
-    if (!marker) return
-    const icon = L.divIcon({
-      className: '',
-      iconSize: selected ? [34, 34] : [30, 30],
-      iconAnchor: selected ? [17, 17] : [15, 15],
-      html: markerIconHtml(String(idx + 1), selected),
-    })
-    try {
-      marker.setIcon(icon)
-    } catch {
-      // ignore
-    }
-  }, [markerIconHtml])
+  const setMarkerSelectedState = useCallback(
+    (idx: number, selected: boolean) => {
+      if (typeof window === 'undefined') return
+      const L = (window as any)?.L
+      if (!L) return
+      const marker = markersRef.current[idx]
+      if (!marker) return
+      const icon = L.divIcon({
+        className: '',
+        iconSize: selected ? [34, 34] : [30, 30],
+        iconAnchor: selected ? [17, 17] : [15, 15],
+        html: markerIconHtml(String(idx + 1), selected),
+      })
+      try {
+        marker.setIcon(icon)
+      } catch {
+        // ignore
+      }
+    },
+    [markerIconHtml]
+  )
 
   useEffect(() => {
     // Maintain a single highlighted marker that tracks selectedPoint.
@@ -176,7 +184,9 @@ export const FullScreenMapModal: React.FC<FullScreenMapModalProps> = ({
 
     ;(async () => {
       try {
-        const info = (await photonReverseOne(selectedPoint.lat, selectedPoint.lng, { signal: controller.signal })) ?? {
+        const info = (await photonReverseOne(selectedPoint.lat, selectedPoint.lng, {
+          signal: controller.signal,
+        })) ?? {
           title: undefined,
           subtitle: undefined,
         }
@@ -328,15 +338,26 @@ export const FullScreenMapModal: React.FC<FullScreenMapModalProps> = ({
   }, [destroyMap])
 
   return (
-    <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[9999] flex items-stretch justify-stretch" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[9999] flex items-stretch justify-stretch"
+      role="dialog"
+      aria-modal="true"
+    >
       <div className="bg-surface w-full h-full overflow-hidden flex flex-col">
         <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/60 shrink-0">
           <div className="min-w-0">
             <h2 className="text-lg font-bold text-white truncate">{title}</h2>
-            {!hasPoints ? <div className="text-xs text-slate-500">No location coordinates available.</div> : null}
+            {!hasPoints ? (
+              <div className="text-xs text-slate-500">No location coordinates available.</div>
+            ) : null}
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors" type="button" aria-label="Close map">
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-white transition-colors"
+              type="button"
+              aria-label="Close map"
+            >
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -370,14 +391,19 @@ export const FullScreenMapModal: React.FC<FullScreenMapModalProps> = ({
 
                 <div className="p-4 flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Stop {selectedPoint.idx + 1}</div>
+                    <div className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Stop {selectedPoint.idx + 1}
+                    </div>
                     <div className="text-base font-bold text-white truncate">
-                      {selectedInfoLoading ? 'Loading location…' : selectedInfo?.title || 'Pinned location'}
+                      {selectedInfoLoading
+                        ? 'Loading location…'
+                        : selectedInfo?.title || 'Pinned location'}
                     </div>
                     <div className="text-sm text-slate-400 truncate">
                       {selectedInfoLoading
                         ? `${formatCoord(selectedPoint.lat)}, ${formatCoord(selectedPoint.lng)}`
-                        : selectedInfo?.subtitle || `${formatCoord(selectedPoint.lat)}, ${formatCoord(selectedPoint.lng)}`}
+                        : selectedInfo?.subtitle ||
+                          `${formatCoord(selectedPoint.lat)}, ${formatCoord(selectedPoint.lng)}`}
                     </div>
                   </div>
                   <button
@@ -419,5 +445,3 @@ export const FullScreenMapModal: React.FC<FullScreenMapModalProps> = ({
     </div>
   )
 }
-
-

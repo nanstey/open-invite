@@ -1,13 +1,16 @@
-import React from 'react'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
-
-import { EventDetail } from '../domains/events/components/detail/EventDetail'
-import { LoginModal } from '../domains/auth/LoginModal'
+import React from 'react'
 import { useAuth } from '../domains/auth/AuthProvider'
-import { coerceEventTab, parseEventTab, type EventTab } from '../domains/events/components/detail/route/routing'
-import { useEventRouteData } from '../domains/events/hooks/useEventRouteData'
+import { LoginModal } from '../domains/auth/LoginModal'
+import { EventDetail } from '../domains/events/components/detail/EventDetail'
 import { EventLoadingScreen } from '../domains/events/components/detail/route/EventLoadingScreen'
 import { EventNotFoundScreen } from '../domains/events/components/detail/route/EventNotFoundScreen'
+import {
+  coerceEventTab,
+  type EventTab,
+  parseEventTab,
+} from '../domains/events/components/detail/route/routing'
+import { useEventRouteData } from '../domains/events/hooks/useEventRouteData'
 
 export const Route = createFileRoute('/e/$slug')({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -31,7 +34,7 @@ export const Route = createFileRoute('/e/$slug')({
 
     const { event, isLoading } = useEventRouteData({
       slugOrId: slug,
-      onCanonicalSlug: (canonicalSlug) =>
+      onCanonicalSlug: canonicalSlug =>
         navigate({
           to: '/e/$slug',
           params: { slug: canonicalSlug },
@@ -88,4 +91,3 @@ export const Route = createFileRoute('/e/$slug')({
     )
   },
 })
-

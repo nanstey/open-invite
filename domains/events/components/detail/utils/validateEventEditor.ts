@@ -9,7 +9,10 @@ type EventEditorValuesLike = {
   groupIds?: string[]
 }
 
-export function validateEventEditor(values: EventEditorValuesLike, hasItinerary: boolean): {
+export function validateEventEditor(
+  values: EventEditorValuesLike,
+  hasItinerary: boolean
+): {
   title?: string
   activityType?: string
   description?: string
@@ -30,8 +33,16 @@ export function validateEventEditor(values: EventEditorValuesLike, hasItinerary:
     activityType: activityType ? undefined : 'Category is required',
     // Description is optional
     description: undefined,
-    startTime: hasItinerary ? undefined : startDateTimeLocal ? undefined : 'Date & time is required',
-    durationHours: hasItinerary ? undefined : durationHours && durationHours > 0 ? undefined : 'Duration is required',
+    startTime: hasItinerary
+      ? undefined
+      : startDateTimeLocal
+        ? undefined
+        : 'Date & time is required',
+    durationHours: hasItinerary
+      ? undefined
+      : durationHours && durationHours > 0
+        ? undefined
+        : 'Duration is required',
     location: location ? undefined : 'Location is required',
     groupIds:
       values.visibilityType === 'GROUPS' && (!values.groupIds || values.groupIds.length === 0)
@@ -39,4 +50,3 @@ export function validateEventEditor(values: EventEditorValuesLike, hasItinerary:
         : undefined,
   }
 }
-

@@ -1,33 +1,33 @@
-import { Lock } from 'lucide-react';
-import * as React from 'react';
-import type { Group } from '../../../lib/types';
-import { Switch } from '../../../lib/ui/9ui/switch';
-import { UserAvatar } from '../../../lib/ui/components/UserAvatar';
-import type { GroupMemberRequest } from '../../../services/groupService';
+import { Lock } from 'lucide-react'
+import * as React from 'react'
+import type { Group } from '../../../lib/types'
+import { Switch } from '../../../lib/ui/9ui/switch'
+import { UserAvatar } from '../../../lib/ui/components/UserAvatar'
+import type { GroupMemberRequest } from '../../../services/groupService'
 
 type GroupSettingsDraft = {
-  name: string;
-  allowMembersCreateEvents: boolean;
-  allowMembersAddMembers: boolean;
-  newMembersRequireAdminApproval: boolean;
-};
+  name: string
+  allowMembersCreateEvents: boolean
+  allowMembersAddMembers: boolean
+  newMembersRequireAdminApproval: boolean
+}
 
 type GroupSettingsTabProps = {
-  selectedGroup: Group;
-  groupSettingsDraft: GroupSettingsDraft | null;
-  isAdmin: boolean;
-  savingSettings: boolean;
-  settingsDirty: boolean;
-  settingsMessage: string | null;
-  pendingRequests: GroupMemberRequest[];
-  loadingRequests: boolean;
-  processingRequestId: string | null;
-  onSettingsDraftChange: React.Dispatch<React.SetStateAction<GroupSettingsDraft | null>>;
-  onSaveSettings: () => void;
-  onApproveRequest: (request: GroupMemberRequest) => void;
-  onDenyRequest: (requestId: string) => void;
-  onDeleteDialogOpen: () => void;
-};
+  selectedGroup: Group
+  groupSettingsDraft: GroupSettingsDraft | null
+  isAdmin: boolean
+  savingSettings: boolean
+  settingsDirty: boolean
+  settingsMessage: string | null
+  pendingRequests: GroupMemberRequest[]
+  loadingRequests: boolean
+  processingRequestId: string | null
+  onSettingsDraftChange: React.Dispatch<React.SetStateAction<GroupSettingsDraft | null>>
+  onSaveSettings: () => void
+  onApproveRequest: (request: GroupMemberRequest) => void
+  onDenyRequest: (requestId: string) => void
+  onDeleteDialogOpen: () => void
+}
 
 export function GroupSettingsTab({
   selectedGroup,
@@ -45,14 +45,14 @@ export function GroupSettingsTab({
   onDenyRequest,
   onDeleteDialogOpen,
 }: GroupSettingsTabProps) {
-  const groupNameInputId = React.useId();
+  const groupNameInputId = React.useId()
   const membersCanAddMembers =
-    groupSettingsDraft?.allowMembersAddMembers ?? selectedGroup.allowMembersAddMembers ?? false;
+    groupSettingsDraft?.allowMembersAddMembers ?? selectedGroup.allowMembersAddMembers ?? false
   const newMembersRequireAdminApprovalEnabled =
     membersCanAddMembers &&
     (groupSettingsDraft?.newMembersRequireAdminApproval ??
       selectedGroup.newMembersRequireAdminApproval ??
-      false);
+      false)
 
   if (!isAdmin) {
     return (
@@ -60,7 +60,7 @@ export function GroupSettingsTab({
         <Lock className="w-5 h-5 text-slate-400" />
         Settings are available to group admins only.
       </div>
-    );
+    )
   }
 
   return (
@@ -237,5 +237,5 @@ export function GroupSettingsTab({
         </button>
       </div>
     </div>
-  );
+  )
 }

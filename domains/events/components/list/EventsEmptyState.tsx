@@ -1,5 +1,3 @@
-
-
 type EventsEmptyStateProps = {
   onClearFilters: () => void
 }
@@ -15,5 +13,3 @@ export function EventsEmptyState({ onClearFilters }: EventsEmptyStateProps) {
     </div>
   )
 }
-
-

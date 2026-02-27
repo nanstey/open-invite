@@ -1,16 +1,23 @@
-import * as React from 'react'
 import { createFileRoute, redirect, useNavigate, useRouterState } from '@tanstack/react-router'
+import * as React from 'react'
 
 import { useAuth } from '../domains/auth/AuthProvider'
-import { EventEditor } from '../domains/events/components/detail/EventEditor'
 import { EventDetail } from '../domains/events/components/detail/EventDetail'
+import { EventEditor } from '../domains/events/components/detail/EventEditor'
 import { EventLoadingScreen } from '../domains/events/components/detail/route/EventLoadingScreen'
 import { EventNotFoundScreen } from '../domains/events/components/detail/route/EventNotFoundScreen'
-import { coerceEventTab, parseEventTab, type EventTab } from '../domains/events/components/detail/route/routing'
-import { useEventRouteData } from '../domains/events/hooks/useEventRouteData'
+import {
+  coerceEventTab,
+  type EventTab,
+  parseEventTab,
+} from '../domains/events/components/detail/route/routing'
 import { useEventDetailActions } from '../domains/events/hooks/useEventDetailActions'
+import {
+  parseEventsView,
+  parseEventsViewOptional,
+} from '../domains/events/hooks/useEventNavigation'
+import { useEventRouteData } from '../domains/events/hooks/useEventRouteData'
 import { markEventViewedFromRouteParam } from '../services/eventService'
-import { parseEventsView, parseEventsViewOptional } from '../domains/events/hooks/useEventNavigation'
 
 function parseEventTabSearch(value: unknown): EventTab | undefined {
   return parseEventTab(value)
@@ -37,7 +44,7 @@ export const Route = createFileRoute('/events/$slug')({
     const search = Route.useSearch()
     const activeTab = coerceEventTab(search.tab, 'details')
     const { fromEventsView } = useRouterState({
-      select: (s) => ({
+      select: s => ({
         fromEventsView: s.location.state.fromEventsView,
       }),
     })
@@ -56,13 +63,15 @@ export const Route = createFileRoute('/events/$slug')({
     // Treat opening an event while authenticated as "invited by link" so it shows up in Pending/Going.
     React.useEffect(() => {
       if (!user) return
-      markEventViewedFromRouteParam(slug).catch((e) => console.warn('markEventViewedFromRouteParam failed:', e))
+      markEventViewedFromRouteParam(slug).catch(e =>
+        console.warn('markEventViewedFromRouteParam failed:', e)
+      )
     }, [slug, user?.id, user])
 
     const { event, setEvent, isLoading } = useEventRouteData({
       slugOrId: slug,
       pauseRealtime: isEditing,
-      onCanonicalSlug: (canonicalSlug) =>
+      onCanonicalSlug: canonicalSlug =>
         navigate({
           to: '/events/$slug',
           params: { slug: canonicalSlug },
@@ -75,7 +84,13 @@ export const Route = createFileRoute('/events/$slug')({
 
     // IMPORTANT: Call hooks unconditionally to preserve hook ordering across renders.
     // `user` may be null briefly while auth is initializing, or `event` may be null while loading.
-    const { onUpdateEvent, handleJoinEvent, handleLeaveEvent, handlePostComment, handleToggleCommentReaction } = useEventDetailActions({
+    const {
+      onUpdateEvent,
+      handleJoinEvent,
+      handleLeaveEvent,
+      handlePostComment,
+      handleToggleCommentReaction,
+    } = useEventDetailActions({
       userId: user?.id ?? '',
       setEvent,
     })
@@ -110,7 +125,7 @@ export const Route = createFileRoute('/events/$slug')({
           activeTab={activeTab}
           onTabChange={handleTabChange}
           onCancel={() => setIsEditing(false)}
-          onSuccess={(updated) => {
+          onSuccess={updated => {
             setEvent(updated)
             setIsEditing(false)
           }}

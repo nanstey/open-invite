@@ -35,10 +35,8 @@ export function useFilterBarVisibility({ enabled }: UseFilterBarVisibilityArgs) 
         lastScrollY.current = currentScrollY
       }
     },
-    [enabled],
+    [enabled]
   )
 
   return { isVisible, onScroll, scrollRef }
 }
-
-

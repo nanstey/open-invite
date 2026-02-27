@@ -27,7 +27,8 @@ export function useInviteShare(input: UseInviteShareInput): {
   }, [])
 
   const buildInviteUrl = React.useCallback(() => {
-    const origin = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : ''
+    const origin =
+      typeof window !== 'undefined' && window.location?.origin ? window.location.origin : ''
     const slugOrId = eventSlug || eventId
     const path = `/e/${encodeURIComponent(slugOrId)}`
     return origin ? `${origin}${path}` : path
@@ -45,9 +46,15 @@ export function useInviteShare(input: UseInviteShareInput): {
   const shareInvite = React.useCallback(async () => {
     const inviteUrl = buildInviteUrl()
     const isCoarsePointer =
-      typeof window !== 'undefined' && typeof window.matchMedia === 'function' && window.matchMedia('(pointer: coarse)').matches
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function' &&
+      window.matchMedia('(pointer: coarse)').matches
 
-    if (isCoarsePointer && typeof navigator !== 'undefined' && typeof (navigator as any).share === 'function') {
+    if (
+      isCoarsePointer &&
+      typeof navigator !== 'undefined' &&
+      typeof (navigator as any).share === 'function'
+    ) {
       try {
         await (navigator as any).share({
           title: eventTitle,
@@ -66,5 +73,3 @@ export function useInviteShare(input: UseInviteShareInput): {
 
   return { inviteCopied, shareInvite }
 }
-
-

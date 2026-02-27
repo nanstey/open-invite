@@ -1,4 +1,3 @@
-
 import { CheckCircle2, EyeOff, Link, Save, Send, X } from 'lucide-react'
 
 export type EventActionsVariant = 'md_row' | 'lg_column' | 'mobile_row'
@@ -62,7 +61,9 @@ export function EventActions(props: {
               disabled={!!isSaving}
               aria-disabled={!canSave}
               className={`w-full py-3 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg ${
-                canSave ? 'bg-primary hover:bg-primary/90 text-white shadow-primary/25' : 'bg-slate-700 text-slate-300'
+                canSave
+                  ? 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
+                  : 'bg-slate-700 text-slate-300'
               } disabled:opacity-60`}
               type="button"
             >
@@ -165,7 +166,9 @@ export function EventActions(props: {
             disabled={!!isSaving}
             aria-disabled={!canSave}
             className={`flex-1 ${isMobile ? 'py-3.5 text-base' : 'py-3 text-base'} rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg ${
-              canSave ? 'bg-primary hover:bg-primary/90 text-white shadow-primary/25' : 'bg-slate-700 text-slate-300'
+              canSave
+                ? 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
+                : 'bg-slate-700 text-slate-300'
             } disabled:opacity-60`}
             type="button"
           >
@@ -176,7 +179,13 @@ export function EventActions(props: {
 
       {mode === 'view' ? (
         <button onClick={() => void onShareInvite()} className={shareClassName} type="button">
-          {isMobile ? <Send className="w-5 h-5" /> : inviteCopied ? <Link className="w-5 h-5" /> : <Send className="w-5 h-5" />}{' '}
+          {isMobile ? (
+            <Send className="w-5 h-5" />
+          ) : inviteCopied ? (
+            <Link className="w-5 h-5" />
+          ) : (
+            <Send className="w-5 h-5" />
+          )}{' '}
           {inviteCopied ? 'URL Copied!' : 'Share Invite'}
         </button>
       ) : null}
@@ -227,5 +236,3 @@ export function EventActions(props: {
     </div>
   )
 }
-
-

@@ -1,8 +1,8 @@
-import type React from 'react'
 import { ExternalLink, X } from 'lucide-react'
-import { PROJECT_STATUS_COLORS, type ProjectStatus } from '../../projectTypes'
-import { Badge } from '../../../../lib/ui/components/Badge'
+import type React from 'react'
 import { Card } from '../../../../lib/ui/9ui/card'
+import { Badge } from '../../../../lib/ui/components/Badge'
+import { PROJECT_STATUS_COLORS, type ProjectStatus } from '../../projectTypes'
 
 export interface ProjectLinkCardProps {
   projectId: string
@@ -26,7 +26,7 @@ export const ProjectLinkCard: React.FC<ProjectLinkCardProps> = ({
   return (
     <Card
       className="flex items-center justify-between p-2 bg-slate-900 rounded-lg border-transparent hover:border-slate-600 transition-colors group cursor-pointer"
-      onClick={(e) => {
+      onClick={e => {
         e.stopPropagation()
         onClick()
       }}
@@ -41,7 +41,8 @@ export const ProjectLinkCard: React.FC<ProjectLinkCardProps> = ({
         <div className="flex items-center gap-1 mt-1">
           <Badge
             colorClass={
-              PROJECT_STATUS_COLORS[status as keyof typeof PROJECT_STATUS_COLORS] || 'bg-slate-500/20 text-slate-300 border-slate-500/40'
+              PROJECT_STATUS_COLORS[status as keyof typeof PROJECT_STATUS_COLORS] ||
+              'bg-slate-500/20 text-slate-300 border-slate-500/40'
             }
           >
             {status.replace('_', ' ')}
@@ -54,7 +55,7 @@ export const ProjectLinkCard: React.FC<ProjectLinkCardProps> = ({
       {onRemove && (
         <button
           type="button"
-          onClick={(e) => {
+          onClick={e => {
             e.stopPropagation()
             onRemove()
           }}

@@ -1,6 +1,11 @@
-import { supabase } from '../lib/supabase'
+import type {
+  Feedback,
+  FeedbackFormData,
+  FeedbackRow,
+  FeedbackStatus,
+} from '../domains/feedback/types'
 import type { Database } from '../lib/database.types'
-import type { Feedback, FeedbackFormData, FeedbackStatus, FeedbackRow } from '../domains/feedback/types'
+import { supabase } from '../lib/supabase'
 
 type FeedbackInsert = Database['public']['Tables']['user_feedback']['Insert']
 
@@ -27,7 +32,9 @@ function transformFeedbackRow(row: FeedbackRow, userName?: string, userAvatar?: 
  * Submit new feedback from current user
  */
 export async function submitFeedback(data: FeedbackFormData): Promise<Feedback | null> {
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) {
     throw new Error('User must be authenticated to submit feedback')
   }
@@ -58,7 +65,9 @@ export async function submitFeedback(data: FeedbackFormData): Promise<Feedback |
  * Fetch current user's feedback submissions
  */
 export async function fetchUserFeedback(): Promise<Feedback[]> {
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) {
     return []
   }
@@ -99,8 +108,7 @@ export async function fetchAllFeedback(): Promise<Feedback[]> {
 
   // Fetch user profiles for all feedback
   const userIds = [...new Set(feedbackRows.map(f => f.user_id))]
-  const { data: profiles, error: profilesError } = await (supabase
-    .from('user_profiles') as any)
+  const { data: profiles, error: profilesError } = await (supabase.from('user_profiles') as any)
     .select('id, name, avatar')
     .in('id', userIds)
 
@@ -124,9 +132,11 @@ export async function fetchAllFeedback(): Promise<Feedback[]> {
 /**
  * Update feedback status (admin only - RLS enforced)
  */
-export async function updateFeedbackStatus(feedbackId: string, status: FeedbackStatus): Promise<boolean> {
-  const { error } = await (supabase
-    .from('user_feedback') as any)
+export async function updateFeedbackStatus(
+  feedbackId: string,
+  status: FeedbackStatus
+): Promise<boolean> {
+  const { error } = await (supabase.from('user_feedback') as any)
     .update({ status })
     .eq('id', feedbackId)
 
@@ -142,7 +152,9 @@ export async function updateFeedbackStatus(feedbackId: string, status: FeedbackS
  * Check if current user is admin
  */
 export async function checkIsAdmin(): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) {
     return false
   }
@@ -159,4 +171,3 @@ export async function checkIsAdmin(): Promise<boolean> {
 
   return (data as { is_admin: boolean }).is_admin ?? false
 }
-

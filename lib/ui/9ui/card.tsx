@@ -6,11 +6,14 @@ export const Card = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDi
     return (
       <div
         ref={ref}
-        className={cn('rounded-2xl border border-slate-700 bg-slate-900/60 text-white shadow-sm', className)}
+        className={cn(
+          'rounded-2xl border border-slate-700 bg-slate-900/60 text-white shadow-sm',
+          className
+        )}
         {...props}
       />
     )
-  },
+  }
 )
 
 Card.displayName = 'Card'
@@ -23,7 +26,10 @@ export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHead
   return <h3 className={cn('text-lg font-semibold', className)} {...props} />
 }
 
-export function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
+export function CardDescription({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLParagraphElement>) {
   return <p className={cn('text-sm text-slate-400', className)} {...props} />
 }
 

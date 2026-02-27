@@ -184,7 +184,9 @@ export function LeafletMiniMapPreview(props: {
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center px-4">
             <div className="text-sm font-semibold text-slate-300">
-              {hasItinerary ? 'Add itinerary locations to preview the map' : 'Pick a place to preview the map'}
+              {hasItinerary
+                ? 'Add itinerary locations to preview the map'
+                : 'Pick a place to preview the map'}
             </div>
             <div className="text-xs text-slate-500 mt-1">
               {hasItinerary
@@ -204,7 +206,7 @@ export function LeafletMiniMapPreview(props: {
           tabIndex={0}
           aria-label="Open map"
           onClick={onOpen}
-          onKeyDown={(e) => {
+          onKeyDown={e => {
             if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault()
               onOpen()
@@ -228,5 +230,3 @@ export function LeafletMiniMapPreview(props: {
     </div>
   )
 }
-
-

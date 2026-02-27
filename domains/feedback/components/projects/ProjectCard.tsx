@@ -5,22 +5,22 @@ import {
   MessageSquare,
   MoreVertical,
   Trash2,
-} from 'lucide-react';
-import type React from 'react';
-import { useState } from 'react';
-import { Card } from '../../../../lib/ui/9ui/card';
-import type { Project } from '../../projectTypes';
-import { CARD_STATUS_STYLES } from '../../projectTypes';
+} from 'lucide-react'
+import type React from 'react'
+import { useState } from 'react'
+import { Card } from '../../../../lib/ui/9ui/card'
+import type { Project } from '../../projectTypes'
+import { CARD_STATUS_STYLES } from '../../projectTypes'
 
 export interface ProjectCardProps {
-  project: Project;
-  isDragging: boolean;
-  onDragStart: () => void;
-  onDragEnd: () => void;
-  onTouchDragStart: () => void;
-  onTouchDragEnd: () => void;
-  onClick: () => void;
-  onDelete: () => void;
+  project: Project
+  isDragging: boolean
+  onDragStart: () => void
+  onDragEnd: () => void
+  onTouchDragStart: () => void
+  onTouchDragEnd: () => void
+  onClick: () => void
+  onDelete: () => void
 }
 
 export const ProjectCard: React.FC<ProjectCardProps> = ({
@@ -33,42 +33,42 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
   onClick,
   onDelete,
 }) => {
-  const [showMenu, setShowMenu] = useState(false);
-  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null);
+  const [showMenu, setShowMenu] = useState(false)
+  const [longPressTimer, setLongPressTimer] = useState<NodeJS.Timeout | null>(null)
 
   const handleDragStart = (e: React.DragEvent) => {
-    e.dataTransfer.setData('projectId', project.id);
-    e.dataTransfer.setData('sourceStatus', project.status);
-    onDragStart();
-  };
+    e.dataTransfer.setData('projectId', project.id)
+    e.dataTransfer.setData('sourceStatus', project.status)
+    onDragStart()
+  }
 
   // Touch handlers for mobile long-press drag
   const handleTouchStart = () => {
     const timer = setTimeout(() => {
-      onTouchDragStart();
-    }, 300); // 300ms long press to start drag
-    setLongPressTimer(timer);
-  };
+      onTouchDragStart()
+    }, 300) // 300ms long press to start drag
+    setLongPressTimer(timer)
+  }
 
   const handleTouchEnd = () => {
     if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
+      clearTimeout(longPressTimer)
+      setLongPressTimer(null)
     }
     if (isDragging) {
-      onTouchDragEnd();
+      onTouchDragEnd()
     }
-  };
+  }
 
   const handleTouchMove = () => {
     if (longPressTimer) {
-      clearTimeout(longPressTimer);
-      setLongPressTimer(null);
+      clearTimeout(longPressTimer)
+      setLongPressTimer(null)
     }
-  };
+  }
 
   // Derive card styling from canonical project status (not local state)
-  const cardStatusStyle = CARD_STATUS_STYLES[project.status] || CARD_STATUS_STYLES.backlog;
+  const cardStatusStyle = CARD_STATUS_STYLES[project.status] || CARD_STATUS_STYLES.backlog
 
   return (
     <Card
@@ -116,8 +116,8 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
           <button
             type="button"
             onClick={e => {
-              e.stopPropagation();
-              setShowMenu(!showMenu);
+              e.stopPropagation()
+              setShowMenu(!showMenu)
             }}
             className="p-1 text-slate-500 hover:text-white rounded transition-colors"
           >
@@ -132,7 +132,7 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 onClick={() => setShowMenu(false)}
                 onKeyDown={e => {
                   if (e.key === 'Escape' || e.key === 'Enter') {
-                    setShowMenu(false);
+                    setShowMenu(false)
                   }
                 }}
               />
@@ -140,11 +140,11 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
                 <button
                   type="button"
                   onClick={e => {
-                    e.stopPropagation();
+                    e.stopPropagation()
                     if (confirm('Delete this project?')) {
-                      onDelete();
+                      onDelete()
                     }
-                    setShowMenu(false);
+                    setShowMenu(false)
                   }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:bg-slate-600 transition-colors"
                 >
@@ -157,5 +157,5 @@ export const ProjectCard: React.FC<ProjectCardProps> = ({
         </div>
       </div>
     </Card>
-  );
-};
+  )
+}

@@ -26,7 +26,7 @@ describe('userService', () => {
   beforeEach(async () => {
     vi.clearAllMocks()
     vi.resetModules()
-    
+
     // Re-import module to get fresh cache state
     const userService = await import('./userService')
     fetchUser = userService.fetchUser
@@ -104,7 +104,7 @@ describe('userService', () => {
           select: () => ({
             eq: () => ({
               single: async () => ({
-                data: null,  // null data causes return null
+                data: null, // null data causes return null
                 error: { message: 'connection failed' },
               }),
             }),
@@ -139,7 +139,7 @@ describe('userService', () => {
 
       // Second call should use cache
       const result = await fetchUser('user-1')
-      expect(singleSpy).toHaveBeenCalledTimes(1)  // No additional call
+      expect(singleSpy).toHaveBeenCalledTimes(1) // No additional call
       expect(result).toMatchObject({ id: 'user-1', name: 'Alice' })
     })
   })
@@ -256,9 +256,7 @@ describe('userService', () => {
         user_profiles: () => ({
           select: () => ({
             in: async () => ({
-              data: [
-                { id: 'user-1', name: 'Alice', avatar: 'avatar1.jpg' },
-              ],
+              data: [{ id: 'user-1', name: 'Alice', avatar: 'avatar1.jpg' }],
               error: null,
             }),
           }),
@@ -279,7 +277,7 @@ describe('userService', () => {
   describe('updateUserProfile', () => {
     it('updates name and returns updated user', async () => {
       const updateFn = vi.fn(async () => ({ error: null }))
-      
+
       mockFrom({
         user_profiles: () => ({
           update: () => ({ eq: updateFn }),
@@ -340,7 +338,10 @@ describe('userService', () => {
         }),
       })
 
-      const result = await updateUserProfile('user-1', { name: 'New Name', avatar: 'new-avatar.jpg' })
+      const result = await updateUserProfile('user-1', {
+        name: 'New Name',
+        avatar: 'new-avatar.jpg',
+      })
 
       expect(result).toMatchObject({ id: 'user-1', name: 'New Name', avatar: 'new-avatar.jpg' })
     })

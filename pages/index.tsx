@@ -1,9 +1,8 @@
-import React from 'react'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
-
-import { LandingPage } from '../domains/home/LandingPage'
-import { LoginModal } from '../domains/auth/LoginModal'
+import React from 'react'
 import { useAuth } from '../domains/auth/AuthProvider'
+import { LoginModal } from '../domains/auth/LoginModal'
+import { LandingPage } from '../domains/home/LandingPage'
 
 export const Route = createFileRoute('/')({
   beforeLoad: ({ context }) => {
@@ -30,4 +29,3 @@ export const Route = createFileRoute('/')({
     )
   },
 })
-

@@ -1,12 +1,12 @@
 import * as React from 'react'
-import { FormattingHelpModal, FORMATTING_EXAMPLE } from './FormattingHelpModal'
-import { MrkdwnRenderer } from './MrkdwnRenderer'
 import { useEmojiAutocomplete } from '../../../../../lib/hooks/useEmojiAutocomplete'
 import { Button } from '../../../../../lib/ui/9ui/button'
 import { Card } from '../../../../../lib/ui/9ui/card'
 import { EmojiPicker } from '../../../../../lib/ui/9ui/emoji-picker'
 import { Popover, PopoverContent } from '../../../../../lib/ui/9ui/popover'
 import { Textarea } from '../../../../../lib/ui/9ui/textarea'
+import { FORMATTING_EXAMPLE, FormattingHelpModal } from './FormattingHelpModal'
+import { MrkdwnRenderer } from './MrkdwnRenderer'
 
 type ViewMode = 'edit' | 'preview'
 
@@ -24,7 +24,7 @@ export function AboutCard(props: {
     (next: string) => {
       onChangeDescription?.(next)
     },
-    [onChangeDescription],
+    [onChangeDescription]
   )
 
   const emojiAutocomplete = useEmojiAutocomplete({
@@ -93,7 +93,11 @@ export function AboutCard(props: {
             </Button>
           </div>
           {viewMode === 'edit' ? (
-            <Popover open={emojiAutocomplete.isOpen} onOpenChange={emojiAutocomplete.setIsOpen} className="w-full">
+            <Popover
+              open={emojiAutocomplete.isOpen}
+              onOpenChange={emojiAutocomplete.setIsOpen}
+              className="w-full"
+            >
               <div className="w-full relative">
                 <Textarea
                   ref={textareaRef}
@@ -103,7 +107,9 @@ export function AboutCard(props: {
                   placeholder="What's the vibe?"
                   required
                   className={`w-full bg-slate-900 border rounded-lg py-3 px-4 text-white outline-none min-h-[8rem] resize-none overflow-hidden ${
-                    error ? 'border-red-500 focus:border-red-500' : 'border-slate-700 focus:border-primary'
+                    error
+                      ? 'border-red-500 focus:border-red-500'
+                      : 'border-slate-700 focus:border-primary'
                   }`}
                 />
                 <PopoverContent
@@ -126,17 +132,13 @@ export function AboutCard(props: {
             </Popover>
           ) : (
             <div className="w-full bg-slate-900 border border-slate-700 rounded-lg p-4 min-h-[8rem]">
-              <MrkdwnRenderer
-                content={description}
-              />
+              <MrkdwnRenderer content={description} />
             </div>
           )}
         </>
       ) : (
         <div className="w-full rounded-lg">
-          <MrkdwnRenderer
-            content={description}
-          />
+          <MrkdwnRenderer content={description} />
         </div>
       )}
       {isEditMode && error ? <div className="text-xs text-red-400 mt-2">{error}</div> : null}

@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
-import { createFileRoute, redirect, useNavigate, Outlet } from '@tanstack/react-router'
+import { createFileRoute, Outlet, redirect, useNavigate } from '@tanstack/react-router'
 import { Loader2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 import { useAuth } from '../domains/auth/AuthProvider'
 import { checkIsAdmin } from '../services/feedbackService'

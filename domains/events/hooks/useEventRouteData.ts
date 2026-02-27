@@ -1,9 +1,8 @@
 import * as React from 'react'
-
-import type { SocialEvent } from '../types'
-import { isUuid } from '../components/detail/route/routing'
 import { fetchEventById, fetchEventBySlug } from '../../../services/eventService'
 import { realtimeService } from '../../../services/realtimeService'
+import { isUuid } from '../components/detail/route/routing'
+import type { SocialEvent } from '../types'
 
 export function useEventRouteData(args: {
   slugOrId: string
@@ -22,14 +21,17 @@ export function useEventRouteData(args: {
     ;(async () => {
       const slugIsUuid = isUuid(slugOrId)
       const matchesCurrentEvent =
-        !!event && ((slugIsUuid && event.id === slugOrId) || (!slugIsUuid && event.slug === slugOrId))
+        !!event &&
+        ((slugIsUuid && event.id === slugOrId) || (!slugIsUuid && event.slug === slugOrId))
       if (matchesCurrentEvent) return
 
       setEvent(null)
       setIsLoading(true)
 
       try {
-        const fetched = slugIsUuid ? await fetchEventById(slugOrId) : await fetchEventBySlug(slugOrId)
+        const fetched = slugIsUuid
+          ? await fetchEventById(slugOrId)
+          : await fetchEventBySlug(slugOrId)
         if (cancelled) return
         setEvent(fetched)
       } finally {
@@ -54,7 +56,7 @@ export function useEventRouteData(args: {
     if (pauseRealtime) return
 
     const unsubscribe = realtimeService.subscribeToEvent(event.id, {
-      onUpdate: (updatedEvent) => setEvent(updatedEvent),
+      onUpdate: updatedEvent => setEvent(updatedEvent),
       onDelete: () => {
         setEvent(null)
         onDelete?.()
@@ -65,5 +67,3 @@ export function useEventRouteData(args: {
 
   return { event, setEvent, isLoading }
 }
-
-

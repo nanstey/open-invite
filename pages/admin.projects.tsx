@@ -10,7 +10,7 @@ export const Route = createFileRoute('/admin/projects')({
 
 function AdminProjectsPage() {
   const { projectId } = Route.useSearch()
-  
+
   return (
     <div className="flex-1 overflow-hidden">
       <FeedbackAdminTabs initialTab="projects" initialProjectId={projectId} />

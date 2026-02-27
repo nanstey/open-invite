@@ -1,7 +1,7 @@
-import type * as React from 'react'
 import { MoreVertical, UserMinus } from 'lucide-react'
-import { UserAvatar } from '../../../lib/ui/components/UserAvatar'
+import type * as React from 'react'
 import type { User } from '../../../lib/types'
+import { UserAvatar } from '../../../lib/ui/components/UserAvatar'
 
 export interface FriendCardProps {
   friend: User
@@ -47,4 +47,3 @@ export const FriendCard: React.FC<FriendCardProps> = ({
     </div>
   </div>
 )
-

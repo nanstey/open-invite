@@ -1,5 +1,5 @@
-import type * as React from 'react'
 import { Clock, X } from 'lucide-react'
+import type * as React from 'react'
 import { UserAvatar } from '../../../lib/ui/components/UserAvatar'
 import type { OutgoingFriendRequest } from '../../../services/friendService'
 

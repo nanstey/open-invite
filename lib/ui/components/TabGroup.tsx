@@ -1,26 +1,33 @@
-
-import type React from 'react';
-import { Tabs, TabsList, TabsTrigger } from '../9ui/tabs';
+import type React from 'react'
+import { Tabs, TabsList, TabsTrigger } from '../9ui/tabs'
 
 export interface TabOption {
-  id: string;
-  label: string;
-  icon?: React.ReactNode;
+  id: string
+  label: string
+  icon?: React.ReactNode
 }
 
 interface TabGroupProps {
-  tabs: TabOption[];
-  activeTab: string;
-  onChange: (id: any) => void;
-  className?: string;
-  hideLabel?: boolean;
+  tabs: TabOption[]
+  activeTab: string
+  onChange: (id: any) => void
+  className?: string
+  hideLabel?: boolean
 }
 
-export const TabGroup: React.FC<TabGroupProps> = ({ tabs, activeTab, onChange, className = '', hideLabel = false }) => {
+export const TabGroup: React.FC<TabGroupProps> = ({
+  tabs,
+  activeTab,
+  onChange,
+  className = '',
+  hideLabel = false,
+}) => {
   return (
     <Tabs value={activeTab} onValueChange={onChange}>
-      <TabsList className={`flex w-full bg-slate-800 p-1 rounded-xl border border-slate-700 ${className}`}>
-        {tabs.map((tab) => (
+      <TabsList
+        className={`flex w-full bg-slate-800 p-1 rounded-xl border border-slate-700 ${className}`}
+      >
+        {tabs.map(tab => (
           <TabsTrigger
             key={tab.id}
             value={tab.id}
@@ -33,5 +40,5 @@ export const TabGroup: React.FC<TabGroupProps> = ({ tabs, activeTab, onChange, c
         ))}
       </TabsList>
     </Tabs>
-  );
-};
+  )
+}

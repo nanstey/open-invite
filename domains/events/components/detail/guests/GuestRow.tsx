@@ -1,5 +1,3 @@
-
-
 import { Check } from 'lucide-react'
 
 import type { User } from '../../../../../lib/types'

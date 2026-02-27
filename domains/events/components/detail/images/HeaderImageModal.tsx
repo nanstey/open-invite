@@ -1,10 +1,10 @@
 import type React from 'react'
 import { useHeaderImageSearch } from '../../../hooks/useHeaderImageSearch'
 import { useHeaderImageSelection } from '../../../hooks/useHeaderImageSelection'
-import { HeaderImageModalHeader } from './HeaderImageModalHeader'
-import { HeaderImageSearchForm } from './HeaderImageSearchForm'
-import { HeaderImageResultsGrid } from './HeaderImageResultsGrid'
 import { HeaderImageModalFooter } from './HeaderImageModalFooter'
+import { HeaderImageModalHeader } from './HeaderImageModalHeader'
+import { HeaderImageResultsGrid } from './HeaderImageResultsGrid'
+import { HeaderImageSearchForm } from './HeaderImageSearchForm'
 
 type HeaderImageModalProps = {
   defaultQuery: string
@@ -19,7 +19,8 @@ export const HeaderImageModal: React.FC<HeaderImageModalProps> = ({
   onClose,
   onUpdate,
 }) => {
-  const { query, setQuery, results, isLoading, error, runSearch } = useHeaderImageSearch(defaultQuery)
+  const { query, setQuery, results, isLoading, error, runSearch } =
+    useHeaderImageSearch(defaultQuery)
   const { selectedUrl, setSelectedUrl, isSaving, handleConfirm } = useHeaderImageSelection({
     initialSelectedUrl,
     onUpdate,
@@ -40,7 +41,9 @@ export const HeaderImageModal: React.FC<HeaderImageModalProps> = ({
           />
 
           {error ? (
-            <div className="text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-xl p-3">{error}</div>
+            <div className="text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-xl p-3">
+              {error}
+            </div>
           ) : null}
 
           {!isLoading && results.length === 0 ? (
@@ -65,4 +68,3 @@ export const HeaderImageModal: React.FC<HeaderImageModalProps> = ({
     </div>
   )
 }
-

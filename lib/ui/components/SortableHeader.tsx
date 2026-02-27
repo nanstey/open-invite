@@ -1,5 +1,5 @@
-import React from 'react'
 import { ArrowUpDown } from 'lucide-react'
+import React from 'react'
 
 export type SortDirection = 'asc' | 'desc'
 
@@ -18,7 +18,7 @@ export interface SortableHeaderProps<T extends string> {
 
 /**
  * Sortable table header with arrow indicator.
- * 
+ *
  * @example
  * <SortableHeader
  *   label="Date"
@@ -28,15 +28,15 @@ export interface SortableHeaderProps<T extends string> {
  *   onSort={handleSort}
  * />
  */
-export function SortableHeader<T extends string>({ 
-  label, 
-  field, 
-  currentSort, 
+export function SortableHeader<T extends string>({
+  label,
+  field,
+  currentSort,
 
-  onSort 
+  onSort,
 }: SortableHeaderProps<T>) {
   const isActive = currentSort === field
-  
+
   return (
     <button
       onClick={() => onSort(field)}
@@ -53,19 +53,24 @@ export function SortableHeader<T extends string>({
 /**
  * Hook to manage sort state
  */
-export function useSort<T extends string>(defaultField: T, defaultDirection: SortDirection = 'desc') {
+export function useSort<T extends string>(
+  defaultField: T,
+  defaultDirection: SortDirection = 'desc'
+) {
   const [sortField, setSortField] = React.useState<T>(defaultField)
   const [sortDirection, setSortDirection] = React.useState<SortDirection>(defaultDirection)
 
-  const handleSort = React.useCallback((field: T) => {
-    if (sortField === field) {
-      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortField(field)
-      setSortDirection('desc')
-    }
-  }, [sortField])
+  const handleSort = React.useCallback(
+    (field: T) => {
+      if (sortField === field) {
+        setSortDirection(prev => (prev === 'asc' ? 'desc' : 'asc'))
+      } else {
+        setSortField(field)
+        setSortDirection('desc')
+      }
+    },
+    [sortField]
+  )
 
   return { sortField, sortDirection, handleSort }
 }
-

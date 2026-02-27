@@ -1,12 +1,17 @@
-
-
 import { ChevronDown, ChevronUp, MoreVertical, Trash2 } from 'lucide-react'
 
 import { FormInput, FormSelect } from '../../../../../../lib/ui/components/FormControls'
 import { parseMoneyInputToCents } from '../../../../../../lib/ui/utils/money'
 
 import type { ItineraryItem } from '../../../../types'
-import type { EventExpense, ExpenseApi, ExpenseSettledKind, ExpenseSplitType, ExpenseTiming, Person } from '../types'
+import type {
+  EventExpense,
+  ExpenseApi,
+  ExpenseSettledKind,
+  ExpenseSplitType,
+  ExpenseTiming,
+  Person,
+} from '../types'
 import {
   canCommitMoneyInput,
   computePerPersonCents,
@@ -75,7 +80,7 @@ export function ExpenseEditRow(props: {
             tabIndex={0}
             aria-expanded={isExpanded}
             onClick={onToggleExpanded}
-            onKeyDown={(ev) => {
+            onKeyDown={ev => {
               if (ev.key === 'Enter' || ev.key === ' ') {
                 ev.preventDefault()
                 onToggleExpanded()
@@ -93,7 +98,7 @@ export function ExpenseEditRow(props: {
             <div className="relative">
               <button
                 type="button"
-                onClick={(ev) => {
+                onClick={ev => {
                   ev.stopPropagation()
                   onToggleMenu()
                 }}
@@ -106,7 +111,7 @@ export function ExpenseEditRow(props: {
               {isMenuOpen ? (
                 <div
                   className="absolute right-0 mt-2 w-44 rounded-xl border border-slate-700 bg-slate-900 shadow-lg z-[2000] overflow-hidden"
-                  onClick={(ev) => ev.stopPropagation()}
+                  onClick={ev => ev.stopPropagation()}
                 >
                   <button
                     type="button"
@@ -138,7 +143,7 @@ export function ExpenseEditRow(props: {
         <div className="px-4 pb-4 space-y-3">
           <FormInput
             value={e.title}
-            onChange={(ev) => expenseApi?.onUpdate(e.id, { title: ev.target.value })}
+            onChange={ev => expenseApi?.onUpdate(e.id, { title: ev.target.value })}
             placeholder="Expense title"
             variant="surface"
             size="md"
@@ -147,7 +152,7 @@ export function ExpenseEditRow(props: {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <FormSelect
               value={e.splitType}
-              onChange={(ev) => {
+              onChange={ev => {
                 const nextSplitType = ev.target.value as ExpenseSplitType
                 if (nextSplitType === 'GROUP') {
                   expenseApi?.onUpdate(e.id, {
@@ -167,8 +172,11 @@ export function ExpenseEditRow(props: {
 
             <FormSelect
               value={e.timing}
-              onChange={(ev) =>
-                expenseApi?.onUpdate(e.id, ensureExpenseShapeOnTimingChange(ev.target.value as ExpenseTiming, e))
+              onChange={ev =>
+                expenseApi?.onUpdate(
+                  e.id,
+                  ensureExpenseShapeOnTimingChange(ev.target.value as ExpenseTiming, e)
+                )
               }
               disabled={e.splitType === 'GROUP'}
               variant="surface"
@@ -187,8 +195,11 @@ export function ExpenseEditRow(props: {
             {e.timing === 'SETTLED_LATER' ? (
               <FormSelect
                 value={e.settledKind ?? 'EXACT'}
-                onChange={(ev) =>
-                  expenseApi?.onUpdate(e.id, ensureExpenseShapeOnSettledKindChange(ev.target.value as ExpenseSettledKind))
+                onChange={ev =>
+                  expenseApi?.onUpdate(
+                    e.id,
+                    ensureExpenseShapeOnSettledKindChange(ev.target.value as ExpenseSettledKind)
+                  )
                 }
                 variant="surface"
                 size="md"
@@ -206,7 +217,7 @@ export function ExpenseEditRow(props: {
               type="text"
               inputMode="decimal"
               value={getDraftValue(e.id, e.amountCents)}
-              onChange={(ev) => {
+              onChange={ev => {
                 const nextText = ev.target.value
                 setDraftValue(e.id, nextText)
                 if (canCommitMoneyInput(nextText)) {

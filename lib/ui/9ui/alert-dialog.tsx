@@ -24,7 +24,12 @@ export type AlertDialogProps = {
   children: React.ReactNode
 }
 
-export function AlertDialog({ open, defaultOpen = false, onOpenChange, children }: AlertDialogProps) {
+export function AlertDialog({
+  open,
+  defaultOpen = false,
+  onOpenChange,
+  children,
+}: AlertDialogProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen)
   const isControlled = typeof open === 'boolean'
   const currentOpen = isControlled ? open : uncontrolledOpen
@@ -36,7 +41,7 @@ export function AlertDialog({ open, defaultOpen = false, onOpenChange, children 
       }
       onOpenChange?.(next)
     },
-    [isControlled, onOpenChange],
+    [isControlled, onOpenChange]
   )
 
   return (
@@ -56,7 +61,7 @@ export function AlertDialogTrigger({ className, render, ...props }: AlertDialogA
     type: 'button',
     className,
     ...props,
-    onClick: (event) => {
+    onClick: event => {
       props.onClick?.(event)
       if (!event.defaultPrevented) {
         setOpen(true)
@@ -73,7 +78,7 @@ export function AlertDialogClose({ className, render, ...props }: AlertDialogAct
     type: 'button',
     className,
     ...props,
-    onClick: (event) => {
+    onClick: event => {
       props.onClick?.(event)
       if (!event.defaultPrevented) {
         setOpen(false)
@@ -95,7 +100,7 @@ export function AlertDialogContent({ className, children }: React.HTMLAttributes
       <div
         className={cn(
           'relative z-[1001] w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 p-6 text-white shadow-lg',
-          className,
+          className
         )}
         role="alertdialog"
         aria-modal="true"
@@ -103,7 +108,7 @@ export function AlertDialogContent({ className, children }: React.HTMLAttributes
         {children}
       </div>
     </div>,
-    document.body,
+    document.body
   )
 }
 
@@ -111,11 +116,17 @@ export function AlertDialogHeader({ className, ...props }: React.HTMLAttributes<
   return <div className={cn('mb-4 space-y-1', className)} {...props} />
 }
 
-export function AlertDialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
+export function AlertDialogTitle({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLHeadingElement>) {
   return <h2 className={cn('text-lg font-semibold', className)} {...props} />
 }
 
-export function AlertDialogDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
+export function AlertDialogDescription({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLParagraphElement>) {
   return <p className={cn('text-sm text-slate-400', className)} {...props} />
 }
 

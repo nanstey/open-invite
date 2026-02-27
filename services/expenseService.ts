@@ -1,6 +1,12 @@
-import { supabase } from '../lib/supabase'
+import type {
+  EventExpense,
+  ExpenseAppliesTo,
+  ExpenseSettledKind,
+  ExpenseSplitType,
+  ExpenseTiming,
+} from '../domains/events/types'
 import type { Database } from '../lib/database.types'
-import type { EventExpense, ExpenseAppliesTo, ExpenseSettledKind, ExpenseSplitType, ExpenseTiming } from '../domains/events/types'
+import { supabase } from '../lib/supabase'
 
 type ExpenseRow = Database['public']['Tables']['event_expenses']['Row']
 
@@ -37,7 +43,9 @@ export async function fetchEventExpenses(eventId: string): Promise<EventExpense[
   return (data ?? []).map(transformRow)
 }
 
-export async function createEventExpense(input: Omit<EventExpense, 'id'>): Promise<EventExpense | null> {
+export async function createEventExpense(
+  input: Omit<EventExpense, 'id'>
+): Promise<EventExpense | null> {
   type Insert = Database['public']['Tables']['event_expenses']['Insert']
 
   const insert: Insert = {
@@ -54,7 +62,11 @@ export async function createEventExpense(input: Omit<EventExpense, 'id'>): Promi
     itinerary_item_id: input.itineraryItemId ?? null,
   }
 
-  const result = await supabase.from('event_expenses').insert(insert as unknown as never).select().single()
+  const result = await supabase
+    .from('event_expenses')
+    .insert(insert as unknown as never)
+    .select()
+    .single()
   const { data, error } = result as unknown as { data: ExpenseRow | null; error: any }
   if (error || !data) {
     console.error('Error creating event expense:', error)
@@ -65,7 +77,7 @@ export async function createEventExpense(input: Omit<EventExpense, 'id'>): Promi
 
 export async function updateEventExpense(
   expenseId: string,
-  patch: Partial<Omit<EventExpense, 'id' | 'eventId'>>,
+  patch: Partial<Omit<EventExpense, 'id' | 'eventId'>>
 ): Promise<EventExpense | null> {
   const update: any = {}
   if (patch.title !== undefined) update.title = patch.title
@@ -79,7 +91,12 @@ export async function updateEventExpense(
   if (patch.sortOrder !== undefined) update.sort_order = patch.sortOrder
   if ('itineraryItemId' in patch) update.itinerary_item_id = patch.itineraryItemId ?? null
 
-  const result = await supabase.from('event_expenses').update(update as unknown as never).eq('id', expenseId).select().single()
+  const result = await supabase
+    .from('event_expenses')
+    .update(update as unknown as never)
+    .eq('id', expenseId)
+    .select()
+    .single()
   const { data, error } = result as unknown as { data: ExpenseRow | null; error: any }
   if (error || !data) {
     console.error('Error updating event expense:', error)
@@ -97,4 +114,3 @@ export async function deleteEventExpense(expenseId: string): Promise<boolean> {
   }
   return true
 }
-

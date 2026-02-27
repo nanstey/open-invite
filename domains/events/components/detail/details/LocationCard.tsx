@@ -1,17 +1,17 @@
-import * as React from 'react'
-
 import { MapPin } from 'lucide-react'
-
-import { LeafletMiniMapPreview } from '../maps/LeafletMiniMapPreview'
-import { FullScreenMapModal } from '../maps/FullScreenMapModal'
-import { LocationAutocomplete, type LocationSuggestion } from '../../../../../lib/ui/components/LocationAutocomplete'
-import { Card } from '../../../../../lib/ui/9ui/card'
-import { useItineraryGeocoding } from '../../../hooks/useItineraryGeocoding'
-import type { LocationData } from '../../../types'
-import { formatEventLocationForDisplay } from '../utils/locationDisplay'
-import type { ItineraryItem } from '../../../types'
-import { extractUniqueLocations, sortByStartTime } from '../itineraries/itinerary'
+import * as React from 'react'
 import { getTheme } from '../../../../../lib/constants'
+import { Card } from '../../../../../lib/ui/9ui/card'
+import {
+  LocationAutocomplete,
+  type LocationSuggestion,
+} from '../../../../../lib/ui/components/LocationAutocomplete'
+import { useItineraryGeocoding } from '../../../hooks/useItineraryGeocoding'
+import type { ItineraryItem, LocationData } from '../../../types'
+import { extractUniqueLocations, sortByStartTime } from '../itineraries/itinerary'
+import { FullScreenMapModal } from '../maps/FullScreenMapModal'
+import { LeafletMiniMapPreview } from '../maps/LeafletMiniMapPreview'
+import { formatEventLocationForDisplay } from '../utils/locationDisplay'
 
 type DisplayLocation = { primary: string; secondary?: string }
 type ItineraryLocDisplay = { full: string; label: string; isReal: boolean }
@@ -38,19 +38,24 @@ export function LocationCard(props: {
   const themeHex = getTheme(props.activityType).hex
 
   const hasItinerary = props.itineraryItems.length > 0
-  const orderedItineraryItems = React.useMemo(() => sortByStartTime(props.itineraryItems), [props.itineraryItems])
+  const orderedItineraryItems = React.useMemo(
+    () => sortByStartTime(props.itineraryItems),
+    [props.itineraryItems]
+  )
   const itineraryLocationList = React.useMemo(() => {
-    return orderedItineraryItems
-      .map((item) => String(item.location ?? '').trim())
-      .filter(Boolean)
+    return orderedItineraryItems.map(item => String(item.location ?? '').trim()).filter(Boolean)
   }, [orderedItineraryItems])
-  const uniqueItineraryLocations = React.useMemo(() => extractUniqueLocations(orderedItineraryItems), [orderedItineraryItems])
+  const uniqueItineraryLocations = React.useMemo(
+    () => extractUniqueLocations(orderedItineraryItems),
+    [orderedItineraryItems]
+  )
 
   const { geoByLocation: itineraryGeo, loading: itineraryGeoLoading } = useItineraryGeocoding({
     enabled: hasItinerary,
     uniqueLocations: uniqueItineraryLocations,
     eventLocation: props.eventLocation,
-    eventCoordinates: props.eventCoordinates as { lat: number; lng: number } | undefined || undefined,
+    eventCoordinates:
+      (props.eventCoordinates as { lat: number; lng: number } | undefined) || undefined,
   })
 
   const miniMapPoints = React.useMemo(() => {
@@ -70,7 +75,13 @@ export function LocationCard(props: {
     const lng = props.eventCoordinates?.lng
     if (typeof lat === 'number' && typeof lng === 'number') return [[lat, lng] as [number, number]]
     return []
-  }, [hasItinerary, itineraryGeo, itineraryLocationList, props.eventCoordinates?.lat, props.eventCoordinates?.lng])
+  }, [
+    hasItinerary,
+    itineraryGeo,
+    itineraryLocationList,
+    props.eventCoordinates?.lat,
+    props.eventCoordinates?.lng,
+  ])
 
   const hasMiniMapPoints = miniMapPoints.length > 0
 
@@ -80,7 +91,10 @@ export function LocationCard(props: {
   }, [hasMiniMapPoints])
 
   const displayLocation = React.useMemo(() => {
-    return formatEventLocationForDisplay({ raw: props.locationValue, locationData: props.eventLocationData })
+    return formatEventLocationForDisplay({
+      raw: props.locationValue,
+      locationData: props.eventLocationData,
+    })
   }, [props.eventLocationData, props.locationValue])
 
   const cardClassName = props.isEditMode
@@ -111,12 +125,16 @@ export function LocationCard(props: {
                         aria-label="Open location in maps"
                       >
                         <div className="flex items-start gap-2 min-w-0">
-                          <div className="text-xs font-bold text-slate-500 mt-[2px] shrink-0">{idx + 1}</div>
+                          <div className="text-xs font-bold text-slate-500 mt-[2px] shrink-0">
+                            {idx + 1}
+                          </div>
                           <div className="min-w-0">
                             <div className="font-bold text-white truncate group-hover:underline decoration-slate-600 decoration-dashed">
                               {primary}
                             </div>
-                            {secondary ? <div className="text-sm text-slate-400 truncate">{secondary}</div> : null}
+                            {secondary ? (
+                              <div className="text-sm text-slate-400 truncate">{secondary}</div>
+                            ) : null}
                           </div>
                         </div>
                       </button>
@@ -130,12 +148,14 @@ export function LocationCard(props: {
           ) : props.isEditMode ? (
             <LocationAutocomplete
               value={props.locationValue}
-              onChangeText={(text) => props.onChangeLocationText?.(text)}
-              onSelect={(selection) => props.onSelectLocation?.(selection)}
+              onChangeText={text => props.onChangeLocationText?.(text)}
+              onSelect={selection => props.onSelectLocation?.(selection)}
               placeholder="Location"
               required
               className={`w-full bg-slate-900 border rounded-lg py-2 px-3 text-white outline-none ${
-                props.locationError ? 'border-red-500 focus:border-red-500' : 'border-slate-700 focus:border-primary'
+                props.locationError
+                  ? 'border-red-500 focus:border-red-500'
+                  : 'border-slate-700 focus:border-primary'
               }`}
             />
           ) : displayLocation.secondary ? (
@@ -180,7 +200,7 @@ export function LocationCard(props: {
           themeHex={themeHex}
           title={props.title || 'Map'}
           onClose={() => setShowMapModal(false)}
-      />
+        />
       ) : null}
     </Card>
   )

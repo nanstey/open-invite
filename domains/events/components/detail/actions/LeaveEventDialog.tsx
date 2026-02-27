@@ -1,5 +1,3 @@
-
-
 import {
   AlertDialog,
   AlertDialogClose,
@@ -24,9 +22,7 @@ export function LeaveEventDialog(props: LeaveEventDialogProps) {
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>Leave this event?</AlertDialogTitle>
-          <AlertDialogDescription>
-            You will be removed from the guest list.
-          </AlertDialogDescription>
+          <AlertDialogDescription>You will be removed from the guest list.</AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogClose className="px-4 py-2 rounded-xl text-slate-200 hover:bg-slate-800 text-sm font-semibold">

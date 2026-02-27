@@ -1,13 +1,12 @@
-
 import { Filter, X } from 'lucide-react'
 import { FormSelect } from '../../../../lib/ui/components/FormControls'
 import {
-  FEEDBACK_TYPE_OPTIONS,
   FEEDBACK_IMPORTANCE_OPTIONS,
   FEEDBACK_STATUS_OPTIONS,
-  type FeedbackType,
+  FEEDBACK_TYPE_OPTIONS,
   type FeedbackImportance,
   type FeedbackStatus,
+  type FeedbackType,
 } from '../../types'
 
 export interface FeedbackFilters {
@@ -26,16 +25,16 @@ export interface FeedbackFilterBarProps {
   filteredCount: number
 }
 
-export function FeedbackFilterBar({ 
-  filters, 
-  onFiltersChange, 
-  totalCount, 
-  filteredCount 
+export function FeedbackFilterBar({
+  filters,
+  onFiltersChange,
+  totalCount,
+  filteredCount,
 }: FeedbackFilterBarProps) {
-  const hasActiveFilters = 
-    filters.type !== 'all' || 
-    filters.importance !== 'all' || 
-    filters.status !== 'all' || 
+  const hasActiveFilters =
+    filters.type !== 'all' ||
+    filters.importance !== 'all' ||
+    filters.status !== 'all' ||
     filters.project !== 'all'
 
   const clearFilters = () => {
@@ -57,15 +56,15 @@ export function FeedbackFilterBar({
         <Filter className="w-4 h-4" />
         <span className="text-sm font-medium">Filters:</span>
       </div>
-      
+
       <FormSelect
         value={filters.type}
-        onChange={(e) => updateFilter('type', e.target.value as FeedbackType | 'all')}
+        onChange={e => updateFilter('type', e.target.value as FeedbackType | 'all')}
         size="sm"
         className="!w-auto min-w-[120px]"
       >
         <option value="all">All Types</option>
-        {FEEDBACK_TYPE_OPTIONS.map((opt) => (
+        {FEEDBACK_TYPE_OPTIONS.map(opt => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
           </option>
@@ -74,12 +73,12 @@ export function FeedbackFilterBar({
 
       <FormSelect
         value={filters.importance}
-        onChange={(e) => updateFilter('importance', e.target.value as FeedbackImportance | 'all')}
+        onChange={e => updateFilter('importance', e.target.value as FeedbackImportance | 'all')}
         size="sm"
         className="!w-auto min-w-[120px]"
       >
         <option value="all">All Priority</option>
-        {FEEDBACK_IMPORTANCE_OPTIONS.map((opt) => (
+        {FEEDBACK_IMPORTANCE_OPTIONS.map(opt => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
           </option>
@@ -88,12 +87,12 @@ export function FeedbackFilterBar({
 
       <FormSelect
         value={filters.status}
-        onChange={(e) => updateFilter('status', e.target.value as FeedbackStatus | 'all')}
+        onChange={e => updateFilter('status', e.target.value as FeedbackStatus | 'all')}
         size="sm"
         className="!w-auto min-w-[120px]"
       >
         <option value="all">All Status</option>
-        {FEEDBACK_STATUS_OPTIONS.map((opt) => (
+        {FEEDBACK_STATUS_OPTIONS.map(opt => (
           <option key={opt.value} value={opt.value}>
             {opt.label}
           </option>
@@ -102,7 +101,7 @@ export function FeedbackFilterBar({
 
       <FormSelect
         value={filters.project}
-        onChange={(e) => updateFilter('project', e.target.value as 'all' | 'has' | 'none')}
+        onChange={e => updateFilter('project', e.target.value as 'all' | 'has' | 'none')}
         size="sm"
         className="!w-auto min-w-[140px]"
       >
@@ -149,4 +148,3 @@ export const DEFAULT_FILTERS: FeedbackFilters = {
   status: 'all',
   project: 'all',
 }
-

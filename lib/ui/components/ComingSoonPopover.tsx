@@ -25,7 +25,7 @@ export function useComingSoonPopover(options?: { durationMs?: number }) {
   const hideTimerRef = React.useRef<number | null>(null)
 
   const hide = React.useCallback(() => {
-    setState((s) => (s.open ? { ...s, open: false } : s))
+    setState(s => (s.open ? { ...s, open: false } : s))
   }, [])
 
   const show = React.useCallback(
@@ -46,7 +46,7 @@ export function useComingSoonPopover(options?: { durationMs?: number }) {
         hide()
       }, durationMs)
     },
-    [durationMs, hide],
+    [durationMs, hide]
   )
 
   React.useEffect(() => {
@@ -112,4 +112,3 @@ export function ComingSoonPopover(props: { state: ComingSoonState }) {
     </Popover>
   )
 }
-

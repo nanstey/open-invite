@@ -1,8 +1,8 @@
 import type * as React from 'react'
 import { SectionHeader } from '../../../lib/ui/components/SectionHeader'
-import { PendingRequestCard } from './PendingRequestCard'
-import { OutgoingRequestCard } from './OutgoingRequestCard'
 import type { OutgoingFriendRequest, PendingFriendRequest } from '../../../services/friendService'
+import { OutgoingRequestCard } from './OutgoingRequestCard'
+import { PendingRequestCard } from './PendingRequestCard'
 
 export interface PendingRequestsSectionProps {
   incomingRequests: PendingFriendRequest[]
@@ -51,7 +51,7 @@ export const PendingRequestsSection: React.FC<PendingRequestsSectionProps> = ({
         </div>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {incomingRequests.map((request) => (
+          {incomingRequests.map(request => (
             <PendingRequestCard
               key={request.id}
               request={request}
@@ -60,7 +60,7 @@ export const PendingRequestsSection: React.FC<PendingRequestsSectionProps> = ({
               onDecline={() => onDecline(request)}
             />
           ))}
-          {outgoingRequests.map((request) => (
+          {outgoingRequests.map(request => (
             <OutgoingRequestCard
               key={request.id}
               request={request}

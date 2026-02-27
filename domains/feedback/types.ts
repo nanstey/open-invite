@@ -91,4 +91,3 @@ export interface SimpleFeedbackItem {
   importance: FeedbackImportance
   status: FeedbackStatus
 }
-

@@ -1,18 +1,31 @@
-import { useState, useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { Plus, Loader2, Github, ExternalLink, X, Pencil, ChevronDown, ChevronUp } from 'lucide-react'
-import { SlidePanel } from '../../../../lib/ui/components/SlidePanel'
+import {
+  ChevronDown,
+  ChevronUp,
+  ExternalLink,
+  Github,
+  Loader2,
+  Pencil,
+  Plus,
+  X,
+} from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Button } from '../../../../lib/ui/9ui/button'
 import { Textarea } from '../../../../lib/ui/9ui/textarea'
-import { FeedbackPicker } from '../feedback/FeedbackPicker'
+import { SlidePanel } from '../../../../lib/ui/components/SlidePanel'
 import {
-  updateProject,
   addFeedbackToProject,
-  removeFeedbackFromProject,
   fetchProjectFeedback,
+  removeFeedbackFromProject,
+  updateProject,
 } from '../../../../services/feedbackProjectService'
-import { FEEDBACK_TYPE_COLORS, FEEDBACK_IMPORTANCE_COLORS, type SimpleFeedbackItem } from '../../types'
 import type { Project } from '../../projectTypes'
+import {
+  FEEDBACK_IMPORTANCE_COLORS,
+  FEEDBACK_TYPE_COLORS,
+  type SimpleFeedbackItem,
+} from '../../types'
+import { FeedbackPicker } from '../feedback/FeedbackPicker'
 
 export interface ProjectDetailPanelProps {
   project: Project
@@ -22,7 +35,7 @@ export interface ProjectDetailPanelProps {
 
 export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetailPanelProps) {
   const navigate = useNavigate()
-  
+
   // Inline editing states
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [isEditingDescription, setIsEditingDescription] = useState(false)
@@ -30,7 +43,7 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
   const [editDescription, setEditDescription] = useState(project.description || '')
   const [savingTitle, setSavingTitle] = useState(false)
   const [savingDescription, setSavingDescription] = useState(false)
-  
+
   // GitHub URL
   const [isEditingGithub, setIsEditingGithub] = useState(false)
   const [githubUrl, setGithubUrl] = useState(project.githubUrl || '')
@@ -96,7 +109,9 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
 
   const handleSaveDescription = async () => {
     setSavingDescription(true)
-    const success = await updateProject(project.id, { description: editDescription.trim() || undefined })
+    const success = await updateProject(project.id, {
+      description: editDescription.trim() || undefined,
+    })
     if (success) {
       onUpdate({ description: editDescription.trim() || null })
       setIsEditingDescription(false)
@@ -119,36 +134,36 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
     const items = await fetchProjectFeedback(project.id)
     setLinkedFeedback(
       items
-        .filter((item) => item.feedback)
-        .map((item): SimpleFeedbackItem => ({
-          id: item.feedback?.id ?? '',
-          title: item.feedback?.title ?? '',
-          description: (item.feedback as any)?.description,
-          type: item.feedback?.type as any,
-          importance: item.feedback?.importance as any,
-          status: item.feedback?.status as any,
-        }))
+        .filter(item => item.feedback)
+        .map(
+          (item): SimpleFeedbackItem => ({
+            id: item.feedback?.id ?? '',
+            title: item.feedback?.title ?? '',
+            description: (item.feedback as any)?.description,
+            type: item.feedback?.type as any,
+            importance: item.feedback?.importance as any,
+            status: item.feedback?.status as any,
+          })
+        )
     )
     setLoadingFeedback(false)
   }
 
   useEffect(() => {
     loadLinkedFeedback()
-  }, [])
+  }, [loadLinkedFeedback])
 
   const handleRemoveFeedback = async (feedbackId: string) => {
     const success = await removeFeedbackFromProject(project.id, feedbackId)
     if (success) {
-      setLinkedFeedback((prev) => prev.filter((f) => f.id !== feedbackId))
+      setLinkedFeedback(prev => prev.filter(f => f.id !== feedbackId))
       onUpdate({ feedbackCount: (project.feedbackCount || 1) - 1 })
     }
   }
 
   const handleToggleNewFeedback = (feedbackId: string) => {
-    setSelectedNewFeedbackIds((prev) =>
-      prev.includes(feedbackId)
-        ? prev.filter((id) => id !== feedbackId)
-        : [...prev, feedbackId]
+    setSelectedNewFeedbackIds(prev =>
+      prev.includes(feedbackId) ? prev.filter(id => id !== feedbackId) : [...prev, feedbackId]
     )
   }
 
@@ -167,7 +182,7 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
     setAddingFeedback(false)
   }
 
-  const linkedFeedbackIds = linkedFeedback.map((f) => f.id)
+  const linkedFeedbackIds = linkedFeedback.map(f => f.id)
 
   return (
     <SlidePanel title="Project Details" onClose={onClose}>
@@ -190,7 +205,7 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
             <input
               type="text"
               value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
+              onChange={e => setEditTitle(e.target.value)}
               className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white outline-none focus:border-primary"
             />
             <div className="flex gap-2">
@@ -218,7 +233,9 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
       {/* Description */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-bold text-slate-400 uppercase tracking-wider">Description</label>
+          <label className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+            Description
+          </label>
           {!isEditingDescription && (
             <Button
               variant="ghost"
@@ -234,7 +251,7 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
           <div className="space-y-2">
             <Textarea
               value={editDescription}
-              onChange={(e) => setEditDescription(e.target.value)}
+              onChange={e => setEditDescription(e.target.value)}
               rows={6}
               placeholder="Add a description..."
               className="w-full bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-primary resize-none"
@@ -261,7 +278,9 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
         ) : (
           <div className="min-h-[24px]">
             {project.description ? (
-              <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">{project.description}</p>
+              <p className="text-slate-300 text-sm leading-relaxed whitespace-pre-wrap">
+                {project.description}
+              </p>
             ) : (
               <p className="text-slate-500 text-sm italic">No description</p>
             )}
@@ -272,7 +291,9 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
       {/* GitHub Link */}
       <div>
         <div className="flex items-center justify-between mb-2">
-          <label className="text-sm font-bold text-slate-400 uppercase tracking-wider">GitHub Link</label>
+          <label className="text-sm font-bold text-slate-400 uppercase tracking-wider">
+            GitHub Link
+          </label>
           {!isEditingGithub && (
             <button
               onClick={() => setIsEditingGithub(true)}
@@ -290,7 +311,7 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
               <input
                 type="text"
                 value={githubUrl}
-                onChange={(e) => setGithubUrl(e.target.value)}
+                onChange={e => setGithubUrl(e.target.value)}
                 placeholder="https://github.com/..."
                 className="flex-1 bg-slate-800/50 border border-slate-700 rounded-xl px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-primary"
               />
@@ -353,13 +374,10 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
             {/* Linked feedback list */}
             {linkedFeedback.length > 0 && (
               <div className="space-y-2 max-h-[400px] overflow-y-auto mb-2">
-                {linkedFeedback.map((item) => {
+                {linkedFeedback.map(item => {
                   const isExpanded = expandedFeedbackIds.has(item.id)
                   return (
-                    <div
-                      key={item.id}
-                      className="bg-slate-900 rounded-lg overflow-hidden"
-                    >
+                    <div key={item.id} className="bg-slate-900 rounded-lg overflow-hidden">
                       {/* Header row */}
                       <div className="flex items-start gap-2 p-2 group">
                         <button
@@ -388,7 +406,8 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
                             </span>
                             <span
                               className={`text-xs px-1.5 py-0.5 rounded border ${
-                                FEEDBACK_IMPORTANCE_COLORS[item.importance] || 'bg-slate-500/20 text-slate-300'
+                                FEEDBACK_IMPORTANCE_COLORS[item.importance] ||
+                                'bg-slate-500/20 text-slate-300'
                               }`}
                             >
                               {item.importance}
@@ -405,7 +424,7 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
                         </button>
                         <button
                           type="button"
-                          onClick={(e) => {
+                          onClick={e => {
                             e.stopPropagation()
                             handleRemoveFeedback(item.id)
                           }}
@@ -415,7 +434,7 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
                           <X className="w-4 h-4" />
                         </button>
                       </div>
-                      
+
                       {/* Expanded description */}
                       {isExpanded && (
                         <div className="px-3 pb-3 pt-1 border-t border-slate-800">

@@ -1,28 +1,28 @@
-import { useState, useEffect } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { User as UserIcon, Calendar, AlertCircle, FolderKanban, Plus, Loader2 } from 'lucide-react'
-import { SlidePanel } from '../../../../lib/ui/components/SlidePanel'
+import { AlertCircle, Calendar, FolderKanban, Loader2, Plus, User as UserIcon } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { Badge } from '../../../../lib/ui/components/Badge'
-import { SearchInput } from '../../../../lib/ui/components/SearchInput'
 import { FormSelect } from '../../../../lib/ui/components/FormControls'
+import { SearchInput } from '../../../../lib/ui/components/SearchInput'
+import { SlidePanel } from '../../../../lib/ui/components/SlidePanel'
 import { formatDateTime } from '../../../../lib/ui/utils/datetime'
-import { updateFeedbackStatus } from '../../../../services/feedbackService'
 import {
-  fetchProjectsForFeedback,
-  fetchAllProjects,
   addFeedbackToProject,
+  fetchAllProjects,
+  fetchProjectsForFeedback,
   removeFeedbackFromProject,
 } from '../../../../services/feedbackProjectService'
+import { updateFeedbackStatus } from '../../../../services/feedbackService'
+import type { SimpleProject } from '../../projectTypes'
 import {
-  FEEDBACK_STATUS_OPTIONS,
-  FEEDBACK_TYPE_COLORS,
   FEEDBACK_IMPORTANCE_COLORS,
   FEEDBACK_STATUS_COLORS,
+  FEEDBACK_STATUS_OPTIONS,
+  FEEDBACK_TYPE_COLORS,
   type Feedback,
   type FeedbackStatus,
 } from '../../types'
 import { ProjectLinkCard } from '../projects/ProjectLinkCard'
-import type { SimpleProject } from '../../projectTypes'
 
 export interface FeedbackDetailPanelProps {
   feedback: Feedback
@@ -31,7 +31,12 @@ export interface FeedbackDetailPanelProps {
   onProjectsChange?: () => void
 }
 
-export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProjectsChange }: FeedbackDetailPanelProps) {
+export function FeedbackDetailPanel({
+  feedback,
+  onClose,
+  onStatusChange,
+  onProjectsChange,
+}: FeedbackDetailPanelProps) {
   const navigate = useNavigate()
   const [updating, setUpdating] = useState(false)
 
@@ -61,7 +66,7 @@ export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProje
 
   useEffect(() => {
     loadProjects()
-  }, [])
+  }, [loadProjects])
 
   const handleAddToProject = async (projectId: string) => {
     setAddingProjectId(projectId)
@@ -136,9 +141,7 @@ export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProje
             <div className="text-sm font-bold text-white">
               {feedback.userName || 'Unknown User'}
             </div>
-            <div className="text-xs text-slate-500">
-              User ID: {feedback.userId.slice(0, 8)}...
-            </div>
+            <div className="text-xs text-slate-500">User ID: {feedback.userId.slice(0, 8)}...</div>
           </div>
         </div>
       </div>
@@ -180,11 +183,11 @@ export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProje
         </h4>
         <FormSelect
           value={feedback.status}
-          onChange={(e) => handleStatusChange(e.target.value as FeedbackStatus)}
+          onChange={e => handleStatusChange(e.target.value as FeedbackStatus)}
           size="lg"
           disabled={updating}
         >
-          {FEEDBACK_STATUS_OPTIONS.map((opt) => (
+          {FEEDBACK_STATUS_OPTIONS.map(opt => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
@@ -208,7 +211,7 @@ export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProje
             {/* Linked projects list */}
             {linkedProjects.length > 0 && (
               <div className="space-y-2 mb-3">
-                {linkedProjects.map((project) => (
+                {linkedProjects.map(project => (
                   <ProjectLinkCard
                     key={project.id}
                     projectId={project.id}
@@ -228,7 +231,7 @@ export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProje
                 <SearchInput
                   size="sm"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Search projects..."
                   autoFocus
                 />
@@ -240,7 +243,7 @@ export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProje
                       {searchQuery ? 'No matching projects' : 'No projects available'}
                     </div>
                   ) : (
-                    availableProjects.map((project) => (
+                    availableProjects.map(project => (
                       <button
                         key={project.id}
                         type="button"

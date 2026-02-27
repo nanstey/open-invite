@@ -1,24 +1,26 @@
-import { supabase } from '../lib/supabase';
-import type { Notification } from '../lib/types';
+import { supabase } from '../lib/supabase'
+import type { Notification } from '../lib/types'
 
 /**
  * Fetch notifications for the current user
  */
 export async function fetchNotifications(): Promise<Notification[]> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) {
-    return [];
+    return []
   }
 
   const { data: notifications, error } = await supabase
     .from('notifications')
     .select('*')
     .eq('user_id', user.id)
-    .order('timestamp', { ascending: false });
+    .order('timestamp', { ascending: false })
 
   if (error || !notifications) {
-    console.error('Error fetching notifications:', error);
-    return [];
+    console.error('Error fetching notifications:', error)
+    return []
   }
 
   return notifications.map(n => ({
@@ -30,7 +32,7 @@ export async function fetchNotifications(): Promise<Notification[]> {
     relatedEventId: n.related_event_id || undefined,
     isRead: n.is_read,
     actorId: n.actor_id || undefined,
-  }));
+  }))
 }
 
 /**
@@ -40,27 +42,29 @@ export async function markNotificationAsRead(notificationId: string): Promise<bo
   const { error } = await supabase
     .from('notifications')
     .update({ is_read: true })
-    .eq('id', notificationId);
+    .eq('id', notificationId)
 
-  return !error;
+  return !error
 }
 
 /**
  * Mark all notifications as read
  */
 export async function markAllNotificationsAsRead(): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) {
-    return false;
+    return false
   }
 
   const { error } = await supabase
     .from('notifications')
     .update({ is_read: true })
     .eq('user_id', user.id)
-    .eq('is_read', false);
+    .eq('is_read', false)
 
-  return !error;
+  return !error
 }
 
 /**
@@ -85,11 +89,11 @@ export async function createNotification(
       actor_id: actorId || null,
     })
     .select()
-    .single();
+    .single()
 
   if (error || !notification) {
-    console.error('Error creating notification:', error);
-    return null;
+    console.error('Error creating notification:', error)
+    return null
   }
 
   return {
@@ -101,6 +105,5 @@ export async function createNotification(
     relatedEventId: notification.related_event_id || undefined,
     isRead: notification.is_read,
     actorId: notification.actor_id || undefined,
-  };
+  }
 }
-

@@ -1,24 +1,24 @@
-import { Plus } from 'lucide-react';
-import type React from 'react';
-import { useState } from 'react';
-import type { KanbanColumn, Project, ProjectStatus } from '../../projectTypes';
-import type { TouchDragProject } from '../ProjectsKanbanBoard';
-import { ProjectCard } from './ProjectCard';
+import { Plus } from 'lucide-react'
+import type React from 'react'
+import { useState } from 'react'
+import type { KanbanColumn, Project, ProjectStatus } from '../../projectTypes'
+import type { TouchDragProject } from '../ProjectsKanbanBoard'
+import { ProjectCard } from './ProjectCard'
 
 export interface KanbanColumnProps {
-  column: KanbanColumn;
-  projects: Project[];
-  draggingProjectId: string | null;
-  touchDragProject: TouchDragProject | null;
-  onDragStart: (projectId: string) => void;
-  onDragEnd: () => void;
-  onDrop: (projectId: string, sourceStatus: ProjectStatus) => void;
-  onTouchDragStart: (projectId: string, sourceStatus: ProjectStatus) => void;
-  onTouchDragEnd: () => void;
-  onTouchDrop: (targetStatus: ProjectStatus) => void;
-  onProjectClick: (project: Project) => void;
-  onProjectDelete: (projectId: string) => void;
-  onAddProject: () => void;
+  column: KanbanColumn
+  projects: Project[]
+  draggingProjectId: string | null
+  touchDragProject: TouchDragProject | null
+  onDragStart: (projectId: string) => void
+  onDragEnd: () => void
+  onDrop: (projectId: string, sourceStatus: ProjectStatus) => void
+  onTouchDragStart: (projectId: string, sourceStatus: ProjectStatus) => void
+  onTouchDragEnd: () => void
+  onTouchDrop: (targetStatus: ProjectStatus) => void
+  onProjectClick: (project: Project) => void
+  onProjectDelete: (projectId: string) => void
+  onAddProject: () => void
 }
 
 export const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
@@ -36,45 +36,45 @@ export const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
   onProjectDelete,
   onAddProject,
 }) => {
-  const [isOver, setIsOver] = useState(false);
-  const [isTouchTarget, setIsTouchTarget] = useState(false);
+  const [isOver, setIsOver] = useState(false)
+  const [isTouchTarget, setIsTouchTarget] = useState(false)
 
   const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsOver(true);
-  };
+    e.preventDefault()
+    setIsOver(true)
+  }
 
   const handleDragLeave = () => {
-    setIsOver(false);
-  };
+    setIsOver(false)
+  }
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsOver(false);
-    const projectId = e.dataTransfer.getData('projectId');
-    const sourceStatus = e.dataTransfer.getData('sourceStatus') as ProjectStatus;
+    e.preventDefault()
+    setIsOver(false)
+    const projectId = e.dataTransfer.getData('projectId')
+    const sourceStatus = e.dataTransfer.getData('sourceStatus') as ProjectStatus
     if (projectId) {
-      onDrop(projectId, sourceStatus);
+      onDrop(projectId, sourceStatus)
     }
-  };
+  }
 
   // Touch-based drop for mobile
   const handleTouchTap = () => {
     if (touchDragProject) {
-      onTouchDrop(column.id);
-      setIsTouchTarget(false);
+      onTouchDrop(column.id)
+      setIsTouchTarget(false)
     }
-  };
+  }
 
   const handleTouchEnter = () => {
     if (touchDragProject) {
-      setIsTouchTarget(true);
+      setIsTouchTarget(true)
     }
-  };
+  }
 
   const handleTouchLeave = () => {
-    setIsTouchTarget(false);
-  };
+    setIsTouchTarget(false)
+  }
 
   return (
     <section
@@ -91,7 +91,7 @@ export const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
       tabIndex={touchDragProject ? 0 : -1}
       onKeyDown={e => {
         if (touchDragProject && e.key === 'Enter') {
-          handleTouchTap();
+          handleTouchTap()
         }
       }}
     >
@@ -143,5 +143,5 @@ export const KanbanColumnComponent: React.FC<KanbanColumnProps> = ({
         </div>
       )}
     </section>
-  );
-};
+  )
+}

@@ -35,7 +35,12 @@ describe('realtimeService', () => {
     }
     supabase.channel.mockReturnValue(channel)
 
-    eventService.fetchEventById.mockResolvedValue({ id: 'event-1', reactions: {}, attendees: [], comments: [] })
+    eventService.fetchEventById.mockResolvedValue({
+      id: 'event-1',
+      reactions: {},
+      attendees: [],
+      comments: [],
+    })
 
     const unsubscribe = realtimeService.subscribeToEvent('event-1', callbacks)
 
@@ -63,7 +68,10 @@ describe('realtimeService', () => {
     }
     supabase.channel.mockReturnValue(channel)
 
-    eventService.fetchEventById.mockResolvedValue({ id: 'event-1', reactions: { '🎉': { emoji: '🎉', count: 1, userReacted: false } } })
+    eventService.fetchEventById.mockResolvedValue({
+      id: 'event-1',
+      reactions: { '🎉': { emoji: '🎉', count: 1, userReacted: false } },
+    })
 
     const callback = vi.fn()
     const unsubscribe = realtimeService.subscribeToReactions('event-1', callback)

@@ -1,23 +1,23 @@
-import { Plus, Users } from 'lucide-react';
+import { Plus, Users } from 'lucide-react'
 
-import type { Group } from '../../../lib/types';
-import { EmptyState } from '../../../lib/ui/components/EmptyState';
-import { SearchInput } from '../../../lib/ui/components/SearchInput';
-import { SectionHeader } from '../../../lib/ui/components/SectionHeader';
+import type { Group } from '../../../lib/types'
+import { EmptyState } from '../../../lib/ui/components/EmptyState'
+import { SearchInput } from '../../../lib/ui/components/SearchInput'
+import { SectionHeader } from '../../../lib/ui/components/SectionHeader'
 
 type GroupsListPaneProps = {
   /** @deprecated Use filteredGroups instead. Kept for backward compatibility with GroupsView. */
-  groups: Group[];
-  filteredGroups: Group[];
-  roleByGroupId: Record<string, 'ADMIN' | 'MEMBER'>;
-  selectedGroupId: string | null;
-  searchTerm: string;
-  isLoading: boolean;
-  userId: string | undefined;
-  onSearchChange: (value: string) => void;
-  onSelectGroup: (groupId: string) => void;
-  onCreateGroup: () => void;
-};
+  groups: Group[]
+  filteredGroups: Group[]
+  roleByGroupId: Record<string, 'ADMIN' | 'MEMBER'>
+  selectedGroupId: string | null
+  searchTerm: string
+  isLoading: boolean
+  userId: string | undefined
+  onSearchChange: (value: string) => void
+  onSelectGroup: (groupId: string) => void
+  onCreateGroup: () => void
+}
 
 export function GroupsListPane({
   // eslint-ignore-next-line
@@ -76,9 +76,9 @@ export function GroupsListPane({
         ) : (
           <div className="space-y-4">
             {filteredGroups.map(group => {
-              const isOwner = group.createdBy === userId;
-              const role = isOwner ? 'OWNER' : roleByGroupId[group.id] === 'ADMIN' ? 'ADMIN' : null;
-              const selected = selectedGroupId === group.id;
+              const isOwner = group.createdBy === userId
+              const role = isOwner ? 'OWNER' : roleByGroupId[group.id] === 'ADMIN' ? 'ADMIN' : null
+              const selected = selectedGroupId === group.id
               return (
                 <button
                   type="button"
@@ -102,11 +102,11 @@ export function GroupsListPane({
                     </span>
                   ) : null}
                 </button>
-              );
+              )
             })}
           </div>
         )}
       </div>
     </section>
-  );
+  )
 }

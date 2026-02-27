@@ -1,8 +1,8 @@
 import * as React from 'react'
 
 import type { User } from '../../../lib/types'
-import type { SocialEvent } from '../types'
 import { fetchUser, fetchUsers } from '../../../services/userService'
+import type { SocialEvent } from '../types'
 
 export function useEventPeople(args: { event: SocialEvent; currentUserId?: string }) {
   const { event, currentUserId } = args
@@ -31,28 +31,28 @@ export function useEventPeople(args: { event: SocialEvent; currentUserId?: strin
       }
 
       // Comment authors
-      const commentUserIds: string[] = event.comments.map((c) => c.userId)
+      const commentUserIds: string[] = event.comments.map(c => c.userId)
       if (commentUserIds.length > 0) {
         const uniqueCommentUserIds: string[] = [...new Set(commentUserIds)]
         const fetchedCommentUsers = await fetchUsers(uniqueCommentUserIds, currentUserId)
         if (cancelled) return
-        setCommentUsers(new Map(fetchedCommentUsers.map((u) => [u.id, u])))
+        setCommentUsers(new Map(fetchedCommentUsers.map(u => [u.id, u])))
       } else {
         setCommentUsers(new Map())
       }
 
       // Comment reactions
       const reactionUserIds: string[] = []
-      event.comments.forEach((comment) => {
-        Object.values(comment.reactions ?? {}).forEach((reaction) => {
-          reaction.userIds?.forEach((id) => reactionUserIds.push(id))
+      event.comments.forEach(comment => {
+        Object.values(comment.reactions ?? {}).forEach(reaction => {
+          reaction.userIds?.forEach(id => reactionUserIds.push(id))
         })
       })
       if (reactionUserIds.length > 0) {
         const uniqueReactionUserIds = [...new Set(reactionUserIds)]
         const fetchedReactionUsers = await fetchUsers(uniqueReactionUserIds, currentUserId)
         if (cancelled) return
-        setReactionUsers(new Map(fetchedReactionUsers.map((u) => [u.id, u])))
+        setReactionUsers(new Map(fetchedReactionUsers.map(u => [u.id, u])))
       } else {
         setReactionUsers(new Map())
       }
@@ -67,4 +67,3 @@ export function useEventPeople(args: { event: SocialEvent; currentUserId?: strin
 
   return { host, attendeesList, commentUsers, reactionUsers }
 }
-

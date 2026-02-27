@@ -3,4 +3,3 @@ export { FriendsListSection, type FriendsListSectionProps } from './FriendsListS
 export { OutgoingRequestCard, type OutgoingRequestCardProps } from './OutgoingRequestCard'
 export { PendingRequestCard, type PendingRequestCardProps } from './PendingRequestCard'
 export { PendingRequestsSection, type PendingRequestsSectionProps } from './PendingRequestsSection'
-

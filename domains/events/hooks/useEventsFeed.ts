@@ -1,9 +1,8 @@
 import * as React from 'react'
-
-import type { SocialEvent } from '../types'
 import { fetchEvents, joinEvent, leaveEvent } from '../../../services/eventService'
 import { realtimeService } from '../../../services/realtimeService'
 import { fetchUsers } from '../../../services/userService'
+import type { SocialEvent } from '../types'
 
 type UseEventsFeedArgs = {
   currentUserId: string | null
@@ -22,7 +21,7 @@ export function useEventsFeed({ currentUserId, enabled }: UseEventsFeedArgs) {
   const refresh = React.useCallback(async () => {
     if (!enabled || !currentUserId) return
     const fetched = await fetchEvents(currentUserId)
-    const hostIds = [...new Set(fetched.map((e) => e.hostId))]
+    const hostIds = [...new Set(fetched.map(e => e.hostId))]
     await fetchUsers(hostIds, currentUserId)
     setEvents(fetched)
   }, [currentUserId, enabled])
@@ -62,13 +61,13 @@ export function useEventsFeed({ currentUserId, enabled }: UseEventsFeedArgs) {
       }
     })
 
-    const unsubscribeNewEvents = realtimeService.subscribeToAllEvents((newEvent) => {
+    const unsubscribeNewEvents = realtimeService.subscribeToAllEvents(newEvent => {
       // Warm user cache (best-effort)
       fetchUsers([newEvent.hostId], currentUserId).catch(() => {})
 
-      setEvents((prev) => {
-        if (prev.some((e) => e.id === newEvent.id)) {
-          return prev.map((e) => (e.id === newEvent.id ? newEvent : e))
+      setEvents(prev => {
+        if (prev.some(e => e.id === newEvent.id)) {
+          return prev.map(e => (e.id === newEvent.id ? newEvent : e))
         }
         return [newEvent, ...prev]
       })
@@ -86,16 +85,16 @@ export function useEventsFeed({ currentUserId, enabled }: UseEventsFeedArgs) {
         const success = await joinEvent(eventId)
         if (success) {
           const updated = await fetchEvents(currentUserId)
-          const event = updated.find((e) => e.id === eventId)
+          const event = updated.find(e => e.id === eventId)
           if (event) {
-            setEvents((prev) => prev.map((e) => (e.id === eventId ? event : e)))
+            setEvents(prev => prev.map(e => (e.id === eventId ? event : e)))
           }
         }
       } catch (error) {
         console.error('Error joining event:', error)
       }
     },
-    [currentUserId, enabled],
+    [currentUserId, enabled]
   )
 
   const leave = React.useCallback(
@@ -105,19 +104,17 @@ export function useEventsFeed({ currentUserId, enabled }: UseEventsFeedArgs) {
         const success = await leaveEvent(eventId)
         if (success) {
           const updated = await fetchEvents(currentUserId)
-          const event = updated.find((e) => e.id === eventId)
+          const event = updated.find(e => e.id === eventId)
           if (event) {
-            setEvents((prev) => prev.map((e) => (e.id === eventId ? event : e)))
+            setEvents(prev => prev.map(e => (e.id === eventId ? event : e)))
           }
         }
       } catch (error) {
         console.error('Error leaving event:', error)
       }
     },
-    [currentUserId, enabled],
+    [currentUserId, enabled]
   )
 
   return { events, loading, refresh, join, leave }
 }
-
-

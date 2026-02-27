@@ -1,31 +1,31 @@
-import type React from 'react';
-import { useState } from 'react';
-import { useAuth } from './AuthProvider';
-import { X } from 'lucide-react';
-import { GoogleIcon } from '@/lib/ui/icons/GoogleIcon';
-import { Button } from '../../lib/ui/9ui/button';
-import { Input } from '../../lib/ui/9ui/input';
+import { X } from 'lucide-react'
+import type React from 'react'
+import { useState } from 'react'
+import { GoogleIcon } from '@/lib/ui/icons/GoogleIcon'
+import { Button } from '../../lib/ui/9ui/button'
+import { Input } from '../../lib/ui/9ui/input'
+import { useAuth } from './AuthProvider'
 
 // ============================================================================
 // Constants
 // ============================================================================
 
-const isEmailAuthEnabled = import.meta.env.VITE_APP_ENV !== 'prod';
-const DEFAULT_AVATAR = 'https://picsum.photos/seed/user/100/100';
+const isEmailAuthEnabled = import.meta.env.VITE_APP_ENV !== 'prod'
+const DEFAULT_AVATAR = 'https://picsum.photos/seed/user/100/100'
 
 // ============================================================================
 // Utilities
 // ============================================================================
 
 function getAuthRedirectPath(): string {
-  const raw = window.location.pathname + window.location.search;
-  if (raw.startsWith('/e/')) return raw.replace(/^\/e\//, '/events/');
-  if (raw === '/') return '/events?view=list';
-  return raw;
+  const raw = window.location.pathname + window.location.search
+  if (raw.startsWith('/e/')) return raw.replace(/^\/e\//, '/events/')
+  if (raw === '/') return '/events?view=list'
+  return raw
 }
 
 function getErrorMessage(err: unknown): string {
-  return err instanceof Error ? err.message : 'An error occurred';
+  return err instanceof Error ? err.message : 'An error occurred'
 }
 
 // ============================================================================
@@ -33,74 +33,82 @@ function getErrorMessage(err: unknown): string {
 // ============================================================================
 
 interface LoginModalProps {
-  onClose: () => void;
+  onClose: () => void
 }
 
 interface FormInputProps {
-  label: string;
-  type: string;
-  value: string;
-  onChange: (value: string) => void;
-  placeholder: string;
-  required?: boolean;
-  minLength?: number;
+  label: string
+  type: string
+  value: string
+  onChange: (value: string) => void
+  placeholder: string
+  required?: boolean
+  minLength?: number
 }
 
 interface GoogleSignInButtonProps {
-  onClick: () => void;
-  disabled: boolean;
-  loading: boolean;
+  onClick: () => void
+  disabled: boolean
+  loading: boolean
 }
 
 interface EmailSignInFormProps {
-  isSignUp: boolean;
-  loading: boolean;
-  onSubmit: (e: React.FormEvent) => void;
+  isSignUp: boolean
+  loading: boolean
+  onSubmit: (e: React.FormEvent) => void
   fields: {
-    name: string;
-    setName: (v: string) => void;
-    avatar: string;
-    setAvatar: (v: string) => void;
-    email: string;
-    setEmail: (v: string) => void;
-    password: string;
-    setPassword: (v: string) => void;
-  };
+    name: string
+    setName: (v: string) => void
+    avatar: string
+    setAvatar: (v: string) => void
+    email: string
+    setEmail: (v: string) => void
+    password: string
+    setPassword: (v: string) => void
+  }
 }
 
 interface AuthToggleProps {
-  isSignUp: boolean;
-  onToggle: () => void;
+  isSignUp: boolean
+  onToggle: () => void
 }
 
 // ============================================================================
 // Sub-components
 // ============================================================================
 
-function FormInput({ label, type, value, onChange, placeholder, required, minLength }: FormInputProps) {
+function FormInput({
+  label,
+  type,
+  value,
+  onChange,
+  placeholder,
+  required,
+  minLength,
+}: FormInputProps) {
   return (
     <div>
       <label className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
       <Input
         type={type}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={e => onChange(e.target.value)}
         className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
         placeholder={placeholder}
         required={required}
         minLength={minLength}
       />
     </div>
-  );
+  )
 }
 
 function AuthError({ message }: { message: string | null }) {
-  if (!message) return null;
+  if (!message) return null
   return (
     <div className="bg-red-500/20 border border-red-500/50 text-red-400 px-4 py-2 rounded-lg text-sm mb-4">
       {message}
     </div>
-  );
+  )
 }
 
 function AuthDivider() {
@@ -113,7 +121,7 @@ function AuthDivider() {
         <span className="px-2 bg-slate-800 text-slate-400">Or continue with email</span>
       </div>
     </div>
-  );
+  )
 }
 
 function GoogleSignInButton({ onClick, disabled, loading }: GoogleSignInButtonProps) {
@@ -128,7 +136,7 @@ function GoogleSignInButton({ onClick, disabled, loading }: GoogleSignInButtonPr
       <GoogleIcon />
       {loading ? 'Signing in...' : 'Sign in with Google'}
     </Button>
-  );
+  )
 }
 
 function EmailSignInForm({ isSignUp, loading, onSubmit, fields }: EmailSignInFormProps) {
@@ -173,15 +181,11 @@ function EmailSignInForm({ isSignUp, loading, onSubmit, fields }: EmailSignInFor
         minLength={6}
       />
 
-      <Button
-        type="submit"
-        disabled={loading}
-        className="w-full font-bold py-2 px-4"
-      >
+      <Button type="submit" disabled={loading} className="w-full font-bold py-2 px-4">
         {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
       </Button>
     </form>
-  );
+  )
 }
 
 function AuthToggle({ isSignUp, onToggle }: AuthToggleProps) {
@@ -195,7 +199,7 @@ function AuthToggle({ isSignUp, onToggle }: AuthToggleProps) {
         {isSignUp ? 'Already have an account? Sign in' : "Don't have an account? Sign up"}
       </Button>
     </div>
-  );
+  )
 }
 
 // ============================================================================
@@ -203,70 +207,70 @@ function AuthToggle({ isSignUp, onToggle }: AuthToggleProps) {
 // ============================================================================
 
 function useLoginForm(onClose: () => void) {
-  const { signIn, signUp, signInWithGoogle } = useAuth();
+  const { signIn, signUp, signInWithGoogle } = useAuth()
 
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [name, setName] = useState('');
-  const [avatar, setAvatar] = useState(DEFAULT_AVATAR);
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [name, setName] = useState('')
+  const [avatar, setAvatar] = useState(DEFAULT_AVATAR)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+  const [googleLoading, setGoogleLoading] = useState(false)
 
   const handleGoogleSignIn = async () => {
-    setError(null);
-    setGoogleLoading(true);
+    setError(null)
+    setGoogleLoading(true)
 
     try {
-      const result = await signInWithGoogle(getAuthRedirectPath());
+      const result = await signInWithGoogle(getAuthRedirectPath())
       if (result?.error) {
-        setError(result.error.message || 'Google sign in failed');
-        setGoogleLoading(false);
+        setError(result.error.message || 'Google sign in failed')
+        setGoogleLoading(false)
       }
     } catch (err) {
-      setError(getErrorMessage(err));
-      setGoogleLoading(false);
+      setError(getErrorMessage(err))
+      setGoogleLoading(false)
     }
-  };
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    setLoading(true);
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
 
     try {
       if (isSignUp) {
         if (!name.trim()) {
-          setError('Name is required');
-          setLoading(false);
-          return;
+          setError('Name is required')
+          setLoading(false)
+          return
         }
-        const result = await signUp(email, password, name, avatar);
+        const result = await signUp(email, password, name, avatar)
         if (result?.error) {
-          setError(result.error.message || 'Sign up failed');
+          setError(result.error.message || 'Sign up failed')
         } else {
-          onClose();
+          onClose()
         }
       } else {
-        const result = await signIn(email, password);
+        const result = await signIn(email, password)
         if (result?.error) {
-          setError(result.error.message || 'Sign in failed');
+          setError(result.error.message || 'Sign in failed')
         } else {
-          onClose();
+          onClose()
         }
       }
     } catch (err) {
-      setError(getErrorMessage(err));
+      setError(getErrorMessage(err))
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   const toggleMode = () => {
-    setIsSignUp(!isSignUp);
-    setError(null);
-  };
+    setIsSignUp(!isSignUp)
+    setError(null)
+  }
 
   return {
     isSignUp,
@@ -286,7 +290,7 @@ function useLoginForm(onClose: () => void) {
       password,
       setPassword,
     },
-  };
+  }
 }
 
 // ============================================================================
@@ -303,7 +307,7 @@ export function LoginModal({ onClose }: LoginModalProps) {
     handleSubmit,
     toggleMode,
     fields,
-  } = useLoginForm(onClose);
+  } = useLoginForm(onClose)
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
@@ -342,5 +346,5 @@ export function LoginModal({ onClose }: LoginModalProps) {
         )}
       </div>
     </div>
-  );
+  )
 }

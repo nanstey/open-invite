@@ -6,13 +6,19 @@ const supabase = vi.hoisted(() => ({
 
 vi.mock('../lib/supabase', () => ({ supabase }))
 
+import type {
+  EventExpense,
+  ExpenseAppliesTo,
+  ExpenseSettledKind,
+  ExpenseSplitType,
+  ExpenseTiming,
+} from '../domains/events/types'
 import {
-  fetchEventExpenses,
   createEventExpense,
-  updateEventExpense,
   deleteEventExpense,
+  fetchEventExpenses,
+  updateEventExpense,
 } from './expenseService'
-import type { EventExpense, ExpenseAppliesTo, ExpenseSplitType, ExpenseTiming, ExpenseSettledKind } from '../domains/events/types'
 
 const mockFrom = (handlers: Record<string, () => any>) => {
   supabase.from.mockImplementation((table: string) => {
@@ -112,8 +118,18 @@ describe('expenseService', () => {
               order: () => ({
                 order: async () => ({
                   data: [
-                    { ...baseExpenseRow, timing: 'SETTLED_LATER', settled_kind: 'EXACT', amount_cents: 5000 },
-                    { ...baseExpenseRow, timing: 'SETTLED_LATER', settled_kind: 'ESTIMATE', amount_cents: 3000 },
+                    {
+                      ...baseExpenseRow,
+                      timing: 'SETTLED_LATER',
+                      settled_kind: 'EXACT',
+                      amount_cents: 5000,
+                    },
+                    {
+                      ...baseExpenseRow,
+                      timing: 'SETTLED_LATER',
+                      settled_kind: 'ESTIMATE',
+                      amount_cents: 3000,
+                    },
                   ],
                   error: null,
                 }),
@@ -137,9 +153,7 @@ describe('expenseService', () => {
             eq: () => ({
               order: () => ({
                 order: async () => ({
-                  data: [
-                    { ...baseExpenseRow, sort_order: null, amount_cents: null },
-                  ],
+                  data: [{ ...baseExpenseRow, sort_order: null, amount_cents: null }],
                   error: null,
                 }),
               }),
@@ -317,7 +331,10 @@ describe('expenseService', () => {
         }),
       })
 
-      const result = await updateEventExpense('expense-1', { title: 'Updated Catering', amountCents: 15000 })
+      const result = await updateEventExpense('expense-1', {
+        title: 'Updated Catering',
+        amountCents: 15000,
+      })
 
       expect(result).toMatchObject({
         id: 'expense-1',

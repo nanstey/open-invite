@@ -1,14 +1,14 @@
-'use client';
+'use client'
 
-import * as React from 'react';
+import * as React from 'react'
 
-import { cn } from './utils';
+import { cn } from './utils'
 
 type SwitchProps = Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'onChange' | 'value'> & {
-  checked?: boolean;
-  defaultChecked?: boolean;
-  onCheckedChange?: (checked: boolean) => void;
-};
+  checked?: boolean
+  defaultChecked?: boolean
+  onCheckedChange?: (checked: boolean) => void
+}
 
 function Switch({
   className,
@@ -19,19 +19,19 @@ function Switch({
   disabled,
   ...props
 }: SwitchProps) {
-  const [uncontrolledChecked, setUncontrolledChecked] = React.useState(defaultChecked);
-  const isControlled = checked !== undefined;
-  const isChecked = isControlled ? checked : uncontrolledChecked;
+  const [uncontrolledChecked, setUncontrolledChecked] = React.useState(defaultChecked)
+  const isControlled = checked !== undefined
+  const isChecked = isControlled ? checked : uncontrolledChecked
 
   const handleCheckedChange = React.useCallback(
     (nextChecked: boolean) => {
       if (!isControlled) {
-        setUncontrolledChecked(nextChecked);
+        setUncontrolledChecked(nextChecked)
       }
-      onCheckedChange?.(nextChecked);
+      onCheckedChange?.(nextChecked)
     },
     [isControlled, onCheckedChange]
-  );
+  )
 
   return (
     <button
@@ -46,11 +46,11 @@ function Switch({
       )}
       disabled={disabled}
       onClick={event => {
-        onClick?.(event);
+        onClick?.(event)
         if (event.defaultPrevented || disabled) {
-          return;
+          return
         }
-        handleCheckedChange(!isChecked);
+        handleCheckedChange(!isChecked)
       }}
       {...props}
     >
@@ -62,7 +62,7 @@ function Switch({
         )}
       />
     </button>
-  );
+  )
 }
 
-export { Switch };
+export { Switch }

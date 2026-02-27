@@ -1,6 +1,6 @@
 import * as React from 'react'
 
-import { parseEventTab, type EventTab } from '../components/detail/route/routing'
+import { type EventTab, parseEventTab } from '../components/detail/route/routing'
 
 export function useEventTabsController(input: {
   activeTabProp?: EventTab
@@ -28,10 +28,8 @@ export function useEventTabsController(input: {
       }
       setUncontrolledActiveTab(tabId)
     },
-    [activeTab, isGuest, onRequireAuth, onTabChange],
+    [activeTab, isGuest, onRequireAuth, onTabChange]
   )
 
   return { activeTab, onTabChange: handleTabChange }
 }
-
-

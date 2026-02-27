@@ -24,20 +24,10 @@ const sizeClasses = {
  * @example
  * <UserAvatar src={user.avatar} alt={user.name} size="md" />
  */
-export const UserAvatar: React.FC<UserAvatarProps> = ({
-  src,
-  alt,
-  size = 'md',
-  className,
-}) => (
+export const UserAvatar: React.FC<UserAvatarProps> = ({ src, alt, size = 'md', className }) => (
   <img
     src={src}
     alt={alt}
-    className={cn(
-      'rounded-full border-2 border-slate-600',
-      sizeClasses[size],
-      className
-    )}
+    className={cn('rounded-full border-2 border-slate-600', sizeClasses[size], className)}
   />
 )
-

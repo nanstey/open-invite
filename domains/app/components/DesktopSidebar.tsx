@@ -1,10 +1,10 @@
-import type React from 'react'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { Bell, CalendarDays, Plus, Users as UsersIcon } from 'lucide-react'
+import type React from 'react'
 
 import type { User } from '../../../lib/types'
-import type { ActiveSection } from '../routing'
 import type { EventsView } from '../../events/hooks/useEventNavigation'
+import type { ActiveSection } from '../routing'
 
 interface DesktopSidebarProps {
   user: User
@@ -112,4 +112,3 @@ export function DesktopSidebar({
     </nav>
   )
 }
-

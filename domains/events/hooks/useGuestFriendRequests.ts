@@ -7,12 +7,12 @@ export function useGuestFriendRequests() {
   const [sendingRequestIds, setSendingRequestIds] = React.useState<Set<string>>(new Set())
 
   const handleSendFriendRequest = React.useCallback(async (userId: string) => {
-    setSendingRequestIds((prev) => new Set(prev).add(userId))
+    setSendingRequestIds(prev => new Set(prev).add(userId))
     const success = await sendFriendRequest(userId)
     if (success) {
-      setPendingRequestIds((prev) => new Set(prev).add(userId))
+      setPendingRequestIds(prev => new Set(prev).add(userId))
     }
-    setSendingRequestIds((prev) => {
+    setSendingRequestIds(prev => {
       const next = new Set(prev)
       next.delete(userId)
       return next

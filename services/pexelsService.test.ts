@@ -1,70 +1,70 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const fetchMock = vi.fn<typeof fetch>();
+const fetchMock = vi.fn<typeof fetch>()
 
 async function loadSearchPexelsImages() {
-  const mod = await import('./pexelsService');
-  return mod.searchPexelsImages;
+  const mod = await import('./pexelsService')
+  return mod.searchPexelsImages
 }
 
 async function callSearch(query: string, opts?: { pageSize?: number }) {
-  const searchPexelsImages = await loadSearchPexelsImages();
-  return searchPexelsImages(query, opts);
+  const searchPexelsImages = await loadSearchPexelsImages()
+  return searchPexelsImages(query, opts)
 }
 
 describe('pexelsService', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    vi.resetModules();
-    vi.stubGlobal('fetch', fetchMock);
-    vi.stubEnv('VITE_PEXELS_API', 'test-pexels-key');
-  });
+    vi.clearAllMocks()
+    vi.resetModules()
+    vi.stubGlobal('fetch', fetchMock)
+    vi.stubEnv('VITE_PEXELS_API', 'test-pexels-key')
+  })
 
   describe('preconditions', () => {
     it('returns [] for blank query', async () => {
-      const result = await callSearch('   ');
+      const result = await callSearch('   ')
 
-      expect(result).toEqual([]);
-      expect(fetchMock).not.toHaveBeenCalled();
-    });
+      expect(result).toEqual([])
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
 
     it('throws clear error when API key is missing/blank', async () => {
-      vi.stubEnv('VITE_PEXELS_API', '  ');
+      vi.stubEnv('VITE_PEXELS_API', '  ')
 
       await expect(callSearch('mountain')).rejects.toThrow(
         'Missing Pexels API key: set VITE_PEXELS_API'
-      );
-      expect(fetchMock).not.toHaveBeenCalled();
-    });
-  });
+      )
+      expect(fetchMock).not.toHaveBeenCalled()
+    })
+  })
 
   describe('request construction', () => {
     it('clamps pageSize to 1..80 and builds request correctly', async () => {
       fetchMock.mockResolvedValue({
         ok: true,
         json: async () => ({ photos: [] }),
-      } as Response);
+      } as Response)
 
-      await callSearch('beach', { pageSize: 999 });
+      await callSearch('beach', { pageSize: 999 })
 
-      expect(fetchMock).toHaveBeenCalledTimes(1);
-      const [firstUrl, firstInit] = fetchMock.mock.calls[0];
-      const parsed = new URL(String(firstUrl));
-      expect(parsed.origin + parsed.pathname).toBe('https://api.pexels.com/v1/search');
-      expect(parsed.searchParams.get('query')).toBe('beach');
-      expect(parsed.searchParams.get('per_page')).toBe('80');
-      expect(parsed.searchParams.get('orientation')).toBe('landscape');
+      expect(fetchMock).toHaveBeenCalledTimes(1)
+      const [firstUrl, firstInit] = fetchMock.mock.calls[0]
+      const parsed = new URL(String(firstUrl))
+      expect(parsed.origin + parsed.pathname).toBe('https://api.pexels.com/v1/search')
+      expect(parsed.searchParams.get('query')).toBe('beach')
+      expect(parsed.searchParams.get('per_page')).toBe('80')
+      expect(parsed.searchParams.get('orientation')).toBe('landscape')
       expect((firstInit as RequestInit | undefined)?.headers).toMatchObject({
         Authorization: 'test-pexels-key',
-      });
+      })
 
-      fetchMock.mockClear();
-      await callSearch('beach', { pageSize: 0 });
-      const [secondUrl] = fetchMock.mock.calls[0];
-      const secondParsed = new URL(String(secondUrl));
-      expect(secondParsed.searchParams.get('per_page')).toBe('1');
-    });
-  });
+      fetchMock.mockClear()
+      await callSearch('beach', { pageSize: 0 })
+      const [secondUrl] = fetchMock.mock.calls[0]
+      const secondParsed = new URL(String(secondUrl))
+      expect(secondParsed.searchParams.get('per_page')).toBe('1')
+    })
+  })
 
   describe('response handling', () => {
     it('throws on non-OK response with status details and optional body text', async () => {
@@ -73,23 +73,23 @@ describe('pexelsService', () => {
         status: 401,
         statusText: 'Unauthorized',
         text: async () => 'invalid key',
-      } as Response);
+      } as Response)
 
       await expect(callSearch('desert')).rejects.toThrow(
         'Pexels request failed: 401 Unauthorized - invalid key'
-      );
+      )
 
       fetchMock.mockResolvedValueOnce({
         ok: false,
         status: 500,
         statusText: 'Internal Server Error',
         text: async () => '',
-      } as Response);
+      } as Response)
 
       await expect(callSearch('desert')).rejects.toThrow(
         'Pexels request failed: 500 Internal Server Error'
-      );
-    });
+      )
+    })
 
     it('maps valid photos with fallback priority and drops invalid records', async () => {
       fetchMock.mockResolvedValue({
@@ -137,9 +137,9 @@ describe('pexelsService', () => {
             },
           ],
         }),
-      } as Response);
+      } as Response)
 
-      const images = await callSearch('forest');
+      const images = await callSearch('forest')
 
       expect(images).toEqual([
         {
@@ -160,7 +160,7 @@ describe('pexelsService', () => {
           creator: undefined,
           license: 'Pexels',
         },
-      ]);
-    });
-  });
-});
+      ])
+    })
+  })
+})

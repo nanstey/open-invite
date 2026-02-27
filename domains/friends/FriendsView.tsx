@@ -1,6 +1,9 @@
 import type React from 'react'
-import { useState, useEffect, useRef, useMemo } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
+import { useClickOutside } from '../../lib/hooks/useClickOutside'
 import type { User } from '../../lib/types'
+import { LoadingSpinner } from '../../lib/ui/components/LoadingSpinner'
+import { SearchInput } from '../../lib/ui/components/SearchInput'
 import {
   acceptFriendRequest,
   cancelFriendRequest,
@@ -8,15 +11,12 @@ import {
   fetchFriends,
   fetchOutgoingFriendRequests,
   fetchPendingFriendRequests,
-  removeFriend,
   type OutgoingFriendRequest,
   type PendingFriendRequest,
+  removeFriend,
 } from '../../services/friendService'
-import { useClickOutside } from '../../lib/hooks/useClickOutside'
-import { SearchInput } from '../../lib/ui/components/SearchInput'
-import { LoadingSpinner } from '../../lib/ui/components/LoadingSpinner'
-import { PendingRequestsSection } from './components/PendingRequestsSection'
 import { FriendsListSection } from './components/FriendsListSection'
+import { PendingRequestsSection } from './components/PendingRequestsSection'
 
 export const FriendsView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('')
@@ -83,13 +83,13 @@ export const FriendsView: React.FC = () => {
   }, [])
 
   const filteredFriends = useMemo(
-    () => friends.filter((friend) => friend.name.toLowerCase().includes(searchTerm.toLowerCase())),
+    () => friends.filter(friend => friend.name.toLowerCase().includes(searchTerm.toLowerCase())),
     [friends, searchTerm]
   )
 
   const groupedFriends = useMemo(() => {
     const groups: Record<string, User[]> = {}
-    filteredFriends.forEach((friend) => {
+    filteredFriends.forEach(friend => {
       const firstLetter = friend.name.charAt(0).toUpperCase()
       if (!groups[firstLetter]) {
         groups[firstLetter] = []
@@ -100,7 +100,7 @@ export const FriendsView: React.FC = () => {
   }, [filteredFriends])
 
   const updateProcessingIds = (id: string, isProcessing: boolean) => {
-    setProcessingIds((prev) => {
+    setProcessingIds(prev => {
       const next = new Set(prev)
       isProcessing ? next.add(id) : next.delete(id)
       return next
@@ -112,7 +112,7 @@ export const FriendsView: React.FC = () => {
     updateProcessingIds(friend.id, true)
     const success = await removeFriend(friend.id)
     if (success) {
-      setFriends((prev) => prev.filter((f) => f.id !== friend.id))
+      setFriends(prev => prev.filter(f => f.id !== friend.id))
     }
     updateProcessingIds(friend.id, false)
   }
@@ -121,8 +121,8 @@ export const FriendsView: React.FC = () => {
     updateProcessingIds(request.id, true)
     const success = await acceptFriendRequest(request.id, request.requesterId)
     if (success) {
-      setPendingRequests((prev) => prev.filter((r) => r.id !== request.id))
-      setFriends((prev) => [request.requester, ...prev])
+      setPendingRequests(prev => prev.filter(r => r.id !== request.id))
+      setFriends(prev => [request.requester, ...prev])
     }
     updateProcessingIds(request.id, false)
   }
@@ -131,7 +131,7 @@ export const FriendsView: React.FC = () => {
     updateProcessingIds(request.id, true)
     const success = await declineFriendRequest(request.id)
     if (success) {
-      setPendingRequests((prev) => prev.filter((r) => r.id !== request.id))
+      setPendingRequests(prev => prev.filter(r => r.id !== request.id))
     }
     updateProcessingIds(request.id, false)
   }
@@ -140,13 +140,13 @@ export const FriendsView: React.FC = () => {
     updateProcessingIds(request.id, true)
     const success = await cancelFriendRequest(request.id)
     if (success) {
-      setOutgoingRequests((prev) => prev.filter((r) => r.id !== request.id))
+      setOutgoingRequests(prev => prev.filter(r => r.id !== request.id))
     }
     updateProcessingIds(request.id, false)
   }
 
   const handleMenuToggle = (friendId: string) => {
-    setOpenMenuId((prev) => (prev === friendId ? null : friendId))
+    setOpenMenuId(prev => (prev === friendId ? null : friendId))
   }
 
   return (
@@ -154,7 +154,7 @@ export const FriendsView: React.FC = () => {
       <div className="bg-slate-900/50 p-1 rounded-xl">
         <SearchInput
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={e => setSearchTerm(e.target.value)}
           placeholder="Search friends..."
           size="lg"
         />

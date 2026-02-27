@@ -1,11 +1,10 @@
-import * as React from 'react'
-
-import type { User } from '../../../../../lib/types'
-import type { Comment, SocialEvent } from '../../../types'
 import { Send } from 'lucide-react'
+import * as React from 'react'
 import { useEmojiAutocomplete } from '../../../../../lib/hooks/useEmojiAutocomplete'
+import type { User } from '../../../../../lib/types'
 import { EmojiPicker } from '../../../../../lib/ui/9ui/emoji-picker'
 import { Popover, PopoverContent } from '../../../../../lib/ui/9ui/popover'
+import type { Comment, SocialEvent } from '../../../types'
 import { CommentReactionBar, CommentReactionPicker } from './CommentReactionBar'
 
 const LONG_PRESS_DELAY_MS = 450
@@ -52,7 +51,7 @@ function ChatMessageBubble({
       if (target?.closest('button')) return
       onOpenPicker(!isPickerOpen)
     },
-    [isPickerOpen, onOpenPicker],
+    [isPickerOpen, onOpenPicker]
   )
 
   const handleTouchStart = React.useCallback(() => {
@@ -102,7 +101,7 @@ function ChatMessageBubble({
             open={isPickerOpen}
             onOpenChange={onOpenPicker}
             showTrigger={false}
-            />
+          />
         </div>
       </div>
       {showReactions ? (
@@ -127,7 +126,11 @@ export function ChatTab(props: {
   isGuest: boolean
   onRequireAuth?: () => void
   onPostComment?: (eventId: string, text: string) => Promise<void> | void
-  onToggleCommentReaction?: (eventId: string, commentId: string, emoji: string) => Promise<void> | void
+  onToggleCommentReaction?: (
+    eventId: string,
+    commentId: string,
+    emoji: string
+  ) => Promise<void> | void
   onUpdateEvent: (updated: SocialEvent) => void
 }) {
   const {
@@ -146,14 +149,22 @@ export function ChatTab(props: {
   const [commentText, setCommentText] = React.useState('')
   const [activePickerCommentId, setActivePickerCommentId] = React.useState<string | null>(null)
   const inputRef = React.useRef<HTMLInputElement>(null)
-  const emojiAutocomplete = useEmojiAutocomplete({ value: commentText, onChange: setCommentText, inputRef })
+  const emojiAutocomplete = useEmojiAutocomplete({
+    value: commentText,
+    onChange: setCommentText,
+    inputRef,
+  })
   const today = React.useMemo(() => new Date(), [])
 
   const formatChatDate = React.useCallback(
     (timestamp: string) => {
       const messageDate = new Date(timestamp)
       const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-      const startOfMessage = new Date(messageDate.getFullYear(), messageDate.getMonth(), messageDate.getDate())
+      const startOfMessage = new Date(
+        messageDate.getFullYear(),
+        messageDate.getMonth(),
+        messageDate.getDate()
+      )
       const diffMs = startOfToday.getTime() - startOfMessage.getTime()
       const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
 
@@ -167,7 +178,7 @@ export function ChatTab(props: {
 
       return messageDate.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
     },
-    [today],
+    [today]
   )
 
   const handlePostComment = async (e: React.FormEvent) => {
@@ -204,15 +215,17 @@ export function ChatTab(props: {
         Object.entries(existingReactions).map(([key, reaction]) => [
           key,
           { ...reaction, userIds: reaction.userIds ? [...reaction.userIds] : undefined },
-        ]),
+        ])
       )
-      const currentEmoji = Object.keys(updated).find((key) => updated[key]?.userReacted)
+      const currentEmoji = Object.keys(updated).find(key => updated[key]?.userReacted)
 
       if (currentEmoji && updated[currentEmoji]) {
         updated[currentEmoji].count -= 1
         updated[currentEmoji].userReacted = false
         if (updated[currentEmoji].userIds && currentUserId) {
-          updated[currentEmoji].userIds = updated[currentEmoji].userIds.filter((id) => id !== currentUserId)
+          updated[currentEmoji].userIds = updated[currentEmoji].userIds.filter(
+            id => id !== currentUserId
+          )
         }
         if (updated[currentEmoji].count <= 0) {
           delete updated[currentEmoji]
@@ -225,14 +238,18 @@ export function ChatTab(props: {
         }
         updated[emoji].count += 1
         updated[emoji].userReacted = true
-        if (updated[emoji].userIds && currentUserId && !updated[emoji].userIds.includes(currentUserId)) {
+        if (
+          updated[emoji].userIds &&
+          currentUserId &&
+          !updated[emoji].userIds.includes(currentUserId)
+        ) {
           updated[emoji].userIds.push(currentUserId)
         }
       }
 
       return Object.keys(updated).length ? updated : undefined
     },
-    [currentUserId],
+    [currentUserId]
   )
 
   const handleToggleReaction = React.useCallback(
@@ -248,14 +265,22 @@ export function ChatTab(props: {
         return
       }
 
-      const updatedComments = event.comments.map((comment) =>
+      const updatedComments = event.comments.map(comment =>
         comment.id === commentId
           ? { ...comment, reactions: applyLocalReactionUpdate(comment, emoji) }
-          : comment,
+          : comment
       )
       onUpdateEvent({ ...event, comments: updatedComments })
     },
-    [applyLocalReactionUpdate, event, isEditMode, isGuest, onRequireAuth, onToggleCommentReaction, onUpdateEvent],
+    [
+      applyLocalReactionUpdate,
+      event,
+      isEditMode,
+      isGuest,
+      onRequireAuth,
+      onToggleCommentReaction,
+      onUpdateEvent,
+    ]
   )
 
   const cardClassName = isEditMode
@@ -300,10 +325,8 @@ export function ChatTab(props: {
                   isEditMode={isEditMode}
                   reactionUsers={reactionUsers}
                   isPickerOpen={isPickerOpen}
-                  onToggleReaction={(emoji) => handleToggleReaction(c.id, emoji)}
-                  onOpenPicker={(nextOpen) =>
-                    setActivePickerCommentId(nextOpen ? c.id : null)
-                  }
+                  onToggleReaction={emoji => handleToggleReaction(c.id, emoji)}
+                  onOpenPicker={nextOpen => setActivePickerCommentId(nextOpen ? c.id : null)}
                   showReactions={hasReactions}
                 />
               </div>
@@ -318,7 +341,11 @@ export function ChatTab(props: {
         </div>
       ) : (
         <form onSubmit={handlePostComment} className="relative">
-          <Popover open={emojiAutocomplete.isOpen} onOpenChange={emojiAutocomplete.setIsOpen} className="w-full">
+          <Popover
+            open={emojiAutocomplete.isOpen}
+            onOpenChange={emojiAutocomplete.setIsOpen}
+            className="w-full"
+          >
             <div className="relative w-full">
               <input
                 ref={inputRef}

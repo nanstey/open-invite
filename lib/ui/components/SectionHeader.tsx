@@ -16,18 +16,9 @@ export interface SectionHeaderProps {
  * @example
  * <SectionHeader title="Pending Friend Requests" count="3 Pending" />
  */
-export const SectionHeader: React.FC<SectionHeaderProps> = ({
-  title,
-  count,
-  className,
-}) => (
+export const SectionHeader: React.FC<SectionHeaderProps> = ({ title, count, className }) => (
   <div className={cn('flex justify-between items-center px-1', className)}>
-    <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider">
-      {title}
-    </h3>
-    {count && (
-      <div className="text-xs text-slate-500 font-semibold">{count}</div>
-    )}
+    <h3 className="text-slate-400 text-xs font-bold uppercase tracking-wider">{title}</h3>
+    {count && <div className="text-xs text-slate-500 font-semibold">{count}</div>}
   </div>
 )
-

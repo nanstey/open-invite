@@ -1,22 +1,27 @@
-import * as React from 'react'
 import { ChevronDown, ChevronUp, MoreVertical, Trash2 } from 'lucide-react'
-
-import type { ItineraryItem, SocialEvent } from '../../../types'
-import { DateTimeFields } from '../../../../../lib/ui/components/DateTimeFields'
-import { LocationAutocomplete } from '../../../../../lib/ui/components/LocationAutocomplete'
+import * as React from 'react'
 import { Button } from '../../../../../lib/ui/9ui/button'
 import { Card } from '../../../../../lib/ui/9ui/card'
 import { Input } from '../../../../../lib/ui/9ui/input'
 import { Textarea } from '../../../../../lib/ui/9ui/textarea'
-import { buildQuarterHourTimeOptions } from '../../../../../lib/ui/utils/datetime'
-import { formatDateLongEnUS, formatTime12h, splitLocalDateTime, toLocalDateTimeInputValue } from '../../../../../lib/ui/utils/datetime'
+import { DateTimeFields } from '../../../../../lib/ui/components/DateTimeFields'
+import { LocationAutocomplete } from '../../../../../lib/ui/components/LocationAutocomplete'
+import {
+  buildQuarterHourTimeOptions,
+  formatDateLongEnUS,
+  formatTime12h,
+  splitLocalDateTime,
+  toLocalDateTimeInputValue,
+} from '../../../../../lib/ui/utils/datetime'
+import { useOutsideClick } from '../../../hooks/useOutsideClick'
+import type { ItineraryItem, SocialEvent } from '../../../types'
 import {
   durationHoursToMinutes,
   getItineraryItemEndDate,
   getNextItineraryItemStartIso,
   minutesToQuarterHourHours,
-  sortByStartTime} from './itinerary'
-import { useOutsideClick } from '../../../hooks/useOutsideClick'
+  sortByStartTime,
+} from './itinerary'
 
 type ItineraryApi = {
   onAdd: (input: {
@@ -34,7 +39,7 @@ type ItineraryApi = {
       durationMinutes: number
       location?: string
       description?: string
-    }>,
+    }>
   ) => Promise<void> | void
   onDelete: (id: string) => Promise<void> | void
 }
@@ -47,7 +52,11 @@ type ItineraryEditorProps = {
   hasItinerary: boolean
   draftStartIso: string | null
   durationHours?: number | ''
-  formatItineraryLocationForDisplay: (location: string | undefined) => { full: string; label: string; isReal: boolean }
+  formatItineraryLocationForDisplay: (location: string | undefined) => {
+    full: string
+    label: string
+    isReal: boolean
+  }
   openItineraryLocationInMaps: (locationFull: string) => void
   itineraryApi: ItineraryApi
 }
@@ -63,7 +72,8 @@ export function ItineraryEditor(props: ItineraryEditorProps) {
     durationHours,
     formatItineraryLocationForDisplay,
     openItineraryLocationInMaps,
-    itineraryApi} = props
+    itineraryApi,
+  } = props
 
   const timeOptions = React.useMemo(() => buildQuarterHourTimeOptions(), [])
 
@@ -73,7 +83,8 @@ export function ItineraryEditor(props: ItineraryEditorProps) {
 
   useOutsideClick({
     enabled: !!openItineraryMenuItemId,
-    onOutsideClick: () => setOpenItineraryMenuItemId(null)})
+    onOutsideClick: () => setOpenItineraryMenuItemId(null),
+  })
 
   // If the parent clears the itinerary list, reset local UI state.
   React.useEffect(() => {
@@ -98,17 +109,18 @@ export function ItineraryEditor(props: ItineraryEditorProps) {
       startTime: startIso,
       durationMinutes,
       location: undefined,
-      description: undefined})
+      description: undefined,
+    })
 
     if (typeof newId === 'string') setExpandedItineraryItemId(newId)
   }, [draftStartIso, durationHours, event.startTime, itineraryApi, itineraryItems.length])
 
   const toggleExpanded = React.useCallback((id: string) => {
-    setExpandedItineraryItemId((prev) => (prev === id ? null : id))
+    setExpandedItineraryItemId(prev => (prev === id ? null : id))
   }, [])
 
   const toggleMenu = React.useCallback((id: string) => {
-    setOpenItineraryMenuItemId((prev) => (prev === id ? null : id))
+    setOpenItineraryMenuItemId(prev => (prev === id ? null : id))
   }, [])
 
   const closeMenu = React.useCallback(() => setOpenItineraryMenuItemId(null), [])
@@ -116,10 +128,10 @@ export function ItineraryEditor(props: ItineraryEditorProps) {
   const handleDeleteItem = React.useCallback(
     (id: string) => {
       setOpenItineraryMenuItemId(null)
-      setExpandedItineraryItemId((prev) => (prev === id ? null : prev))
+      setExpandedItineraryItemId(prev => (prev === id ? null : prev))
       itineraryApi.onDelete(id)
     },
-    [itineraryApi],
+    [itineraryApi]
   )
 
   const handleAddItem = React.useCallback(async () => {
@@ -130,7 +142,8 @@ export function ItineraryEditor(props: ItineraryEditorProps) {
       startTime: defaultStartIso,
       durationMinutes: 60,
       location: undefined,
-      description: undefined})
+      description: undefined,
+    })
 
     if (typeof newId === 'string') setExpandedItineraryItemId(newId)
   }, [itineraryApi, orderedItems])
@@ -182,7 +195,11 @@ function ItineraryBuilder(props: {
   showItineraryTimesOnly: boolean
   showItineraryStartTimeOnly: boolean
   timeOptions: Array<{ value: string; label: string }>
-  formatItineraryLocationForDisplay: (location: string | undefined) => { full: string; label: string; isReal: boolean }
+  formatItineraryLocationForDisplay: (location: string | undefined) => {
+    full: string
+    label: string
+    isReal: boolean
+  }
   openItineraryLocationInMaps: (locationFull: string) => void
   itineraryApi: ItineraryApi
   onToggleExpanded: (id: string) => void
@@ -206,13 +223,16 @@ function ItineraryBuilder(props: {
     onToggleMenu,
     onCloseMenu,
     onDeleteItem,
-    onAddItem} = props
+    onAddItem,
+  } = props
 
   return (
     <div className="space-y-3">
-      {itineraryItems.length === 0 ? <div className="text-sm text-slate-500 italic">No itinerary items yet.</div> : null}
+      {itineraryItems.length === 0 ? (
+        <div className="text-sm text-slate-500 italic">No itinerary items yet.</div>
+      ) : null}
 
-      {orderedItems.map((item) => (
+      {orderedItems.map(item => (
         <ItineraryItemCard
           key={item.id}
           item={item}
@@ -227,7 +247,7 @@ function ItineraryBuilder(props: {
           onToggleMenu={() => onToggleMenu(item.id)}
           onCloseMenu={onCloseMenu}
           onDelete={() => onDeleteItem(item.id)}
-          onUpdate={(patch) => itineraryApi.onUpdate(item.id, patch)}
+          onUpdate={patch => itineraryApi.onUpdate(item.id, patch)}
         />
       ))}
 
@@ -251,7 +271,11 @@ function ItineraryItemCard(props: {
   showItineraryTimesOnly: boolean
   showItineraryStartTimeOnly: boolean
   timeOptions: Array<{ value: string; label: string }>
-  formatItineraryLocationForDisplay: (location: string | undefined) => { full: string; label: string; isReal: boolean }
+  formatItineraryLocationForDisplay: (location: string | undefined) => {
+    full: string
+    label: string
+    isReal: boolean
+  }
   openItineraryLocationInMaps: (locationFull: string) => void
   onToggleExpanded: () => void
   onToggleMenu: () => void
@@ -264,7 +288,7 @@ function ItineraryItemCard(props: {
       durationMinutes: number
       location?: string
       description?: string
-    }>,
+    }>
   ) => Promise<void> | void
 }) {
   const {
@@ -280,15 +304,20 @@ function ItineraryItemCard(props: {
     onToggleMenu,
     onCloseMenu,
     onDelete,
-    onUpdate} = props
+    onUpdate,
+  } = props
 
   const start = new Date(item.startTime)
   const end = getItineraryItemEndDate(item)
-  const time = showItineraryStartTimeOnly ? formatTime12h(start) : `${formatTime12h(start)} - ${formatTime12h(end)}`
+  const time = showItineraryStartTimeOnly
+    ? formatTime12h(start)
+    : `${formatTime12h(start)} - ${formatTime12h(end)}`
   const date = formatDateLongEnUS(start)
   const loc = formatItineraryLocationForDisplay(item.location)
 
-  const { date: itemDate, time: itemTime } = splitLocalDateTime(toLocalDateTimeInputValue(item.startTime))
+  const { date: itemDate, time: itemTime } = splitLocalDateTime(
+    toLocalDateTimeInputValue(item.startTime)
+  )
   const itemDurationHours = minutesToQuarterHourHours(item.durationMinutes)
 
   return (
@@ -350,7 +379,8 @@ function ItineraryItemHeader(props: {
     onToggleExpanded,
     onToggleMenu,
     onCloseMenu,
-    onDelete} = props
+    onDelete,
+  } = props
 
   return (
     <div className="flex items-start justify-between gap-3">
@@ -395,7 +425,8 @@ function ItineraryItemSummary(props: {
     location,
     openItineraryLocationInMaps,
     isExpanded,
-    onToggleExpanded} = props
+    onToggleExpanded,
+  } = props
 
   return (
     <div
@@ -404,7 +435,7 @@ function ItineraryItemSummary(props: {
       tabIndex={0}
       aria-expanded={isExpanded}
       onClick={onToggleExpanded}
-      onKeyDown={(e) => {
+      onKeyDown={e => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault()
           onToggleExpanded()
@@ -412,12 +443,14 @@ function ItineraryItemSummary(props: {
       }}
     >
       <div className="font-bold text-white truncate">{title || 'Untitled item'}</div>
-      <div className="text-sm text-slate-400">{showItineraryTimesOnly ? timeLabel : `${dateLabel} • ${timeLabel}`}</div>
+      <div className="text-sm text-slate-400">
+        {showItineraryTimesOnly ? timeLabel : `${dateLabel} • ${timeLabel}`}
+      </div>
       {location.label ? (
         location.isReal && location.full ? (
           <button
             type="button"
-            onClick={(e) => {
+            onClick={e => {
               e.stopPropagation()
               openItineraryLocationInMaps(location.full)
             }}
@@ -449,7 +482,7 @@ function ItineraryItemActions(props: {
       <div className="relative">
         <button
           type="button"
-          onClick={(e) => {
+          onClick={e => {
             e.stopPropagation()
             onToggleMenu()
           }}
@@ -462,7 +495,7 @@ function ItineraryItemActions(props: {
         {isMenuOpen ? (
           <div
             className="absolute right-0 mt-2 w-44 rounded-xl border border-slate-700 bg-slate-900 shadow-lg z-[2000] overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
             <button
               type="button"
@@ -503,7 +536,7 @@ function ItineraryItemFields(props: {
       durationMinutes: number
       location?: string
       description?: string
-    }>,
+    }>
   ) => Promise<void> | void
 }) {
   const { item, itemDate, itemTime, itemDurationHours, timeOptions, onUpdate } = props
@@ -519,17 +552,18 @@ function ItineraryItemFields(props: {
         minDurationHours={0.25}
         durationStepHours={0.25}
         durationPlaceholder="e.g. 1.5"
-        onChangeDate={(nextDate) => {
+        onChangeDate={nextDate => {
           if (!nextDate || !itemTime) return
           onUpdate({ startTime: new Date(`${nextDate}T${itemTime}`).toISOString() })
         }}
-        onChangeTime={(nextTime) => {
+        onChangeTime={nextTime => {
           if (!itemDate || !nextTime) return
           onUpdate({ startTime: new Date(`${itemDate}T${nextTime}`).toISOString() })
         }}
-        onChangeDurationHours={(next) =>
+        onChangeDurationHours={next =>
           onUpdate({
-            durationMinutes: Math.max(1, Math.round(Number(next || 0) * 60))})
+            durationMinutes: Math.max(1, Math.round(Number(next || 0) * 60)),
+          })
         }
       />
 
@@ -538,17 +572,19 @@ function ItineraryItemFields(props: {
           <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Title</div>
           <Input
             value={item.title}
-            onChange={(e) => onUpdate({ title: e.target.value })}
+            onChange={e => onUpdate({ title: e.target.value })}
             className="w-full bg-slate-900 border rounded-lg py-2.5 px-3 text-white outline-none border-slate-700 focus:border-primary"
             placeholder="e.g. Meet up"
           />
         </div>
         <div className="space-y-1">
-          <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Location (optional)</div>
+          <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">
+            Location (optional)
+          </div>
           <LocationAutocomplete
             value={item.location ?? ''}
-            onChangeText={(text) => onUpdate({ location: text || undefined })}
-            onSelect={(selection) => onUpdate({ location: selection.locationData.display.full })}
+            onChangeText={text => onUpdate({ location: text || undefined })}
+            onSelect={selection => onUpdate({ location: selection.locationData.display.full })}
             placeholder="Location (optional)"
             className="w-full bg-slate-900 border rounded-lg py-2.5 px-3 text-white outline-none border-slate-700 focus:border-primary"
           />
@@ -556,10 +592,12 @@ function ItineraryItemFields(props: {
       </div>
 
       <div className="space-y-1">
-        <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Description (optional)</div>
+        <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">
+          Description (optional)
+        </div>
         <Textarea
           value={item.description ?? ''}
-          onChange={(e) => onUpdate({ description: e.target.value || undefined })}
+          onChange={e => onUpdate({ description: e.target.value || undefined })}
           className="w-full bg-slate-900 border rounded-lg py-2.5 px-3 text-white outline-none border-slate-700 focus:border-primary h-20 resize-none"
           placeholder="Notes, links, what to bring..."
         />

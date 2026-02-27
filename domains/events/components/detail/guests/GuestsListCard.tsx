@@ -1,10 +1,8 @@
-
-
 import { Users } from 'lucide-react'
 
 import type { User } from '../../../../../lib/types'
-import type { SocialEvent } from '../../../types'
 import { FormSelect } from '../../../../../lib/ui/components/FormControls'
+import type { SocialEvent } from '../../../types'
 import { GuestRow } from './GuestRow'
 
 type GuestsListCardProps = {
@@ -69,14 +67,16 @@ export function GuestsListCard(props: GuestsListCardProps) {
 
       {showFilter ? (
         <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-2">
-          <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Filter by itinerary</div>
+          <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">
+            Filter by itinerary
+          </div>
           <FormSelect
             value={activeFilterId}
             size="md"
-            onChange={(e) => onChangeItineraryFilterId?.(e.target.value)}
+            onChange={e => onChangeItineraryFilterId?.(e.target.value)}
           >
             <option value="">All guests</option>
-            {(event.itineraryItems ?? []).map((item) => (
+            {(event.itineraryItems ?? []).map(item => (
               <option key={item.id} value={item.id}>
                 {item.title}
               </option>
@@ -89,7 +89,7 @@ export function GuestsListCard(props: GuestsListCardProps) {
         <div className="text-sm text-slate-500 italic">No guests yet.</div>
       ) : (
         <div className="space-y-2">
-          {attendees.map((u) => {
+          {attendees.map(u => {
             const isHost = u.id === event.hostId
             const isMe = !!currentUserId && u.id === currentUserId
             const isFriend = friendIds.has(u.id)

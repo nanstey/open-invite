@@ -1,8 +1,6 @@
-
-
-import { FormSelect } from '../../../../../lib/ui/components/FormControls'
 import { Card } from '../../../../../lib/ui/9ui/card'
 import { Input } from '../../../../../lib/ui/9ui/input'
+import { FormSelect } from '../../../../../lib/ui/components/FormControls'
 
 export function TitleCard(props: {
   isEditMode: boolean
@@ -23,11 +21,13 @@ export function TitleCard(props: {
         <div className="md:col-span-2">
           <Input
             value={title}
-            onChange={(e) => onChangeTitle?.(e.target.value)}
+            onChange={e => onChangeTitle?.(e.target.value)}
             placeholder="Invite title"
             required
             className={`w-full bg-slate-900 border rounded-lg py-3 px-4 text-white outline-none ${
-              errors?.title ? 'border-red-500 focus:border-red-500' : 'border-slate-700 focus:border-primary'
+              errors?.title
+                ? 'border-red-500 focus:border-red-500'
+                : 'border-slate-700 focus:border-primary'
             }`}
           />
           {errors?.title ? <div className="text-xs text-red-400 mt-1">{errors.title}</div> : null}
@@ -35,7 +35,7 @@ export function TitleCard(props: {
         <div className="md:col-span-1">
           <FormSelect
             value={activityType}
-            onChange={(e) => onChangeActivityType?.(e.target.value)}
+            onChange={e => onChangeActivityType?.(e.target.value)}
             required
             size="lg"
             variant="surface"
@@ -48,10 +48,11 @@ export function TitleCard(props: {
             <option value="Work">Work</option>
             <option value="Travel">Travel</option>
           </FormSelect>
-          {errors?.activityType ? <div className="text-xs text-red-400 mt-1">{errors.activityType}</div> : null}
+          {errors?.activityType ? (
+            <div className="text-xs text-red-400 mt-1">{errors.activityType}</div>
+          ) : null}
         </div>
       </div>
     </Card>
   )
 }
-

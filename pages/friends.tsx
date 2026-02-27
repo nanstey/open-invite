@@ -1,11 +1,10 @@
-import { useCallback } from 'react'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { User, Users } from 'lucide-react'
-
-import { FriendsView } from '../domains/friends/FriendsView'
-import { GroupsView } from '../domains/groups/GroupsView'
-import { coerceFriendsTab, parseFriendsTab } from '../domains/friends/types'
+import { useCallback } from 'react'
 import { useSetHeaderTabs } from '../domains/app/HeaderTabsContext'
+import { FriendsView } from '../domains/friends/FriendsView'
+import { coerceFriendsTab, parseFriendsTab } from '../domains/friends/types'
+import { GroupsView } from '../domains/groups/GroupsView'
 import type { TabOption } from '../lib/ui/components/TabGroup'
 
 const friendsTabs: TabOption[] = [
@@ -29,7 +28,7 @@ export const Route = createFileRoute('/friends')({
 
     const handleTabChange = useCallback(
       (id: string) => navigate({ to: '/friends', search: { tab: coerceFriendsTab(id) } }),
-      [navigate],
+      [navigate]
     )
 
     useSetHeaderTabs(friendsTabs, tab, handleTabChange)

@@ -1,8 +1,12 @@
-import { useState, useEffect } from 'react'
-import { Loader2, Check } from 'lucide-react'
+import { Check, Loader2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { SearchInput } from '../../../../lib/ui/components/SearchInput'
 import { fetchAllFeedbackSimple } from '../../../../services/feedbackProjectService'
-import { FEEDBACK_TYPE_COLORS, FEEDBACK_IMPORTANCE_COLORS, type SimpleFeedbackItem } from '../../types'
+import {
+  FEEDBACK_IMPORTANCE_COLORS,
+  FEEDBACK_TYPE_COLORS,
+  type SimpleFeedbackItem,
+} from '../../types'
 
 export interface FeedbackPickerProps {
   /** Currently selected feedback IDs */
@@ -31,13 +35,12 @@ export function FeedbackPicker({ selectedIds, onToggle, excludeIds = [] }: Feedb
 
   useEffect(() => {
     loadFeedback()
-  }, [])
+  }, [loadFeedback])
 
   const filteredItems = feedbackItems
     .filter(item => !excludeIds.includes(item.id))
-    .filter(item =>
-      searchQuery === '' ||
-      item.title.toLowerCase().includes(searchQuery.toLowerCase())
+    .filter(
+      item => searchQuery === '' || item.title.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
   if (loading) {
@@ -54,7 +57,7 @@ export function FeedbackPicker({ selectedIds, onToggle, excludeIds = [] }: Feedb
       <SearchInput
         size="sm"
         value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
+        onChange={e => setSearchQuery(e.target.value)}
         placeholder="Search feedback..."
       />
 
@@ -65,7 +68,7 @@ export function FeedbackPicker({ selectedIds, onToggle, excludeIds = [] }: Feedb
             {searchQuery ? 'No matching feedback' : 'No feedback available'}
           </div>
         ) : (
-          filteredItems.map((item) => {
+          filteredItems.map(item => {
             const isSelected = selectedIds.includes(item.id)
             return (
               <button
@@ -80,9 +83,7 @@ export function FeedbackPicker({ selectedIds, onToggle, excludeIds = [] }: Feedb
               >
                 <div
                   className={`w-4 h-4 mt-0.5 shrink-0 rounded border flex items-center justify-center ${
-                    isSelected
-                      ? 'bg-primary border-primary'
-                      : 'border-slate-600'
+                    isSelected ? 'bg-primary border-primary' : 'border-slate-600'
                   }`}
                 >
                   {isSelected && <Check className="w-3 h-3 text-white" />}
@@ -99,7 +100,8 @@ export function FeedbackPicker({ selectedIds, onToggle, excludeIds = [] }: Feedb
                     </span>
                     <span
                       className={`text-xs px-1.5 py-0.5 rounded border ${
-                        FEEDBACK_IMPORTANCE_COLORS[item.importance] || 'bg-slate-500/20 text-slate-300'
+                        FEEDBACK_IMPORTANCE_COLORS[item.importance] ||
+                        'bg-slate-500/20 text-slate-300'
                       }`}
                     >
                       {item.importance}
@@ -120,4 +122,3 @@ export function FeedbackPicker({ selectedIds, onToggle, excludeIds = [] }: Feedb
     </div>
   )
 }
-

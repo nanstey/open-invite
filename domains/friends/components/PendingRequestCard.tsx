@@ -1,5 +1,5 @@
-import type * as React from 'react'
 import { Check, X } from 'lucide-react'
+import type * as React from 'react'
 import { UserAvatar } from '../../../lib/ui/components/UserAvatar'
 import type { PendingFriendRequest } from '../../../services/friendService'
 
@@ -46,4 +46,3 @@ export const PendingRequestCard: React.FC<PendingRequestCardProps> = ({
     </div>
   </div>
 )
-

@@ -24,7 +24,13 @@ export type PopoverProps = {
   children: React.ReactNode
 }
 
-export function Popover({ open, defaultOpen = false, onOpenChange, className, children }: PopoverProps) {
+export function Popover({
+  open,
+  defaultOpen = false,
+  onOpenChange,
+  className,
+  children,
+}: PopoverProps) {
   const [uncontrolledOpen, setUncontrolledOpen] = React.useState(defaultOpen)
   const isControlled = typeof open === 'boolean'
   const currentOpen = isControlled ? open : uncontrolledOpen
@@ -36,7 +42,7 @@ export function Popover({ open, defaultOpen = false, onOpenChange, className, ch
       }
       onOpenChange?.(next)
     },
-    [isControlled, onOpenChange],
+    [isControlled, onOpenChange]
   )
 
   return (
@@ -46,14 +52,17 @@ export function Popover({ open, defaultOpen = false, onOpenChange, className, ch
   )
 }
 
-export function PopoverTrigger({ className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement>) {
+export function PopoverTrigger({
+  className,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   const { open, setOpen } = usePopoverContext()
   return (
     <button
       type="button"
       className={className}
       aria-expanded={open}
-      onClick={(event) => {
+      onClick={event => {
         props.onClick?.(event)
         if (!event.defaultPrevented) {
           setOpen(!open)
@@ -69,7 +78,10 @@ export function PopoverContent({
   align = 'center',
   staticPosition = false,
   ...props
-}: React.HTMLAttributes<HTMLDivElement> & { align?: 'start' | 'center' | 'end'; staticPosition?: boolean }) {
+}: React.HTMLAttributes<HTMLDivElement> & {
+  align?: 'start' | 'center' | 'end'
+  staticPosition?: boolean
+}) {
   const { open } = usePopoverContext()
   if (!open) {
     return null
@@ -80,7 +92,7 @@ export function PopoverContent({
       <div
         className={cn(
           'z-50 w-64 rounded-xl border border-slate-700 bg-slate-900 p-4 text-sm text-white shadow-xl',
-          className,
+          className
         )}
         {...props}
       />
@@ -98,7 +110,7 @@ export function PopoverContent({
       className={cn(
         'absolute z-50 mt-2 w-64 rounded-xl border border-slate-700 bg-slate-900 p-4 text-sm text-white shadow-xl',
         alignment[align],
-        className,
+        className
       )}
       {...props}
     />

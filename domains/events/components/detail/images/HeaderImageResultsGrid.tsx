@@ -1,5 +1,3 @@
-
-
 import { ExternalLink } from 'lucide-react'
 
 import type { PexelsImage } from '../../../../../services/pexelsService'
@@ -15,7 +13,7 @@ export function HeaderImageResultsGrid(props: HeaderImageResultsGridProps) {
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {results.map((img) => {
+      {results.map(img => {
         const isSelected = selectedUrl === img.fullUrl
         const credit = getImageCredit(img)
         return (
@@ -29,10 +27,14 @@ export function HeaderImageResultsGrid(props: HeaderImageResultsGridProps) {
           >
             <div className="relative w-full aspect-[16/10] bg-slate-800">
               <img src={img.thumbnailUrl} alt={img.title} className="w-full h-full object-cover" />
-              {isSelected ? <div className="absolute inset-0 ring-2 ring-primary pointer-events-none" /> : null}
+              {isSelected ? (
+                <div className="absolute inset-0 ring-2 ring-primary pointer-events-none" />
+              ) : null}
             </div>
             <div className="p-2">
-              <div className="text-xs font-semibold text-white truncate">{img.title || 'Untitled'}</div>
+              <div className="text-xs font-semibold text-white truncate">
+                {img.title || 'Untitled'}
+              </div>
               <div className="mt-1 flex items-center justify-between gap-2">
                 <div className="text-[11px] text-slate-500 truncate">{credit}</div>
                 {img.sourceUrl ? (
@@ -41,7 +43,7 @@ export function HeaderImageResultsGrid(props: HeaderImageResultsGridProps) {
                     target="_blank"
                     rel="noreferrer"
                     className="text-slate-500 hover:text-slate-200"
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={e => e.stopPropagation()}
                     aria-label="Open source"
                   >
                     <ExternalLink className="w-3.5 h-3.5" />

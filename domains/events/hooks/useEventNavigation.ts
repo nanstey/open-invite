@@ -33,5 +33,3 @@ export function useEventNavigation(view: EventsView) {
       state: { fromEventsView: view },
     })
 }
-
-

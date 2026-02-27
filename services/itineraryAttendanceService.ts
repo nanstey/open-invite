@@ -1,6 +1,6 @@
-import { supabase } from '../lib/supabase'
-import type { Database } from '../lib/database.types'
 import type { ItineraryAttendance } from '../domains/events/types'
+import type { Database } from '../lib/database.types'
+import { supabase } from '../lib/supabase'
 
 type AttendanceRow = Database['public']['Tables']['event_itinerary_attendance']['Row']
 
@@ -19,7 +19,9 @@ function transformRow(row: AttendanceRow): ItineraryAttendance {
   }
 }
 
-export async function fetchEventItineraryAttendance(eventId: string): Promise<ItineraryAttendance[]> {
+export async function fetchEventItineraryAttendance(
+  eventId: string
+): Promise<ItineraryAttendance[]> {
   const result = await supabase
     .from('event_itinerary_attendance')
     .select('*')
@@ -43,7 +45,7 @@ export async function ensureItineraryAttendanceForAllAttendees(args: {
   if (attendeeIds.length === 0 || itineraryItemIds.length === 0) return true
 
   const existing = await fetchEventItineraryAttendance(eventId)
-  const existingByUser = new Map(existing.map((row) => [row.userId, row]))
+  const existingByUser = new Map(existing.map(row => [row.userId, row]))
 
   const toUpsert: AttendanceInsert[] = []
   for (const userId of attendeeIds) {
@@ -73,9 +75,11 @@ export async function ensureItineraryAttendanceForAllAttendees(args: {
 
 export async function upsertItineraryAttendance(
   eventId: string,
-  itineraryItemIds: string[],
+  itineraryItemIds: string[]
 ): Promise<ItineraryAttendance | null> {
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) return null
 
   const input: AttendanceInsert = {
@@ -100,7 +104,9 @@ export async function upsertItineraryAttendance(
 }
 
 export async function deleteItineraryAttendance(eventId: string): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
   if (!user) return false
 
   const input: AttendanceUpdate = {

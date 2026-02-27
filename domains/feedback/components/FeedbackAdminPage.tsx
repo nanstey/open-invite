@@ -1,14 +1,22 @@
-import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from '@tanstack/react-router'
-import { Loader2, FolderKanban } from 'lucide-react'
-import { fetchAllFeedback } from '../../../services/feedbackService'
-import { fetchAllFeedbackProjectMappings, type FeedbackProjectMapping } from '../../../services/feedbackProjectService'
-import { FeedbackDetailPanel } from './feedback/FeedbackDetailPanel'
-import { FeedbackRow } from './feedback/FeedbackRow'
-import { FeedbackFilterBar, DEFAULT_FILTERS, hasActiveFilters, type FeedbackFilters } from './feedback/FeedbackFilterBar'
+import { FolderKanban, Loader2 } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
 import { SearchInput } from '../../../lib/ui/components/SearchInput'
 import { SortableHeader, useSort } from '../../../lib/ui/components/SortableHeader'
+import {
+  type FeedbackProjectMapping,
+  fetchAllFeedbackProjectMappings,
+} from '../../../services/feedbackProjectService'
+import { fetchAllFeedback } from '../../../services/feedbackService'
 import type { Feedback, FeedbackStatus } from '../types'
+import { FeedbackDetailPanel } from './feedback/FeedbackDetailPanel'
+import {
+  DEFAULT_FILTERS,
+  FeedbackFilterBar,
+  type FeedbackFilters,
+  hasActiveFilters,
+} from './feedback/FeedbackFilterBar'
+import { FeedbackRow } from './feedback/FeedbackRow'
 
 type SortField = 'createdAt' | 'title' | 'type' | 'importance' | 'status'
 
@@ -25,7 +33,7 @@ export function FeedbackAdminPage({ initialFeedbackId }: FeedbackAdminPageProps)
   const [selectedFeedback, setSelectedFeedback] = useState<Feedback | null>(null)
   const [initialFeedbackHandled, setInitialFeedbackHandled] = useState(false)
   const [filters, setFilters] = useState<FeedbackFilters>(DEFAULT_FILTERS)
-  
+
   const { sortField, sortDirection, handleSort } = useSort<SortField>('createdAt', 'desc')
 
   // Helper to get projects for a feedback item
@@ -59,11 +67,15 @@ export function FeedbackAdminPage({ initialFeedbackId }: FeedbackAdminPageProps)
   }, [])
 
   const handleStatusChange = (id: string, newStatus: FeedbackStatus) => {
-    setFeedback((prev) =>
-      prev.map((f) => (f.id === id ? { ...f, status: newStatus, updatedAt: new Date().toISOString() } : f))
+    setFeedback(prev =>
+      prev.map(f =>
+        f.id === id ? { ...f, status: newStatus, updatedAt: new Date().toISOString() } : f
+      )
     )
     if (selectedFeedback?.id === id) {
-      setSelectedFeedback((prev) => (prev ? { ...prev, status: newStatus, updatedAt: new Date().toISOString() } : null))
+      setSelectedFeedback(prev =>
+        prev ? { ...prev, status: newStatus, updatedAt: new Date().toISOString() } : null
+      )
     }
   }
 
@@ -83,7 +95,7 @@ export function FeedbackAdminPage({ initialFeedbackId }: FeedbackAdminPageProps)
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase()
       result = result.filter(
-        (f) =>
+        f =>
           f.title.toLowerCase().includes(term) ||
           f.description.toLowerCase().includes(term) ||
           f.userName?.toLowerCase().includes(term)
@@ -92,20 +104,20 @@ export function FeedbackAdminPage({ initialFeedbackId }: FeedbackAdminPageProps)
 
     // Apply filters
     if (filters.type !== 'all') {
-      result = result.filter((f) => f.type === filters.type)
+      result = result.filter(f => f.type === filters.type)
     }
     if (filters.importance !== 'all') {
-      result = result.filter((f) => f.importance === filters.importance)
+      result = result.filter(f => f.importance === filters.importance)
     }
     if (filters.status !== 'all') {
-      result = result.filter((f) => f.status === filters.status)
+      result = result.filter(f => f.status === filters.status)
     }
     if (filters.project !== 'all') {
       const feedbackIdsWithProjects = new Set(projectMappings.map(m => m.feedbackId))
       if (filters.project === 'has') {
-        result = result.filter((f) => feedbackIdsWithProjects.has(f.id))
+        result = result.filter(f => feedbackIdsWithProjects.has(f.id))
       } else if (filters.project === 'none') {
-        result = result.filter((f) => !feedbackIdsWithProjects.has(f.id))
+        result = result.filter(f => !feedbackIdsWithProjects.has(f.id))
       }
     }
 
@@ -164,7 +176,7 @@ export function FeedbackAdminPage({ initialFeedbackId }: FeedbackAdminPageProps)
         <SearchInput
           size="lg"
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={e => setSearchTerm(e.target.value)}
           placeholder="Search feedback..."
         />
       </div>
@@ -181,9 +193,7 @@ export function FeedbackAdminPage({ initialFeedbackId }: FeedbackAdminPageProps)
       {filteredAndSortedFeedback.length === 0 ? (
         <div className="text-center py-12">
           <p className="text-slate-400">
-            {isFiltered
-              ? 'No feedback matches your filters.'
-              : 'No feedback submitted yet.'}
+            {isFiltered ? 'No feedback matches your filters.' : 'No feedback submitted yet.'}
           </p>
           {hasActiveFilters(filters) && (
             <button
@@ -198,20 +208,50 @@ export function FeedbackAdminPage({ initialFeedbackId }: FeedbackAdminPageProps)
         <div className="bg-surface rounded-xl border border-slate-700 overflow-hidden">
           {/* Table Header - Desktop */}
           <div className="hidden md:grid grid-cols-[1fr_180px_100px_100px_100px_100px] gap-4 p-4 border-b border-slate-700 bg-slate-800/50">
-            <SortableHeader label="Title" field="title" currentSort={sortField} direction={sortDirection} onSort={handleSort} />
+            <SortableHeader
+              label="Title"
+              field="title"
+              currentSort={sortField}
+              direction={sortDirection}
+              onSort={handleSort}
+            />
             <div className="flex items-center gap-1 text-xs font-bold uppercase tracking-wider text-slate-400">
               <FolderKanban className="w-3 h-3" />
               Project
             </div>
-            <SortableHeader label="Type" field="type" currentSort={sortField} direction={sortDirection} onSort={handleSort} />
-            <SortableHeader label="Priority" field="importance" currentSort={sortField} direction={sortDirection} onSort={handleSort} />
-            <SortableHeader label="Status" field="status" currentSort={sortField} direction={sortDirection} onSort={handleSort} />
-            <SortableHeader label="Date" field="createdAt" currentSort={sortField} direction={sortDirection} onSort={handleSort} />
+            <SortableHeader
+              label="Type"
+              field="type"
+              currentSort={sortField}
+              direction={sortDirection}
+              onSort={handleSort}
+            />
+            <SortableHeader
+              label="Priority"
+              field="importance"
+              currentSort={sortField}
+              direction={sortDirection}
+              onSort={handleSort}
+            />
+            <SortableHeader
+              label="Status"
+              field="status"
+              currentSort={sortField}
+              direction={sortDirection}
+              onSort={handleSort}
+            />
+            <SortableHeader
+              label="Date"
+              field="createdAt"
+              currentSort={sortField}
+              direction={sortDirection}
+              onSort={handleSort}
+            />
           </div>
 
           {/* Table Rows */}
           <div className="divide-y divide-slate-700/50">
-            {filteredAndSortedFeedback.map((f) => (
+            {filteredAndSortedFeedback.map(f => (
               <FeedbackRow
                 key={f.id}
                 feedback={f}

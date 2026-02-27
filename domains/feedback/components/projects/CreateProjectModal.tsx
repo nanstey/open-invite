@@ -1,11 +1,11 @@
+import { Github, Loader2 } from 'lucide-react'
 import type React from 'react'
 import { useState } from 'react'
-import { Loader2, Github } from 'lucide-react'
-import { FeedbackPicker } from '../feedback/FeedbackPicker'
-import type { ProjectFormData } from '../../projectTypes'
 import { Button } from '../../../../lib/ui/9ui/button'
 import { Input } from '../../../../lib/ui/9ui/input'
 import { Textarea } from '../../../../lib/ui/9ui/textarea'
+import type { ProjectFormData } from '../../projectTypes'
+import { FeedbackPicker } from '../feedback/FeedbackPicker'
 
 export interface CreateProjectModalProps {
   onClose: () => void
@@ -21,10 +21,8 @@ export function CreateProjectModal({ onClose, onCreate }: CreateProjectModalProp
   const [error, setError] = useState<string | null>(null)
 
   const handleToggleFeedback = (feedbackId: string) => {
-    setSelectedFeedbackIds((prev) =>
-      prev.includes(feedbackId)
-        ? prev.filter((id) => id !== feedbackId)
-        : [...prev, feedbackId]
+    setSelectedFeedbackIds(prev =>
+      prev.includes(feedbackId) ? prev.filter(id => id !== feedbackId) : [...prev, feedbackId]
     )
   }
 
@@ -76,7 +74,7 @@ export function CreateProjectModal({ onClose, onCreate }: CreateProjectModalProp
             <Input
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={e => setTitle(e.target.value)}
               placeholder="Project name"
               className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-primary"
               disabled={loading}
@@ -85,12 +83,10 @@ export function CreateProjectModal({ onClose, onCreate }: CreateProjectModalProp
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
-              Description
-            </label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">Description</label>
             <Textarea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               placeholder="What is this project about?"
               rows={3}
               className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-primary resize-none"
@@ -99,15 +95,13 @@ export function CreateProjectModal({ onClose, onCreate }: CreateProjectModalProp
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
-              GitHub Link
-            </label>
+            <label className="block text-sm font-medium text-slate-300 mb-1">GitHub Link</label>
             <div className="flex items-center gap-2">
               <Github className="w-5 h-5 text-slate-500" />
               <Input
                 type="text"
                 value={githubUrl}
-                onChange={(e) => setGithubUrl(e.target.value)}
+                onChange={e => setGithubUrl(e.target.value)}
                 placeholder="https://github.com/..."
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-primary"
                 disabled={loading}
@@ -119,10 +113,7 @@ export function CreateProjectModal({ onClose, onCreate }: CreateProjectModalProp
             <label className="block text-sm font-medium text-slate-300 mb-1">
               Link Feedback Items
             </label>
-            <FeedbackPicker
-              selectedIds={selectedFeedbackIds}
-              onToggle={handleToggleFeedback}
-            />
+            <FeedbackPicker selectedIds={selectedFeedbackIds} onToggle={handleToggleFeedback} />
           </div>
 
           <div className="flex gap-3 pt-2">

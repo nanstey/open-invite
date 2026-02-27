@@ -1,18 +1,18 @@
-import { supabase } from '../lib/supabase';
-import type { Notification } from '../lib/types';
-import type { SocialEvent, Comment, Reaction } from '../domains/events/types';
-import { fetchEventById } from './eventService';
+import type { Comment, Reaction, SocialEvent } from '../domains/events/types'
+import { supabase } from '../lib/supabase'
+import type { Notification } from '../lib/types'
+import { fetchEventById } from './eventService'
 
-type EventCallback = (event: SocialEvent) => void;
-type CommentCallback = (comment: Comment, eventId: string) => void;
+type EventCallback = (event: SocialEvent) => void
+type CommentCallback = (comment: Comment, eventId: string) => void
 // type ReactionCallback = (reaction: Reaction, eventId: string, emoji: string) => void;
-type NotificationCallback = (notification: Notification) => void;
+type NotificationCallback = (notification: Notification) => void
 
 class RealtimeService {
-  private eventSubscriptions: Map<string, any> = new Map();
-  private commentSubscriptions: Map<string, any> = new Map();
-  private reactionSubscriptions: Map<string, any> = new Map();
-  private notificationSubscription: any = null;
+  private eventSubscriptions: Map<string, any> = new Map()
+  private commentSubscriptions: Map<string, any> = new Map()
+  private reactionSubscriptions: Map<string, any> = new Map()
+  private notificationSubscription: any = null
 
   /**
    * Subscribe to changes for a specific event
@@ -20,13 +20,13 @@ class RealtimeService {
   subscribeToEvent(
     eventId: string,
     callbacks: {
-      onUpdate?: EventCallback;
-      onDelete?: (eventId: string) => void;
+      onUpdate?: EventCallback
+      onDelete?: (eventId: string) => void
     }
   ): () => void {
     // Unsubscribe if already subscribed
     if (this.eventSubscriptions.has(eventId)) {
-      this.eventSubscriptions.get(eventId)?.unsubscribe();
+      this.eventSubscriptions.get(eventId)?.unsubscribe()
     }
 
     const subscription = supabase
@@ -39,14 +39,14 @@ class RealtimeService {
           table: 'events',
           filter: `id=eq.${eventId}`,
         },
-        async (payload) => {
+        async payload => {
           if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
-            const updatedEvent = await fetchEventById(eventId);
+            const updatedEvent = await fetchEventById(eventId)
             if (updatedEvent && callbacks.onUpdate) {
-              callbacks.onUpdate(updatedEvent);
+              callbacks.onUpdate(updatedEvent)
             }
           } else if (payload.eventType === 'DELETE' && callbacks.onDelete) {
-            callbacks.onDelete(eventId);
+            callbacks.onDelete(eventId)
           }
         }
       )
@@ -59,20 +59,20 @@ class RealtimeService {
           filter: `event_id=eq.${eventId}`,
         },
         async () => {
-          const updatedEvent = await fetchEventById(eventId);
+          const updatedEvent = await fetchEventById(eventId)
           if (updatedEvent && callbacks.onUpdate) {
-            callbacks.onUpdate(updatedEvent);
+            callbacks.onUpdate(updatedEvent)
           }
         }
       )
-      .subscribe();
+      .subscribe()
 
-    this.eventSubscriptions.set(eventId, subscription);
+    this.eventSubscriptions.set(eventId, subscription)
 
     return () => {
-      subscription.unsubscribe();
-      this.eventSubscriptions.delete(eventId);
-    };
+      subscription.unsubscribe()
+      this.eventSubscriptions.delete(eventId)
+    }
   }
 
   /**
@@ -88,30 +88,27 @@ class RealtimeService {
           schema: 'public',
           table: 'events',
         },
-        async (payload) => {
-          const newEvent = await fetchEventById(payload.new.id);
+        async payload => {
+          const newEvent = await fetchEventById(payload.new.id)
           if (newEvent) {
-            callback(newEvent);
+            callback(newEvent)
           }
         }
       )
-      .subscribe();
+      .subscribe()
 
     return () => {
-      subscription.unsubscribe();
-    };
+      subscription.unsubscribe()
+    }
   }
 
   /**
    * Subscribe to comments for an event
    */
-  subscribeToComments(
-    eventId: string,
-    callback: CommentCallback
-  ): () => void {
+  subscribeToComments(eventId: string, callback: CommentCallback): () => void {
     // Unsubscribe if already subscribed
     if (this.commentSubscriptions.has(eventId)) {
-      this.commentSubscriptions.get(eventId)?.unsubscribe();
+      this.commentSubscriptions.get(eventId)?.unsubscribe()
     }
 
     const subscription = supabase
@@ -124,14 +121,14 @@ class RealtimeService {
           table: 'comments',
           filter: `event_id=eq.${eventId}`,
         },
-        (payload) => {
+        payload => {
           const comment: Comment = {
             id: payload.new.id,
             userId: payload.new.user_id,
             text: payload.new.text,
             timestamp: payload.new.timestamp,
-          };
-          callback(comment, eventId);
+          }
+          callback(comment, eventId)
         }
       )
       .on(
@@ -147,14 +144,14 @@ class RealtimeService {
           // For now, we'll just trigger a refetch
         }
       )
-      .subscribe();
+      .subscribe()
 
-    this.commentSubscriptions.set(eventId, subscription);
+    this.commentSubscriptions.set(eventId, subscription)
 
     return () => {
-      subscription.unsubscribe();
-      this.commentSubscriptions.delete(eventId);
-    };
+      subscription.unsubscribe()
+      this.commentSubscriptions.delete(eventId)
+    }
   }
 
   /**
@@ -166,7 +163,7 @@ class RealtimeService {
   ): () => void {
     // Unsubscribe if already subscribed
     if (this.reactionSubscriptions.has(eventId)) {
-      this.reactionSubscriptions.get(eventId)?.unsubscribe();
+      this.reactionSubscriptions.get(eventId)?.unsubscribe()
     }
 
     const subscription = supabase
@@ -181,29 +178,26 @@ class RealtimeService {
         },
         async () => {
           // Refetch reactions to get accurate counts
-          const event = await fetchEventById(eventId);
+          const event = await fetchEventById(eventId)
           if (event) {
-            callback(event.reactions);
+            callback(event.reactions)
           }
         }
       )
-      .subscribe();
+      .subscribe()
 
-    this.reactionSubscriptions.set(eventId, subscription);
+    this.reactionSubscriptions.set(eventId, subscription)
 
     return () => {
-      subscription.unsubscribe();
-      this.reactionSubscriptions.delete(eventId);
-    };
+      subscription.unsubscribe()
+      this.reactionSubscriptions.delete(eventId)
+    }
   }
 
   /**
    * Subscribe to attendees for an event
    */
-  subscribeToAttendees(
-    eventId: string,
-    callback: (attendees: string[]) => void
-  ): () => void {
+  subscribeToAttendees(eventId: string, callback: (attendees: string[]) => void): () => void {
     const subscription = supabase
       .channel(`attendees:${eventId}`)
       .on(
@@ -215,31 +209,33 @@ class RealtimeService {
           filter: `event_id=eq.${eventId}`,
         },
         async () => {
-          const event = await fetchEventById(eventId);
+          const event = await fetchEventById(eventId)
           if (event) {
-            callback(event.attendees);
+            callback(event.attendees)
           }
         }
       )
-      .subscribe();
+      .subscribe()
 
     return () => {
-      subscription.unsubscribe();
-    };
+      subscription.unsubscribe()
+    }
   }
 
   /**
    * Subscribe to notifications for the current user
    */
   async subscribeToNotifications(callback: NotificationCallback): Promise<() => void> {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser()
     if (!user) {
-      return () => {}; // No-op unsubscribe
+      return () => {} // No-op unsubscribe
     }
 
     // Unsubscribe if already subscribed
     if (this.notificationSubscription) {
-      this.notificationSubscription.unsubscribe();
+      this.notificationSubscription.unsubscribe()
     }
 
     const subscription = supabase
@@ -252,7 +248,7 @@ class RealtimeService {
           table: 'notifications',
           filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
+        payload => {
           const notification: Notification = {
             id: payload.new.id,
             type: payload.new.type,
@@ -262,36 +258,35 @@ class RealtimeService {
             relatedEventId: payload.new.related_event_id || undefined,
             isRead: payload.new.is_read,
             actorId: payload.new.actor_id || undefined,
-          };
-          callback(notification);
+          }
+          callback(notification)
         }
       )
-      .subscribe();
+      .subscribe()
 
-    this.notificationSubscription = subscription;
+    this.notificationSubscription = subscription
 
     return () => {
-      subscription.unsubscribe();
-      this.notificationSubscription = null;
-    };
+      subscription.unsubscribe()
+      this.notificationSubscription = null
+    }
   }
 
   /**
    * Clean up all subscriptions
    */
   cleanup() {
-    this.eventSubscriptions.forEach(sub => sub.unsubscribe());
-    this.eventSubscriptions.clear();
-    this.commentSubscriptions.forEach(sub => sub.unsubscribe());
-    this.commentSubscriptions.clear();
-    this.reactionSubscriptions.forEach(sub => sub.unsubscribe());
-    this.reactionSubscriptions.clear();
+    this.eventSubscriptions.forEach(sub => sub.unsubscribe())
+    this.eventSubscriptions.clear()
+    this.commentSubscriptions.forEach(sub => sub.unsubscribe())
+    this.commentSubscriptions.clear()
+    this.reactionSubscriptions.forEach(sub => sub.unsubscribe())
+    this.reactionSubscriptions.clear()
     if (this.notificationSubscription) {
-      this.notificationSubscription.unsubscribe();
-      this.notificationSubscription = null;
+      this.notificationSubscription.unsubscribe()
+      this.notificationSubscription = null
     }
   }
 }
 
-export const realtimeService = new RealtimeService();
-
+export const realtimeService = new RealtimeService()

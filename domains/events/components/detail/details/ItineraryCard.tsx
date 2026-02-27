@@ -19,16 +19,22 @@ export function ItineraryCard(props: {
         <h1 className="text-2xl font-bold text-white">Itinerary</h1>
         {props.isEditMode || props.headerActions ? (
           <div className="shrink-0 flex flex-wrap items-center gap-2">
-            {props.headerActions ? <div className="flex items-center gap-2">{props.headerActions}</div> : null}
+            {props.headerActions ? (
+              <div className="flex items-center gap-2">{props.headerActions}</div>
+            ) : null}
             {props.isEditMode ? (
               <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">Time display</span>
+                <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
+                  Time display
+                </span>
                 <FormSelect
                   size="sm"
                   variant="muted"
                   aria-label="Itinerary time display"
                   value={props.showItineraryStartTimeOnly ? 'start' : 'range'}
-                  onChange={(event) => props.onChangeItineraryStartTimeOnly?.(event.target.value === 'start')}
+                  onChange={event =>
+                    props.onChangeItineraryStartTimeOnly?.(event.target.value === 'start')
+                  }
                 >
                   <option value="start">Start only</option>
                   <option value="range">Start &amp; end</option>

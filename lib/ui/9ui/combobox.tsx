@@ -1,64 +1,64 @@
-import { Check, ChevronDown, X } from 'lucide-react';
-import * as React from 'react';
+import { Check, ChevronDown, X } from 'lucide-react'
+import * as React from 'react'
 
-import { cn } from './utils';
+import { cn } from './utils'
 
 type ComboboxContextValue<T> = {
-  open: boolean;
-  setOpen: (next: boolean) => void;
-  query: string;
-  setQuery: (next: string) => void;
-  items: T[];
-  filteredItems: T[];
-  selectedItem: T | null;
-  setSelectedItem: (next: T | null) => void;
-  highlightedIndex: number;
-  setHighlightedIndex: React.Dispatch<React.SetStateAction<number>>;
-  selectItemAtIndex: (index: number) => void;
-  itemToString: (item: T | null | undefined) => string;
-};
+  open: boolean
+  setOpen: (next: boolean) => void
+  query: string
+  setQuery: (next: string) => void
+  items: T[]
+  filteredItems: T[]
+  selectedItem: T | null
+  setSelectedItem: (next: T | null) => void
+  highlightedIndex: number
+  setHighlightedIndex: React.Dispatch<React.SetStateAction<number>>
+  selectItemAtIndex: (index: number) => void
+  itemToString: (item: T | null | undefined) => string
+}
 
-const ComboboxContext = React.createContext<ComboboxContextValue<unknown> | null>(null);
+const ComboboxContext = React.createContext<ComboboxContextValue<unknown> | null>(null)
 
 function useComboboxContext<T>() {
-  const context = React.useContext(ComboboxContext);
+  const context = React.useContext(ComboboxContext)
   if (!context) {
-    throw new Error('Combobox components must be used within <Combobox>');
+    throw new Error('Combobox components must be used within <Combobox>')
   }
-  return context as ComboboxContextValue<T>;
+  return context as ComboboxContextValue<T>
 }
 
 function defaultItemToString<T>(item: T | null | undefined) {
   if (item == null) {
-    return '';
+    return ''
   }
   if (typeof item === 'string') {
-    return item;
+    return item
   }
   if (typeof item === 'number' || typeof item === 'boolean') {
-    return String(item);
+    return String(item)
   }
   if (typeof item === 'object') {
-    const candidate = item as Record<string, unknown>;
+    const candidate = item as Record<string, unknown>
     if (typeof candidate.label === 'string') {
-      return candidate.label;
+      return candidate.label
     }
     if (typeof candidate.value === 'string') {
-      return candidate.value;
+      return candidate.value
     }
   }
-  return String(item);
+  return String(item)
 }
 
 export type ComboboxProps<T> = {
-  items: T[];
-  value?: T | null;
-  defaultValue?: T | null;
-  onValueChange?: (value: T | null) => void;
-  itemToString?: (item: T | null | undefined) => string;
-  className?: string;
-  children: React.ReactNode;
-};
+  items: T[]
+  value?: T | null
+  defaultValue?: T | null
+  onValueChange?: (value: T | null) => void
+  itemToString?: (item: T | null | undefined) => string
+  className?: string
+  children: React.ReactNode
+}
 
 export function Combobox<T>({
   items,
@@ -69,46 +69,46 @@ export function Combobox<T>({
   className,
   children,
 }: ComboboxProps<T>) {
-  const [open, setOpen] = React.useState(false);
-  const [query, setQuery] = React.useState('');
-  const [uncontrolledValue, setUncontrolledValue] = React.useState<T | null>(defaultValue);
-  const [highlightedIndex, setHighlightedIndex] = React.useState(-1);
-  const rootRef = React.useRef<HTMLDivElement | null>(null);
+  const [open, setOpen] = React.useState(false)
+  const [query, setQuery] = React.useState('')
+  const [uncontrolledValue, setUncontrolledValue] = React.useState<T | null>(defaultValue)
+  const [highlightedIndex, setHighlightedIndex] = React.useState(-1)
+  const rootRef = React.useRef<HTMLDivElement | null>(null)
 
-  const isControlled = value !== undefined;
-  const selectedItem = isControlled ? (value ?? null) : uncontrolledValue;
+  const isControlled = value !== undefined
+  const selectedItem = isControlled ? (value ?? null) : uncontrolledValue
 
   const filteredItems = React.useMemo(() => {
-    const normalizedQuery = query.trim().toLowerCase();
+    const normalizedQuery = query.trim().toLowerCase()
     if (!normalizedQuery) {
-      return items;
+      return items
     }
-    return items.filter(item => itemToString(item).toLowerCase().includes(normalizedQuery));
-  }, [itemToString, items, query]);
+    return items.filter(item => itemToString(item).toLowerCase().includes(normalizedQuery))
+  }, [itemToString, items, query])
 
   const setSelectedItem = React.useCallback(
     (next: T | null) => {
       if (!isControlled) {
-        setUncontrolledValue(next);
+        setUncontrolledValue(next)
       }
-      onValueChange?.(next);
+      onValueChange?.(next)
     },
     [isControlled, onValueChange]
-  );
+  )
 
   const selectItemAtIndex = React.useCallback(
     (index: number) => {
       if (index < 0 || index >= filteredItems.length) {
-        return;
+        return
       }
-      const nextItem = filteredItems[index] ?? null;
-      setSelectedItem(nextItem);
-      setQuery('');
-      setOpen(false);
-      setHighlightedIndex(-1);
+      const nextItem = filteredItems[index] ?? null
+      setSelectedItem(nextItem)
+      setQuery('')
+      setOpen(false)
+      setHighlightedIndex(-1)
     },
     [filteredItems, setSelectedItem]
-  );
+  )
 
   const context = React.useMemo<ComboboxContextValue<T>>(
     () => ({
@@ -136,57 +136,57 @@ export function Combobox<T>({
       selectedItem,
       setSelectedItem,
     ]
-  );
+  )
 
   React.useEffect(() => {
     if (!open || filteredItems.length === 0) {
-      setHighlightedIndex(-1);
-      return;
+      setHighlightedIndex(-1)
+      return
     }
 
     setHighlightedIndex(prev => {
       if (prev >= 0 && prev < filteredItems.length) {
-        return prev;
+        return prev
       }
       const selectedIndex =
-        selectedItem == null ? -1 : filteredItems.findIndex(item => Object.is(item, selectedItem));
-      return selectedIndex >= 0 ? selectedIndex : 0;
-    });
-  }, [filteredItems, open, selectedItem]);
+        selectedItem == null ? -1 : filteredItems.findIndex(item => Object.is(item, selectedItem))
+      return selectedIndex >= 0 ? selectedIndex : 0
+    })
+  }, [filteredItems, open, selectedItem])
 
   React.useEffect(() => {
     if (!open) {
-      return;
+      return
     }
 
     const handleDocumentPointerDown = (event: MouseEvent | TouchEvent) => {
-      const target = event.target as Node | null;
+      const target = event.target as Node | null
       if (!rootRef.current || !target) {
-        return;
+        return
       }
       if (!rootRef.current.contains(target)) {
-        setOpen(false);
-        setQuery('');
+        setOpen(false)
+        setQuery('')
       }
-    };
+    }
 
     const handleDocumentKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setOpen(false);
-        setQuery('');
+        setOpen(false)
+        setQuery('')
       }
-    };
+    }
 
-    document.addEventListener('mousedown', handleDocumentPointerDown);
-    document.addEventListener('touchstart', handleDocumentPointerDown);
-    document.addEventListener('keydown', handleDocumentKeyDown);
+    document.addEventListener('mousedown', handleDocumentPointerDown)
+    document.addEventListener('touchstart', handleDocumentPointerDown)
+    document.addEventListener('keydown', handleDocumentKeyDown)
 
     return () => {
-      document.removeEventListener('mousedown', handleDocumentPointerDown);
-      document.removeEventListener('touchstart', handleDocumentPointerDown);
-      document.removeEventListener('keydown', handleDocumentKeyDown);
-    };
-  }, [open]);
+      document.removeEventListener('mousedown', handleDocumentPointerDown)
+      document.removeEventListener('touchstart', handleDocumentPointerDown)
+      document.removeEventListener('keydown', handleDocumentKeyDown)
+    }
+  }, [open])
 
   return (
     <ComboboxContext.Provider value={context as ComboboxContextValue<unknown>}>
@@ -194,17 +194,17 @@ export function Combobox<T>({
         {children}
       </div>
     </ComboboxContext.Provider>
-  );
+  )
 }
 
 export type ComboboxInputProps = Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
   'onChange' | 'value'
 > & {
-  inputContainerClassName?: string;
-  showClear?: boolean;
-  startContent?: React.ReactNode;
-};
+  inputContainerClassName?: string
+  showClear?: boolean
+  startContent?: React.ReactNode
+}
 
 export const ComboboxInput = React.forwardRef<HTMLInputElement, ComboboxInputProps>(
   (
@@ -230,23 +230,23 @@ export const ComboboxInput = React.forwardRef<HTMLInputElement, ComboboxInputPro
       selectItemAtIndex,
       itemToString,
       filteredItems,
-    } = useComboboxContext<unknown>();
-    const inputRef = React.useRef<HTMLInputElement | null>(null);
-    const disabled = !!props.disabled;
+    } = useComboboxContext<unknown>()
+    const inputRef = React.useRef<HTMLInputElement | null>(null)
+    const disabled = !!props.disabled
 
     const setRefs = React.useCallback(
       (node: HTMLInputElement | null) => {
-        inputRef.current = node;
+        inputRef.current = node
         if (typeof ref === 'function') {
-          ref(node);
-          return;
+          ref(node)
+          return
         }
         if (ref) {
-          ref.current = node;
+          ref.current = node
         }
       },
       [ref]
-    );
+    )
 
     return (
       <div
@@ -261,51 +261,51 @@ export const ComboboxInput = React.forwardRef<HTMLInputElement, ComboboxInputPro
           ref={setRefs}
           value={query}
           onChange={event => {
-            setQuery(event.target.value);
-            setOpen(true);
-            setHighlightedIndex(0);
+            setQuery(event.target.value)
+            setOpen(true)
+            setHighlightedIndex(0)
           }}
           onKeyDown={event => {
-            props.onKeyDown?.(event);
+            props.onKeyDown?.(event)
             if (event.defaultPrevented) {
-              return;
+              return
             }
 
             if (event.key === 'ArrowDown') {
-              event.preventDefault();
+              event.preventDefault()
               if (!open) {
-                setOpen(true);
-                return;
+                setOpen(true)
+                return
               }
               if (filteredItems.length === 0) {
-                return;
+                return
               }
-              setHighlightedIndex(prev => (prev + 1 + filteredItems.length) % filteredItems.length);
-              return;
+              setHighlightedIndex(prev => (prev + 1 + filteredItems.length) % filteredItems.length)
+              return
             }
 
             if (event.key === 'ArrowUp') {
-              event.preventDefault();
+              event.preventDefault()
               if (!open) {
-                setOpen(true);
-                return;
+                setOpen(true)
+                return
               }
               if (filteredItems.length === 0) {
-                return;
+                return
               }
-              setHighlightedIndex(prev => (prev - 1 + filteredItems.length) % filteredItems.length);
-              return;
+              setHighlightedIndex(prev => (prev - 1 + filteredItems.length) % filteredItems.length)
+              return
             }
 
             if (event.key === 'Enter' && open && highlightedIndex >= 0) {
-              event.preventDefault();
-              selectItemAtIndex(highlightedIndex);
+              event.preventDefault()
+              selectItemAtIndex(highlightedIndex)
             }
           }}
           onFocus={event => {
-            props.onFocus?.(event);
+            props.onFocus?.(event)
             if (!event.defaultPrevented) {
-              setOpen(true);
+              setOpen(true)
             }
           }}
           placeholder={placeholder}
@@ -321,9 +321,9 @@ export const ComboboxInput = React.forwardRef<HTMLInputElement, ComboboxInputPro
             className="text-slate-400 hover:text-slate-200"
             disabled={disabled}
             onClick={() => {
-              setQuery('');
-              setSelectedItem(null);
-              setOpen(false);
+              setQuery('')
+              setSelectedItem(null)
+              setOpen(false)
             }}
             aria-label="Clear value"
           >
@@ -341,17 +341,17 @@ export const ComboboxInput = React.forwardRef<HTMLInputElement, ComboboxInputPro
         </button>
         <span className="sr-only">{itemToString(selectedItem)}</span>
       </div>
-    );
+    )
   }
-);
+)
 
-ComboboxInput.displayName = 'ComboboxInput';
+ComboboxInput.displayName = 'ComboboxInput'
 
-export type ComboboxTriggerProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
+export type ComboboxTriggerProps = React.ButtonHTMLAttributes<HTMLButtonElement>
 
 export const ComboboxTrigger = React.forwardRef<HTMLButtonElement, ComboboxTriggerProps>(
   ({ className, children, ...props }, ref) => {
-    const { open, setOpen } = useComboboxContext<unknown>();
+    const { open, setOpen } = useComboboxContext<unknown>()
     return (
       <button
         ref={ref}
@@ -361,9 +361,9 @@ export const ComboboxTrigger = React.forwardRef<HTMLButtonElement, ComboboxTrigg
           className
         )}
         onClick={event => {
-          props.onClick?.(event);
+          props.onClick?.(event)
           if (!event.defaultPrevented) {
-            setOpen(!open);
+            setOpen(!open)
           }
         }}
         {...props}
@@ -371,20 +371,20 @@ export const ComboboxTrigger = React.forwardRef<HTMLButtonElement, ComboboxTrigg
         {children}
         <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
       </button>
-    );
+    )
   }
-);
+)
 
-ComboboxTrigger.displayName = 'ComboboxTrigger';
+ComboboxTrigger.displayName = 'ComboboxTrigger'
 
 export type ComboboxValueProps = React.HTMLAttributes<HTMLSpanElement> & {
-  placeholder?: string;
-};
+  placeholder?: string
+}
 
 export const ComboboxValue = React.forwardRef<HTMLSpanElement, ComboboxValueProps>(
   ({ className, placeholder = 'Select...', ...props }, ref) => {
-    const { selectedItem, itemToString } = useComboboxContext<unknown>();
-    const label = itemToString(selectedItem);
+    const { selectedItem, itemToString } = useComboboxContext<unknown>()
+    const label = itemToString(selectedItem)
     return (
       <span
         ref={ref}
@@ -393,19 +393,19 @@ export const ComboboxValue = React.forwardRef<HTMLSpanElement, ComboboxValueProp
       >
         {label || placeholder}
       </span>
-    );
+    )
   }
-);
+)
 
-ComboboxValue.displayName = 'ComboboxValue';
+ComboboxValue.displayName = 'ComboboxValue'
 
-export type ComboboxContentProps = React.HTMLAttributes<HTMLDivElement>;
+export type ComboboxContentProps = React.HTMLAttributes<HTMLDivElement>
 
 export const ComboboxContent = React.forwardRef<HTMLDivElement, ComboboxContentProps>(
   ({ className, ...props }, ref) => {
-    const { open } = useComboboxContext<unknown>();
+    const { open } = useComboboxContext<unknown>()
     if (!open) {
-      return null;
+      return null
     }
     return (
       <div
@@ -416,28 +416,28 @@ export const ComboboxContent = React.forwardRef<HTMLDivElement, ComboboxContentP
         )}
         {...props}
       />
-    );
+    )
   }
-);
+)
 
-ComboboxContent.displayName = 'ComboboxContent';
+ComboboxContent.displayName = 'ComboboxContent'
 
 export type ComboboxListProps<T> = Omit<React.HTMLAttributes<HTMLDivElement>, 'children'> & {
-  children: React.ReactNode | ((item: T) => React.ReactNode);
-};
+  children: React.ReactNode | ((item: T) => React.ReactNode)
+}
 
 export function ComboboxList<T>({ className, children, ...props }: ComboboxListProps<T>) {
-  const { filteredItems } = useComboboxContext<T>();
+  const { filteredItems } = useComboboxContext<T>()
   return (
     <div className={cn('space-y-0.5', className)} {...props}>
       {typeof children === 'function' ? filteredItems.map(item => children(item)) : children}
     </div>
-  );
+  )
 }
 
 export type ComboboxItemProps<T> = Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, 'value'> & {
-  value: T;
-};
+  value: T
+}
 
 export function ComboboxItem<T>({ className, value, children, ...props }: ComboboxItemProps<T>) {
   const {
@@ -448,10 +448,10 @@ export function ComboboxItem<T>({ className, value, children, ...props }: Combob
     setSelectedItem,
     setQuery,
     setOpen,
-  } = useComboboxContext<T>();
-  const isSelected = Object.is(selectedItem, value);
-  const itemIndex = filteredItems.findIndex(item => Object.is(item, value));
-  const isHighlighted = itemIndex >= 0 && itemIndex === highlightedIndex;
+  } = useComboboxContext<T>()
+  const isSelected = Object.is(selectedItem, value)
+  const itemIndex = filteredItems.findIndex(item => Object.is(item, value))
+  const isHighlighted = itemIndex >= 0 && itemIndex === highlightedIndex
   return (
     <button
       type="button"
@@ -462,15 +462,15 @@ export function ComboboxItem<T>({ className, value, children, ...props }: Combob
       )}
       onMouseEnter={() => {
         if (itemIndex >= 0) {
-          setHighlightedIndex(itemIndex);
+          setHighlightedIndex(itemIndex)
         }
       }}
       onClick={event => {
-        props.onClick?.(event);
+        props.onClick?.(event)
         if (!event.defaultPrevented) {
-          setSelectedItem(value);
-          setQuery('');
-          setOpen(false);
+          setSelectedItem(value)
+          setQuery('')
+          setOpen(false)
         }
       }}
       {...props}
@@ -478,34 +478,34 @@ export function ComboboxItem<T>({ className, value, children, ...props }: Combob
       <span className="truncate">{children}</span>
       {isSelected ? <Check className="h-4 w-4 shrink-0 text-slate-300" /> : null}
     </button>
-  );
+  )
 }
 
-export type ComboboxEmptyProps = React.HTMLAttributes<HTMLDivElement>;
+export type ComboboxEmptyProps = React.HTMLAttributes<HTMLDivElement>
 
 export function ComboboxEmpty({
   className,
   children = 'No result found.',
   ...props
 }: ComboboxEmptyProps) {
-  const { filteredItems } = useComboboxContext<unknown>();
+  const { filteredItems } = useComboboxContext<unknown>()
   if (filteredItems.length > 0) {
-    return null;
+    return null
   }
   return (
     <div className={cn('px-4 py-3 text-sm text-slate-400', className)} {...props}>
       {children}
     </div>
-  );
+  )
 }
 
-export type ComboboxChipsProps = React.HTMLAttributes<HTMLDivElement>;
+export type ComboboxChipsProps = React.HTMLAttributes<HTMLDivElement>
 
 export function ComboboxChips({ className, ...props }: ComboboxChipsProps) {
-  return <div className={cn('flex flex-wrap items-center gap-2', className)} {...props} />;
+  return <div className={cn('flex flex-wrap items-center gap-2', className)} {...props} />
 }
 
-export type ComboboxChipProps = React.HTMLAttributes<HTMLSpanElement>;
+export type ComboboxChipProps = React.HTMLAttributes<HTMLSpanElement>
 
 export function ComboboxChip({ className, ...props }: ComboboxChipProps) {
   return (
@@ -516,10 +516,10 @@ export function ComboboxChip({ className, ...props }: ComboboxChipProps) {
       )}
       {...props}
     />
-  );
+  )
 }
 
-export type ComboboxChipRemoveProps = React.ButtonHTMLAttributes<HTMLButtonElement>;
+export type ComboboxChipRemoveProps = React.ButtonHTMLAttributes<HTMLButtonElement>
 
 export function ComboboxChipRemove({ className, children, ...props }: ComboboxChipRemoveProps) {
   return (
@@ -533,5 +533,5 @@ export function ComboboxChipRemove({ className, children, ...props }: ComboboxCh
     >
       {children ?? <X className="h-4 w-4" />}
     </button>
-  );
+  )
 }

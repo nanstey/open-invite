@@ -1,7 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vitest'
 
-import { validateEventEditor } from '../../domains/events/components/detail/utils/validateEventEditor';
-import { EventVisibility } from '../../domains/events/types';
+import { validateEventEditor } from '../../domains/events/components/detail/utils/validateEventEditor'
+import { EventVisibility } from '../../domains/events/types'
 
 const baseValues = {
   title: 'Board Game Night',
@@ -10,7 +10,7 @@ const baseValues = {
   activityType: 'Social',
   startDateTimeLocal: '2026-02-28T19:00',
   durationHours: 2,
-};
+}
 
 describe('EventEditor integration: group visibility validation', () => {
   it('requires at least one group when visibilityType=GROUPS', () => {
@@ -21,10 +21,10 @@ describe('EventEditor integration: group visibility validation', () => {
         groupIds: [],
       },
       false
-    );
+    )
 
-    expect(errors.groupIds).toBe('Select at least one group');
-  });
+    expect(errors.groupIds).toBe('Select at least one group')
+  })
 
   it('passes validation when at least one group is selected', () => {
     const errors = validateEventEditor(
@@ -34,8 +34,8 @@ describe('EventEditor integration: group visibility validation', () => {
         groupIds: ['group-1'],
       },
       false
-    );
+    )
 
-    expect(errors.groupIds).toBeUndefined();
-  });
-});
+    expect(errors.groupIds).toBeUndefined()
+  })
+})

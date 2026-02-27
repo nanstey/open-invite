@@ -1,4 +1,3 @@
-
 import { ArrowLeft } from 'lucide-react'
 
 export function EventNotFoundScreen(props: {
@@ -45,5 +44,3 @@ export function EventNotFoundScreen(props: {
     </div>
   )
 }
-
-

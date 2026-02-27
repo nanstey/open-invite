@@ -16,19 +16,22 @@ export function computeParticipantIdsForAppliesTo(args: {
         ? currentUserId
         : peopleIds[0]
 
-  if (appliesTo === 'HOST_ONLY') return hostParticipantId ? [hostParticipantId] : peopleIds.slice(0, 1)
+  if (appliesTo === 'HOST_ONLY')
+    return hostParticipantId ? [hostParticipantId] : peopleIds.slice(0, 1)
   if (appliesTo === 'GUESTS_ONLY')
-    return hostParticipantId ? peopleIds.filter((id) => id !== hostParticipantId) : peopleIds
+    return hostParticipantId ? peopleIds.filter(id => id !== hostParticipantId) : peopleIds
   // EVERYONE
   return peopleIds
 }
 
 export function filterExpensesForItinerarySelection(
   expenses: EventExpense[],
-  selectedItineraryItemIds: string[],
+  selectedItineraryItemIds: string[]
 ): EventExpense[] {
   const selected = new Set(selectedItineraryItemIds)
-  return expenses.filter((expense) => !expense.itineraryItemId || selected.has(expense.itineraryItemId))
+  return expenses.filter(
+    expense => !expense.itineraryItemId || selected.has(expense.itineraryItemId)
+  )
 }
 
 export function canCommitMoneyInput(s: string): boolean {
@@ -44,12 +47,18 @@ export function isEstimateExpense(expense: EventExpense): boolean {
   return expense.timing === 'SETTLED_LATER' && expense.settledKind === 'ESTIMATE'
 }
 
-export function formatCentsMaybeEstimate(cents: number, opts: { currency: string; isEstimate: boolean }): string {
+export function formatCentsMaybeEstimate(
+  cents: number,
+  opts: { currency: string; isEstimate: boolean }
+): string {
   const formatted = formatCents(cents, { currency: opts.currency })
   return opts.isEstimate ? `~${formatted}` : formatted
 }
 
-export function formatSummaryCents(cents: number, opts: { currency: string; isEstimate: boolean }): string {
+export function formatSummaryCents(
+  cents: number,
+  opts: { currency: string; isEstimate: boolean }
+): string {
   if (cents === 0) return 'FREE'
   return formatCentsMaybeEstimate(cents, opts)
 }
@@ -91,7 +100,7 @@ export function titleForKind(expense: EventExpense): string {
 
 export function ensureExpenseShapeOnTimingChange(
   timing: ExpenseTiming,
-  current: EventExpense,
+  current: EventExpense
 ): Partial<Omit<EventExpense, 'id' | 'eventId'>> {
   // Business rule: Group expenses are always settled later.
   if (current.splitType === 'GROUP' && timing === 'UP_FRONT') {
@@ -114,8 +123,7 @@ export function ensureExpenseShapeOnTimingChange(
 }
 
 export function ensureExpenseShapeOnSettledKindChange(
-  settledKind: ExpenseSettledKind,
+  settledKind: ExpenseSettledKind
 ): Partial<Omit<EventExpense, 'id' | 'eventId'>> {
   return { settledKind, amountCents: 0 }
 }
-

@@ -1,14 +1,14 @@
-import * as React from 'react'
 import { Calendar, MapPin, Users } from 'lucide-react'
+import * as React from 'react'
 
 import type { User } from '../../../../../lib/types'
-import type { EventDateTimeModel } from '../utils/eventDateTimeModel'
-import type { LocationData } from '../../../types'
-import { buildGoogleMapsLatLngUrl } from '../maps/maps'
-import { openExternalUrl } from '../../../../../lib/ui/utils/openExternalUrl'
-import { formatEventLocationForDisplay } from '../utils/locationDisplay'
 import { Button } from '../../../../../lib/ui/9ui/button'
 import { Card } from '../../../../../lib/ui/9ui/card'
+import { openExternalUrl } from '../../../../../lib/ui/utils/openExternalUrl'
+import type { LocationData } from '../../../types'
+import { buildGoogleMapsLatLngUrl } from '../maps/maps'
+import type { EventDateTimeModel } from '../utils/eventDateTimeModel'
+import { formatEventLocationForDisplay } from '../utils/locationDisplay'
 
 type SeatsSummary = {
   attendeeCount: number
@@ -30,10 +30,13 @@ export function KeyFactsCard(props: {
   const { host, dateTime, isFlexibleStart, location, coordinates, seats } = props
 
   const wherePrimary = React.useMemo(
-    () => formatEventLocationForDisplay({ raw: location.raw, locationData: location.locationData }).primary,
-    [location.locationData, location.raw],
+    () =>
+      formatEventLocationForDisplay({ raw: location.raw, locationData: location.locationData })
+        .primary,
+    [location.locationData, location.raw]
   )
-  const hasCoordinates = typeof coordinates?.lat === 'number' && typeof coordinates?.lng === 'number'
+  const hasCoordinates =
+    typeof coordinates?.lat === 'number' && typeof coordinates?.lng === 'number'
   const openInMaps = React.useCallback(() => {
     const lat = coordinates?.lat
     const lng = coordinates?.lng
@@ -48,7 +51,11 @@ export function KeyFactsCard(props: {
         <div className="md:hidden flex items-start justify-between gap-3">
           <div className="flex items-center gap-3 min-w-0">
             {host ? (
-              <img src={host.avatar} className="w-10 h-10 rounded-full border-2 border-slate-700 shrink-0" alt={host.name} />
+              <img
+                src={host.avatar}
+                className="w-10 h-10 rounded-full border-2 border-slate-700 shrink-0"
+                alt={host.name}
+              />
             ) : (
               <div className="w-10 h-10 rounded-full bg-slate-700 animate-pulse border-2 border-slate-700 shrink-0" />
             )}
@@ -116,7 +123,9 @@ export function KeyFactsCard(props: {
                   </div>
                 </>
               )}
-              {dateTime.showMultiDay && isFlexibleStart && <div className="text-sm text-slate-400 italic">(Flexible)</div>}
+              {dateTime.showMultiDay && isFlexibleStart && (
+                <div className="text-sm text-slate-400 italic">(Flexible)</div>
+              )}
             </div>
           </div>
 
@@ -147,16 +156,15 @@ export function KeyFactsCard(props: {
             <div className="min-w-0">
               <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Seats</div>
               {/* Seats are editable elsewhere; keep this overview read-only. */}
-              
-                <div className="font-bold text-white truncate">
-                  {seats.maxSeats ? `${seats.goingLabel} going` : `${seats.attendeeCount} going`}
-                </div>
-                {seats.spotsLeft !== null ? (
-                  <div className="text-sm text-slate-400">{seats.spotsLeft} spots left</div>
-                ) : (
-                  <div className="text-sm text-slate-500">No limit</div>
-                )}
-              
+
+              <div className="font-bold text-white truncate">
+                {seats.maxSeats ? `${seats.goingLabel} going` : `${seats.attendeeCount} going`}
+              </div>
+              {seats.spotsLeft !== null ? (
+                <div className="text-sm text-slate-400">{seats.spotsLeft} spots left</div>
+              ) : (
+                <div className="text-sm text-slate-500">No limit</div>
+              )}
             </div>
           </div>
         </div>
