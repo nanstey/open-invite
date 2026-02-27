@@ -152,7 +152,7 @@ export function LeafletMiniMapPreview(props: {
       }).addTo(map)
 
       const bounds = layer.getBounds?.()
-      if (bounds && bounds.isValid?.()) {
+      if (bounds?.isValid?.()) {
         try {
           map.fitBounds(bounds, { padding: [18, 18], maxZoom: 15, animate: false })
         } catch {

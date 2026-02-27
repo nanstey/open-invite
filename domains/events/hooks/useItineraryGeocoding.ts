@@ -61,7 +61,7 @@ export function useItineraryGeocoding(args: {
       cancelled = true
       controller.abort()
     }
-  }, [enabled, uniqueLocations, eventLocation, eventCoordinates?.lat, eventCoordinates?.lng, hasCoordinates])
+  }, [enabled, uniqueLocations, eventLocation, eventCoordinates?.lat, eventCoordinates?.lng, hasCoordinates, eventCoordinates])
 
   return { geoByLocation, loading }
 }

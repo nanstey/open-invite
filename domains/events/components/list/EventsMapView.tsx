@@ -107,7 +107,7 @@ export const MapView: React.FC<MapViewProps> = ({ events, onEventClick, currentU
             <div class="absolute inset-0 ${pulseColorClass} rounded-full animate-pulse opacity-50"></div>
             <img src="${host.avatar}" class="relative w-10 h-10 rounded-full border-2 ${ringBorder} shadow-lg object-cover" />
             <div class="absolute -bottom-1 -right-1 bg-surface text-[10px] px-1 rounded border border-slate-700 shadow font-bold text-white z-10">
-               ${new Date(event.startTime).getHours() < 12 ? new Date(event.startTime).getHours() + 'a' : (new Date(event.startTime).getHours() - 12 || 12) + 'p'}
+               ${new Date(event.startTime).getHours() < 12 ? `${new Date(event.startTime).getHours()}a` : `${new Date(event.startTime).getHours() - 12 || 12}p`}
             </div>
          </div>
        `;

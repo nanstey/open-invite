@@ -110,7 +110,7 @@ export function useEventDetailActions(args: {
 
       return next
     },
-    [cloneReactions],
+    [cloneReactions, userId],
   )
 
   const handleJoinEvent = React.useCallback(

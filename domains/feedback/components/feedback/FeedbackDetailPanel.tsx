@@ -50,7 +50,7 @@ export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProje
 
   useEffect(() => {
     loadProjects()
-  }, [feedback.id])
+  }, [loadProjects])
 
   const loadProjects = async () => {
     setLoadingProjects(true)

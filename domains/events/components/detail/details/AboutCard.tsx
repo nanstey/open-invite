@@ -51,7 +51,7 @@ export function AboutCard(props: {
       textarea.style.height = 'auto'
       textarea.style.height = `${Math.max(128, textarea.scrollHeight)}px`
     }
-  }, [description, viewMode])
+  }, [viewMode])
 
   const cardClassName = isEditMode
     ? 'bg-surface border border-slate-700 rounded-2xl p-5'

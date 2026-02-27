@@ -16,7 +16,7 @@ export function useFilterBarVisibility({ enabled, resetKey }: UseFilterBarVisibi
     if (scrollRef.current) {
       scrollRef.current.scrollTop = 0
     }
-  }, [resetKey])
+  }, [])
 
   const onScroll = React.useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {

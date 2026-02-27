@@ -119,7 +119,7 @@ export function HeroHeader(props: {
       window.removeEventListener('mousemove', handleMouseMove)
       window.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [isDragging])
+  }, [isDragging, handleDragEnd, handleDragMove])
 
   // Prevent mobile page scroll while adjusting the header image.
   React.useEffect(() => {

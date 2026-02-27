@@ -51,7 +51,7 @@ function AppShellLayout() {
 
       navigate({ to: '/', replace: true })
     }
-  }, [loading, user, activeSection, navigate])
+  }, [loading, user, activeSection, navigate, pathname])
 
   if (loading) {
     return (

@@ -155,7 +155,7 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
       if (!attendeesMap.has(att.event_id)) {
         attendeesMap.set(att.event_id, []);
       }
-      attendeesMap.get(att.event_id)!.push(att.user_id);
+      attendeesMap.get(att.event_id)?.push(att.user_id);
     });
   }
 
@@ -165,7 +165,7 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
       if (!groupIdsMap.has(eg.event_id)) {
         groupIdsMap.set(eg.event_id, []);
       }
-      groupIdsMap.get(eg.event_id)!.push(eg.group_id);
+      groupIdsMap.get(eg.event_id)?.push(eg.group_id);
     });
   }
 
@@ -177,7 +177,7 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
       if (!commentsMap.has(comment.event_id)) {
         commentsMap.set(comment.event_id, []);
       }
-      commentsMap.get(comment.event_id)!.push({
+      commentsMap.get(comment.event_id)?.push({
         id: comment.id,
         userId: comment.user_id,
         text: comment.text,

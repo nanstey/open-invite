@@ -123,8 +123,7 @@ const EventsPage: React.FC = () => {
 
       <div ref={scrollContainerRef} className={contentClass} onScroll={handleScroll}>
         {view === 'list' ? (
-          <>
-            {filteredEvents.length === 0 ? (
+          filteredEvents.length === 0 ? (
               <EventsEmptyState onClearFilters={clearFilters} />
             ) : (
               <EventsCardView
@@ -137,8 +136,7 @@ const EventsPage: React.FC = () => {
                 onDismiss={dismiss}
                 onRestore={restore}
               />
-            )}
-          </>
+            )
         ) : view === 'map' ? (
           <MapView
             events={filteredEvents}

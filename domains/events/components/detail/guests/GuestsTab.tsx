@@ -62,7 +62,7 @@ export function GuestsTab(props: {
 
   const selectedAttendeeIds = React.useMemo(() => {
     return getSelectedAttendeeIds({ event, activeFilterId })
-  }, [activeFilterId, event.itineraryAttendance])
+  }, [activeFilterId, event.itineraryAttendance, event])
 
   const orderedAttendeesList = React.useMemo(() => {
     return orderAttendees({

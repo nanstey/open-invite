@@ -24,7 +24,7 @@ export function FeedbackPicker({ selectedIds, onToggle, excludeIds = [] }: Feedb
 
   useEffect(() => {
     loadFeedback()
-  }, [])
+  }, [loadFeedback])
 
   const loadFeedback = async () => {
     setLoading(true)

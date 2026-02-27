@@ -92,7 +92,7 @@ export function ItineraryAttendanceOverlay(props: {
     if (!open) return
     if (requiresUpFrontAck) setAckUpFront(false)
     if (requiresSettledAck) setAckSettled(false)
-  }, [open, requiresUpFrontAck, requiresSettledAck, selectedIds])
+  }, [open, requiresUpFrontAck, requiresSettledAck])
 
   const toggleSelection = (itemId: string) => {
     setSelectedIds((prev) => {
