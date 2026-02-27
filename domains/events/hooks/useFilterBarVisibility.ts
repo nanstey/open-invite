@@ -2,10 +2,10 @@ import * as React from 'react'
 
 type UseFilterBarVisibilityArgs = {
   enabled: boolean
-  resetKey: unknown
+  resetKey?: unknown
 }
 
-export function useFilterBarVisibility({ enabled, resetKey }: UseFilterBarVisibilityArgs) {
+export function useFilterBarVisibility({ enabled }: UseFilterBarVisibilityArgs) {
   const [isVisible, setIsVisible] = React.useState(true)
   const lastScrollY = React.useRef(0)
   const scrollRef = React.useRef<HTMLDivElement>(null)

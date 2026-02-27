@@ -114,10 +114,6 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
     setSavingGithub(false)
   }
 
-  useEffect(() => {
-    loadLinkedFeedback()
-  }, [loadLinkedFeedback])
-
   const loadLinkedFeedback = async () => {
     setLoadingFeedback(true)
     const items = await fetchProjectFeedback(project.id)
@@ -125,8 +121,8 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
       items
         .filter((item) => item.feedback)
         .map((item): SimpleFeedbackItem => ({
-          id: item.feedback?.id,
-          title: item.feedback?.title,
+          id: item.feedback?.id ?? '',
+          title: item.feedback?.title ?? '',
           description: (item.feedback as any)?.description,
           type: item.feedback?.type as any,
           importance: item.feedback?.importance as any,
@@ -135,6 +131,10 @@ export function ProjectDetailPanel({ project, onClose, onUpdate }: ProjectDetail
     )
     setLoadingFeedback(false)
   }
+
+  useEffect(() => {
+    loadLinkedFeedback()
+  }, [])
 
   const handleRemoveFeedback = async (feedbackId: string) => {
     const success = await removeFeedbackFromProject(project.id, feedbackId)

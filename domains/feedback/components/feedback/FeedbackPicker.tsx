@@ -22,16 +22,16 @@ export function FeedbackPicker({ selectedIds, onToggle, excludeIds = [] }: Feedb
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
 
-  useEffect(() => {
-    loadFeedback()
-  }, [loadFeedback])
-
   const loadFeedback = async () => {
     setLoading(true)
     const items = await fetchAllFeedbackSimple()
     setFeedbackItems(items)
     setLoading(false)
   }
+
+  useEffect(() => {
+    loadFeedback()
+  }, [])
 
   const filteredItems = feedbackItems
     .filter(item => !excludeIds.includes(item.id))
