@@ -1,14 +1,13 @@
-
-import { cn } from './utils'
-import type { EmojiItem } from './emoji-data'
+import type { EmojiItem } from './emoji-data';
+import { cn } from './utils';
 
 export type EmojiPickerProps = {
-  emojis: EmojiItem[]
-  highlightedIndex: number
-  onSelect: (emoji: EmojiItem) => void
-  onHighlightChange?: (index: number) => void
-  className?: string
-}
+  emojis: EmojiItem[];
+  highlightedIndex: number;
+  onSelect: (emoji: EmojiItem) => void;
+  onHighlightChange?: (index: number) => void;
+  className?: string;
+};
 
 export function EmojiPicker({
   emojis,
@@ -24,26 +23,27 @@ export function EmojiPicker({
       ) : (
         <div role="listbox" aria-label="Emoji suggestions" className="grid grid-cols-8 gap-1">
           {emojis.map((item, index) => {
-            const isActive = index === highlightedIndex
+            const isActive = index === highlightedIndex;
             return (
               <button
                 key={item.shortcodes[0]}
                 type="button"
+                role="option"
                 aria-selected={isActive}
                 title={item.shortcodes[0]}
                 className={cn(
                   'h-9 w-9 rounded-lg text-lg transition-colors',
-                  isActive ? 'bg-slate-700' : 'hover:bg-slate-800',
+                  isActive ? 'bg-slate-700' : 'hover:bg-slate-800'
                 )}
                 onMouseEnter={() => onHighlightChange?.(index)}
                 onClick={() => onSelect(item)}
               >
                 {item.emoji}
               </button>
-            )
+            );
           })}
         </div>
       )}
     </div>
-  )
+  );
 }

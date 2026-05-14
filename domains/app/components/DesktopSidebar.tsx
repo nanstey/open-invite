@@ -1,16 +1,16 @@
-import type React from 'react'
-import { Link, useNavigate } from '@tanstack/react-router'
-import { Bell, CalendarDays, Plus, Users as UsersIcon } from 'lucide-react'
+import { Link, useNavigate } from '@tanstack/react-router';
+import { Bell, CalendarDays, Compass, Plus, Users as UsersIcon } from 'lucide-react';
+import type React from 'react';
 
-import type { User } from '../../../lib/types'
-import type { ActiveSection } from '../routing'
-import type { EventsView } from '../../events/hooks/useEventNavigation'
+import type { User } from '../../../lib/types';
+import type { EventsView } from '../../events/hooks/useEventNavigation';
+import type { ActiveSection } from '../routing';
 
 interface DesktopSidebarProps {
-  user: User
-  activeSection: ActiveSection
-  eventsView: EventsView
-  onComingSoon: (e: React.MouseEvent) => void
+  user: User;
+  activeSection: ActiveSection;
+  eventsView: EventsView;
+  onComingSoon: (e: React.MouseEvent) => void;
 }
 
 export function DesktopSidebar({
@@ -19,14 +19,13 @@ export function DesktopSidebar({
   eventsView,
   onComingSoon,
 }: DesktopSidebarProps) {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   return (
     <nav className="hidden md:flex w-20 lg:w-64 bg-slate-900 border-r border-slate-800 flex-col justify-between items-center p-4 z-20 shrink-0">
       <div className="flex flex-col items-center gap-8 w-full">
         <Link
-          to="/events"
-          search={{ view: 'list' }}
+          to="/explore"
           className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary cursor-pointer select-none mb-4"
         >
           <span className="lg:hidden">0i!</span>
@@ -34,6 +33,18 @@ export function DesktopSidebar({
         </Link>
 
         <div className="flex flex-col gap-4 w-full">
+          <Link
+            to="/explore"
+            className={`p-3 rounded-xl transition-all flex items-center justify-start gap-3 w-full ${
+              activeSection === 'EXPLORE'
+                ? 'bg-primary/10 text-primary'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`}
+          >
+            <Compass className="w-6 h-6" />
+            <span className="hidden lg:block font-medium">Explore</span>
+          </Link>
+
           <Link
             to="/events"
             search={{ view: eventsView }}
@@ -44,7 +55,7 @@ export function DesktopSidebar({
             }`}
           >
             <CalendarDays className="w-6 h-6" />
-            <span className="hidden lg:block font-medium">Events</span>
+            <span className="hidden lg:block font-medium">My Invites</span>
           </Link>
 
           <Link
@@ -110,6 +121,5 @@ export function DesktopSidebar({
         </Link>
       </div>
     </nav>
-  )
+  );
 }
-

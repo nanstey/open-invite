@@ -1,4 +1,3 @@
-
 export interface User {
   id: string;
   name: string;
@@ -29,10 +28,18 @@ export interface Notification {
   actorId?: string; // Who triggered it
 }
 
-export type ViewMode = 'EVENTS' | 'FRIENDS' | 'ALERTS' | 'PROFILE';
+export type ViewMode = 'EXPLORE' | 'EVENTS' | 'FRIENDS' | 'ALERTS' | 'PROFILE';
 export type FriendsMode = 'FRIENDS' | 'GROUPS';
 
 // Event-domain types live in `domains/events/types.ts`. Keep these exports to avoid
 // breaking existing imports outside the events domain during migration.
-export type { Comment, Reaction, ItineraryItem, LocationData, SocialEvent, InvitesMode, MyEventsMode } from '../domains/events/types'
-export { EventVisibility } from '../domains/events/types'
+export type {
+  Comment,
+  InvitesMode,
+  ItineraryItem,
+  LocationData,
+  MyEventsMode,
+  Reaction,
+  SocialEvent,
+} from '../domains/events/types';
+export { EventVisibility } from '../domains/events/types';

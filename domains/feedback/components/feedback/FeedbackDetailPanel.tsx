@@ -1,104 +1,110 @@
-import { useState, useEffect } from 'react'
-import { useNavigate } from '@tanstack/react-router'
-import { User as UserIcon, Calendar, AlertCircle, FolderKanban, Plus, Loader2 } from 'lucide-react'
-import { SlidePanel } from '../../../../lib/ui/components/SlidePanel'
-import { Badge } from '../../../../lib/ui/components/Badge'
-import { SearchInput } from '../../../../lib/ui/components/SearchInput'
-import { FormSelect } from '../../../../lib/ui/components/FormControls'
-import { formatDateTime } from '../../../../lib/ui/utils/datetime'
-import { updateFeedbackStatus } from '../../../../services/feedbackService'
+import { useNavigate } from '@tanstack/react-router';
+import { AlertCircle, Calendar, FolderKanban, Loader2, Plus, User as UserIcon } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Badge } from '../../../../lib/ui/components/Badge';
+import { FormSelect } from '../../../../lib/ui/components/FormControls';
+import { SearchInput } from '../../../../lib/ui/components/SearchInput';
+import { SlidePanel } from '../../../../lib/ui/components/SlidePanel';
+import { formatDateTime } from '../../../../lib/ui/utils/datetime';
 import {
-  fetchProjectsForFeedback,
-  fetchAllProjects,
   addFeedbackToProject,
+  fetchAllProjects,
+  fetchProjectsForFeedback,
   removeFeedbackFromProject,
-} from '../../../../services/feedbackProjectService'
+} from '../../../../services/feedbackProjectService';
+import { updateFeedbackStatus } from '../../../../services/feedbackService';
+import type { SimpleProject } from '../../projectTypes';
 import {
-  FEEDBACK_STATUS_OPTIONS,
-  FEEDBACK_TYPE_COLORS,
   FEEDBACK_IMPORTANCE_COLORS,
   FEEDBACK_STATUS_COLORS,
+  FEEDBACK_STATUS_OPTIONS,
+  FEEDBACK_TYPE_COLORS,
   type Feedback,
   type FeedbackStatus,
-} from '../../types'
-import { ProjectLinkCard } from '../projects/ProjectLinkCard'
-import type { SimpleProject } from '../../projectTypes'
+} from '../../types';
+import { ProjectLinkCard } from '../projects/ProjectLinkCard';
 
 export interface FeedbackDetailPanelProps {
-  feedback: Feedback
-  onClose: () => void
-  onStatusChange: (id: string, status: FeedbackStatus) => void
-  onProjectsChange?: () => void
+  feedback: Feedback;
+  onClose: () => void;
+  onStatusChange: (id: string, status: FeedbackStatus) => void;
+  onProjectsChange?: () => void;
 }
 
-export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProjectsChange }: FeedbackDetailPanelProps) {
-  const navigate = useNavigate()
-  const [updating, setUpdating] = useState(false)
+export function FeedbackDetailPanel({
+  feedback,
+  onClose,
+  onStatusChange,
+  onProjectsChange,
+}: FeedbackDetailPanelProps) {
+  const navigate = useNavigate();
+  const [updating, setUpdating] = useState(false);
 
   // Projects state
-  const [linkedProjects, setLinkedProjects] = useState<SimpleProject[]>([])
-  const [allProjects, setAllProjects] = useState<SimpleProject[]>([])
-  const [loadingProjects, setLoadingProjects] = useState(true)
-  const [showAddProject, setShowAddProject] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [addingProjectId, setAddingProjectId] = useState<string | null>(null)
+  const [linkedProjects, setLinkedProjects] = useState<SimpleProject[]>([]);
+  const [allProjects, setAllProjects] = useState<SimpleProject[]>([]);
+  const [loadingProjects, setLoadingProjects] = useState(true);
+  const [showAddProject, setShowAddProject] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [addingProjectId, setAddingProjectId] = useState<string | null>(null);
 
   const handleNavigateToProject = (projectId: string) => {
-    onClose()
-    navigate({ to: '/admin/projects', search: { projectId } })
-  }
+    onClose();
+    navigate({ to: '/admin/projects', search: { projectId } });
+  };
 
   const loadProjects = async () => {
-    setLoadingProjects(true)
+    setLoadingProjects(true);
     const [linked, all] = await Promise.all([
       fetchProjectsForFeedback(feedback.id),
       fetchAllProjects(),
-    ])
-    setLinkedProjects(linked)
-    setAllProjects(all)
-    setLoadingProjects(false)
-  }
+    ]);
+    setLinkedProjects(linked);
+    setAllProjects(all);
+    setLoadingProjects(false);
+  };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: load once on mount
   useEffect(() => {
-    loadProjects()
-  }, [])
+    loadProjects();
+  }, []);
 
   const handleAddToProject = async (projectId: string) => {
-    setAddingProjectId(projectId)
-    const success = await addFeedbackToProject(projectId, feedback.id)
+    setAddingProjectId(projectId);
+    const success = await addFeedbackToProject(projectId, feedback.id);
     if (success) {
-      const project = allProjects.find(p => p.id === projectId)
+      const project = allProjects.find(p => p.id === projectId);
       if (project) {
-        setLinkedProjects(prev => [...prev, project])
+        setLinkedProjects(prev => [...prev, project]);
       }
-      onProjectsChange?.()
+      onProjectsChange?.();
     }
-    setAddingProjectId(null)
-    setShowAddProject(false)
-    setSearchQuery('')
-  }
+    setAddingProjectId(null);
+    setShowAddProject(false);
+    setSearchQuery('');
+  };
 
   const handleRemoveFromProject = async (projectId: string) => {
-    const success = await removeFeedbackFromProject(projectId, feedback.id)
+    const success = await removeFeedbackFromProject(projectId, feedback.id);
     if (success) {
-      setLinkedProjects(prev => prev.filter(p => p.id !== projectId))
-      onProjectsChange?.()
+      setLinkedProjects(prev => prev.filter(p => p.id !== projectId));
+      onProjectsChange?.();
     }
-  }
+  };
 
   const handleStatusChange = async (newStatus: FeedbackStatus) => {
-    setUpdating(true)
-    const success = await updateFeedbackStatus(feedback.id, newStatus)
+    setUpdating(true);
+    const success = await updateFeedbackStatus(feedback.id, newStatus);
     if (success) {
-      onStatusChange(feedback.id, newStatus)
+      onStatusChange(feedback.id, newStatus);
     }
-    setUpdating(false)
-  }
+    setUpdating(false);
+  };
 
-  const linkedProjectIds = linkedProjects.map(p => p.id)
+  const linkedProjectIds = linkedProjects.map(p => p.id);
   const availableProjects = allProjects
     .filter(p => !linkedProjectIds.includes(p.id))
-    .filter(p => searchQuery === '' || p.title.toLowerCase().includes(searchQuery.toLowerCase()))
+    .filter(p => searchQuery === '' || p.title.toLowerCase().includes(searchQuery.toLowerCase()));
 
   return (
     <SlidePanel title="Feedback Details" onClose={onClose}>
@@ -136,9 +142,7 @@ export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProje
             <div className="text-sm font-bold text-white">
               {feedback.userName || 'Unknown User'}
             </div>
-            <div className="text-xs text-slate-500">
-              User ID: {feedback.userId.slice(0, 8)}...
-            </div>
+            <div className="text-xs text-slate-500">User ID: {feedback.userId.slice(0, 8)}...</div>
           </div>
         </div>
       </div>
@@ -180,11 +184,11 @@ export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProje
         </h4>
         <FormSelect
           value={feedback.status}
-          onChange={(e) => handleStatusChange(e.target.value as FeedbackStatus)}
+          onChange={e => handleStatusChange(e.target.value as FeedbackStatus)}
           size="lg"
           disabled={updating}
         >
-          {FEEDBACK_STATUS_OPTIONS.map((opt) => (
+          {FEEDBACK_STATUS_OPTIONS.map(opt => (
             <option key={opt.value} value={opt.value}>
               {opt.label}
             </option>
@@ -208,7 +212,7 @@ export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProje
             {/* Linked projects list */}
             {linkedProjects.length > 0 && (
               <div className="space-y-2 mb-3">
-                {linkedProjects.map((project) => (
+                {linkedProjects.map(project => (
                   <ProjectLinkCard
                     key={project.id}
                     projectId={project.id}
@@ -228,7 +232,7 @@ export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProje
                 <SearchInput
                   size="sm"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={e => setSearchQuery(e.target.value)}
                   placeholder="Search projects..."
                   autoFocus
                 />
@@ -240,7 +244,7 @@ export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProje
                       {searchQuery ? 'No matching projects' : 'No projects available'}
                     </div>
                   ) : (
-                    availableProjects.map((project) => (
+                    availableProjects.map(project => (
                       <button
                         key={project.id}
                         type="button"
@@ -265,8 +269,8 @@ export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProje
                 <button
                   type="button"
                   onClick={() => {
-                    setShowAddProject(false)
-                    setSearchQuery('')
+                    setShowAddProject(false);
+                    setSearchQuery('');
                   }}
                   className="w-full px-3 py-2 text-sm rounded-lg border border-slate-700 text-slate-400 hover:bg-slate-800 transition-colors"
                 >
@@ -287,5 +291,5 @@ export function FeedbackDetailPanel({ feedback, onClose, onStatusChange, onProje
         )}
       </div>
     </SlidePanel>
-  )
+  );
 }

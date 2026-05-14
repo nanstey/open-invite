@@ -1,25 +1,24 @@
-import * as React from 'react'
+import { Send } from 'lucide-react';
+import * as React from 'react';
+import { useEmojiAutocomplete } from '../../../../../lib/hooks/useEmojiAutocomplete';
+import type { User } from '../../../../../lib/types';
+import { EmojiPicker } from '../../../../../lib/ui/9ui/emoji-picker';
+import { Popover, PopoverContent } from '../../../../../lib/ui/9ui/popover';
+import type { Comment, SocialEvent } from '../../../types';
+import { CommentReactionBar, CommentReactionPicker } from './CommentReactionBar';
 
-import type { User } from '../../../../../lib/types'
-import type { Comment, SocialEvent } from '../../../types'
-import { Send } from 'lucide-react'
-import { useEmojiAutocomplete } from '../../../../../lib/hooks/useEmojiAutocomplete'
-import { EmojiPicker } from '../../../../../lib/ui/9ui/emoji-picker'
-import { Popover, PopoverContent } from '../../../../../lib/ui/9ui/popover'
-import { CommentReactionBar, CommentReactionPicker } from './CommentReactionBar'
-
-const LONG_PRESS_DELAY_MS = 450
+const LONG_PRESS_DELAY_MS = 450;
 
 type ChatMessageBubbleProps = {
-  comment: Comment
-  user?: User
-  isEditMode: boolean
-  reactionUsers: Map<string, User>
-  isPickerOpen: boolean
-  onToggleReaction: (emoji: string) => void
-  onOpenPicker: (nextOpen: boolean) => void
-  showReactions: boolean
-}
+  comment: Comment;
+  user?: User;
+  isEditMode: boolean;
+  reactionUsers: Map<string, User>;
+  isPickerOpen: boolean;
+  onToggleReaction: (emoji: string) => void;
+  onOpenPicker: (nextOpen: boolean) => void;
+  showReactions: boolean;
+};
 
 function ChatMessageBubble({
   comment,
@@ -31,51 +30,52 @@ function ChatMessageBubble({
   onOpenPicker,
   showReactions,
 }: ChatMessageBubbleProps) {
-  const longPressTimeout = React.useRef<number | null>(null)
-  const suppressClickRef = React.useRef(false)
+  const longPressTimeout = React.useRef<number | null>(null);
+  const suppressClickRef = React.useRef(false);
 
   React.useEffect(() => {
     return () => {
       if (longPressTimeout.current) {
-        window.clearTimeout(longPressTimeout.current)
+        window.clearTimeout(longPressTimeout.current);
       }
-    }
-  }, [])
+    };
+  }, []);
 
   const handleClick = React.useCallback(
-    (event: React.MouseEvent<HTMLDivElement>) => {
+    (event: React.MouseEvent<HTMLButtonElement>) => {
       if (suppressClickRef.current) {
-        suppressClickRef.current = false
-        return
+        suppressClickRef.current = false;
+        return;
       }
-      const target = event.target as HTMLElement | null
-      if (target?.closest('button')) return
-      onOpenPicker(!isPickerOpen)
+      const target = event.target as HTMLElement | null;
+      if (target?.closest('button')) return;
+      onOpenPicker(!isPickerOpen);
     },
-    [isPickerOpen, onOpenPicker],
-  )
+    [isPickerOpen, onOpenPicker]
+  );
 
   const handleTouchStart = React.useCallback(() => {
     if (longPressTimeout.current) {
-      window.clearTimeout(longPressTimeout.current)
+      window.clearTimeout(longPressTimeout.current);
     }
     longPressTimeout.current = window.setTimeout(() => {
-      suppressClickRef.current = true
-      onOpenPicker(true)
-    }, LONG_PRESS_DELAY_MS)
-  }, [onOpenPicker])
+      suppressClickRef.current = true;
+      onOpenPicker(true);
+    }, LONG_PRESS_DELAY_MS);
+  }, [onOpenPicker]);
 
   const handleTouchEnd = React.useCallback(() => {
     if (longPressTimeout.current) {
-      window.clearTimeout(longPressTimeout.current)
-      longPressTimeout.current = null
+      window.clearTimeout(longPressTimeout.current);
+      longPressTimeout.current = null;
     }
-  }, [])
+  }, []);
 
   return (
     <div className="flex-1">
-      <div
-        className="bg-slate-800 rounded-2xl rounded-tl-none p-4 cursor-pointer"
+      <button
+        type="button"
+        className="bg-slate-800 rounded-2xl rounded-tl-none p-4 cursor-pointer w-full text-left"
         onClick={handleClick}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
@@ -102,9 +102,9 @@ function ChatMessageBubble({
             open={isPickerOpen}
             onOpenChange={onOpenPicker}
             showTrigger={false}
-            />
+          />
         </div>
-      </div>
+      </button>
       {showReactions ? (
         <CommentReactionBar
           reactions={comment.reactions}
@@ -115,20 +115,24 @@ function ChatMessageBubble({
         />
       ) : null}
     </div>
-  )
+  );
 }
 
 export function ChatTab(props: {
-  event: SocialEvent
-  commentUsers: Map<string, User>
-  reactionUsers: Map<string, User>
-  currentUserId?: string
-  isEditMode: boolean
-  isGuest: boolean
-  onRequireAuth?: () => void
-  onPostComment?: (eventId: string, text: string) => Promise<void> | void
-  onToggleCommentReaction?: (eventId: string, commentId: string, emoji: string) => Promise<void> | void
-  onUpdateEvent: (updated: SocialEvent) => void
+  event: SocialEvent;
+  commentUsers: Map<string, User>;
+  reactionUsers: Map<string, User>;
+  currentUserId?: string;
+  isEditMode: boolean;
+  isGuest: boolean;
+  onRequireAuth?: () => void;
+  onPostComment?: (eventId: string, text: string) => Promise<void> | void;
+  onToggleCommentReaction?: (
+    eventId: string,
+    commentId: string,
+    emoji: string
+  ) => Promise<void> | void;
+  onUpdateEvent: (updated: SocialEvent) => void;
 }) {
   const {
     event,
@@ -141,126 +145,152 @@ export function ChatTab(props: {
     onPostComment,
     onToggleCommentReaction,
     onUpdateEvent,
-  } = props
+  } = props;
 
-  const [commentText, setCommentText] = React.useState('')
-  const [activePickerCommentId, setActivePickerCommentId] = React.useState<string | null>(null)
-  const inputRef = React.useRef<HTMLInputElement>(null)
-  const emojiAutocomplete = useEmojiAutocomplete({ value: commentText, onChange: setCommentText, inputRef })
-  const today = React.useMemo(() => new Date(), [])
+  const [commentText, setCommentText] = React.useState('');
+  const [activePickerCommentId, setActivePickerCommentId] = React.useState<string | null>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const emojiAutocomplete = useEmojiAutocomplete({
+    value: commentText,
+    onChange: setCommentText,
+    inputRef,
+  });
+  const today = React.useMemo(() => new Date(), []);
 
   const formatChatDate = React.useCallback(
     (timestamp: string) => {
-      const messageDate = new Date(timestamp)
-      const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate())
-      const startOfMessage = new Date(messageDate.getFullYear(), messageDate.getMonth(), messageDate.getDate())
-      const diffMs = startOfToday.getTime() - startOfMessage.getTime()
-      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+      const messageDate = new Date(timestamp);
+      const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const startOfMessage = new Date(
+        messageDate.getFullYear(),
+        messageDate.getMonth(),
+        messageDate.getDate()
+      );
+      const diffMs = startOfToday.getTime() - startOfMessage.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
       if (diffDays >= 0 && diffDays < 7) {
-        return messageDate.toLocaleDateString([], { weekday: 'short' })
+        return messageDate.toLocaleDateString([], { weekday: 'short' });
       }
 
       if (messageDate.getFullYear() === today.getFullYear()) {
-        return messageDate.toLocaleDateString([], { month: 'short', day: 'numeric' })
+        return messageDate.toLocaleDateString([], { month: 'short', day: 'numeric' });
       }
 
-      return messageDate.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })
+      return messageDate.toLocaleDateString([], {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      });
     },
-    [today],
-  )
+    [today]
+  );
 
   const handlePostComment = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (isEditMode) return
+    e.preventDefault();
+    if (isEditMode) return;
     if (isGuest) {
-      onRequireAuth?.()
-      return
+      onRequireAuth?.();
+      return;
     }
-    const text = commentText.trim()
-    if (!text) return
+    const text = commentText.trim();
+    if (!text) return;
 
     if (onPostComment) {
-      setCommentText('')
-      await onPostComment(event.id, text)
-      return
+      setCommentText('');
+      await onPostComment(event.id, text);
+      return;
     }
 
     const newComment: Comment = {
       id: `optimistic-${Date.now().toString()}`,
-      userId: currentUserId!,
+      userId: currentUserId ?? '',
       text,
       timestamp: new Date().toISOString(),
-    }
+    };
 
-    onUpdateEvent({ ...event, comments: [...event.comments, newComment] })
-    setCommentText('')
-  }
+    onUpdateEvent({ ...event, comments: [...event.comments, newComment] });
+    setCommentText('');
+  };
 
   const applyLocalReactionUpdate = React.useCallback(
     (comment: Comment, emoji: string) => {
-      const existingReactions = comment.reactions ?? {}
+      const existingReactions = comment.reactions ?? {};
       const updated = Object.fromEntries(
         Object.entries(existingReactions).map(([key, reaction]) => [
           key,
           { ...reaction, userIds: reaction.userIds ? [...reaction.userIds] : undefined },
-        ]),
-      )
-      const currentEmoji = Object.keys(updated).find((key) => updated[key]?.userReacted)
+        ])
+      );
+      const currentEmoji = Object.keys(updated).find(key => updated[key]?.userReacted);
 
       if (currentEmoji && updated[currentEmoji]) {
-        updated[currentEmoji].count -= 1
-        updated[currentEmoji].userReacted = false
+        updated[currentEmoji].count -= 1;
+        updated[currentEmoji].userReacted = false;
         if (updated[currentEmoji].userIds && currentUserId) {
-          updated[currentEmoji].userIds = updated[currentEmoji].userIds.filter((id) => id !== currentUserId)
+          updated[currentEmoji].userIds = updated[currentEmoji].userIds.filter(
+            id => id !== currentUserId
+          );
         }
         if (updated[currentEmoji].count <= 0) {
-          delete updated[currentEmoji]
+          delete updated[currentEmoji];
         }
       }
 
       if (currentEmoji !== emoji) {
         if (!updated[emoji]) {
-          updated[emoji] = { emoji, count: 0, userReacted: false, userIds: [] }
+          updated[emoji] = { emoji, count: 0, userReacted: false, userIds: [] };
         }
-        updated[emoji].count += 1
-        updated[emoji].userReacted = true
-        if (updated[emoji].userIds && currentUserId && !updated[emoji].userIds.includes(currentUserId)) {
-          updated[emoji].userIds.push(currentUserId)
+        updated[emoji].count += 1;
+        updated[emoji].userReacted = true;
+        if (
+          updated[emoji].userIds &&
+          currentUserId &&
+          !updated[emoji].userIds.includes(currentUserId)
+        ) {
+          updated[emoji].userIds.push(currentUserId);
         }
       }
 
-      return Object.keys(updated).length ? updated : undefined
+      return Object.keys(updated).length ? updated : undefined;
     },
-    [currentUserId],
-  )
+    [currentUserId]
+  );
 
   const handleToggleReaction = React.useCallback(
     (commentId: string, emoji: string) => {
-      if (isEditMode) return
+      if (isEditMode) return;
       if (isGuest) {
-        onRequireAuth?.()
-        return
+        onRequireAuth?.();
+        return;
       }
 
       if (onToggleCommentReaction) {
-        void onToggleCommentReaction(event.id, commentId, emoji)
-        return
+        void onToggleCommentReaction(event.id, commentId, emoji);
+        return;
       }
 
-      const updatedComments = event.comments.map((comment) =>
+      const updatedComments = event.comments.map(comment =>
         comment.id === commentId
           ? { ...comment, reactions: applyLocalReactionUpdate(comment, emoji) }
-          : comment,
-      )
-      onUpdateEvent({ ...event, comments: updatedComments })
+          : comment
+      );
+      onUpdateEvent({ ...event, comments: updatedComments });
     },
-    [applyLocalReactionUpdate, event, isEditMode, isGuest, onRequireAuth, onToggleCommentReaction, onUpdateEvent],
-  )
+    [
+      applyLocalReactionUpdate,
+      event,
+      isEditMode,
+      isGuest,
+      onRequireAuth,
+      onToggleCommentReaction,
+      onUpdateEvent,
+    ]
+  );
 
   const cardClassName = isEditMode
     ? 'bg-surface border border-slate-700 rounded-2xl p-5'
-    : 'bg-background border border-transparent rounded-2xl p-5'
+    : 'bg-background border border-transparent rounded-2xl p-5';
 
   return (
     <div className={cardClassName}>
@@ -274,13 +304,13 @@ export function ChatTab(props: {
         )}
 
         {event.comments.map((c, index) => {
-          const u = commentUsers.get(c.userId)
-          const prev = index > 0 ? event.comments[index - 1] : null
-          const currentDayKey = new Date(c.timestamp).toDateString()
-          const prevDayKey = prev ? new Date(prev.timestamp).toDateString() : null
-          const showDateHeader = currentDayKey !== prevDayKey
-          const hasReactions = !!c.reactions && Object.keys(c.reactions).length > 0
-          const isPickerOpen = activePickerCommentId === c.id
+          const u = commentUsers.get(c.userId);
+          const prev = index > 0 ? event.comments[index - 1] : null;
+          const currentDayKey = new Date(c.timestamp).toDateString();
+          const prevDayKey = prev ? new Date(prev.timestamp).toDateString() : null;
+          const showDateHeader = currentDayKey !== prevDayKey;
+          const hasReactions = !!c.reactions && Object.keys(c.reactions).length > 0;
+          const isPickerOpen = activePickerCommentId === c.id;
           return (
             <React.Fragment key={c.id}>
               {showDateHeader ? (
@@ -300,15 +330,13 @@ export function ChatTab(props: {
                   isEditMode={isEditMode}
                   reactionUsers={reactionUsers}
                   isPickerOpen={isPickerOpen}
-                  onToggleReaction={(emoji) => handleToggleReaction(c.id, emoji)}
-                  onOpenPicker={(nextOpen) =>
-                    setActivePickerCommentId(nextOpen ? c.id : null)
-                  }
+                  onToggleReaction={emoji => handleToggleReaction(c.id, emoji)}
+                  onOpenPicker={nextOpen => setActivePickerCommentId(nextOpen ? c.id : null)}
                   showReactions={hasReactions}
                 />
               </div>
             </React.Fragment>
-          )
+          );
         })}
       </div>
 
@@ -318,7 +346,11 @@ export function ChatTab(props: {
         </div>
       ) : (
         <form onSubmit={handlePostComment} className="relative">
-          <Popover open={emojiAutocomplete.isOpen} onOpenChange={emojiAutocomplete.setIsOpen} className="w-full">
+          <Popover
+            open={emojiAutocomplete.isOpen}
+            onOpenChange={emojiAutocomplete.setIsOpen}
+            className="w-full"
+          >
             <div className="relative w-full">
               <input
                 ref={inputRef}
@@ -355,5 +387,5 @@ export function ChatTab(props: {
         </form>
       )}
     </div>
-  )
+  );
 }

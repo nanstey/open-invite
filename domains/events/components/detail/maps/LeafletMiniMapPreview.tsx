@@ -1,66 +1,66 @@
-import * as React from 'react'
+import * as React from 'react';
 
-type LatLng = [number, number]
+type LatLng = [number, number];
 
 export function LeafletMiniMapPreview(props: {
-  points: LatLng[]
-  themeHex: string
-  hasItinerary: boolean
-  itineraryGeoLoading: boolean
-  onOpen: () => void
+  points: LatLng[];
+  themeHex: string;
+  hasItinerary: boolean;
+  itineraryGeoLoading: boolean;
+  onOpen: () => void;
 }) {
-  const { points, themeHex, hasItinerary, itineraryGeoLoading, onOpen } = props
+  const { points, themeHex, hasItinerary, itineraryGeoLoading, onOpen } = props;
 
-  const containerRef = React.useRef<HTMLDivElement>(null)
-  const mapInstanceRef = React.useRef<any>(null)
-  const markerRef = React.useRef<any>(null)
-  const markerLayerRef = React.useRef<any>(null)
-  const polylineRef = React.useRef<any>(null)
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const mapInstanceRef = React.useRef<any>(null);
+  const markerRef = React.useRef<any>(null);
+  const markerLayerRef = React.useRef<any>(null);
+  const polylineRef = React.useRef<any>(null);
 
-  const hasPoints = points.length > 0
+  const hasPoints = points.length > 0;
 
   const destroyMap = React.useCallback(() => {
     if (mapInstanceRef.current) {
-      mapInstanceRef.current.remove()
-      mapInstanceRef.current = null
+      mapInstanceRef.current.remove();
+      mapInstanceRef.current = null;
     }
-    markerRef.current = null
-    markerLayerRef.current = null
-    polylineRef.current = null
+    markerRef.current = null;
+    markerLayerRef.current = null;
+    polylineRef.current = null;
 
-    const el = containerRef.current as any
+    const el = containerRef.current as any;
     if (el) {
       try {
-        delete el._leaflet_id
+        delete el._leaflet_id;
       } catch {
         // ignore
       }
-      if (typeof el.innerHTML === 'string') el.innerHTML = ''
+      if (typeof el.innerHTML === 'string') el.innerHTML = '';
     }
-  }, [])
+  }, []);
 
   React.useEffect(() => {
-    if (!containerRef.current) return
+    if (!containerRef.current) return;
 
-    const L = (window as any)?.L
-    if (!L) return
+    const L = (window as any)?.L;
+    if (!L) return;
 
     if (!hasPoints) {
-      destroyMap()
-      return
+      destroyMap();
+      return;
     }
 
-    const [lat0, lng0] = points[0]!
+    const [lat0, lng0] = points[0] as [number, number];
 
     if (!mapInstanceRef.current) {
-      const el = containerRef.current as any
+      const el = containerRef.current as any;
       if (el) {
         try {
-          delete el._leaflet_id
+          delete el._leaflet_id;
         } catch {
           // ignore
         }
-        if (typeof el.innerHTML === 'string') el.innerHTML = ''
+        if (typeof el.innerHTML === 'string') el.innerHTML = '';
       }
 
       const map = L.map(containerRef.current, {
@@ -73,36 +73,36 @@ export function LeafletMiniMapPreview(props: {
         keyboard: false,
         tap: false,
         touchZoom: false,
-      }).setView([lat0, lng0], 13)
+      }).setView([lat0, lng0], 13);
 
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         subdomains: 'abcd',
         maxZoom: 20,
         opacity: 0.95,
-      }).addTo(map)
+      }).addTo(map);
 
-      mapInstanceRef.current = map
+      mapInstanceRef.current = map;
     }
 
-    const map = mapInstanceRef.current
+    const map = mapInstanceRef.current;
 
     // Clear old layers
     if (markerRef.current) {
-      markerRef.current.remove()
-      markerRef.current = null
+      markerRef.current.remove();
+      markerRef.current = null;
     }
     if (markerLayerRef.current) {
-      markerLayerRef.current.remove()
-      markerLayerRef.current = null
+      markerLayerRef.current.remove();
+      markerLayerRef.current = null;
     }
     if (polylineRef.current) {
-      polylineRef.current.remove()
-      polylineRef.current = null
+      polylineRef.current.remove();
+      polylineRef.current = null;
     }
 
     if (points.length === 1) {
-      const [lat, lng] = points[0]!
-      map.setView([lat, lng], 15)
+      const [lat, lng] = points[0] as [number, number];
+      map.setView([lat, lng], 15);
       const icon = L.divIcon({
         className: '',
         iconSize: [26, 26],
@@ -118,12 +118,12 @@ export function LeafletMiniMapPreview(props: {
             color:#0b1020;
           ">1</div>
         `,
-      })
-      markerRef.current = L.marker([lat, lng], { icon }).addTo(map)
+      });
+      markerRef.current = L.marker([lat, lng], { icon }).addTo(map);
     } else {
-      const layer = L.featureGroup()
+      const layer = L.featureGroup();
       for (let i = 0; i < points.length; i++) {
-        const [lat, lng] = points[i]!
+        const [lat, lng] = points[i] as [number, number];
         const icon = L.divIcon({
           className: '',
           iconSize: [26, 26],
@@ -139,22 +139,22 @@ export function LeafletMiniMapPreview(props: {
               color:#0b1020;
             ">${i + 1}</div>
           `,
-        })
-        L.marker([lat, lng], { icon }).addTo(layer)
+        });
+        L.marker([lat, lng], { icon }).addTo(layer);
       }
-      layer.addTo(map)
-      markerLayerRef.current = layer
+      layer.addTo(map);
+      markerLayerRef.current = layer;
 
       polylineRef.current = L.polyline(points, {
         color: themeHex,
         weight: 3,
         opacity: 0.55,
-      }).addTo(map)
+      }).addTo(map);
 
-      const bounds = layer.getBounds?.()
+      const bounds = layer.getBounds?.();
       if (bounds?.isValid?.()) {
         try {
-          map.fitBounds(bounds, { padding: [18, 18], maxZoom: 15, animate: false })
+          map.fitBounds(bounds, { padding: [18, 18], maxZoom: 15, animate: false });
         } catch {
           // ignore
         }
@@ -164,17 +164,17 @@ export function LeafletMiniMapPreview(props: {
     if (map?.invalidateSize) {
       requestAnimationFrame(() => {
         try {
-          map.invalidateSize(true)
+          map.invalidateSize(true);
         } catch {
           // ignore
         }
-      })
+      });
     }
-  }, [destroyMap, hasPoints, points, themeHex])
+  }, [destroyMap, hasPoints, points, themeHex]);
 
   React.useEffect(() => {
-    return () => destroyMap()
-  }, [destroyMap])
+    return () => destroyMap();
+  }, [destroyMap]);
 
   return (
     <div className="mt-4 relative rounded-2xl overflow-hidden border border-slate-700 bg-slate-900">
@@ -184,7 +184,9 @@ export function LeafletMiniMapPreview(props: {
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="text-center px-4">
             <div className="text-sm font-semibold text-slate-300">
-              {hasItinerary ? 'Add itinerary locations to preview the map' : 'Pick a place to preview the map'}
+              {hasItinerary
+                ? 'Add itinerary locations to preview the map'
+                : 'Pick a place to preview the map'}
             </div>
             <div className="text-xs text-slate-500 mt-1">
               {hasItinerary
@@ -198,18 +200,11 @@ export function LeafletMiniMapPreview(props: {
       ) : null}
 
       {hasPoints ? (
-        <div
+        <button
+          type="button"
           className="absolute inset-0 z-10 cursor-pointer"
-          role="button"
-          tabIndex={0}
           aria-label="Open map"
           onClick={onOpen}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' || e.key === ' ') {
-              e.preventDefault()
-              onOpen()
-            }
-          }}
         />
       ) : null}
 
@@ -226,7 +221,5 @@ export function LeafletMiniMapPreview(props: {
         </div>
       ) : null}
     </div>
-  )
+  );
 }
-
-

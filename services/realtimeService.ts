@@ -1,6 +1,6 @@
+import type { Comment, Reaction, SocialEvent } from '../domains/events/types';
 import { supabase } from '../lib/supabase';
 import type { Notification } from '../lib/types';
-import type { SocialEvent, Comment, Reaction } from '../domains/events/types';
 import { fetchEventById } from './eventService';
 
 type EventCallback = (event: SocialEvent) => void;
@@ -39,7 +39,7 @@ class RealtimeService {
           table: 'events',
           filter: `id=eq.${eventId}`,
         },
-        async (payload) => {
+        async payload => {
           if (payload.eventType === 'UPDATE' || payload.eventType === 'INSERT') {
             const updatedEvent = await fetchEventById(eventId);
             if (updatedEvent && callbacks.onUpdate) {
@@ -88,7 +88,7 @@ class RealtimeService {
           schema: 'public',
           table: 'events',
         },
-        async (payload) => {
+        async payload => {
           const newEvent = await fetchEventById(payload.new.id);
           if (newEvent) {
             callback(newEvent);
@@ -105,10 +105,7 @@ class RealtimeService {
   /**
    * Subscribe to comments for an event
    */
-  subscribeToComments(
-    eventId: string,
-    callback: CommentCallback
-  ): () => void {
+  subscribeToComments(eventId: string, callback: CommentCallback): () => void {
     // Unsubscribe if already subscribed
     if (this.commentSubscriptions.has(eventId)) {
       this.commentSubscriptions.get(eventId)?.unsubscribe();
@@ -124,7 +121,7 @@ class RealtimeService {
           table: 'comments',
           filter: `event_id=eq.${eventId}`,
         },
-        (payload) => {
+        payload => {
           const comment: Comment = {
             id: payload.new.id,
             userId: payload.new.user_id,
@@ -200,10 +197,7 @@ class RealtimeService {
   /**
    * Subscribe to attendees for an event
    */
-  subscribeToAttendees(
-    eventId: string,
-    callback: (attendees: string[]) => void
-  ): () => void {
+  subscribeToAttendees(eventId: string, callback: (attendees: string[]) => void): () => void {
     const subscription = supabase
       .channel(`attendees:${eventId}`)
       .on(
@@ -232,7 +226,9 @@ class RealtimeService {
    * Subscribe to notifications for the current user
    */
   async subscribeToNotifications(callback: NotificationCallback): Promise<() => void> {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       return () => {}; // No-op unsubscribe
     }
@@ -252,7 +248,7 @@ class RealtimeService {
           table: 'notifications',
           filter: `user_id=eq.${user.id}`,
         },
-        (payload) => {
+        payload => {
           const notification: Notification = {
             id: payload.new.id,
             type: payload.new.type,
@@ -280,11 +276,17 @@ class RealtimeService {
    * Clean up all subscriptions
    */
   cleanup() {
-    this.eventSubscriptions.forEach(sub => sub.unsubscribe());
+    this.eventSubscriptions.forEach(sub => {
+      sub.unsubscribe();
+    });
     this.eventSubscriptions.clear();
-    this.commentSubscriptions.forEach(sub => sub.unsubscribe());
+    this.commentSubscriptions.forEach(sub => {
+      sub.unsubscribe();
+    });
     this.commentSubscriptions.clear();
-    this.reactionSubscriptions.forEach(sub => sub.unsubscribe());
+    this.reactionSubscriptions.forEach(sub => {
+      sub.unsubscribe();
+    });
     this.reactionSubscriptions.clear();
     if (this.notificationSubscription) {
       this.notificationSubscription.unsubscribe();
@@ -294,4 +296,3 @@ class RealtimeService {
 }
 
 export const realtimeService = new RealtimeService();
-

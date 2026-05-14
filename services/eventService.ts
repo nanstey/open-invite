@@ -1,10 +1,20 @@
-import { supabase } from '../lib/supabase';
-import type { SocialEvent, Comment, Reaction, EventVisibility, LocationData, ItineraryTimeDisplay } from '../domains/events/types';
+import { isUuid } from '../domains/events/components/detail/route/routing';
+import type {
+  Comment,
+  EventVisibility,
+  ItineraryTimeDisplay,
+  LocationData,
+  Reaction,
+  SocialEvent,
+} from '../domains/events/types';
 import type { Database } from '../lib/database.types';
-import { fetchItineraryItems } from './itineraryService'
-import { fetchEventExpenses } from './expenseService'
-import { fetchEventItineraryAttendance, deleteItineraryAttendance } from './itineraryAttendanceService'
-import { isUuid } from '../domains/events/components/detail/route/routing'
+import { supabase } from '../lib/supabase';
+import { fetchEventExpenses } from './expenseService';
+import {
+  deleteItineraryAttendance,
+  fetchEventItineraryAttendance,
+} from './itineraryAttendanceService';
+import { fetchItineraryItems } from './itineraryService';
 
 type EventRow = Database['public']['Tables']['events']['Row'];
 type EventAttendeeRow = Database['public']['Tables']['event_attendees']['Row'];
@@ -52,7 +62,9 @@ async function markEventViewedBySlug(slug: string): Promise<string | null> {
  * Safe to call repeatedly (idempotent).
  */
 export async function markEventViewedFromRouteParam(slugOrId: string): Promise<void> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) return;
 
   if (isUuid(slugOrId)) {
@@ -74,7 +86,7 @@ function transformEventRow(
   groupIds: string[],
   itineraryItems?: SocialEvent['itineraryItems'],
   expenses?: SocialEvent['expenses'],
-  itineraryAttendance?: SocialEvent['itineraryAttendance'],
+  itineraryAttendance?: SocialEvent['itineraryAttendance']
 ): SocialEvent {
   return {
     id: row.id,
@@ -130,10 +142,14 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
 
   // Fetch attendees, comments, reactions, and event groups for all events
   const eventIds = events.map(e => e.id);
-  
+
   const [attendeesResult, commentsResult, reactionsResult, eventGroupsResult] = await Promise.all([
     supabase.from('event_attendees').select('*').in('event_id', eventIds),
-    supabase.from('comments').select('*').in('event_id', eventIds).order('timestamp', { ascending: true }),
+    supabase
+      .from('comments')
+      .select('*')
+      .in('event_id', eventIds)
+      .order('timestamp', { ascending: true }),
     supabase.from('reactions').select('*').in('event_id', eventIds),
     supabase.from('event_groups').select('*').in('event_id', eventIds),
   ]);
@@ -194,11 +210,12 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
 
     const commentReactions = commentReactionsData as CommentReactionRow[] | null;
     if (commentReactions) {
-      commentReactions.forEach((reaction) => {
+      commentReactions.forEach(reaction => {
         if (!commentReactionsMap.has(reaction.comment_id)) {
           commentReactionsMap.set(reaction.comment_id, new Map());
         }
-        const reactions = commentReactionsMap.get(reaction.comment_id)!;
+        const reactions = commentReactionsMap.get(reaction.comment_id);
+        if (!reactions) return;
         if (!reactions.has(reaction.emoji)) {
           reactions.set(reaction.emoji, {
             emoji: reaction.emoji,
@@ -207,7 +224,8 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
             userIds: [],
           });
         }
-        const current = reactions.get(reaction.emoji)!;
+        const current = reactions.get(reaction.emoji);
+        if (!current) return;
         current.count++;
         if (current.userIds && !current.userIds.includes(reaction.user_id)) {
           current.userIds.push(reaction.user_id);
@@ -225,8 +243,9 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
       if (!reactionsMap.has(reaction.event_id)) {
         reactionsMap.set(reaction.event_id, new Map());
       }
-      const eventReactions = reactionsMap.get(reaction.event_id)!;
-      
+      const eventReactions = reactionsMap.get(reaction.event_id);
+      if (!eventReactions) return;
+
       if (!eventReactions.has(reaction.emoji)) {
         eventReactions.set(reaction.emoji, {
           emoji: reaction.emoji,
@@ -234,8 +253,9 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
           userReacted: false,
         });
       }
-      
-      const r = eventReactions.get(reaction.emoji)!;
+
+      const r = eventReactions.get(reaction.emoji);
+      if (!r) return;
       r.count++;
       if (currentUserId && reaction.user_id === currentUserId) {
         r.userReacted = true;
@@ -246,7 +266,7 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
   // Transform events
   return events.map((event: EventRow) => {
     const attendees = attendeesMap.get(event.id) || [];
-    const comments = (commentsMap.get(event.id) || []).map((comment) => {
+    const comments = (commentsMap.get(event.id) || []).map(comment => {
       const reactionsRecord: Record<string, Reaction> = {};
       commentReactionsMap.get(comment.id)?.forEach((reaction, emoji) => {
         reactionsRecord[emoji] = reaction;
@@ -271,7 +291,11 @@ export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]
  */
 export async function fetchEventById(eventId: string): Promise<SocialEvent | null> {
   const fetchOnce = async (): Promise<EventRow | null> => {
-    const { data: event, error } = await supabase.from('events').select('*').eq('id', eventId).single();
+    const { data: event, error } = await supabase
+      .from('events')
+      .select('*')
+      .eq('id', eventId)
+      .single();
     if (error || !event) {
       console.error('Error fetching event:', error);
       return null;
@@ -282,7 +306,9 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
   let eventRow = await fetchOnce();
   if (!eventRow) {
     // If authenticated, treat "trying to view by id" as accepting/invited-by-link and retry once.
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (user) {
       const marked = await markEventViewedById(eventId);
       if (marked) {
@@ -294,9 +320,21 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
   if (!eventRow) return null;
 
   // Fetch related data
-  const [attendeesResult, commentsResult, reactionsResult, eventGroupsResult, itineraryItems, expenses, itineraryAttendance] = await Promise.all([
+  const [
+    attendeesResult,
+    commentsResult,
+    reactionsResult,
+    eventGroupsResult,
+    itineraryItems,
+    expenses,
+    itineraryAttendance,
+  ] = await Promise.all([
     supabase.from('event_attendees').select('*').eq('event_id', eventId),
-    supabase.from('comments').select('*').eq('event_id', eventId).order('timestamp', { ascending: true }),
+    supabase
+      .from('comments')
+      .select('*')
+      .eq('event_id', eventId)
+      .order('timestamp', { ascending: true }),
     supabase.from('reactions').select('*').eq('event_id', eventId),
     supabase.from('event_groups').select('*').eq('event_id', eventId),
     fetchItineraryItems(eventId),
@@ -310,19 +348,22 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
   const eventGroupsData = eventGroupsResult.data as EventGroupRow[] | null;
 
   const attendees = attendeesData?.map(a => a.user_id) || [];
-  const comments: Comment[] = commentsData?.map(c => ({
-    id: c.id,
-    userId: c.user_id,
-    text: c.text,
-    timestamp: c.timestamp ?? '',
-  })) || [];
+  const comments: Comment[] =
+    commentsData?.map(c => ({
+      id: c.id,
+      userId: c.user_id,
+      text: c.text,
+      timestamp: c.timestamp ?? '',
+    })) || [];
   const groupIds = eventGroupsData?.map(eg => eg.group_id) || [];
 
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const currentUserId = user?.id;
 
   const commentReactionsMap = new Map<string, Map<string, Reaction>>();
-  const commentIds = comments.map((comment) => comment.id);
+  const commentIds = comments.map(comment => comment.id);
   if (commentIds.length > 0) {
     const { data: commentReactionsData } = await supabase
       .from('comment_reactions')
@@ -331,11 +372,12 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
 
     const commentReactions = commentReactionsData as CommentReactionRow[] | null;
     if (commentReactions) {
-      commentReactions.forEach((reaction) => {
+      commentReactions.forEach(reaction => {
         if (!commentReactionsMap.has(reaction.comment_id)) {
           commentReactionsMap.set(reaction.comment_id, new Map());
         }
-        const reactions = commentReactionsMap.get(reaction.comment_id)!;
+        const reactions = commentReactionsMap.get(reaction.comment_id);
+        if (!reactions) return;
         if (!reactions.has(reaction.emoji)) {
           reactions.set(reaction.emoji, {
             emoji: reaction.emoji,
@@ -344,7 +386,8 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
             userIds: [],
           });
         }
-        const current = reactions.get(reaction.emoji)!;
+        const current = reactions.get(reaction.emoji);
+        if (!current) return;
         current.count++;
         if (current.userIds && !current.userIds.includes(reaction.user_id)) {
           current.userIds.push(reaction.user_id);
@@ -356,7 +399,7 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
     }
   }
 
-  const commentsWithReactions = comments.map((comment) => {
+  const commentsWithReactions = comments.map(comment => {
     const reactionsRecord: Record<string, Reaction> = {};
     commentReactionsMap.get(comment.id)?.forEach((reaction, emoji) => {
       reactionsRecord[emoji] = reaction;
@@ -369,7 +412,7 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
 
   // Process reactions
   const reactions: Record<string, Reaction> = {};
-  
+
   if (reactionsData) {
     reactionsData.forEach(reaction => {
       if (!reactions[reaction.emoji]) {
@@ -386,7 +429,16 @@ export async function fetchEventById(eventId: string): Promise<SocialEvent | nul
     });
   }
 
-  return transformEventRow(eventRow, attendees, commentsWithReactions, reactions, groupIds, itineraryItems, expenses, itineraryAttendance);
+  return transformEventRow(
+    eventRow,
+    attendees,
+    commentsWithReactions,
+    reactions,
+    groupIds,
+    itineraryItems,
+    expenses,
+    itineraryAttendance
+  );
 }
 
 /**
@@ -411,7 +463,9 @@ export async function fetchEventBySlug(slug: string): Promise<SocialEvent | null
   let id = await tryDirect();
 
   if (!id) {
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (user) {
       // Treat "view by link" as invited-by-link and resolve via SECURITY DEFINER RPC.
       id = await markEventViewedBySlug(slug);
@@ -426,16 +480,19 @@ export async function fetchEventBySlug(slug: string): Promise<SocialEvent | null
  * Create a new event
  */
 export async function createEvent(
-  eventData: Omit<SocialEvent, 'id' | 'slug' | 'hostId' | 'attendees' | 'comments' | 'reactions'>,
+  eventData: Omit<SocialEvent, 'id' | 'slug' | 'hostId' | 'attendees' | 'comments' | 'reactions'>
 ): Promise<SocialEvent | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) {
     throw new Error('User must be authenticated to create events');
   }
 
   type EventInsert = Database['public']['Tables']['events']['Insert'];
-  
-  const slug = eventData.title
+
+  const slug =
+    eventData.title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
@@ -464,7 +521,7 @@ export async function createEvent(
     no_phones: eventData.noPhones,
     itinerary_time_display: eventData.itineraryTimeDisplay,
   };
-  
+
   const result = await supabase
     .from('events')
     .insert(insertData as unknown as never)
@@ -488,7 +545,11 @@ export async function createEvent(
   await supabase.from('event_attendees').insert(attendeeData as unknown as never);
 
   // Add event groups if visibility is GROUPS
-  if (eventData.visibilityType === 'GROUPS' && eventData.groupIds && eventData.groupIds.length > 0) {
+  if (
+    eventData.visibilityType === 'GROUPS' &&
+    eventData.groupIds &&
+    eventData.groupIds.length > 0
+  ) {
     type EventGroupInsert = Database['public']['Tables']['event_groups']['Insert'];
     const groupData: EventGroupInsert[] = eventData.groupIds.map(groupId => ({
       event_id: eventRow.id,
@@ -503,14 +564,18 @@ export async function createEvent(
 /**
  * Update an existing event
  */
-export async function updateEvent(eventId: string, updates: Partial<SocialEvent>): Promise<SocialEvent | null> {
+export async function updateEvent(
+  eventId: string,
+  updates: Partial<SocialEvent>
+): Promise<SocialEvent | null> {
   const updateData: any = {};
-  
+
   if (updates.title !== undefined) updateData.title = updates.title;
   if (updates.description !== undefined) updateData.description = updates.description;
   if (updates.activityType !== undefined) updateData.activity_type = updates.activityType;
   if (updates.headerImageUrl !== undefined) updateData.header_image_url = updates.headerImageUrl;
-  if (updates.headerImagePositionY !== undefined) updateData.header_image_position_y = updates.headerImagePositionY;
+  if (updates.headerImagePositionY !== undefined)
+    updateData.header_image_position_y = updates.headerImagePositionY;
   if (updates.location !== undefined) updateData.location = updates.location;
   if (updates.coordinates !== undefined) updateData.coordinates = updates.coordinates;
   if (updates.locationData !== undefined) updateData.location_data = updates.locationData;
@@ -519,11 +584,14 @@ export async function updateEvent(eventId: string, updates: Partial<SocialEvent>
   if (updates.isFlexibleStart !== undefined) updateData.is_flexible_start = updates.isFlexibleStart;
   if (updates.isFlexibleEnd !== undefined) updateData.is_flexible_end = updates.isFlexibleEnd;
   if (updates.visibilityType !== undefined) updateData.visibility_type = updates.visibilityType;
-  if (updates.allowFriendInvites !== undefined) updateData.allow_friend_invites = updates.allowFriendInvites;
+  if (updates.allowFriendInvites !== undefined)
+    updateData.allow_friend_invites = updates.allowFriendInvites;
   if (updates.maxSeats !== undefined) updateData.max_seats = updates.maxSeats;
-  if (updates.itineraryAttendanceEnabled !== undefined) updateData.itinerary_attendance_enabled = updates.itineraryAttendanceEnabled;
+  if (updates.itineraryAttendanceEnabled !== undefined)
+    updateData.itinerary_attendance_enabled = updates.itineraryAttendanceEnabled;
   if (updates.noPhones !== undefined) updateData.no_phones = updates.noPhones;
-  if (updates.itineraryTimeDisplay !== undefined) updateData.itinerary_time_display = updates.itineraryTimeDisplay;
+  if (updates.itineraryTimeDisplay !== undefined)
+    updateData.itinerary_time_display = updates.itineraryTimeDisplay;
 
   // type EventUpdate = Database['public']['Tables']['events']['Update']; // unused
   const result = await supabase
@@ -541,7 +609,7 @@ export async function updateEvent(eventId: string, updates: Partial<SocialEvent>
   if (updates.groupIds !== undefined) {
     // Delete existing event groups
     await supabase.from('event_groups').delete().eq('event_id', eventId);
-    
+
     // Insert new event groups if visibility is GROUPS and groupIds are provided
     if (updates.visibilityType === 'GROUPS' && updates.groupIds.length > 0) {
       type EventGroupInsert = Database['public']['Tables']['event_groups']['Insert'];
@@ -562,7 +630,10 @@ export async function updateEvent(eventId: string, updates: Partial<SocialEvent>
 export async function joinEvent(eventId: string): Promise<boolean> {
   // Prefer session (no network) vs auth.getUser() (network). This also avoids
   // transient "no user" cases where the app has user state but getUser fails.
-  const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
   const user = session?.user;
   if (!user) {
     console.warn('joinEvent: no session user:', sessionError);
@@ -592,7 +663,9 @@ export async function joinEvent(eventId: string): Promise<boolean> {
  * Leave an event
  */
 export async function leaveEvent(eventId: string): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) {
     return false;
   }
@@ -619,7 +692,9 @@ export async function leaveEvent(eventId: string): Promise<boolean> {
  * Add a comment to an event
  */
 export async function addComment(eventId: string, text: string): Promise<Comment | null> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) {
     return null;
   }
@@ -656,7 +731,9 @@ export async function addComment(eventId: string, text: string): Promise<Comment
  * Add or remove a reaction to an event
  */
 export async function toggleReaction(eventId: string, emoji: string): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) {
     return false;
   }
@@ -673,10 +750,7 @@ export async function toggleReaction(eventId: string, emoji: string): Promise<bo
   if (existing) {
     const existingRow = existing as Pick<ReactionRow, 'id'>;
     // Remove reaction
-    const { error } = await supabase
-      .from('reactions')
-      .delete()
-      .eq('id', existingRow.id);
+    const { error } = await supabase.from('reactions').delete().eq('id', existingRow.id);
     return !error;
   } else {
     // Add reaction
@@ -686,9 +760,7 @@ export async function toggleReaction(eventId: string, emoji: string): Promise<bo
       user_id: user.id,
       emoji,
     };
-    const result = await supabase
-      .from('reactions')
-      .insert(reactionData as unknown as never);
+    const result = await supabase.from('reactions').insert(reactionData as unknown as never);
     const { error } = result as unknown as { error: any };
     return !error;
   }
@@ -698,7 +770,9 @@ export async function toggleReaction(eventId: string, emoji: string): Promise<bo
  * Add, replace, or remove a reaction on a comment (one per user).
  */
 export async function toggleCommentReaction(commentId: string, emoji: string): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) {
     return false;
   }
@@ -733,9 +807,7 @@ export async function toggleCommentReaction(commentId: string, emoji: string): P
     user_id: user.id,
     emoji,
   };
-  const result = await supabase
-    .from('comment_reactions')
-    .insert(reactionData as unknown as never);
+  const result = await supabase.from('comment_reactions').insert(reactionData as unknown as never);
   const { error } = result as unknown as { error: any };
   return !error;
 }

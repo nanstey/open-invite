@@ -1,17 +1,16 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { ChevronDown, ChevronUp, ExternalLink, X } from 'lucide-react'
+import { ChevronDown, ChevronUp, ExternalLink, X } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { photonReverseOne } from '../../../../../lib/ui/utils/photon';
+import { buildGoogleMapsLatLngUrl } from './maps';
 
-import { buildGoogleMapsLatLngUrl } from './maps'
-import { photonReverseOne } from '../../../../../lib/ui/utils/photon'
-
-type LatLng = [number, number]
+type LatLng = [number, number];
 
 type FullScreenMapModalProps = {
-  points: LatLng[]
-  themeHex: string
-  title?: string
-  onClose: () => void
-}
+  points: LatLng[];
+  themeHex: string;
+  title?: string;
+  onClose: () => void;
+};
 
 export const FullScreenMapModal: React.FC<FullScreenMapModalProps> = ({
   points,
@@ -19,52 +18,60 @@ export const FullScreenMapModal: React.FC<FullScreenMapModalProps> = ({
   title = 'Map',
   onClose,
 }) => {
-  const leafletLoaded = typeof window !== 'undefined' && !!(window as any)?.L
-  const mapContainerRef = useRef<HTMLDivElement>(null)
-  const mapInstanceRef = useRef<any>(null)
-  const markersRef = useRef<any[]>([])
-  const selectedMarkerIdxRef = useRef<number | null>(null)
-  const markerLayerRef = useRef<any>(null)
-  const polylineRef = useRef<any>(null)
+  const leafletLoaded = typeof window !== 'undefined' && !!(window as any)?.L;
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
+  const markersRef = useRef<any[]>([]);
+  const selectedMarkerIdxRef = useRef<number | null>(null);
+  const markerLayerRef = useRef<any>(null);
+  const polylineRef = useRef<any>(null);
 
-  const [selectedPoint, setSelectedPoint] = useState<{ idx: number; lat: number; lng: number } | null>(null)
-  const [selectedInfo, setSelectedInfo] = useState<{ title?: string; subtitle?: string } | null>(null)
-  const [selectedInfoLoading, setSelectedInfoLoading] = useState(false)
-  const reverseCacheRef = useRef<Map<string, { title?: string; subtitle?: string }>>(new Map())
+  const [selectedPoint, setSelectedPoint] = useState<{
+    idx: number;
+    lat: number;
+    lng: number;
+  } | null>(null);
+  const [selectedInfo, setSelectedInfo] = useState<{ title?: string; subtitle?: string } | null>(
+    null
+  );
+  const [selectedInfoLoading, setSelectedInfoLoading] = useState(false);
+  const reverseCacheRef = useRef<Map<string, { title?: string; subtitle?: string }>>(new Map());
 
-  const hasPoints = points.length > 0
-  const firstPoint = points[0] ?? null
+  const hasPoints = points.length > 0;
+  const firstPoint = points[0] ?? null;
 
   const navigateToStop = useCallback(
     (idx: number) => {
-      const next = points[idx]
-      if (!next) return
-      const [lat, lng] = next
-      setSelectedPoint({ idx, lat, lng })
-      const map = mapInstanceRef.current
+      const next = points[idx];
+      if (!next) return;
+      const [lat, lng] = next;
+      setSelectedPoint({ idx, lat, lng });
+      const map = mapInstanceRef.current;
       if (map?.panTo) {
         try {
-          map.panTo([lat, lng], { animate: true })
+          map.panTo([lat, lng], { animate: true });
         } catch {
           // ignore
         }
       }
     },
-    [points],
-  )
+    [points]
+  );
 
   const formatCoord = useCallback((n: number) => {
-    if (!Number.isFinite(n)) return String(n)
-    return n.toFixed(5)
-  }, [])
+    if (!Number.isFinite(n)) return String(n);
+    return n.toFixed(5);
+  }, []);
 
   const markerIconHtml = useMemo(() => {
-    const safeHex = String(themeHex || '#22c55e')
+    const safeHex = String(themeHex || '#22c55e');
     return (label: string, selected: boolean) => {
-      const size = selected ? 34 : 30
-      const border = selected ? 3 : 2
-      const shadow = selected ? '0 14px 30px rgba(0,0,0,0.55)' : '0 10px 24px rgba(0,0,0,0.40)'
-      const outline = selected ? `0 0 0 3px rgba(255,255,255,0.18), 0 0 0 6px ${safeHex}55` : 'none'
+      const size = selected ? 34 : 30;
+      const border = selected ? 3 : 2;
+      const shadow = selected ? '0 14px 30px rgba(0,0,0,0.55)' : '0 10px 24px rgba(0,0,0,0.40)';
+      const outline = selected
+        ? `0 0 0 3px rgba(255,255,255,0.18), 0 0 0 6px ${safeHex}55`
+        : 'none';
       return `
       <div style="
         width:${size}px;height:${size}px;border-radius:9999px;
@@ -76,147 +83,152 @@ export const FullScreenMapModal: React.FC<FullScreenMapModalProps> = ({
         font-weight:900;font-size:12px;line-height:1;
         color:#0b1020;
       ">${label}</div>
-    `
-    }
-  }, [themeHex])
+    `;
+    };
+  }, [themeHex]);
 
   const destroyMap = React.useCallback(() => {
     if (mapInstanceRef.current) {
       try {
-        mapInstanceRef.current.remove()
+        mapInstanceRef.current.remove();
       } catch {
         // ignore
       }
-      mapInstanceRef.current = null
+      mapInstanceRef.current = null;
     }
-    markerLayerRef.current = null
-    polylineRef.current = null
-    markersRef.current = []
-    selectedMarkerIdxRef.current = null
+    markerLayerRef.current = null;
+    polylineRef.current = null;
+    markersRef.current = [];
+    selectedMarkerIdxRef.current = null;
 
-    const el = mapContainerRef.current as any
+    const el = mapContainerRef.current as any;
     if (el) {
       try {
-        delete el._leaflet_id
+        delete el._leaflet_id;
       } catch {
         // ignore
       }
-      if (typeof el.innerHTML === 'string') el.innerHTML = ''
+      if (typeof el.innerHTML === 'string') el.innerHTML = '';
     }
-  }, [])
+  }, []);
 
-  const setMarkerSelectedState = useCallback((idx: number, selected: boolean) => {
-    if (typeof window === 'undefined') return
-    const L = (window as any)?.L
-    if (!L) return
-    const marker = markersRef.current[idx]
-    if (!marker) return
-    const icon = L.divIcon({
-      className: '',
-      iconSize: selected ? [34, 34] : [30, 30],
-      iconAnchor: selected ? [17, 17] : [15, 15],
-      html: markerIconHtml(String(idx + 1), selected),
-    })
-    try {
-      marker.setIcon(icon)
-    } catch {
-      // ignore
-    }
-  }, [markerIconHtml])
+  const setMarkerSelectedState = useCallback(
+    (idx: number, selected: boolean) => {
+      if (typeof window === 'undefined') return;
+      const L = (window as any)?.L;
+      if (!L) return;
+      const marker = markersRef.current[idx];
+      if (!marker) return;
+      const icon = L.divIcon({
+        className: '',
+        iconSize: selected ? [34, 34] : [30, 30],
+        iconAnchor: selected ? [17, 17] : [15, 15],
+        html: markerIconHtml(String(idx + 1), selected),
+      });
+      try {
+        marker.setIcon(icon);
+      } catch {
+        // ignore
+      }
+    },
+    [markerIconHtml]
+  );
 
   useEffect(() => {
     // Maintain a single highlighted marker that tracks selectedPoint.
-    const prevIdx = selectedMarkerIdxRef.current
-    const nextIdx = selectedPoint?.idx ?? null
+    const prevIdx = selectedMarkerIdxRef.current;
+    const nextIdx = selectedPoint?.idx ?? null;
 
     if (typeof prevIdx === 'number' && prevIdx !== nextIdx) {
-      setMarkerSelectedState(prevIdx, false)
+      setMarkerSelectedState(prevIdx, false);
     }
     if (typeof nextIdx === 'number') {
-      setMarkerSelectedState(nextIdx, true)
+      setMarkerSelectedState(nextIdx, true);
     }
 
-    selectedMarkerIdxRef.current = nextIdx
-  }, [selectedPoint?.idx, setMarkerSelectedState])
+    selectedMarkerIdxRef.current = nextIdx;
+  }, [selectedPoint?.idx, setMarkerSelectedState]);
 
   useEffect(() => {
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     return () => {
-      document.body.style.overflow = prevOverflow
-    }
-  }, [])
+      document.body.style.overflow = prevOverflow;
+    };
+  }, []);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose()
-    }
-    document.addEventListener('keydown', onKeyDown)
-    return () => document.removeEventListener('keydown', onKeyDown)
-  }, [onClose])
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
 
   useEffect(() => {
     if (!selectedPoint) {
-      setSelectedInfo(null)
-      setSelectedInfoLoading(false)
-      return
+      setSelectedInfo(null);
+      setSelectedInfoLoading(false);
+      return;
     }
 
-    const key = `${selectedPoint.lat},${selectedPoint.lng}`
-    const cached = reverseCacheRef.current.get(key)
+    const key = `${selectedPoint.lat},${selectedPoint.lng}`;
+    const cached = reverseCacheRef.current.get(key);
     if (cached) {
-      setSelectedInfo(cached)
-      setSelectedInfoLoading(false)
-      return
+      setSelectedInfo(cached);
+      setSelectedInfoLoading(false);
+      return;
     }
 
-    const controller = new AbortController()
-    setSelectedInfoLoading(true)
-    setSelectedInfo(null)
+    const controller = new AbortController();
+    setSelectedInfoLoading(true);
+    setSelectedInfo(null);
 
-    ;(async () => {
+    (async () => {
       try {
-        const info = (await photonReverseOne(selectedPoint.lat, selectedPoint.lng, { signal: controller.signal })) ?? {
+        const info = (await photonReverseOne(selectedPoint.lat, selectedPoint.lng, {
+          signal: controller.signal,
+        })) ?? {
           title: undefined,
           subtitle: undefined,
-        }
-        reverseCacheRef.current.set(key, info)
-        setSelectedInfo(info)
+        };
+        reverseCacheRef.current.set(key, info);
+        setSelectedInfo(info);
       } catch (e: any) {
-        if (e?.name === 'AbortError') return
-        const fallback = { title: undefined, subtitle: undefined }
-        reverseCacheRef.current.set(key, fallback)
-        setSelectedInfo(fallback)
+        if (e?.name === 'AbortError') return;
+        const fallback = { title: undefined, subtitle: undefined };
+        reverseCacheRef.current.set(key, fallback);
+        setSelectedInfo(fallback);
       } finally {
-        setSelectedInfoLoading(false)
+        setSelectedInfoLoading(false);
       }
-    })()
+    })();
 
     return () => {
-      controller.abort()
-    }
-  }, [selectedPoint])
+      controller.abort();
+    };
+  }, [selectedPoint]);
 
   useEffect(() => {
-    if (!mapContainerRef.current) return
-    if (typeof window === 'undefined') return
-    const L = (window as any)?.L
-    if (!L) return
+    if (!mapContainerRef.current) return;
+    if (typeof window === 'undefined') return;
+    const L = (window as any)?.L;
+    if (!L) return;
 
     if (!hasPoints || !firstPoint) {
-      destroyMap()
-      return
+      destroyMap();
+      return;
     }
 
     if (!mapInstanceRef.current) {
-      const el = mapContainerRef.current as any
+      const el = mapContainerRef.current as any;
       if (el) {
         try {
-          delete el._leaflet_id
+          delete el._leaflet_id;
         } catch {
           // ignore
         }
-        if (typeof el.innerHTML === 'string') el.innerHTML = ''
+        if (typeof el.innerHTML === 'string') el.innerHTML = '';
       }
 
       const map = L.map(mapContainerRef.current, {
@@ -229,7 +241,7 @@ export const FullScreenMapModal: React.FC<FullScreenMapModalProps> = ({
         keyboard: true,
         tap: true,
         touchZoom: true,
-      })
+      });
 
       L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
         attribution:
@@ -237,106 +249,117 @@ export const FullScreenMapModal: React.FC<FullScreenMapModalProps> = ({
         subdomains: 'abcd',
         maxZoom: 20,
         opacity: 0.95,
-      }).addTo(map)
+      }).addTo(map);
 
-      mapInstanceRef.current = map
+      mapInstanceRef.current = map;
     }
 
-    const map = mapInstanceRef.current
+    const map = mapInstanceRef.current;
 
     if (markerLayerRef.current) {
       try {
-        markerLayerRef.current.remove()
+        markerLayerRef.current.remove();
       } catch {
         // ignore
       }
-      markerLayerRef.current = null
+      markerLayerRef.current = null;
     }
     if (polylineRef.current) {
       try {
-        polylineRef.current.remove()
+        polylineRef.current.remove();
       } catch {
         // ignore
       }
-      polylineRef.current = null
+      polylineRef.current = null;
     }
-    markersRef.current = []
-    selectedMarkerIdxRef.current = null
+    markersRef.current = [];
+    selectedMarkerIdxRef.current = null;
 
-    const layer = L.featureGroup()
+    const layer = L.featureGroup();
     for (let i = 0; i < points.length; i++) {
-      const [lat, lng] = points[i]!
+      const [lat, lng] = points[i] as [number, number];
       const icon = L.divIcon({
         className: '',
         iconSize: selectedPoint?.idx === i ? [34, 34] : [30, 30],
         iconAnchor: selectedPoint?.idx === i ? [17, 17] : [15, 15],
         html: markerIconHtml(String(i + 1), selectedPoint?.idx === i),
-      })
-      const marker = L.marker([lat, lng], { icon }).addTo(layer)
-      markersRef.current[i] = marker
+      });
+      const marker = L.marker([lat, lng], { icon }).addTo(layer);
+      markersRef.current[i] = marker;
       marker.on('click', () => {
-        setSelectedPoint({ idx: i, lat, lng })
+        setSelectedPoint({ idx: i, lat, lng });
         try {
-          map.panTo([lat, lng], { animate: true })
+          map.panTo([lat, lng], { animate: true });
         } catch {
           // ignore
         }
-      })
+      });
     }
-    layer.addTo(map)
-    markerLayerRef.current = layer
+    layer.addTo(map);
+    markerLayerRef.current = layer;
 
     if (points.length > 1) {
       polylineRef.current = L.polyline(points, {
         color: themeHex,
         weight: 4,
         opacity: 0.65,
-      }).addTo(map)
+      }).addTo(map);
     }
 
-    const bounds = layer.getBounds?.()
+    const bounds = layer.getBounds?.();
     if (bounds?.isValid?.()) {
       try {
-        map.fitBounds(bounds, { padding: [36, 36], maxZoom: 16, animate: false })
+        map.fitBounds(bounds, { padding: [36, 36], maxZoom: 16, animate: false });
       } catch {
         // ignore
       }
     } else {
-      const [lat, lng] = firstPoint
-      map.setView([lat, lng], 15)
+      const [lat, lng] = firstPoint;
+      map.setView([lat, lng], 15);
     }
 
     if (map?.invalidateSize) {
       requestAnimationFrame(() => {
         try {
-          map.invalidateSize(true)
+          map.invalidateSize(true);
         } catch {
           // ignore
         }
-      })
+      });
     }
 
     return () => {
       // keep instance while open; destroyed on close/unmount
-    }
-  }, [destroyMap, firstPoint, hasPoints, markerIconHtml, points, selectedPoint?.idx, themeHex])
+    };
+  }, [destroyMap, firstPoint, hasPoints, markerIconHtml, points, selectedPoint?.idx, themeHex]);
 
   useEffect(() => {
     return () => {
-      destroyMap()
-    }
-  }, [destroyMap])
+      destroyMap();
+    };
+  }, [destroyMap]);
 
   return (
-    <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[9999] flex items-stretch justify-stretch" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[9999] flex items-stretch justify-stretch"
+      role="dialog"
+      aria-modal="true"
+    >
       <div className="bg-surface w-full h-full overflow-hidden flex flex-col">
         <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/60 shrink-0">
           <div className="min-w-0">
             <h2 className="text-lg font-bold text-white truncate">{title}</h2>
-            {!hasPoints ? <div className="text-xs text-slate-500">No location coordinates available.</div> : null}
+            {!hasPoints ? (
+              <div className="text-xs text-slate-500">No location coordinates available.</div>
+            ) : null}
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors" type="button" aria-label="Close map">
+            <button
+              onClick={onClose}
+              className="text-slate-400 hover:text-white transition-colors"
+              type="button"
+              aria-label="Close map"
+            >
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -370,14 +393,19 @@ export const FullScreenMapModal: React.FC<FullScreenMapModalProps> = ({
 
                 <div className="p-4 flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <div className="text-xs font-bold uppercase tracking-wider text-slate-500">Stop {selectedPoint.idx + 1}</div>
+                    <div className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                      Stop {selectedPoint.idx + 1}
+                    </div>
                     <div className="text-base font-bold text-white truncate">
-                      {selectedInfoLoading ? 'Loading location…' : selectedInfo?.title || 'Pinned location'}
+                      {selectedInfoLoading
+                        ? 'Loading location…'
+                        : selectedInfo?.title || 'Pinned location'}
                     </div>
                     <div className="text-sm text-slate-400 truncate">
                       {selectedInfoLoading
                         ? `${formatCoord(selectedPoint.lat)}, ${formatCoord(selectedPoint.lng)}`
-                        : selectedInfo?.subtitle || `${formatCoord(selectedPoint.lat)}, ${formatCoord(selectedPoint.lng)}`}
+                        : selectedInfo?.subtitle ||
+                          `${formatCoord(selectedPoint.lat)}, ${formatCoord(selectedPoint.lng)}`}
                     </div>
                   </div>
                   <button
@@ -417,7 +445,5 @@ export const FullScreenMapModal: React.FC<FullScreenMapModalProps> = ({
         </div>
       </div>
     </div>
-  )
-}
-
-
+  );
+};

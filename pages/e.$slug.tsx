@@ -1,59 +1,62 @@
-import React from 'react'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
-
-import { EventDetail } from '../domains/events/components/detail/EventDetail'
-import { LoginModal } from '../domains/auth/LoginModal'
-import { useAuth } from '../domains/auth/AuthProvider'
-import { coerceEventTab, parseEventTab, type EventTab } from '../domains/events/components/detail/route/routing'
-import { useEventRouteData } from '../domains/events/hooks/useEventRouteData'
-import { EventLoadingScreen } from '../domains/events/components/detail/route/EventLoadingScreen'
-import { EventNotFoundScreen } from '../domains/events/components/detail/route/EventNotFoundScreen'
+import { createFileRoute, useNavigate } from '@tanstack/react-router';
+import React from 'react';
+import { useAuth } from '../domains/auth/AuthProvider';
+import { LoginModal } from '../domains/auth/LoginModal';
+import { EventDetail } from '../domains/events/components/detail/EventDetail';
+import { EventLoadingScreen } from '../domains/events/components/detail/route/EventLoadingScreen';
+import { EventNotFoundScreen } from '../domains/events/components/detail/route/EventNotFoundScreen';
+import {
+  coerceEventTab,
+  type EventTab,
+  parseEventTab,
+} from '../domains/events/components/detail/route/routing';
+import { useEventRouteData } from '../domains/events/hooks/useEventRouteData';
 
 export const Route = createFileRoute('/e/$slug')({
   validateSearch: (search: Record<string, unknown>) => ({
     tab: parseEventTab(search.tab),
   }),
   component: function PublicEventDetailRouteComponent() {
-    const { user } = useAuth()
-    const navigate = useNavigate()
-    const { slug } = Route.useParams()
-    const search = Route.useSearch()
-    const tab = coerceEventTab(search.tab, 'details')
+    const { user } = useAuth();
+    const navigate = useNavigate();
+    const { slug } = Route.useParams();
+    const search = Route.useSearch();
+    const tab = coerceEventTab(search.tab, 'details');
     const handleTabChange = (next: EventTab) =>
       navigate({
         to: '/e/$slug',
         params: { slug },
         search: { ...search, tab: next },
         replace: true,
-      })
+      });
 
-    const [showLoginModal, setShowLoginModal] = React.useState(false)
+    const [showLoginModal, setShowLoginModal] = React.useState(false);
 
     const { event, isLoading } = useEventRouteData({
       slugOrId: slug,
-      onCanonicalSlug: (canonicalSlug) =>
+      onCanonicalSlug: canonicalSlug =>
         navigate({
           to: '/e/$slug',
           params: { slug: canonicalSlug },
           search: { tab },
           replace: true,
         }),
-    })
+    });
 
     React.useEffect(() => {
-      if (!user) return
-      setShowLoginModal(false)
+      if (!user) return;
+      setShowLoginModal(false);
       navigate({
         to: '/events/$slug',
         params: { slug },
-        search: { view: undefined, tab },
+        search: { view: undefined, tab, from: undefined },
         replace: true,
         state: { fromEventsView: 'list' },
-      })
-    }, [user, navigate, slug, tab])
+      });
+    }, [user, navigate, slug, tab]);
 
     if (isLoading) {
-      return <EventLoadingScreen />
+      return <EventLoadingScreen />;
     }
 
     if (!event) {
@@ -67,7 +70,7 @@ export const Route = createFileRoute('/e/$slug')({
           />
           {showLoginModal ? <LoginModal onClose={() => setShowLoginModal(false)} /> : null}
         </>
-      )
+      );
     }
 
     return (
@@ -85,7 +88,6 @@ export const Route = createFileRoute('/e/$slug')({
         />
         {showLoginModal ? <LoginModal onClose={() => setShowLoginModal(false)} /> : null}
       </div>
-    )
+    );
   },
-})
-
+});

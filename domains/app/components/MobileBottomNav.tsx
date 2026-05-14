@@ -1,28 +1,31 @@
-import type React from 'react'
-import { Link, useNavigate } from '@tanstack/react-router'
-import { Bell, CalendarDays, Plus, Users as UsersIcon } from 'lucide-react'
+import { Link, useNavigate } from '@tanstack/react-router';
+import { CalendarDays, Compass, Plus, Users as UsersIcon } from 'lucide-react';
 
-import type { User } from '../../../lib/types'
-import type { ActiveSection } from '../routing'
-import type { EventsView } from '../../events/hooks/useEventNavigation'
+import type { User } from '../../../lib/types';
+import type { EventsView } from '../../events/hooks/useEventNavigation';
+import type { ActiveSection } from '../routing';
 
 interface MobileBottomNavProps {
-  user: User
-  activeSection: ActiveSection
-  eventsView: EventsView
-  onComingSoon: (e: React.MouseEvent) => void
+  user: User;
+  activeSection: ActiveSection;
+  eventsView: EventsView;
 }
 
-export function MobileBottomNav({
-  user,
-  activeSection,
-  eventsView,
-  onComingSoon,
-}: MobileBottomNavProps) {
-  const navigate = useNavigate()
+export function MobileBottomNav({ user, activeSection, eventsView }: MobileBottomNavProps) {
+  const navigate = useNavigate();
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-slate-900 border-t border-slate-800 z-50 grid grid-cols-5 items-center justify-items-center px-2 pb-safe-area shadow-[0_-5px_20px_rgba(0,0,0,0.3)]">
+      <Link
+        to="/explore"
+        className={`w-full flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
+          activeSection === 'EXPLORE' ? 'text-primary' : 'text-slate-400'
+        }`}
+      >
+        <Compass className="w-8 h-8" />
+        {/* <span className="text-[12px] font-medium">Explore</span> */}
+      </Link>
+
       <Link
         to="/events"
         search={{ view: eventsView }}
@@ -30,21 +33,10 @@ export function MobileBottomNav({
           activeSection === 'EVENTS' ? 'text-primary' : 'text-slate-400'
         }`}
       >
-        <CalendarDays className="w-6 h-6" />
-        <span className="text-[12px] font-medium">Events</span>
+        <CalendarDays className="w-8 h-8" />
+        {/* <span className="text-[12px] font-medium">Invites</span> */}
       </Link>
 
-      <Link
-        to="/friends"
-        search={{ tab: 'friends' }}
-        className={`w-full flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
-          activeSection === 'FRIENDS' ? 'text-primary' : 'text-slate-400'
-        }`}
-      >
-        <UsersIcon className="w-6 h-6" />
-        <span className="text-[12px] font-medium">Friends</span>
-      </Link>
-      
       <div className="w-full flex justify-center">
         <button
           onClick={() => navigate({ to: '/events/new', search: { view: eventsView } })}
@@ -55,16 +47,16 @@ export function MobileBottomNav({
         </button>
       </div>
 
-      <button
-        type="button"
-        aria-disabled="true"
-        onClick={onComingSoon}
-        className="w-full flex flex-col items-center gap-1 p-2 rounded-lg text-slate-500 opacity-60 cursor-not-allowed"
-        title="Coming Soon!"
+      <Link
+        to="/friends"
+        search={{ tab: 'friends' }}
+        className={`w-full flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
+          activeSection === 'FRIENDS' ? 'text-primary' : 'text-slate-400'
+        }`}
       >
-        <Bell className="w-6 h-6" />
-        <span className="text-[12px] font-medium">Alerts</span>
-      </button>
+        <UsersIcon className="w-8 h-8" />
+        {/* <span className="text-[12px] font-medium">Friends</span> */}
+      </Link>
 
       <Link
         to="/profile"
@@ -73,14 +65,14 @@ export function MobileBottomNav({
         }`}
       >
         <div
-          className={`w-6 h-6 rounded-full overflow-hidden border ${
+          className={`w-9 h-9 rounded-full overflow-hidden border ${
             activeSection === 'PROFILE' ? 'border-primary' : 'border-slate-500'
           }`}
         >
           <img src={user.avatar} alt="Me" className="w-full h-full object-cover" />
         </div>
-        <span className="text-[12px] font-medium">Profile</span>
+        {/* <span className="text-[12px] font-medium">Profile</span> */}
       </Link>
     </nav>
-  )
+  );
 }

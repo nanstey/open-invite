@@ -1,15 +1,15 @@
-import type * as React from 'react'
-import { MoreVertical, UserMinus } from 'lucide-react'
-import { UserAvatar } from '../../../lib/ui/components/UserAvatar'
-import type { User } from '../../../lib/types'
+import { MoreVertical, UserMinus } from 'lucide-react';
+import type * as React from 'react';
+import type { User } from '../../../lib/types';
+import { UserAvatar } from '../../../lib/ui/components/UserAvatar';
 
 export interface FriendCardProps {
-  friend: User
-  isMenuOpen: boolean
-  isProcessing: boolean
-  menuRef: React.RefObject<HTMLDivElement | null>
-  onMenuToggle: () => void
-  onRemove: () => void
+  friend: User;
+  isMenuOpen: boolean;
+  isProcessing: boolean;
+  menuRef: React.RefObject<HTMLDivElement | null>;
+  onMenuToggle: () => void;
+  onRemove: () => void;
 }
 
 export const FriendCard: React.FC<FriendCardProps> = ({
@@ -27,6 +27,7 @@ export const FriendCard: React.FC<FriendCardProps> = ({
     </div>
     <div className="relative shrink-0" ref={isMenuOpen ? menuRef : null}>
       <button
+        type="button"
         className="p-2 hover:bg-slate-700 rounded-full text-slate-400 hover:text-white transition-colors"
         onClick={onMenuToggle}
       >
@@ -35,6 +36,7 @@ export const FriendCard: React.FC<FriendCardProps> = ({
       {isMenuOpen && (
         <div className="absolute right-0 top-full mt-1 bg-slate-800 border border-slate-700 rounded-lg shadow-xl z-10 min-w-[140px] py-1">
           <button
+            type="button"
             className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-slate-700 flex items-center gap-2 transition-colors"
             onClick={onRemove}
             disabled={isProcessing}
@@ -46,5 +48,4 @@ export const FriendCard: React.FC<FriendCardProps> = ({
       )}
     </div>
   </div>
-)
-
+);

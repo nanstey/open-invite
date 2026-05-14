@@ -1,57 +1,45 @@
+import type { User } from '../../../../lib/types';
+import type { SocialEvent } from '../../types';
+import { EventCard } from './EventCard';
+import type { StatusFilter } from './EventsFilterBar';
 
-
-import type { User } from '../../../../lib/types'
-import type { SocialEvent } from '../../types'
-import type { StatusFilter } from './EventsFilterBar'
-import { EventCard } from './EventCard'
-
-type EventsGroup = { title: string; events: SocialEvent[] }
+type EventsGroup = { title: string; events: SocialEvent[] };
 
 type EventsCardViewProps = {
-  groupedEvents: EventsGroup[]
-  currentUser: User
-  statusFilter: StatusFilter
-  onEventClick: (event: SocialEvent) => void
-  onJoin: (eventId: string) => void | Promise<void>
-  onLeave: (eventId: string) => void | Promise<void>
-  onDismiss: (eventId: string) => void
-  onRestore: (eventId: string) => void
-}
+  groupedEvents: EventsGroup[];
+  currentUser: User;
+  statusFilter: StatusFilter;
+  onEventClick: (event: SocialEvent) => void;
+  onRestore: (eventId: string) => void;
+};
 
 export function EventsCardView({
   groupedEvents,
   currentUser,
   statusFilter,
   onEventClick,
-  onJoin,
-  onLeave,
-  onDismiss,
   onRestore,
 }: EventsCardViewProps) {
   return (
-    <div className="pb-20 space-y-8">
-      {groupedEvents.map((group) => (
+    <div className="space-y-8 pb-20">
+      {groupedEvents.map(group => (
         <div key={group.title}>
           <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-3 mt-6 first:mt-0 py-1">
             {group.title}
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
-            {group.events.map((event) => (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 min-[1200px]:[grid-template-columns:repeat(3,minmax(0,24rem))] min-[1800px]:[grid-template-columns:repeat(4,minmax(0,24rem))]">
+            {group.events.map(event => (
               <div key={event.id} className="relative group">
                 <EventCard
                   event={event}
                   onClick={() => onEventClick(event)}
                   currentUser={currentUser}
-                  onJoin={onJoin}
-                  onLeave={onLeave}
-                  onHide={onDismiss}
-                  filterContext={statusFilter}
                 />
                 {statusFilter === 'DISMISSED' ? (
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      onRestore(event.id)
+                    onClick={e => {
+                      e.stopPropagation();
+                      onRestore(event.id);
                     }}
                     className="absolute top-2 right-2 bg-slate-800 text-green-400 px-3 py-1 rounded-full text-xs font-bold border border-green-500/50 hover:bg-green-500/20 z-10"
                     type="button"
@@ -70,7 +58,5 @@ export function EventsCardView({
         <span className="text-xs font-bold uppercase tracking-widest">No more events</span>
       </div>
     </div>
-  )
+  );
 }
-
-

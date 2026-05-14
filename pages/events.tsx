@@ -1,27 +1,36 @@
-import type React from 'react'
-import { useMemo, useCallback } from 'react'
-import { Outlet, createFileRoute, redirect, useNavigate, useRouterState } from '@tanstack/react-router'
-import { Calendar as CalendarIcon, LayoutGrid, Map as MapIcon } from 'lucide-react'
-
-import { useAuth } from '../domains/auth/AuthProvider'
-import { useSetHeaderTabs } from '../domains/app/HeaderTabsContext'
-import type { TabOption } from '../lib/ui/components/TabGroup'
-import { MapView } from '../domains/events/components/list/EventsMapView'
-import { CalendarView } from '../domains/events/components/list/CalendarView'
-import { EventsCardView } from '../domains/events/components/list/EventsCardView'
-import { FilterBar } from '../domains/events/components/list/EventsFilterBar'
-import { EventsEmptyState } from '../domains/events/components/list/EventsEmptyState'
-import { EventsLoadingScreen } from '../domains/events/components/list/EventsLoadingScreen'
-import { useEventFilters } from '../domains/events/hooks/useEventFilters'
-import { useEventNavigation, coerceEventsView, type EventsView } from '../domains/events/hooks/useEventNavigation'
-import { useEventsFeed } from '../domains/events/hooks/useEventsFeed'
-import { useFilterBarVisibility } from '../domains/events/hooks/useFilterBarVisibility'
+import {
+  createFileRoute,
+  Outlet,
+  redirect,
+  useNavigate,
+  useRouterState,
+} from '@tanstack/react-router';
+import { Calendar as CalendarIcon, LayoutGrid, Map as MapIcon } from 'lucide-react';
+import type React from 'react';
+import { useCallback, useMemo } from 'react';
+import { useSetHeaderTabs } from '../domains/app/HeaderTabsContext';
+import { useAuth } from '../domains/auth/AuthProvider';
+import { CalendarView } from '../domains/events/components/list/CalendarView';
+import { EventsCardView } from '../domains/events/components/list/EventsCardView';
+import { EventsEmptyState } from '../domains/events/components/list/EventsEmptyState';
+import { FilterBar } from '../domains/events/components/list/EventsFilterBar';
+import { EventsLoadingScreen } from '../domains/events/components/list/EventsLoadingScreen';
+import { MapView } from '../domains/events/components/list/EventsMapView';
+import { useEventFilters } from '../domains/events/hooks/useEventFilters';
+import {
+  coerceEventsView,
+  type EventsView,
+  useEventNavigation,
+} from '../domains/events/hooks/useEventNavigation';
+import { useEventsFeed } from '../domains/events/hooks/useEventsFeed';
+import { useFilterBarVisibility } from '../domains/events/hooks/useFilterBarVisibility';
+import type { TabOption } from '../lib/ui/components/TabGroup';
 
 function parseEventsView(value: unknown): EventsView | undefined {
-  if (typeof value !== 'string') return undefined
-  const view = value.toLowerCase()
-  if (view === 'map' || view === 'calendar' || view === 'list') return view
-  return undefined
+  if (typeof value !== 'string') return undefined;
+  const view = value.toLowerCase();
+  if (view === 'map' || view === 'calendar' || view === 'list') return view;
+  return undefined;
 }
 
 export const Route = createFileRoute('/events')({
@@ -30,48 +39,48 @@ export const Route = createFileRoute('/events')({
   }),
   beforeLoad: ({ context }) => {
     if (!context.auth.loading && !context.auth.user) {
-      throw redirect({ to: '/' })
+      throw redirect({ to: '/' });
     }
   },
   component: function EventsRouteComponent() {
     const { pathname } = useRouterState({
-      select: (s) => ({ pathname: s.location.pathname }),
-    })
+      select: s => ({ pathname: s.location.pathname }),
+    });
 
-    const isEventsIndex = pathname === '/events'
+    const isEventsIndex = pathname === '/events';
     return (
       <>
         {isEventsIndex ? <EventsPage /> : null}
         <Outlet />
       </>
-    )
+    );
   },
-})
+});
 
 const inviteTabs: TabOption[] = [
   { id: 'list', label: 'Cards', icon: <LayoutGrid className="w-4 h-4" /> },
   { id: 'map', label: 'Map', icon: <MapIcon className="w-4 h-4" /> },
   { id: 'calendar', label: 'Calendar', icon: <CalendarIcon className="w-4 h-4" /> },
-]
+];
 
 const EventsPage: React.FC = () => {
-  const { user: currentUser, loading: authLoading } = useAuth()
-  const navigate = useNavigate()
-  const view = Route.useSearch().view ?? 'list'
+  const { user: currentUser, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
+  const view = Route.useSearch().view ?? 'list';
 
   const handleTabChange = useCallback(
     (id: string) => navigate({ to: '/events', search: { view: coerceEventsView(id) } }),
     [navigate]
-  )
+  );
 
-  useSetHeaderTabs(inviteTabs, view, handleTabChange)
+  useSetHeaderTabs(inviteTabs, view, handleTabChange);
 
-  const { events, loading: eventsLoading, join, leave } = useEventsFeed({
+  const { events, loading: eventsLoading } = useEventsFeed({
     currentUserId: currentUser?.id ?? null,
     enabled: !authLoading,
-  })
+  });
 
-  const goToEvent = useEventNavigation(view)
+  const goToEvent = useEventNavigation(view);
 
   const {
     searchTerm,
@@ -86,24 +95,26 @@ const EventsPage: React.FC = () => {
     setShowOpenOnly,
     filteredEvents,
     groupedEvents,
-    dismiss,
     restore,
     clearFilters,
-  } = useEventFilters(events, currentUser?.id ?? '')
+  } = useEventFilters(events, currentUser?.id ?? '');
 
-  const { isVisible: isFilterBarVisible, onScroll: handleScroll, scrollRef: scrollContainerRef } =
-    useFilterBarVisibility({ enabled: view === 'list', resetKey: view })
+  const {
+    isVisible: isFilterBarVisible,
+    onScroll: handleScroll,
+    scrollRef: scrollContainerRef,
+  } = useFilterBarVisibility({ enabled: view === 'list', resetKey: view });
 
   const contentClass = useMemo(() => {
     if (view === 'calendar' || view === 'map') {
-      return 'flex-1 flex flex-col overflow-hidden p-0 md:p-4 md:pt-2'
+      return 'flex-1 flex flex-col overflow-hidden p-0 md:p-4 md:pt-2';
     }
-    return 'flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 pt-2'
-  }, [view])
+    return 'flex-1 overflow-y-auto custom-scrollbar p-4 md:p-6 pt-2';
+  }, [view]);
 
-  if (authLoading || eventsLoading) return <EventsLoadingScreen />
+  if (authLoading || eventsLoading) return <EventsLoadingScreen />;
 
-  if (!currentUser) return null
+  if (!currentUser) return null;
 
   return (
     <>
@@ -124,25 +135,18 @@ const EventsPage: React.FC = () => {
       <div ref={scrollContainerRef} className={contentClass} onScroll={handleScroll}>
         {view === 'list' ? (
           filteredEvents.length === 0 ? (
-              <EventsEmptyState onClearFilters={clearFilters} />
-            ) : (
-              <EventsCardView
-                groupedEvents={groupedEvents}
-                currentUser={currentUser}
-                statusFilter={statusFilter}
-                onEventClick={goToEvent}
-                onJoin={join}
-                onLeave={leave}
-                onDismiss={dismiss}
-                onRestore={restore}
-              />
-            )
+            <EventsEmptyState onClearFilters={clearFilters} />
+          ) : (
+            <EventsCardView
+              groupedEvents={groupedEvents}
+              currentUser={currentUser}
+              statusFilter={statusFilter}
+              onEventClick={goToEvent}
+              onRestore={restore}
+            />
+          )
         ) : view === 'map' ? (
-          <MapView
-            events={filteredEvents}
-            onEventClick={goToEvent}
-            currentUser={currentUser}
-          />
+          <MapView events={filteredEvents} onEventClick={goToEvent} currentUser={currentUser} />
         ) : (
           <CalendarView
             events={filteredEvents}
@@ -152,6 +156,5 @@ const EventsPage: React.FC = () => {
         )}
       </div>
     </>
-  )
-}
-
+  );
+};

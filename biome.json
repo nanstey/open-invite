@@ -74,6 +74,18 @@
       }
     }
   },
+  "overrides": [
+    {
+      "includes": ["**/MrkdwnRenderer.tsx"],
+      "linter": {
+        "rules": {
+          "security": {
+            "noDangerouslySetInnerHtml": "off"
+          }
+        }
+      }
+    }
+  ],
   "assist": {
     "enabled": true,
     "actions": {
