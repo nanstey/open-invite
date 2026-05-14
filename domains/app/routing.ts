@@ -1,20 +1,29 @@
-export type ActiveSection = 'EVENTS' | 'FRIENDS' | 'ALERTS' | 'PROFILE' | 'ADMIN' | 'PUBLIC'
+export type ActiveSection =
+  | 'EXPLORE'
+  | 'EVENTS'
+  | 'FRIENDS'
+  | 'ALERTS'
+  | 'PROFILE'
+  | 'ADMIN'
+  | 'PUBLIC';
 
 export function getPageTitle(pathname: string): string {
-  if (pathname.startsWith('/groups')) return 'Groups'
-  if (pathname.startsWith('/friends')) return 'Friends'
-  if (pathname.startsWith('/alerts')) return 'Alerts'
-  if (pathname.startsWith('/profile')) return 'Profile'
-  if (pathname.startsWith('/admin')) return 'Admin'
-  return 'Events'
+  if (pathname.startsWith('/explore')) return 'Explore';
+  if (pathname.startsWith('/groups')) return 'Groups';
+  if (pathname.startsWith('/friends')) return 'Friends';
+  if (pathname.startsWith('/alerts')) return 'Alerts';
+  if (pathname.startsWith('/profile')) return 'Profile';
+  if (pathname.startsWith('/admin')) return 'Admin';
+  return 'My Invites';
 }
 
 export function getActiveSection(pathname: string): ActiveSection {
-  if (pathname.startsWith('/groups')) return 'FRIENDS'
-  if (pathname.startsWith('/friends')) return 'FRIENDS'
-  if (pathname.startsWith('/alerts')) return 'ALERTS'
-  if (pathname.startsWith('/profile')) return 'PROFILE'
-  if (pathname.startsWith('/admin')) return 'ADMIN'
-  if (pathname.startsWith('/events')) return 'EVENTS'
-  return 'PUBLIC'
+  if (pathname.startsWith('/explore')) return 'EXPLORE';
+  if (pathname.startsWith('/groups')) return 'FRIENDS';
+  if (pathname.startsWith('/friends')) return 'FRIENDS';
+  if (pathname.startsWith('/alerts')) return 'ALERTS';
+  if (pathname.startsWith('/profile')) return 'PROFILE';
+  if (pathname.startsWith('/admin')) return 'ADMIN';
+  if (pathname.startsWith('/events')) return 'EVENTS';
+  return 'PUBLIC';
 }

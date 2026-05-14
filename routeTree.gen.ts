@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './pages/__root'
 import { Route as ProfileRouteImport } from './pages/profile'
 import { Route as FriendsRouteImport } from './pages/friends'
+import { Route as ExploreRouteImport } from './pages/explore'
 import { Route as EventsRouteImport } from './pages/events'
 import { Route as AlertsRouteImport } from './pages/alerts'
 import { Route as AdminRouteImport } from './pages/admin'
@@ -30,6 +31,11 @@ const ProfileRoute = ProfileRouteImport.update({
 const FriendsRoute = FriendsRouteImport.update({
   id: '/friends',
   path: '/friends',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ExploreRoute = ExploreRouteImport.update({
+  id: '/explore',
+  path: '/explore',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EventsRoute = EventsRouteImport.update({
@@ -88,6 +94,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRouteWithChildren
   '/alerts': typeof AlertsRoute
   '/events': typeof EventsRouteWithChildren
+  '/explore': typeof ExploreRoute
   '/friends': typeof FriendsRoute
   '/profile': typeof ProfileRoute
   '/admin/feedback': typeof AdminFeedbackRoute
@@ -102,6 +109,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRouteWithChildren
   '/alerts': typeof AlertsRoute
   '/events': typeof EventsRouteWithChildren
+  '/explore': typeof ExploreRoute
   '/friends': typeof FriendsRoute
   '/profile': typeof ProfileRoute
   '/admin/feedback': typeof AdminFeedbackRoute
@@ -117,6 +125,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRouteWithChildren
   '/alerts': typeof AlertsRoute
   '/events': typeof EventsRouteWithChildren
+  '/explore': typeof ExploreRoute
   '/friends': typeof FriendsRoute
   '/profile': typeof ProfileRoute
   '/admin/feedback': typeof AdminFeedbackRoute
@@ -133,6 +142,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/alerts'
     | '/events'
+    | '/explore'
     | '/friends'
     | '/profile'
     | '/admin/feedback'
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/alerts'
     | '/events'
+    | '/explore'
     | '/friends'
     | '/profile'
     | '/admin/feedback'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/alerts'
     | '/events'
+    | '/explore'
     | '/friends'
     | '/profile'
     | '/admin/feedback'
@@ -176,6 +188,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRouteWithChildren
   AlertsRoute: typeof AlertsRoute
   EventsRoute: typeof EventsRouteWithChildren
+  ExploreRoute: typeof ExploreRoute
   FriendsRoute: typeof FriendsRoute
   ProfileRoute: typeof ProfileRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
@@ -196,6 +209,13 @@ declare module '@tanstack/react-router' {
       path: '/friends'
       fullPath: '/friends'
       preLoaderRoute: typeof FriendsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/explore': {
+      id: '/explore'
+      path: '/explore'
+      fullPath: '/explore'
+      preLoaderRoute: typeof ExploreRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/events': {
@@ -301,6 +321,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRouteWithChildren,
   AlertsRoute: AlertsRoute,
   EventsRoute: EventsRouteWithChildren,
+  ExploreRoute: ExploreRoute,
   FriendsRoute: FriendsRoute,
   ProfileRoute: ProfileRoute,
   AuthCallbackRoute: AuthCallbackRoute,
