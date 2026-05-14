@@ -142,7 +142,7 @@ export function ExploreRail({
                     event={event}
                     currentUser={currentUser}
                     onClick={() => onEventClick(event)}
-                    appearance={variant === 'featured' ? 'exploreFeatured' : 'explore'}
+                    size={variant === 'featured' ? 'featured' : 'default'}
                   />
                 ))}
               </div>
