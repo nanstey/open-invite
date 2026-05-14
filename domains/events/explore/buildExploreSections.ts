@@ -11,6 +11,22 @@ export type ExploreSection = {
 const HOUR_MS = 60 * 60 * 1000;
 const DAY_MS = 24 * HOUR_MS;
 
+const CATEGORY_EMOJI: Record<string, string> = {
+  entertainment: '🎭',
+  errand: '🛒',
+  food: '🍽️',
+  social: '🥂',
+  sport: '⚽',
+  travel: '✈️',
+  work: '💼',
+  other: '✨',
+};
+
+function withEmoji(category: string): string {
+  const emoji = CATEGORY_EMOJI[category.trim().toLowerCase()];
+  return emoji ? `${emoji} ${category}` : category;
+}
+
 function compareChronologically(a: SocialEvent, b: SocialEvent) {
   return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
 }
@@ -74,18 +90,18 @@ export function buildExploreSections(
   const sections: ExploreSection[] = [];
 
   if (happeningSoon.length > 0) {
-    sections.push({ id: 'happening-soon', title: 'Happening Soon', events: happeningSoon });
+    sections.push({ id: 'happening-soon', title: '⚡ Happening Soon', events: happeningSoon });
   }
 
   if (upcoming.length > 0) {
-    sections.push({ id: 'upcoming', title: 'Upcoming', events: upcoming });
+    sections.push({ id: 'upcoming', title: '📅 Upcoming', events: upcoming });
   }
 
   const categorySections = [...groupedByCategory.entries()]
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([activityType, categoryEvents]) => ({
       id: `category:${activityType}` as const,
-      title: activityType,
+      title: withEmoji(activityType),
       events: [...categoryEvents].sort(compareChronologically),
     }));
 
