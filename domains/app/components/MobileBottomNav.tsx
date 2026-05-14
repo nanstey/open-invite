@@ -65,7 +65,7 @@ export function MobileBottomNav({ user, activeSection, eventsView }: MobileBotto
         }`}
       >
         <div
-          className={`w-8 h-8 rounded-full overflow-hidden border ${
+          className={`w-9 h-9 rounded-full overflow-hidden border ${
             activeSection === 'PROFILE' ? 'border-primary' : 'border-slate-500'
           }`}
         >
