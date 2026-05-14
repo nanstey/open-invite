@@ -1,5 +1,5 @@
+import { Bell, CalendarDays, Map as MapIcon, MapPin, Sparkles, Users } from 'lucide-react';
 import type React from 'react';
-import { CalendarDays, Map, Users, Bell, MapPin, Sparkles } from 'lucide-react';
 import { Card } from '../../lib/ui/9ui/card';
 
 // ============================================================================
@@ -35,15 +35,17 @@ const FEATURES: Feature[] = [
     image: 'https://images.unsplash.com/photo-1633526543814-9718c8922b7a?w=800&h=600&fit=crop',
   },
   {
-    icon: <Map className="w-8 h-8" />,
+    icon: <MapIcon className="w-8 h-8" />,
     title: 'Map View',
-    description: 'Discover events happening near you. See where your friends are gathering in real-time.',
+    description:
+      'Discover events happening near you. See where your friends are gathering in real-time.',
     image: 'https://images.unsplash.com/photo-1619468129361-605ebea04b44?w=800&h=600&fit=crop',
   },
   {
     icon: <Bell className="w-8 h-8" />,
     title: 'Smart Notifications',
-    description: 'Never miss an invite or update. Get personalized alerts for events you care about.',
+    description:
+      'Never miss an invite or update. Get personalized alerts for events you care about.',
     image: 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&h=600&fit=crop',
   },
 ];
@@ -82,15 +84,20 @@ function HeroSection({ onSignIn }: { onSignIn: () => void }) {
         </div>
 
         <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-primary animate-gradient">
-          Open Invite<sup className="text-lg md:text-xl ml-1 text-primary inline-block align-top mt-5">beta</sup>
+          Open Invite
+          <sup className="text-lg md:text-xl ml-1 text-primary inline-block align-top mt-5">
+            beta
+          </sup>
         </h1>
 
         <p className="text-xl md:text-2xl text-slate-300 mb-8 max-w-2xl mx-auto leading-relaxed">
-          Coordinate activities with friends, manage invites, and discover what your circle is up to.
+          Coordinate activities with friends, manage invites, and discover what your circle is up
+          to.
         </p>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
           <button
+            type="button"
             onClick={onSignIn}
             className="px-8 py-4 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/40 transition-all transform hover:scale-105 text-lg"
           >
@@ -154,8 +161,8 @@ function FeaturesSection() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {FEATURES.map((feature, index) => (
-            <FeatureCard key={index} feature={feature} />
+          {FEATURES.map(feature => (
+            <FeatureCard key={feature.title} feature={feature} />
           ))}
         </div>
       </div>
@@ -166,7 +173,9 @@ function FeaturesSection() {
 function CategoryCard({ category }: { category: Category; key?: React.Key }) {
   return (
     <Card className="group relative aspect-square bg-slate-800/50 backdrop-blur-sm border-slate-700 rounded-xl overflow-hidden hover:border-primary/50 transition-all duration-300 cursor-pointer">
-      <div className={`absolute inset-0 ${category.color} opacity-10 group-hover:opacity-20 transition-opacity`}></div>
+      <div
+        className={`absolute inset-0 ${category.color} opacity-10 group-hover:opacity-20 transition-opacity`}
+      ></div>
       <div className="relative h-full flex flex-col items-center justify-center p-4">
         <div className="text-4xl mb-2">{category.icon}</div>
         <div className="text-sm font-semibold text-slate-200">{category.name}</div>
@@ -189,8 +198,8 @@ function CategoriesSection() {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-          {CATEGORIES.map((category, index) => (
-            <CategoryCard key={index} category={category} />
+          {CATEGORIES.map(category => (
+            <CategoryCard key={category.name} category={category} />
           ))}
         </div>
       </div>
@@ -213,7 +222,8 @@ function ShowcaseSection() {
               Discover Events Near You
             </h2>
             <p className="text-xl text-slate-400 mb-6 leading-relaxed">
-              See what's happening in your area. Find events by location and join gatherings with friends nearby.
+              See what's happening in your area. Find events by location and join gatherings with
+              friends nearby.
             </p>
             <ul className="space-y-3 text-slate-300">
               <li className="flex items-center gap-3">
@@ -257,7 +267,8 @@ function ShowcaseSection() {
               Stay Connected with Friends
             </h2>
             <p className="text-xl text-slate-400 mb-6 leading-relaxed">
-              Build your social network. Create groups, invite friends, and keep track of everyone's plans in one place.
+              Build your social network. Create groups, invite friends, and keep track of everyone's
+              plans in one place.
             </p>
             <ul className="space-y-3 text-slate-300">
               <li className="flex items-center gap-3">
@@ -291,6 +302,7 @@ function CTASection({ onSignIn }: { onSignIn: () => void }) {
           Join your friends and start discovering amazing events happening around you.
         </p>
         <button
+          type="button"
           onClick={onSignIn}
           className="px-10 py-5 bg-gradient-to-r from-primary to-secondary text-white font-bold rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/40 transition-all transform hover:scale-105 text-lg"
         >
@@ -308,9 +320,7 @@ function Footer() {
         <div className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-secondary mb-4">
           Open Invite
         </div>
-        <p className="text-slate-500 text-sm">
-          A social calendar for friends
-        </p>
+        <p className="text-slate-500 text-sm">A social calendar for friends</p>
       </div>
     </footer>
   );

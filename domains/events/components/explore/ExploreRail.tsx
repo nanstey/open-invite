@@ -129,9 +129,9 @@ export function ExploreRail({
           style={{ transform: `translateX(-${pageIndex * viewportWidth}px)` }}
           data-page-index={pageIndex}
         >
-          {pages.map((page, idx) => (
+          {pages.map(page => (
             <div
-              key={`${title}-page-${idx}`}
+              key={page.map(e => e.id).join('-') || title}
               className="shrink-0"
               style={{ width: viewportWidth || undefined }}
             >

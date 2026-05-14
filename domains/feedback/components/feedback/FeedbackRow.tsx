@@ -1,43 +1,44 @@
-import type React from 'react'
-import { Badge } from '../../../../lib/ui/components/Badge'
-import { ProjectLinkCard } from '../projects/ProjectLinkCard'
-import { formatDateShort } from '../../../../lib/ui/utils/datetime'
+import type React from 'react';
+import { Badge } from '../../../../lib/ui/components/Badge';
+import { formatDateShort } from '../../../../lib/ui/utils/datetime';
+import type { FeedbackProjectMapping } from '../../../../services/feedbackProjectService';
 import {
-  FEEDBACK_TYPE_COLORS,
   FEEDBACK_IMPORTANCE_COLORS,
   FEEDBACK_STATUS_COLORS,
+  FEEDBACK_TYPE_COLORS,
   type Feedback,
-} from '../../types'
-import type { FeedbackProjectMapping } from '../../../../services/feedbackProjectService'
+} from '../../types';
+import { ProjectLinkCard } from '../projects/ProjectLinkCard';
 
 export interface FeedbackRowProps {
-  feedback: Feedback
+  feedback: Feedback;
   /** Project mappings for this feedback item */
-  projectMappings: FeedbackProjectMapping[]
+  projectMappings: FeedbackProjectMapping[];
   /** Click handler for the row */
-  onClick: () => void
+  onClick: () => void;
   /** Click handler for project link */
-  onProjectClick: (projectId: string) => void
+  onProjectClick: (projectId: string) => void;
 }
 
-export const FeedbackRow: React.FC<FeedbackRowProps> = ({ 
-  feedback, 
-  projectMappings, 
-  onClick, 
-  onProjectClick 
+export const FeedbackRow: React.FC<FeedbackRowProps> = ({
+  feedback,
+  projectMappings,
+  onClick,
+  onProjectClick,
 }) => {
-  const firstProject = projectMappings[0]
-  const additionalCount = projectMappings.length > 1 ? projectMappings.length - 1 : undefined
+  const firstProject = projectMappings[0];
+  const additionalCount = projectMappings.length > 1 ? projectMappings.length - 1 : undefined;
 
   const handleProjectClick = (e?: React.MouseEvent) => {
-    e?.stopPropagation()
+    e?.stopPropagation();
     if (firstProject) {
-      onProjectClick(firstProject.projectId)
+      onProjectClick(firstProject.projectId);
     }
-  }
+  };
 
   return (
     <button
+      type="button"
       onClick={onClick}
       className="w-full text-left p-4 hover:bg-slate-800/50 transition-colors"
     >
@@ -63,7 +64,9 @@ export const FeedbackRow: React.FC<FeedbackRowProps> = ({
           )}
         </div>
         <Badge colorClass={FEEDBACK_TYPE_COLORS[feedback.type]}>{feedback.type}</Badge>
-        <Badge colorClass={FEEDBACK_IMPORTANCE_COLORS[feedback.importance]}>{feedback.importance}</Badge>
+        <Badge colorClass={FEEDBACK_IMPORTANCE_COLORS[feedback.importance]}>
+          {feedback.importance}
+        </Badge>
         <Badge colorClass={FEEDBACK_STATUS_COLORS[feedback.status]}>{feedback.status}</Badge>
         <div className="text-xs text-slate-400">{formatDateShort(feedback.createdAt)}</div>
       </div>
@@ -76,7 +79,9 @@ export const FeedbackRow: React.FC<FeedbackRowProps> = ({
         </div>
         <div className="flex flex-wrap gap-2">
           <Badge colorClass={FEEDBACK_TYPE_COLORS[feedback.type]}>{feedback.type}</Badge>
-          <Badge colorClass={FEEDBACK_IMPORTANCE_COLORS[feedback.importance]}>{feedback.importance}</Badge>
+          <Badge colorClass={FEEDBACK_IMPORTANCE_COLORS[feedback.importance]}>
+            {feedback.importance}
+          </Badge>
         </div>
         {firstProject && (
           <ProjectLinkCard
@@ -93,6 +98,5 @@ export const FeedbackRow: React.FC<FeedbackRowProps> = ({
         </div>
       </div>
     </button>
-  )
-}
-
+  );
+};

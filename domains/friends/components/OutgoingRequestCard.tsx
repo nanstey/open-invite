@@ -1,12 +1,12 @@
-import type * as React from 'react'
-import { Clock, X } from 'lucide-react'
-import { UserAvatar } from '../../../lib/ui/components/UserAvatar'
-import type { OutgoingFriendRequest } from '../../../services/friendService'
+import { Clock, X } from 'lucide-react';
+import type * as React from 'react';
+import { UserAvatar } from '../../../lib/ui/components/UserAvatar';
+import type { OutgoingFriendRequest } from '../../../services/friendService';
 
 export interface OutgoingRequestCardProps {
-  request: OutgoingFriendRequest
-  isProcessing: boolean
-  onCancel: () => void
+  request: OutgoingFriendRequest;
+  isProcessing: boolean;
+  onCancel: () => void;
 }
 
 export const OutgoingRequestCard: React.FC<OutgoingRequestCardProps> = ({
@@ -28,6 +28,7 @@ export const OutgoingRequestCard: React.FC<OutgoingRequestCardProps> = ({
         <span className="hidden sm:inline">Pending</span>
       </div>
       <button
+        type="button"
         className="p-2 sm:px-3 sm:py-2 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-red-400 hover:border-red-400/30 transition-colors disabled:opacity-50"
         onClick={onCancel}
         disabled={isProcessing}
@@ -38,4 +39,4 @@ export const OutgoingRequestCard: React.FC<OutgoingRequestCardProps> = ({
       </button>
     </div>
   </div>
-)
+);

@@ -1,10 +1,9 @@
-
 import type React from 'react';
 import { useEffect, useRef, useState } from 'react';
-import type { User } from '../../../../lib/types';
-import type { SocialEvent } from '../../types';
 import { getTheme } from '../../../../lib/constants';
+import type { User } from '../../../../lib/types';
 import { fetchUsers } from '../../../../services/userService';
+import type { SocialEvent } from '../../types';
 
 // Add declaration for Leaflet on window object
 declare global {
@@ -46,14 +45,18 @@ export const MapView: React.FC<MapViewProps> = ({ events, onEventClick, currentU
     if (!mapInstanceRef.current) {
       // Center on Victoria BC
       const map = window.L.map(mapContainerRef.current).setView([48.4284, -123.3656], 13);
-      
+
       // Add a lighter basemap for better legibility in our dark UI (CartoDB Voyager)
-      window.L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
-        subdomains: 'abcd',
-        maxZoom: 20,
-        opacity: 0.95,
-      }).addTo(map);
+      window.L.tileLayer(
+        'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
+        {
+          attribution:
+            '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+          subdomains: 'abcd',
+          maxZoom: 20,
+          opacity: 0.95,
+        }
+      ).addTo(map);
 
       mapInstanceRef.current = map;
     }
@@ -76,33 +79,36 @@ export const MapView: React.FC<MapViewProps> = ({ events, onEventClick, currentU
     const map = mapInstanceRef.current;
 
     // Clear existing markers
-    markersRef.current.forEach(marker => marker.remove());
+    markersRef.current.forEach(marker => {
+      marker.remove();
+    });
     markersRef.current = [];
 
     // Add new markers
     events.forEach(event => {
-       const host = hostsMap.get(event.hostId);
-       if (!host) return; // Skip if host not loaded yet
-       if (typeof event.coordinates?.lat !== 'number' || typeof event.coordinates?.lng !== 'number') return; // No pin
-       
-       const theme = getTheme(event.activityType);
-       const isHost = event.hostId === currentUser.id;
-       const isAttending = event.attendees.includes(currentUser.id);
-       
-       // Pulse color based on status
-       let pulseColorClass = theme.bg; // Default category color
-       let ringBorder = 'border-white';
-       
-       if (isHost) {
-         pulseColorClass = 'bg-yellow-500';
-         ringBorder = 'border-yellow-500';
-       } else if (isAttending) {
-         pulseColorClass = 'bg-green-500';
-         ringBorder = 'border-green-500';
-       }
+      const host = hostsMap.get(event.hostId);
+      if (!host) return; // Skip if host not loaded yet
+      if (typeof event.coordinates?.lat !== 'number' || typeof event.coordinates?.lng !== 'number')
+        return; // No pin
 
-       // Create custom HTML icon with avatar
-       const iconHtml = `
+      const theme = getTheme(event.activityType);
+      const isHost = event.hostId === currentUser.id;
+      const isAttending = event.attendees.includes(currentUser.id);
+
+      // Pulse color based on status
+      let pulseColorClass = theme.bg; // Default category color
+      let ringBorder = 'border-white';
+
+      if (isHost) {
+        pulseColorClass = 'bg-yellow-500';
+        ringBorder = 'border-yellow-500';
+      } else if (isAttending) {
+        pulseColorClass = 'bg-green-500';
+        ringBorder = 'border-green-500';
+      }
+
+      // Create custom HTML icon with avatar
+      const iconHtml = `
          <div class="relative w-10 h-10 group">
             <div class="absolute inset-0 ${pulseColorClass} rounded-full animate-pulse opacity-50"></div>
             <img src="${host.avatar}" class="relative w-10 h-10 rounded-full border-2 ${ringBorder} shadow-lg object-cover" />
@@ -112,17 +118,19 @@ export const MapView: React.FC<MapViewProps> = ({ events, onEventClick, currentU
          </div>
        `;
 
-       const customIcon = window.L.divIcon({
-         html: iconHtml,
-         className: 'bg-transparent', // Remove default styles
-         iconSize: [40, 40],
-         iconAnchor: [20, 20],
-         popupAnchor: [0, -20]
-       });
+      const customIcon = window.L.divIcon({
+        html: iconHtml,
+        className: 'bg-transparent', // Remove default styles
+        iconSize: [40, 40],
+        iconAnchor: [20, 20],
+        popupAnchor: [0, -20],
+      });
 
-       const marker = window.L.marker([event.coordinates.lat, event.coordinates.lng], { icon: customIcon })
-         .addTo(map)
-         .bindPopup(`
+      const marker = window.L.marker([event.coordinates.lat, event.coordinates.lng], {
+        icon: customIcon,
+      })
+        .addTo(map)
+        .bindPopup(`
             <div class="min-w-[150px]">
                <div class="text-xs ${theme.text} font-bold uppercase mb-1 flex justify-between">
                   <span>${event.activityType}</span>
@@ -135,26 +143,25 @@ export const MapView: React.FC<MapViewProps> = ({ events, onEventClick, currentU
                </button>
             </div>
          `);
-       
-       // Add click listener to marker to open popup
-       marker.on('click', () => {
-         // Optionally handle simple click
-       });
 
-       // Bind popup open event to attach custom click handler to the button inside popup
-       marker.on('popupopen', () => {
-          const btn = document.querySelector(`.click-trigger[data-id="${event.id}"]`);
-          if (btn) {
-            btn.addEventListener('click', (e) => {
-               e.stopPropagation();
-               onEventClick(event);
-            });
-          }
-       });
+      // Add click listener to marker to open popup
+      marker.on('click', () => {
+        // Optionally handle simple click
+      });
 
-       markersRef.current.push(marker);
+      // Bind popup open event to attach custom click handler to the button inside popup
+      marker.on('popupopen', () => {
+        const btn = document.querySelector(`.click-trigger[data-id="${event.id}"]`);
+        if (btn) {
+          btn.addEventListener('click', e => {
+            e.stopPropagation();
+            onEventClick(event);
+          });
+        }
+      });
+
+      markersRef.current.push(marker);
     });
-
   }, [events, onEventClick, currentUser, hostsMap]);
 
   return (

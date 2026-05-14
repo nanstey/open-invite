@@ -1,42 +1,40 @@
-import type React from 'react'
-import { useState } from 'react'
-import { Loader2, Github } from 'lucide-react'
-import { FeedbackPicker } from '../feedback/FeedbackPicker'
-import type { ProjectFormData } from '../../projectTypes'
-import { Button } from '../../../../lib/ui/9ui/button'
-import { Input } from '../../../../lib/ui/9ui/input'
-import { Textarea } from '../../../../lib/ui/9ui/textarea'
+import { Github, Loader2 } from 'lucide-react';
+import type React from 'react';
+import { useState } from 'react';
+import { Button } from '../../../../lib/ui/9ui/button';
+import { Input } from '../../../../lib/ui/9ui/input';
+import { Textarea } from '../../../../lib/ui/9ui/textarea';
+import type { ProjectFormData } from '../../projectTypes';
+import { FeedbackPicker } from '../feedback/FeedbackPicker';
 
 export interface CreateProjectModalProps {
-  onClose: () => void
-  onCreate: (data: ProjectFormData, feedbackIds: string[]) => Promise<void>
+  onClose: () => void;
+  onCreate: (data: ProjectFormData, feedbackIds: string[]) => Promise<void>;
 }
 
 export function CreateProjectModal({ onClose, onCreate }: CreateProjectModalProps) {
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [githubUrl, setGithubUrl] = useState('')
-  const [selectedFeedbackIds, setSelectedFeedbackIds] = useState<string[]>([])
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [githubUrl, setGithubUrl] = useState('');
+  const [selectedFeedbackIds, setSelectedFeedbackIds] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleToggleFeedback = (feedbackId: string) => {
-    setSelectedFeedbackIds((prev) =>
-      prev.includes(feedbackId)
-        ? prev.filter((id) => id !== feedbackId)
-        : [...prev, feedbackId]
-    )
-  }
+    setSelectedFeedbackIds(prev =>
+      prev.includes(feedbackId) ? prev.filter(id => id !== feedbackId) : [...prev, feedbackId]
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (!title.trim()) {
-      setError('Title is required')
-      return
+      setError('Title is required');
+      return;
     }
 
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
       await onCreate(
@@ -46,14 +44,14 @@ export function CreateProjectModal({ onClose, onCreate }: CreateProjectModalProp
           githubUrl: githubUrl.trim() || undefined,
         },
         selectedFeedbackIds
-      )
-      onClose()
+      );
+      onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to create project')
+      setError(err instanceof Error ? err.message : 'Failed to create project');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[9999] flex items-center justify-center p-4">
@@ -70,13 +68,17 @@ export function CreateProjectModal({ onClose, onCreate }: CreateProjectModalProp
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
+            <label
+              htmlFor="project-title"
+              className="block text-sm font-medium text-slate-300 mb-1"
+            >
               Title <span className="text-red-400">*</span>
             </label>
             <Input
+              id="project-title"
               type="text"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={e => setTitle(e.target.value)}
               placeholder="Project name"
               className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-primary"
               disabled={loading}
@@ -85,12 +87,16 @@ export function CreateProjectModal({ onClose, onCreate }: CreateProjectModalProp
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
+            <label
+              htmlFor="project-description"
+              className="block text-sm font-medium text-slate-300 mb-1"
+            >
               Description
             </label>
             <Textarea
+              id="project-description"
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               placeholder="What is this project about?"
               rows={3}
               className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-primary resize-none"
@@ -99,15 +105,19 @@ export function CreateProjectModal({ onClose, onCreate }: CreateProjectModalProp
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
+            <label
+              htmlFor="project-github"
+              className="block text-sm font-medium text-slate-300 mb-1"
+            >
               GitHub Link
             </label>
             <div className="flex items-center gap-2">
               <Github className="w-5 h-5 text-slate-500" />
               <Input
+                id="project-github"
                 type="text"
                 value={githubUrl}
-                onChange={(e) => setGithubUrl(e.target.value)}
+                onChange={e => setGithubUrl(e.target.value)}
                 placeholder="https://github.com/..."
                 className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder:text-slate-500 outline-none focus:border-primary"
                 disabled={loading}
@@ -116,13 +126,13 @@ export function CreateProjectModal({ onClose, onCreate }: CreateProjectModalProp
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-300 mb-1">
+            <label
+              htmlFor="project-feedback"
+              className="block text-sm font-medium text-slate-300 mb-1"
+            >
               Link Feedback Items
             </label>
-            <FeedbackPicker
-              selectedIds={selectedFeedbackIds}
-              onToggle={handleToggleFeedback}
-            />
+            <FeedbackPicker selectedIds={selectedFeedbackIds} onToggle={handleToggleFeedback} />
           </div>
 
           <div className="flex gap-3 pt-2">
@@ -146,5 +156,5 @@ export function CreateProjectModal({ onClose, onCreate }: CreateProjectModalProp
         </form>
       </div>
     </div>
-  )
+  );
 }

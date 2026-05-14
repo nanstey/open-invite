@@ -1,13 +1,13 @@
-import type * as React from 'react'
-import { Check, X } from 'lucide-react'
-import { UserAvatar } from '../../../lib/ui/components/UserAvatar'
-import type { PendingFriendRequest } from '../../../services/friendService'
+import { Check, X } from 'lucide-react';
+import type * as React from 'react';
+import { UserAvatar } from '../../../lib/ui/components/UserAvatar';
+import type { PendingFriendRequest } from '../../../services/friendService';
 
 export interface PendingRequestCardProps {
-  request: PendingFriendRequest
-  isProcessing: boolean
-  onAccept: () => void
-  onDecline: () => void
+  request: PendingFriendRequest;
+  isProcessing: boolean;
+  onAccept: () => void;
+  onDecline: () => void;
 }
 
 export const PendingRequestCard: React.FC<PendingRequestCardProps> = ({
@@ -26,6 +26,7 @@ export const PendingRequestCard: React.FC<PendingRequestCardProps> = ({
     </div>
     <div className="flex gap-2 shrink-0">
       <button
+        type="button"
         className="p-2 sm:px-3 sm:py-2 rounded-lg text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
         onClick={onAccept}
         disabled={isProcessing}
@@ -35,6 +36,7 @@ export const PendingRequestCard: React.FC<PendingRequestCardProps> = ({
         <span className="hidden sm:inline">Accept</span>
       </button>
       <button
+        type="button"
         className="p-2 sm:px-3 sm:py-2 rounded-lg text-xs font-bold bg-slate-800 text-slate-300 border border-slate-700 hover:bg-slate-700 hover:text-red-400 hover:border-red-400/30 transition-colors disabled:opacity-50"
         onClick={onDecline}
         disabled={isProcessing}
@@ -45,5 +47,4 @@ export const PendingRequestCard: React.FC<PendingRequestCardProps> = ({
       </button>
     </div>
   </div>
-)
-
+);

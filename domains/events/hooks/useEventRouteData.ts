@@ -1,69 +1,67 @@
-import * as React from 'react'
-
-import type { SocialEvent } from '../types'
-import { isUuid } from '../components/detail/route/routing'
-import { fetchEventById, fetchEventBySlug } from '../../../services/eventService'
-import { realtimeService } from '../../../services/realtimeService'
+import * as React from 'react';
+import { fetchEventById, fetchEventBySlug } from '../../../services/eventService';
+import { realtimeService } from '../../../services/realtimeService';
+import { isUuid } from '../components/detail/route/routing';
+import type { SocialEvent } from '../types';
 
 export function useEventRouteData(args: {
-  slugOrId: string
-  pauseRealtime?: boolean
-  onCanonicalSlug?: (canonicalSlug: string) => void
-  onDelete?: () => void
+  slugOrId: string;
+  pauseRealtime?: boolean;
+  onCanonicalSlug?: (canonicalSlug: string) => void;
+  onDelete?: () => void;
 }) {
-  const { slugOrId, pauseRealtime, onCanonicalSlug, onDelete } = args
+  const { slugOrId, pauseRealtime, onCanonicalSlug, onDelete } = args;
 
-  const [event, setEvent] = React.useState<SocialEvent | null>(null)
-  const [isLoading, setIsLoading] = React.useState(true)
+  const [event, setEvent] = React.useState<SocialEvent | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
-    let cancelled = false
+    let cancelled = false;
 
-    ;(async () => {
-      const slugIsUuid = isUuid(slugOrId)
+    (async () => {
+      const slugIsUuid = isUuid(slugOrId);
       const matchesCurrentEvent =
-        !!event && ((slugIsUuid && event.id === slugOrId) || (!slugIsUuid && event.slug === slugOrId))
-      if (matchesCurrentEvent) return
+        !!event &&
+        ((slugIsUuid && event.id === slugOrId) || (!slugIsUuid && event.slug === slugOrId));
+      if (matchesCurrentEvent) return;
 
-      setEvent(null)
-      setIsLoading(true)
+      setEvent(null);
+      setIsLoading(true);
 
       try {
-        const fetched = slugIsUuid ? await fetchEventById(slugOrId) : await fetchEventBySlug(slugOrId)
-        if (cancelled) return
-        setEvent(fetched)
+        const fetched = slugIsUuid
+          ? await fetchEventById(slugOrId)
+          : await fetchEventBySlug(slugOrId);
+        if (!cancelled) setEvent(fetched);
       } finally {
-        if (cancelled) return
-        setIsLoading(false)
+        if (!cancelled) setIsLoading(false);
       }
-    })()
+    })();
 
     return () => {
-      cancelled = true
-    }
-  }, [event?.id, event?.slug, slugOrId, event])
+      cancelled = true;
+    };
+  }, [event?.id, event?.slug, slugOrId, event]);
 
   React.useEffect(() => {
-    if (!event) return
-    if (!isUuid(slugOrId)) return
-    onCanonicalSlug?.(event.slug)
-  }, [event?.slug, slugOrId, onCanonicalSlug, event])
+    if (!event) return;
+    if (!isUuid(slugOrId)) return;
+    onCanonicalSlug?.(event.slug);
+  }, [event?.slug, slugOrId, onCanonicalSlug, event]);
 
   React.useEffect(() => {
-    if (!event) return
-    if (pauseRealtime) return
+    if (!event) return;
+    if (pauseRealtime) return;
 
     const unsubscribe = realtimeService.subscribeToEvent(event.id, {
-      onUpdate: (updatedEvent) => setEvent(updatedEvent),
+      onUpdate: updatedEvent => setEvent(updatedEvent),
       onDelete: () => {
-        setEvent(null)
-        onDelete?.()
+        setEvent(null);
+        onDelete?.();
       },
-    })
-    return () => unsubscribe()
-  }, [event?.id, pauseRealtime, onDelete, event])
+    });
+    return () => unsubscribe();
+  }, [event?.id, pauseRealtime, onDelete, event]);
 
-  return { event, setEvent, isLoading }
+  return { event, setEvent, isLoading };
 }
-
-

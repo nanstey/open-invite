@@ -41,16 +41,6 @@ export function ExplorePage() {
     <div className="flex-1 overflow-y-auto custom-scrollbar px-4 py-4 md:px-6 md:py-6">
       <div className="mx-auto flex w-full max-w-[92rem] flex-col gap-8 pb-20">
         <div className="space-y-5">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold tracking-tight text-white md:text-4xl">
-              Find your next invite
-            </h1>
-            <p className="max-w-2xl text-sm text-slate-400 md:text-base">
-              Browse what&apos;s happening soon, what&apos;s coming up this week, and the rest of
-              the feed by category.
-            </p>
-          </div>
-
           <SearchInput
             value={searchTerm}
             onChange={event => setSearchTerm(event.target.value)}

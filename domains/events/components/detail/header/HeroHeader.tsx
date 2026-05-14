@@ -1,18 +1,18 @@
-import * as React from 'react'
-import { ArrowLeft, Image as ImageIcon, Move } from 'lucide-react'
-import { getTheme } from '../../../../../lib/constants'
+import { ArrowLeft, Image as ImageIcon, Move } from 'lucide-react';
+import * as React from 'react';
+import { getTheme } from '../../../../../lib/constants';
 
 export function HeroHeader(props: {
-  eventId: string
-  headerImageUrl?: string | null
-  headerImagePositionY?: number
-  activityType: string
-  title: string
-  showBackButton: boolean
-  onBack?: () => void
-  showHeaderImagePicker: boolean
-  onOpenHeaderImagePicker?: () => void
-  onSaveHeaderImagePositionY?: (positionY: number) => void
+  eventId: string;
+  headerImageUrl?: string | null;
+  headerImagePositionY?: number;
+  activityType: string;
+  title: string;
+  showBackButton: boolean;
+  onBack?: () => void;
+  showHeaderImagePicker: boolean;
+  onOpenHeaderImagePicker?: () => void;
+  onSaveHeaderImagePositionY?: (positionY: number) => void;
 }) {
   const {
     eventId,
@@ -25,119 +25,122 @@ export function HeroHeader(props: {
     showHeaderImagePicker,
     onOpenHeaderImagePicker,
     onSaveHeaderImagePositionY,
-  } = props
+  } = props;
 
-  const headerImageSrc = headerImageUrl || `https://picsum.photos/seed/${eventId}/1200/800`
-  const themeBgClass = getTheme(activityType).bg
-  const resolvedPositionY = Math.min(100, Math.max(0, headerImagePositionY ?? 50))
-  const [isAdjusting, setIsAdjusting] = React.useState(false)
-  const [draftPositionY, setDraftPositionY] = React.useState(resolvedPositionY)
-  const [isDragging, setIsDragging] = React.useState(false)
-  const dragStartRef = React.useRef<{ y: number; startPosition: number } | null>(null)
-  const containerRef = React.useRef<HTMLDivElement>(null)
+  const headerImageSrc = headerImageUrl || `https://picsum.photos/seed/${eventId}/1200/800`;
+  const themeBgClass = getTheme(activityType).bg;
+  const resolvedPositionY = Math.min(100, Math.max(0, headerImagePositionY ?? 50));
+  const [isAdjusting, setIsAdjusting] = React.useState(false);
+  const [draftPositionY, setDraftPositionY] = React.useState(resolvedPositionY);
+  const [isDragging, setIsDragging] = React.useState(false);
+  const dragStartRef = React.useRef<{ y: number; startPosition: number } | null>(null);
+  const containerRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (!isAdjusting) {
-      setDraftPositionY(resolvedPositionY)
+      setDraftPositionY(resolvedPositionY);
     }
-  }, [isAdjusting, resolvedPositionY])
+  }, [isAdjusting, resolvedPositionY]);
 
   const handleOpenAdjust = () => {
-    setDraftPositionY(resolvedPositionY)
-    setIsAdjusting(true)
-  }
+    setDraftPositionY(resolvedPositionY);
+    setIsAdjusting(true);
+  };
 
   const handleCancelAdjust = () => {
-    setDraftPositionY(resolvedPositionY)
-    setIsAdjusting(false)
-  }
+    setDraftPositionY(resolvedPositionY);
+    setIsAdjusting(false);
+  };
 
   const handleSaveAdjust = () => {
-    onSaveHeaderImagePositionY?.(draftPositionY)
-    setIsAdjusting(false)
-  }
+    onSaveHeaderImagePositionY?.(draftPositionY);
+    setIsAdjusting(false);
+  };
 
   const handleDragStart = (clientY: number) => {
-    if (!isAdjusting) return
-    setIsDragging(true)
-    dragStartRef.current = { y: clientY, startPosition: draftPositionY }
-  }
+    if (!isAdjusting) return;
+    setIsDragging(true);
+    dragStartRef.current = { y: clientY, startPosition: draftPositionY };
+  };
 
-  const handleDragMove = (clientY: number) => {
-    if (!isDragging || !dragStartRef.current || !containerRef.current) return
-    const containerHeight = containerRef.current.offsetHeight
-    const deltaY = clientY - dragStartRef.current.y
-    // Dragging down = show more of the top = decrease position
-    // Dragging up = show more of the bottom = increase position
-    const sensitivity = 100 / containerHeight // Full drag = full range
-    const newPosition = dragStartRef.current.startPosition - deltaY * sensitivity
-    const clampedPosition = Math.min(100, Math.max(0, newPosition))
-    setDraftPositionY(Math.round(clampedPosition * 100) / 100)
-  }
+  const handleDragMove = React.useCallback(
+    (clientY: number) => {
+      if (!isDragging || !dragStartRef.current || !containerRef.current) return;
+      const containerHeight = containerRef.current.offsetHeight;
+      const deltaY = clientY - dragStartRef.current.y;
+      const sensitivity = 100 / containerHeight;
+      const newPosition = dragStartRef.current.startPosition - deltaY * sensitivity;
+      const clampedPosition = Math.min(100, Math.max(0, newPosition));
+      setDraftPositionY(Math.round(clampedPosition * 100) / 100);
+    },
+    [isDragging]
+  );
 
-  const handleDragEnd = () => {
-    setIsDragging(false)
-    dragStartRef.current = null
-  }
+  const handleDragEnd = React.useCallback(() => {
+    setIsDragging(false);
+    dragStartRef.current = null;
+  }, []);
 
   // Mouse events
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (!isAdjusting) return
-    e.preventDefault()
-    handleDragStart(e.clientY)
-  }
+    if (!isAdjusting) return;
+    e.preventDefault();
+    handleDragStart(e.clientY);
+  };
 
   // Touch events
   const handleTouchStart = (e: React.TouchEvent) => {
-    if (!isAdjusting) return
-    handleDragStart(e.touches[0].clientY)
-  }
+    if (!isAdjusting) return;
+    handleDragStart(e.touches[0].clientY);
+  };
 
   const handleTouchMove = (e: React.TouchEvent) => {
     if (isAdjusting) {
-      e.preventDefault()
+      e.preventDefault();
     }
-    handleDragMove(e.touches[0].clientY)
-  }
+    handleDragMove(e.touches[0].clientY);
+  };
 
   // Global mouse move/up listeners
   React.useEffect(() => {
-    if (!isDragging) return
+    if (!isDragging) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      handleDragMove(e.clientY)
-    }
+      handleDragMove(e.clientY);
+    };
 
     const handleMouseUp = () => {
-      handleDragEnd()
-    }
+      handleDragEnd();
+    };
 
-    window.addEventListener('mousemove', handleMouseMove)
-    window.addEventListener('mouseup', handleMouseUp)
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove)
-      window.removeEventListener('mouseup', handleMouseUp)
-    }
-  }, [isDragging, handleDragEnd, handleDragMove])
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging, handleDragEnd, handleDragMove]);
 
   // Prevent mobile page scroll while adjusting the header image.
   React.useEffect(() => {
-    if (!isAdjusting || !containerRef.current) return
-    const container = containerRef.current
+    if (!isAdjusting || !containerRef.current) return;
+    const container = containerRef.current;
     const handleTouchMoveEvent = (e: TouchEvent) => {
-      e.preventDefault()
-    }
+      e.preventDefault();
+    };
 
-    container.addEventListener('touchmove', handleTouchMoveEvent, { passive: false })
+    container.addEventListener('touchmove', handleTouchMoveEvent, { passive: false });
     return () => {
-      container.removeEventListener('touchmove', handleTouchMoveEvent)
-    }
-  }, [isAdjusting])
+      container.removeEventListener('touchmove', handleTouchMoveEvent);
+    };
+  }, [isAdjusting]);
 
   return (
     <div
       ref={containerRef}
+      role="img"
+      aria-label="Event cover image"
       className={`relative w-full h-56 md:h-72 bg-slate-800 ${isAdjusting ? 'cursor-grab' : ''} ${isDragging ? 'cursor-grabbing' : ''}`}
       style={{ touchAction: isAdjusting ? 'none' : 'auto' }}
       onMouseDown={handleMouseDown}
@@ -152,7 +155,9 @@ export function HeroHeader(props: {
         alt="cover"
         draggable={false}
       />
-      <div className={`absolute inset-0 bg-gradient-to-t from-background/95 via-background/45 to-transparent ${isAdjusting ? 'pointer-events-none' : ''}`} />
+      <div
+        className={`absolute inset-0 bg-gradient-to-t from-background/95 via-background/45 to-transparent ${isAdjusting ? 'pointer-events-none' : ''}`}
+      />
 
       {showBackButton && onBack && !isAdjusting ? (
         <div className="absolute top-4 left-4">
@@ -170,9 +175,15 @@ export function HeroHeader(props: {
       {!isAdjusting ? (
         <div className="absolute bottom-0 left-0 right-0">
           <div className="max-w-6xl mx-auto px-4 md:px-6 pb-5">
-            <div className={`inline-block px-2 py-0.5 rounded text-xs font-bold text-white ${themeBgClass}`}>{activityType}</div>
+            <div
+              className={`inline-block px-2 py-0.5 rounded text-xs font-bold text-white ${themeBgClass}`}
+            >
+              {activityType}
+            </div>
             <div className="flex items-end justify-between gap-4 mt-2 mb-4 h-12">
-              <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight min-w-0">{title || 'Untitled invite'}</h1>
+              <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight min-w-0">
+                {title || 'Untitled invite'}
+              </h1>
               {showHeaderImagePicker ? (
                 <div className="flex items-center gap-2 shrink-0">
                   <button
@@ -232,5 +243,5 @@ export function HeroHeader(props: {
         </div>
       ) : null}
     </div>
-  )
+  );
 }

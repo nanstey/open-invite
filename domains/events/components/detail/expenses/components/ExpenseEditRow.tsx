@@ -1,12 +1,17 @@
+import { ChevronDown, ChevronUp, MoreVertical, Trash2 } from 'lucide-react';
 
+import { FormInput, FormSelect } from '../../../../../../lib/ui/components/FormControls';
+import { parseMoneyInputToCents } from '../../../../../../lib/ui/utils/money';
 
-import { ChevronDown, ChevronUp, MoreVertical, Trash2 } from 'lucide-react'
-
-import { FormInput, FormSelect } from '../../../../../../lib/ui/components/FormControls'
-import { parseMoneyInputToCents } from '../../../../../../lib/ui/utils/money'
-
-import type { ItineraryItem } from '../../../../types'
-import type { EventExpense, ExpenseApi, ExpenseSettledKind, ExpenseSplitType, ExpenseTiming, Person } from '../types'
+import type { ItineraryItem } from '../../../../types';
+import type {
+  EventExpense,
+  ExpenseApi,
+  ExpenseSettledKind,
+  ExpenseSplitType,
+  ExpenseTiming,
+  Person,
+} from '../types';
 import {
   canCommitMoneyInput,
   computePerPersonCents,
@@ -16,29 +21,29 @@ import {
   formatCentsMaybeEstimate,
   isEstimateExpense,
   titleForKind,
-} from '../utils'
-import { ExpenseParticipantsEditor } from './ExpenseParticipantsEditor'
+} from '../utils';
+import { ExpenseParticipantsEditor } from './ExpenseParticipantsEditor';
 
 export function ExpenseEditRow(props: {
-  expense: EventExpense
-  people: Person[]
-  allPeopleIds: string[]
-  hostId?: string
-  currentUserId?: string
-  expenseApi?: ExpenseApi
-  itineraryItems: ItineraryItem[]
+  expense: EventExpense;
+  people: Person[];
+  allPeopleIds: string[];
+  hostId?: string;
+  currentUserId?: string;
+  expenseApi?: ExpenseApi;
+  itineraryItems: ItineraryItem[];
 
-  isExpanded: boolean
-  onToggleExpanded: () => void
+  isExpanded: boolean;
+  onToggleExpanded: () => void;
 
-  isMenuOpen: boolean
-  onToggleMenu: () => void
-  onCloseMenu: () => void
-  onDelete: () => void
+  isMenuOpen: boolean;
+  onToggleMenu: () => void;
+  onCloseMenu: () => void;
+  onDelete: () => void;
 
-  getDraftValue: (expenseId: string, fallbackCents: number | undefined) => string
-  setDraftValue: (expenseId: string, value: string) => void
-  normalizeDraftValue: (expenseId: string, cents: number | undefined) => void
+  getDraftValue: (expenseId: string, fallbackCents: number | undefined) => string;
+  setDraftValue: (expenseId: string, value: string) => void;
+  normalizeDraftValue: (expenseId: string, cents: number | undefined) => void;
 }) {
   const {
     expense: e,
@@ -57,45 +62,38 @@ export function ExpenseEditRow(props: {
     getDraftValue,
     setDraftValue,
     normalizeDraftValue,
-  } = props
+  } = props;
 
-  const totalCents = computeTotalCents(e)
-  const perCents = computePerPersonCents(e)
-  const isEstimate = isEstimateExpense(e)
-  const totalLabel = formatCentsMaybeEstimate(totalCents, { currency: e.currency, isEstimate })
-  const perLabel = formatCentsMaybeEstimate(perCents, { currency: e.currency, isEstimate })
+  const totalCents = computeTotalCents(e);
+  const perCents = computePerPersonCents(e);
+  const isEstimate = isEstimateExpense(e);
+  const totalLabel = formatCentsMaybeEstimate(totalCents, { currency: e.currency, isEstimate });
+  const perLabel = formatCentsMaybeEstimate(perCents, { currency: e.currency, isEstimate });
 
   return (
     <div className="rounded-xl border border-slate-800 bg-slate-900/30">
       <div className="p-4">
         <div className="flex items-start justify-between gap-3">
-          <div
+          <button
+            type="button"
             className="min-w-0 flex-1 text-left cursor-pointer"
-            role="button"
-            tabIndex={0}
             aria-expanded={isExpanded}
             onClick={onToggleExpanded}
-            onKeyDown={(ev) => {
-              if (ev.key === 'Enter' || ev.key === ' ') {
-                ev.preventDefault()
-                onToggleExpanded()
-              }
-            }}
           >
             <div className="font-bold text-white truncate">{e.title || 'Untitled expense'}</div>
             <div className="text-sm text-slate-400">{titleForKind(e)}</div>
             <div className="text-sm text-slate-400 truncate">
               {totalLabel} total • {perLabel} / person • {e.participantIds.length} people
             </div>
-          </div>
+          </button>
 
           <div className="flex items-center gap-2 shrink-0">
             <div className="relative">
               <button
                 type="button"
-                onClick={(ev) => {
-                  ev.stopPropagation()
-                  onToggleMenu()
+                onClick={ev => {
+                  ev.stopPropagation();
+                  onToggleMenu();
                 }}
                 className="p-2 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 transition-colors"
                 aria-label="Expense menu"
@@ -106,13 +104,15 @@ export function ExpenseEditRow(props: {
               {isMenuOpen ? (
                 <div
                   className="absolute right-0 mt-2 w-44 rounded-xl border border-slate-700 bg-slate-900 shadow-lg z-[2000] overflow-hidden"
-                  onClick={(ev) => ev.stopPropagation()}
+                  role="menu"
+                  onClick={ev => ev.stopPropagation()}
+                  onKeyDown={ev => ev.stopPropagation()}
                 >
                   <button
                     type="button"
                     onClick={() => {
-                      onCloseMenu()
-                      onDelete()
+                      onCloseMenu();
+                      onDelete();
                     }}
                     className="w-full px-3 py-2 text-sm font-semibold text-red-300 hover:bg-red-500/10 flex items-center gap-2"
                   >
@@ -138,7 +138,7 @@ export function ExpenseEditRow(props: {
         <div className="px-4 pb-4 space-y-3">
           <FormInput
             value={e.title}
-            onChange={(ev) => expenseApi?.onUpdate(e.id, { title: ev.target.value })}
+            onChange={ev => expenseApi?.onUpdate(e.id, { title: ev.target.value })}
             placeholder="Expense title"
             variant="surface"
             size="md"
@@ -147,15 +147,15 @@ export function ExpenseEditRow(props: {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <FormSelect
               value={e.splitType}
-              onChange={(ev) => {
-                const nextSplitType = ev.target.value as ExpenseSplitType
+              onChange={ev => {
+                const nextSplitType = ev.target.value as ExpenseSplitType;
                 if (nextSplitType === 'GROUP') {
                   expenseApi?.onUpdate(e.id, {
                     splitType: nextSplitType,
                     ...ensureExpenseShapeOnTimingChange('SETTLED_LATER', e),
-                  })
+                  });
                 } else {
-                  expenseApi?.onUpdate(e.id, { splitType: nextSplitType })
+                  expenseApi?.onUpdate(e.id, { splitType: nextSplitType });
                 }
               }}
               variant="surface"
@@ -167,8 +167,11 @@ export function ExpenseEditRow(props: {
 
             <FormSelect
               value={e.timing}
-              onChange={(ev) =>
-                expenseApi?.onUpdate(e.id, ensureExpenseShapeOnTimingChange(ev.target.value as ExpenseTiming, e))
+              onChange={ev =>
+                expenseApi?.onUpdate(
+                  e.id,
+                  ensureExpenseShapeOnTimingChange(ev.target.value as ExpenseTiming, e)
+                )
               }
               disabled={e.splitType === 'GROUP'}
               variant="surface"
@@ -187,8 +190,11 @@ export function ExpenseEditRow(props: {
             {e.timing === 'SETTLED_LATER' ? (
               <FormSelect
                 value={e.settledKind ?? 'EXACT'}
-                onChange={(ev) =>
-                  expenseApi?.onUpdate(e.id, ensureExpenseShapeOnSettledKindChange(ev.target.value as ExpenseSettledKind))
+                onChange={ev =>
+                  expenseApi?.onUpdate(
+                    e.id,
+                    ensureExpenseShapeOnSettledKindChange(ev.target.value as ExpenseSettledKind)
+                  )
                 }
                 variant="surface"
                 size="md"
@@ -206,19 +212,19 @@ export function ExpenseEditRow(props: {
               type="text"
               inputMode="decimal"
               value={getDraftValue(e.id, e.amountCents)}
-              onChange={(ev) => {
-                const nextText = ev.target.value
-                setDraftValue(e.id, nextText)
+              onChange={ev => {
+                const nextText = ev.target.value;
+                setDraftValue(e.id, nextText);
                 if (canCommitMoneyInput(nextText)) {
-                  const cents = parseMoneyInputToCents(nextText)
-                  if (typeof cents === 'number') expenseApi?.onUpdate(e.id, { amountCents: cents })
+                  const cents = parseMoneyInputToCents(nextText);
+                  if (typeof cents === 'number') expenseApi?.onUpdate(e.id, { amountCents: cents });
                 }
               }}
               onBlur={() => {
-                const text = getDraftValue(e.id, e.amountCents)
-                const cents = parseMoneyInputToCents(text) ?? 0
-                expenseApi?.onUpdate(e.id, { amountCents: cents })
-                normalizeDraftValue(e.id, cents)
+                const text = getDraftValue(e.id, e.amountCents);
+                const cents = parseMoneyInputToCents(text) ?? 0;
+                expenseApi?.onUpdate(e.id, { amountCents: cents });
+                normalizeDraftValue(e.id, cents);
               }}
               placeholder={
                 e.timing === 'SETTLED_LATER' && e.settledKind === 'ESTIMATE'
@@ -244,5 +250,5 @@ export function ExpenseEditRow(props: {
         </div>
       ) : null}
     </div>
-  )
+  );
 }

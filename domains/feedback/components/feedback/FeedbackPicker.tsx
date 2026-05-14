@@ -1,16 +1,20 @@
-import { useState, useEffect } from 'react'
-import { Loader2, Check } from 'lucide-react'
-import { SearchInput } from '../../../../lib/ui/components/SearchInput'
-import { fetchAllFeedbackSimple } from '../../../../services/feedbackProjectService'
-import { FEEDBACK_TYPE_COLORS, FEEDBACK_IMPORTANCE_COLORS, type SimpleFeedbackItem } from '../../types'
+import { Check, Loader2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { SearchInput } from '../../../../lib/ui/components/SearchInput';
+import { fetchAllFeedbackSimple } from '../../../../services/feedbackProjectService';
+import {
+  FEEDBACK_IMPORTANCE_COLORS,
+  FEEDBACK_TYPE_COLORS,
+  type SimpleFeedbackItem,
+} from '../../types';
 
 export interface FeedbackPickerProps {
   /** Currently selected feedback IDs */
-  selectedIds: string[]
+  selectedIds: string[];
   /** Toggle selection of a feedback item */
-  onToggle: (feedbackId: string) => void
+  onToggle: (feedbackId: string) => void;
   /** Feedback IDs to exclude from the list */
-  excludeIds?: string[]
+  excludeIds?: string[];
 }
 
 /**
@@ -18,34 +22,34 @@ export interface FeedbackPickerProps {
  * Used in project creation and project detail panels.
  */
 export function FeedbackPicker({ selectedIds, onToggle, excludeIds = [] }: FeedbackPickerProps) {
-  const [feedbackItems, setFeedbackItems] = useState<SimpleFeedbackItem[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
+  const [feedbackItems, setFeedbackItems] = useState<SimpleFeedbackItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const loadFeedback = async () => {
-    setLoading(true)
-    const items = await fetchAllFeedbackSimple()
-    setFeedbackItems(items)
-    setLoading(false)
-  }
+    setLoading(true);
+    const items = await fetchAllFeedbackSimple();
+    setFeedbackItems(items);
+    setLoading(false);
+  };
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: load once on mount
   useEffect(() => {
-    loadFeedback()
-  }, [])
+    loadFeedback();
+  }, []);
 
   const filteredItems = feedbackItems
     .filter(item => !excludeIds.includes(item.id))
-    .filter(item =>
-      searchQuery === '' ||
-      item.title.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    .filter(
+      item => searchQuery === '' || item.title.toLowerCase().includes(searchQuery.toLowerCase())
+    );
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-4">
         <Loader2 className="w-5 h-5 text-slate-500 animate-spin" />
       </div>
-    )
+    );
   }
 
   return (
@@ -54,7 +58,7 @@ export function FeedbackPicker({ selectedIds, onToggle, excludeIds = [] }: Feedb
       <SearchInput
         size="sm"
         value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
+        onChange={e => setSearchQuery(e.target.value)}
         placeholder="Search feedback..."
       />
 
@@ -65,8 +69,8 @@ export function FeedbackPicker({ selectedIds, onToggle, excludeIds = [] }: Feedb
             {searchQuery ? 'No matching feedback' : 'No feedback available'}
           </div>
         ) : (
-          filteredItems.map((item) => {
-            const isSelected = selectedIds.includes(item.id)
+          filteredItems.map(item => {
+            const isSelected = selectedIds.includes(item.id);
             return (
               <button
                 key={item.id}
@@ -80,9 +84,7 @@ export function FeedbackPicker({ selectedIds, onToggle, excludeIds = [] }: Feedb
               >
                 <div
                   className={`w-4 h-4 mt-0.5 shrink-0 rounded border flex items-center justify-center ${
-                    isSelected
-                      ? 'bg-primary border-primary'
-                      : 'border-slate-600'
+                    isSelected ? 'bg-primary border-primary' : 'border-slate-600'
                   }`}
                 >
                   {isSelected && <Check className="w-3 h-3 text-white" />}
@@ -99,7 +101,8 @@ export function FeedbackPicker({ selectedIds, onToggle, excludeIds = [] }: Feedb
                     </span>
                     <span
                       className={`text-xs px-1.5 py-0.5 rounded border ${
-                        FEEDBACK_IMPORTANCE_COLORS[item.importance] || 'bg-slate-500/20 text-slate-300'
+                        FEEDBACK_IMPORTANCE_COLORS[item.importance] ||
+                        'bg-slate-500/20 text-slate-300'
                       }`}
                     >
                       {item.importance}
@@ -107,7 +110,7 @@ export function FeedbackPicker({ selectedIds, onToggle, excludeIds = [] }: Feedb
                   </div>
                 </div>
               </button>
-            )
+            );
           })
         )}
       </div>
@@ -118,6 +121,5 @@ export function FeedbackPicker({ selectedIds, onToggle, excludeIds = [] }: Feedb
         </div>
       )}
     </div>
-  )
+  );
 }
-

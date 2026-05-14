@@ -1,10 +1,10 @@
+import { X } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
-import { useAuth } from './AuthProvider';
-import { X } from 'lucide-react';
 import { GoogleIcon } from '@/lib/ui/icons/GoogleIcon';
 import { Button } from '../../lib/ui/9ui/button';
 import { Input } from '../../lib/ui/9ui/input';
+import { useAuth } from './AuthProvider';
 
 // ============================================================================
 // Constants
@@ -77,14 +77,25 @@ interface AuthToggleProps {
 // Sub-components
 // ============================================================================
 
-function FormInput({ label, type, value, onChange, placeholder, required, minLength }: FormInputProps) {
+function FormInput({
+  label,
+  type,
+  value,
+  onChange,
+  placeholder,
+  required,
+  minLength,
+}: FormInputProps) {
   return (
     <div>
-      <label className="block text-sm font-medium text-slate-300 mb-1">{label}</label>
+      <label htmlFor={`input-${label}`} className="block text-sm font-medium text-slate-300 mb-1">
+        {label}
+      </label>
       <Input
+        id={`input-${label}`}
         type={type}
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={e => onChange(e.target.value)}
         className="w-full px-4 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
         placeholder={placeholder}
         required={required}
@@ -173,11 +184,7 @@ function EmailSignInForm({ isSignUp, loading, onSubmit, fields }: EmailSignInFor
         minLength={6}
       />
 
-      <Button
-        type="submit"
-        disabled={loading}
-        className="w-full font-bold py-2 px-4"
-      >
+      <Button type="submit" disabled={loading} className="w-full font-bold py-2 px-4">
         {loading ? 'Loading...' : isSignUp ? 'Sign Up' : 'Sign In'}
       </Button>
     </form>
