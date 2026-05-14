@@ -22,8 +22,8 @@ export function MobileBottomNav({ user, activeSection, eventsView }: MobileBotto
           activeSection === 'EXPLORE' ? 'text-primary' : 'text-slate-400'
         }`}
       >
-        <Compass className="w-6 h-6" />
-        <span className="text-[12px] font-medium">Explore</span>
+        <Compass className="w-8 h-8" />
+        {/* <span className="text-[12px] font-medium">Explore</span> */}
       </Link>
 
       <Link
@@ -33,19 +33,8 @@ export function MobileBottomNav({ user, activeSection, eventsView }: MobileBotto
           activeSection === 'EVENTS' ? 'text-primary' : 'text-slate-400'
         }`}
       >
-        <CalendarDays className="w-6 h-6" />
-        <span className="text-[12px] font-medium">Invites</span>
-      </Link>
-
-      <Link
-        to="/friends"
-        search={{ tab: 'friends' }}
-        className={`w-full flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
-          activeSection === 'FRIENDS' ? 'text-primary' : 'text-slate-400'
-        }`}
-      >
-        <UsersIcon className="w-6 h-6" />
-        <span className="text-[12px] font-medium">Friends</span>
+        <CalendarDays className="w-8 h-8" />
+        {/* <span className="text-[12px] font-medium">Invites</span> */}
       </Link>
 
       <div className="w-full flex justify-center">
@@ -59,19 +48,30 @@ export function MobileBottomNav({ user, activeSection, eventsView }: MobileBotto
       </div>
 
       <Link
+        to="/friends"
+        search={{ tab: 'friends' }}
+        className={`w-full flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
+          activeSection === 'FRIENDS' ? 'text-primary' : 'text-slate-400'
+        }`}
+      >
+        <UsersIcon className="w-8 h-8" />
+        {/* <span className="text-[12px] font-medium">Friends</span> */}
+      </Link>
+
+      <Link
         to="/profile"
         className={`w-full flex flex-col items-center gap-1 p-2 rounded-lg transition-colors ${
           activeSection === 'PROFILE' ? 'text-primary' : 'text-slate-400'
         }`}
       >
         <div
-          className={`w-6 h-6 rounded-full overflow-hidden border ${
+          className={`w-8 h-8 rounded-full overflow-hidden border ${
             activeSection === 'PROFILE' ? 'border-primary' : 'border-slate-500'
           }`}
         >
           <img src={user.avatar} alt="Me" className="w-full h-full object-cover" />
         </div>
-        <span className="text-[12px] font-medium">Profile</span>
+        {/* <span className="text-[12px] font-medium">Profile</span> */}
       </Link>
     </nav>
   );
