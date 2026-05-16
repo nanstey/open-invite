@@ -7,7 +7,7 @@ import { computeExpenseSummaryForExpenses } from '../expenses/useExpenseCalculat
 import { filterExpensesForItinerarySelection, formatSummaryCents } from '../expenses/utils';
 import { sortByStartTime } from './itinerary';
 
-export function ItineraryAttendanceOverlay(props: {
+export function ScheduleAttendanceOverlay(props: {
   open: boolean;
   title: string;
   itineraryItems: ItineraryItem[];
@@ -128,7 +128,7 @@ export function ItineraryAttendanceOverlay(props: {
         <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/60 shrink-0">
           <div>
             <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
-              Select itinerary items
+              Select schedule items
             </div>
             <h2 className="text-lg font-bold text-white">{title}</h2>
           </div>
@@ -143,12 +143,11 @@ export function ItineraryAttendanceOverlay(props: {
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar space-y-4">
           <div className="text-sm text-slate-400">
-            Choose the itinerary items you plan to attend. Expense totals update as you select
-            items.
+            Choose the schedule items you plan to attend. Expense totals update as you select items.
           </div>
 
           {orderedItems.length === 0 ? (
-            <div className="text-sm text-slate-500 italic">No itinerary items yet.</div>
+            <div className="text-sm text-slate-500 italic">No schedule items yet.</div>
           ) : (
             <div className="space-y-3">
               {orderedItems.map(item => {

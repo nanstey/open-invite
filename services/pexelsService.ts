@@ -28,9 +28,10 @@ type PexelsSearchResponse = {
 };
 
 function getPexelsApiKey(): string {
-  // In tests, vi.stubEnv updates process.env; in app runtime Vite exposes import.meta.env.
+  // Vitest stubs process.env; browser builds rely on Vite's import.meta.env.
+  const processEnv = typeof process !== 'undefined' ? process.env : undefined;
   const key =
-    (process.env.VITE_PEXELS_API as string | undefined) ??
+    (processEnv?.VITE_PEXELS_API as string | undefined) ??
     ((import.meta as any).env?.VITE_PEXELS_API as string | undefined);
   return (key ?? '').trim();
 }

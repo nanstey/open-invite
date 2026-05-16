@@ -13,6 +13,18 @@ const baseValues = {
 };
 
 describe('EventEditor integration: group visibility validation', () => {
+  it('does not require a top-level event location', () => {
+    const errors = validateEventEditor(
+      {
+        ...baseValues,
+        location: '',
+      },
+      false
+    );
+
+    expect(errors.location).toBeUndefined();
+  });
+
   it('requires at least one group when visibilityType=GROUPS', () => {
     const errors = validateEventEditor(
       {

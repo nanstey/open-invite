@@ -1,73 +1,79 @@
-
-
-import type { User } from '../../../../../lib/types'
-import type { LocationSuggestion } from '../../../../../lib/ui/components/LocationAutocomplete'
-import type { ItineraryItem, SocialEvent } from '../../../types'
-import type { Person, EventExpense, ExpenseApi } from '../expenses/types'
-import type { DraftStartDateTimeLocalModel } from '../../../hooks/useDraftStartDateTimeLocal'
-import type { EventDateTimeModel } from '../utils/eventDateTimeModel'
-import { buildGoogleMapsSearchUrl } from '../maps/maps'
-import { openExternalUrl } from '../../../../../lib/ui/utils/openExternalUrl'
-import { formatItineraryLocationForDisplay, formatRawLocationForDisplay } from '../utils/locationDisplay'
-import { TitleCard } from './TitleCard'
-import { AboutCard } from './AboutCard'
-import { DateTimeCard } from './DateTimeCard'
-import { ItineraryCard } from './ItineraryCard'
-import { LocationCard } from './LocationCard'
-import { ExpensesCard } from '../expenses/ExpensesCard'
-import { ItineraryEditor } from '../itineraries/ItineraryEditor'
-import { ItinerarySection } from '../itineraries/ItinerarySection'
+import type { User } from '../../../../../lib/types';
+import type { LocationSuggestion } from '../../../../../lib/ui/components/LocationAutocomplete';
+import { openExternalUrl } from '../../../../../lib/ui/utils/openExternalUrl';
+import type { DraftStartDateTimeLocalModel } from '../../../hooks/useDraftStartDateTimeLocal';
+import type { ItineraryItem, SocialEvent } from '../../../types';
+import { ExpensesCard } from '../expenses/ExpensesCard';
+import type { EventExpense, ExpenseApi, Person } from '../expenses/types';
+import { ScheduleEditor } from '../itineraries/ScheduleEditor';
+import { ScheduleSection } from '../itineraries/ScheduleSection';
+import { buildGoogleMapsSearchUrl } from '../maps/maps';
+import type { EventDateTimeModel } from '../utils/eventDateTimeModel';
+import {
+  formatItineraryLocationForDisplay,
+  formatRawLocationForDisplay,
+} from '../utils/locationDisplay';
+import { AboutCard } from './AboutCard';
+import { DateTimeCard } from './DateTimeCard';
+import { LocationCard } from './LocationCard';
+import { ScheduleCard } from './ScheduleCard';
+import { TitleCard } from './TitleCard';
 
 type DetailsTabEditModel = {
-  errors?: Partial<Record<'title' | 'description' | 'startTime' | 'location' | 'activityType' | 'durationHours', string>>
-  durationHours?: number | ''
-  onChangeDurationHours?: (value: number | '') => void
-  onChange: (patch: Partial<SocialEvent>) => void
+  errors?: Partial<
+    Record<
+      'title' | 'description' | 'startTime' | 'location' | 'activityType' | 'durationHours',
+      string
+    >
+  >;
+  durationHours?: number | '';
+  onChangeDurationHours?: (value: number | '') => void;
+  onChange: (patch: Partial<SocialEvent>) => void;
   itinerary?: {
-    items: ItineraryItem[]
+    items: ItineraryItem[];
     onAdd: (input: {
-      title: string
-      startTime: string
-      durationMinutes: number
-      location?: string
-      description?: string
-    }) => Promise<string> | string
+      title: string;
+      startTime: string;
+      durationMinutes: number;
+      location?: string;
+      description?: string;
+    }) => Promise<string> | string;
     onUpdate: (
       id: string,
       patch: Partial<{
-        title: string
-        startTime: string
-        durationMinutes: number
-        location?: string
-        description?: string
-      }>,
-    ) => Promise<void> | void
-    onDelete: (id: string) => Promise<void> | void
-  }
-}
+        title: string;
+        startTime: string;
+        durationMinutes: number;
+        location?: string;
+        description?: string;
+      }>
+    ) => Promise<void> | void;
+    onDelete: (id: string) => Promise<void> | void;
+  };
+};
 
 type DetailsTabProps = {
-  event: SocialEvent
-  isEditMode: boolean
-  isGuest: boolean
-  onRequireAuth?: () => void
-  currentUserId?: string
-  hostId?: string
-  expenses: EventExpense[]
-  expenseApi?: ExpenseApi
-  people: Person[]
-  itineraryItems: ItineraryItem[]
-  hasItinerary: boolean
-  dateTime: EventDateTimeModel
-  draftStart: DraftStartDateTimeLocalModel
-  edit?: DetailsTabEditModel
-  showItineraryStartTimeOnly: boolean
-  onChangeItineraryStartTimeOnly: (next: boolean) => void
-  canManageItineraryAttendance: boolean
-  onOpenItineraryAttendance: () => void
-  hasCurrentAttendance: boolean
-  attendanceByItem?: Map<string, User[]>
-}
+  event: SocialEvent;
+  isEditMode: boolean;
+  isGuest: boolean;
+  onRequireAuth?: () => void;
+  currentUserId?: string;
+  hostId?: string;
+  expenses: EventExpense[];
+  expenseApi?: ExpenseApi;
+  people: Person[];
+  itineraryItems: ItineraryItem[];
+  hasItinerary: boolean;
+  dateTime: EventDateTimeModel;
+  draftStart: DraftStartDateTimeLocalModel;
+  edit?: DetailsTabEditModel;
+  showItineraryStartTimeOnly: boolean;
+  onChangeItineraryStartTimeOnly: (next: boolean) => void;
+  canManageItineraryAttendance: boolean;
+  onOpenItineraryAttendance: () => void;
+  hasCurrentAttendance: boolean;
+  attendanceByItem?: Map<string, User[]>;
+};
 
 export function DetailsTab(props: DetailsTabProps) {
   const {
@@ -91,13 +97,13 @@ export function DetailsTab(props: DetailsTabProps) {
     onOpenItineraryAttendance,
     hasCurrentAttendance,
     attendanceByItem,
-  } = props
+  } = props;
 
   const openItineraryLocationInMaps = (locationFull: string) => {
-    const q = String(locationFull ?? '').trim()
-    if (!q) return
-    openExternalUrl(buildGoogleMapsSearchUrl(q))
-  }
+    const q = String(locationFull ?? '').trim();
+    if (!q) return;
+    openExternalUrl(buildGoogleMapsSearchUrl(q));
+  };
 
   return (
     <div className="space-y-4">
@@ -105,15 +111,19 @@ export function DetailsTab(props: DetailsTabProps) {
         isEditMode={isEditMode}
         title={event.title}
         activityType={event.activityType}
-        onChangeTitle={(next) => edit?.onChange({ title: next })}
-        onChangeActivityType={(next) => edit?.onChange({ activityType: next })}
-        errors={isEditMode ? { title: edit?.errors?.title, activityType: edit?.errors?.activityType } : undefined}
+        onChangeTitle={next => edit?.onChange({ title: next })}
+        onChangeActivityType={next => edit?.onChange({ activityType: next })}
+        errors={
+          isEditMode
+            ? { title: edit?.errors?.title, activityType: edit?.errors?.activityType }
+            : undefined
+        }
       />
 
       <AboutCard
         isEditMode={isEditMode}
         description={event.description}
-        onChangeDescription={(next) => edit?.onChange({ description: next })}
+        onChangeDescription={next => edit?.onChange({ description: next })}
         error={isEditMode ? edit?.errors?.description : undefined}
       />
 
@@ -134,7 +144,7 @@ export function DetailsTab(props: DetailsTabProps) {
       {!isEditMode && hasItinerary && <hr className="border-slate-700" />}
 
       {isEditMode || hasItinerary ? (
-        <ItineraryCard
+        <ScheduleCard
           isEditMode={isEditMode}
           showItineraryStartTimeOnly={showItineraryStartTimeOnly}
           onChangeItineraryStartTimeOnly={onChangeItineraryStartTimeOnly}
@@ -152,7 +162,7 @@ export function DetailsTab(props: DetailsTabProps) {
         >
           {isEditMode ? (
             edit?.itinerary ? (
-              <ItineraryEditor
+              <ScheduleEditor
                 event={event}
                 itineraryItems={itineraryItems}
                 showItineraryTimesOnly={dateTime.showItineraryTimesOnly}
@@ -165,10 +175,10 @@ export function DetailsTab(props: DetailsTabProps) {
                 itineraryApi={edit.itinerary}
               />
             ) : (
-              <div className="text-sm text-slate-500 italic">Itinerary editing is unavailable.</div>
+              <div className="text-sm text-slate-500 italic">Schedule editing is unavailable.</div>
             )
           ) : (
-            <ItinerarySection
+            <ScheduleSection
               items={itineraryItems}
               showItineraryTimesOnly={dateTime.showItineraryTimesOnly}
               showItineraryStartTimeOnly={showItineraryStartTimeOnly}
@@ -177,7 +187,7 @@ export function DetailsTab(props: DetailsTabProps) {
               attendanceByItem={event.itineraryAttendanceEnabled ? attendanceByItem : undefined}
             />
           )}
-        </ItineraryCard>
+        </ScheduleCard>
       ) : null}
 
       {!isEditMode && <hr className="border-slate-700" />}
@@ -194,7 +204,7 @@ export function DetailsTab(props: DetailsTabProps) {
         eventCoordinates={event.coordinates}
         isEditMode={isEditMode}
         locationValue={event.location}
-        onChangeLocationText={(text) =>
+        onChangeLocationText={text =>
           edit?.onChange({ location: text, coordinates: undefined, locationData: undefined })
         }
         onSelectLocation={(selection: LocationSuggestion) =>
@@ -224,5 +234,5 @@ export function DetailsTab(props: DetailsTabProps) {
         itineraryItems={itineraryItems}
       />
     </div>
-  )
+  );
 }

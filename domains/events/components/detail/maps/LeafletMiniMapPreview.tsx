@@ -185,14 +185,14 @@ export function LeafletMiniMapPreview(props: {
           <div className="text-center px-4">
             <div className="text-sm font-semibold text-slate-300">
               {hasItinerary
-                ? 'Add itinerary locations to preview the map'
+                ? 'Add schedule locations to preview the map'
                 : 'Pick a place to preview the map'}
             </div>
             <div className="text-xs text-slate-500 mt-1">
               {hasItinerary
                 ? itineraryGeoLoading
                   ? 'Finding places…'
-                  : 'Set a location on each itinerary item.'
+                  : 'Set a location on each schedule item.'
                 : 'Type a location, then select a suggestion.'}
             </div>
           </div>

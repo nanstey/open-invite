@@ -312,7 +312,7 @@ export function useEventEditorController(props: {
       });
       if (!times) throw new Error('Missing required fields');
       if (!hasItinerary && !times.endTime) throw new Error('Missing required fields');
-      if (hasItinerary && !times.endTime) throw new Error('Itinerary is missing required fields');
+      if (hasItinerary && !times.endTime) throw new Error('Schedule is missing required fields');
 
       const maxSeats = value.maxSeats === '' ? undefined : Number(value.maxSeats);
       const normalizedMaxSeats = maxSeats && maxSeats > 0 ? maxSeats : undefined;

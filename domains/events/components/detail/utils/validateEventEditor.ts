@@ -1,42 +1,51 @@
 type EventEditorValuesLike = {
-  title: string
-  description: string
-  location: string
-  activityType: string
-  startDateTimeLocal: string
-  durationHours: number | ''
-  visibilityType?: string
-  groupIds?: string[]
-}
+  title: string;
+  description: string;
+  location: string;
+  activityType: string;
+  startDateTimeLocal: string;
+  durationHours: number | '';
+  visibilityType?: string;
+  groupIds?: string[];
+};
 
-export function validateEventEditor(values: EventEditorValuesLike, hasItinerary: boolean): {
-  title?: string
-  activityType?: string
-  description?: string
-  startTime?: string
-  durationHours?: string
-  location?: string
-  groupIds?: string
+export function validateEventEditor(
+  values: EventEditorValuesLike,
+  hasItinerary: boolean
+): {
+  title?: string;
+  activityType?: string;
+  description?: string;
+  startTime?: string;
+  durationHours?: string;
+  location?: string;
+  groupIds?: string;
 } {
-  const title = values.title.trim()
-  const location = values.location.trim()
+  const title = values.title.trim();
   // const description = values.description.trim()  // unused
-  const activityType = String(values.activityType ?? '').trim()
-  const startDateTimeLocal = values.startDateTimeLocal
-  const durationHours = values.durationHours === '' ? undefined : Number(values.durationHours)
+  const activityType = String(values.activityType ?? '').trim();
+  const startDateTimeLocal = values.startDateTimeLocal;
+  const durationHours = values.durationHours === '' ? undefined : Number(values.durationHours);
 
   return {
     title: title ? undefined : 'Title is required',
     activityType: activityType ? undefined : 'Category is required',
     // Description is optional
     description: undefined,
-    startTime: hasItinerary ? undefined : startDateTimeLocal ? undefined : 'Date & time is required',
-    durationHours: hasItinerary ? undefined : durationHours && durationHours > 0 ? undefined : 'Duration is required',
-    location: location ? undefined : 'Location is required',
+    startTime: hasItinerary
+      ? undefined
+      : startDateTimeLocal
+        ? undefined
+        : 'Date & time is required',
+    durationHours: hasItinerary
+      ? undefined
+      : durationHours && durationHours > 0
+        ? undefined
+        : 'Duration is required',
+    location: undefined,
     groupIds:
       values.visibilityType === 'GROUPS' && (!values.groupIds || values.groupIds.length === 0)
         ? 'Select at least one group'
         : undefined,
-  }
+  };
 }
-

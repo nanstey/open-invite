@@ -1,21 +1,20 @@
-import * as React from 'react'
-
-import { DateTimeFields } from '../../../../../lib/ui/components/DateTimeFields'
-import { buildQuarterHourTimeOptions } from '../../../../../lib/ui/utils/datetime'
-import { Card } from '../../../../../lib/ui/9ui/card'
-import type { EventDateTimeModel } from '../utils/eventDateTimeModel'
-import type { DraftStartDateTimeLocalModel } from '../../../hooks/useDraftStartDateTimeLocal'
+import * as React from 'react';
+import { Card } from '../../../../../lib/ui/9ui/card';
+import { DateTimeFields } from '../../../../../lib/ui/components/DateTimeFields';
+import { buildQuarterHourTimeOptions } from '../../../../../lib/ui/utils/datetime';
+import type { DraftStartDateTimeLocalModel } from '../../../hooks/useDraftStartDateTimeLocal';
+import type { EventDateTimeModel } from '../utils/eventDateTimeModel';
 
 export function DateTimeCard(props: {
-  isEditMode: boolean
-  hasItinerary: boolean
-  dateTime: EventDateTimeModel
-  isFlexibleStart: boolean
-  draft?: DraftStartDateTimeLocalModel
-  durationHours?: number | ''
-  onChangeDurationHours?: (next: number | '') => void
-  errorStartTime?: string
-  errorDurationHours?: string
+  isEditMode: boolean;
+  hasItinerary: boolean;
+  dateTime: EventDateTimeModel;
+  isFlexibleStart: boolean;
+  draft?: DraftStartDateTimeLocalModel;
+  durationHours?: number | '';
+  onChangeDurationHours?: (next: number | '') => void;
+  errorStartTime?: string;
+  errorDurationHours?: string;
 }) {
   const {
     isEditMode,
@@ -27,13 +26,13 @@ export function DateTimeCard(props: {
     onChangeDurationHours,
     errorStartTime,
     errorDurationHours,
-  } = props
+  } = props;
 
-  const timeOptions = React.useMemo(() => buildQuarterHourTimeOptions(), [])
+  const timeOptions = React.useMemo(() => buildQuarterHourTimeOptions(), []);
 
   const cardClassName = isEditMode
     ? 'bg-surface border border-slate-700 rounded-2xl p-5'
-    : 'bg-background border border-transparent rounded-2xl p-5'
+    : 'bg-background border border-transparent rounded-2xl p-5';
 
   return (
     <Card className={cardClassName}>
@@ -41,7 +40,8 @@ export function DateTimeCard(props: {
       {isEditMode ? (
         hasItinerary ? (
           <div className="text-sm text-slate-400 bg-slate-900/40 border border-slate-800 rounded-xl p-4">
-            Event time is derived from itinerary items. Edit the itinerary below to change the overall time.
+            Event time is derived from schedule items. Edit the schedule below to change the overall
+            time.
           </div>
         ) : (
           <DateTimeFields
@@ -57,9 +57,9 @@ export function DateTimeCard(props: {
             invalidStartTime={!!errorStartTime}
             invalidDuration={!!errorDurationHours}
             durationErrorText={errorDurationHours}
-            onChangeDate={(nextDate) => draft?.onChangeDraftDate(nextDate)}
-            onChangeTime={(nextTime) => draft?.onChangeDraftTime(nextTime)}
-            onChangeDurationHours={(next) => onChangeDurationHours?.(next)}
+            onChangeDate={nextDate => draft?.onChangeDraftDate(nextDate)}
+            onChangeTime={nextTime => draft?.onChangeDraftTime(nextTime)}
+            onChangeDurationHours={next => onChangeDurationHours?.(next)}
           />
         )
       ) : (
@@ -76,7 +76,9 @@ export function DateTimeCard(props: {
                   <span className="font-normal text-slate-400">{dateTime.endTimeText}</span>
                 </div>
               )}
-              {isFlexibleStart ? <div className="text-sm text-slate-400 leading-tight italic">(Flexible)</div> : null}
+              {isFlexibleStart ? (
+                <div className="text-sm text-slate-400 leading-tight italic">(Flexible)</div>
+              ) : null}
             </>
           ) : (
             <>
@@ -89,7 +91,9 @@ export function DateTimeCard(props: {
           )}
         </div>
       )}
-      {isEditMode && errorStartTime ? <div className="text-xs text-red-400 mt-2">{errorStartTime}</div> : null}
+      {isEditMode && errorStartTime ? (
+        <div className="text-xs text-red-400 mt-2">{errorStartTime}</div>
+      ) : null}
     </Card>
-  )
+  );
 }

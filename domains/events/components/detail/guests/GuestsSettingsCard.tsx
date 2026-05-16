@@ -174,7 +174,7 @@ export function GuestsSettingsCard(props: GuestsSettingsCardProps) {
 
       <div className="space-y-2">
         <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">
-          Itinerary attendance
+          Schedule attendance
         </div>
         <div className="flex items-center gap-2 text-sm text-slate-200">
           <Checkbox
@@ -185,7 +185,7 @@ export function GuestsSettingsCard(props: GuestsSettingsCardProps) {
           <label htmlFor={itineraryAttendanceId}>Enable partial attendance</label>
         </div>
         <div className="text-xs text-slate-500">
-          Attendees select itinerary items when they join, and expense totals are calculated
+          Attendees select schedule items when they join, and expense totals are calculated
           accordingly.
         </div>
       </div>

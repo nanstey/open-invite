@@ -23,7 +23,7 @@ import { GuestsTab } from './guests/GuestsTab';
 import { HeroHeader } from './header/HeroHeader';
 import { KeyFactsCard } from './header/KeyFactsCard';
 import { HeaderImageModal } from './images/HeaderImageModal';
-import { ItineraryAttendanceOverlay } from './itineraries/ItineraryAttendanceOverlay';
+import { ScheduleAttendanceOverlay } from './itineraries/ScheduleAttendanceOverlay';
 import type { EventTab } from './route/routing';
 import { buildEventDateTimeModel } from './utils/eventDateTimeModel';
 
@@ -56,7 +56,13 @@ interface EventDetailProps {
     groupsLoading?: boolean;
     errors?: Partial<
       Record<
-        'title' | 'description' | 'startTime' | 'location' | 'activityType' | 'durationHours' | 'groupIds',
+        | 'title'
+        | 'description'
+        | 'startTime'
+        | 'location'
+        | 'activityType'
+        | 'durationHours'
+        | 'groupIds',
         string
       >
     >;
@@ -141,8 +147,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
 
   // --- Local UI state ---
   const [showHeaderImageModal, setShowHeaderImageModal] = useState(false);
-  const [showItineraryAttendanceOverlay, setShowItineraryAttendanceOverlay] = useState(false);
-  const [guestItineraryFilterId, setGuestItineraryFilterId] = useState('');
+  const [showScheduleAttendanceOverlay, setShowScheduleAttendanceOverlay] = useState(false);
+  const [guestScheduleFilterId, setGuestScheduleFilterId] = useState('');
   const [pendingJoin, setPendingJoin] = useState(false);
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
 
@@ -242,12 +248,12 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     wasAttendingRef.current = isAttending;
 
     if (!wasAttending && isAttending && canManageItineraryAttendance) {
-      setShowItineraryAttendanceOverlay(true);
+      setShowScheduleAttendanceOverlay(true);
       return;
     }
 
     if (shouldPromptItineraryAttendance) {
-      setShowItineraryAttendanceOverlay(true);
+      setShowScheduleAttendanceOverlay(true);
     }
   }, [canManageItineraryAttendance, isAttending, shouldPromptItineraryAttendance]);
 
@@ -308,7 +314,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   }, [attendeesList.length, event.maxSeats]);
 
   // --- UI options ---
-  // Time options are now owned by `DateTimeCard` and `ItineraryEditor`.
+  // Time options are now owned by `DateTimeCard` and `ScheduleEditor`.
 
   const tabs: TabOption[] = [
     { id: 'details', label: 'Details', icon: <Info className="w-4 h-4" /> },
@@ -335,7 +341,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       }
       if (shouldGateJoin) {
         setPendingJoin(true);
-        setShowItineraryAttendanceOverlay(true);
+        setShowScheduleAttendanceOverlay(true);
         return;
       }
       await attendance.onJoinLeave();
@@ -421,7 +427,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               showItineraryStartTimeOnly={showItineraryStartTimeOnly}
               onChangeItineraryStartTimeOnly={handleChangeItineraryStartTimeOnly}
               canManageItineraryAttendance={!!canManageItineraryAttendance}
-              onOpenItineraryAttendance={() => setShowItineraryAttendanceOverlay(true)}
+              onOpenItineraryAttendance={() => setShowScheduleAttendanceOverlay(true)}
               hasCurrentAttendance={!!currentAttendance}
               attendanceByItem={attendanceByItem}
             />
@@ -436,16 +442,18 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               incomingRequestMap={incomingRequestMap}
               currentUserId={currentUserId ?? undefined}
               isEditMode={isEditMode}
-              itineraryFilterId={guestItineraryFilterId}
-              onChangeItineraryFilterId={setGuestItineraryFilterId}
-              onChangeAttendees={(nextAttendees) => edit?.onChange({ attendees: nextAttendees })}
-              onChangeMaxSeats={(next) => edit?.onChange({ maxSeats: next })}
-              onChangeVisibility={(next) => edit?.onChange({ visibilityType: next })}
-              onChangeGroupIds={(nextGroupIds) => edit?.onChange({ groupIds: nextGroupIds })}
+              itineraryFilterId={guestScheduleFilterId}
+              onChangeItineraryFilterId={setGuestScheduleFilterId}
+              onChangeAttendees={nextAttendees => edit?.onChange({ attendees: nextAttendees })}
+              onChangeMaxSeats={next => edit?.onChange({ maxSeats: next })}
+              onChangeVisibility={next => edit?.onChange({ visibilityType: next })}
+              onChangeGroupIds={nextGroupIds => edit?.onChange({ groupIds: nextGroupIds })}
               groupOptions={edit?.groups}
               groupsLoading={edit?.groupsLoading}
               groupError={edit?.errors?.groupIds}
-              onChangeItineraryAttendanceEnabled={(next) => edit?.onChange({ itineraryAttendanceEnabled: next })}
+              onChangeItineraryAttendanceEnabled={next =>
+                edit?.onChange({ itineraryAttendanceEnabled: next })
+              }
             />
           ) : null}
 
@@ -485,9 +493,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
         />
       ) : null}
 
-      {showItineraryAttendanceOverlay ? (
-        <ItineraryAttendanceOverlay
-          open={showItineraryAttendanceOverlay}
+      {showScheduleAttendanceOverlay ? (
+        <ScheduleAttendanceOverlay
+          open={showScheduleAttendanceOverlay}
           title={event.title}
           itineraryItems={itineraryItems}
           expenses={event.expenses ?? []}
@@ -496,7 +504,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           initialSelectedIds={currentAttendanceIds}
           mode={pendingJoin ? 'join' : currentAttendance ? 'edit' : 'join'}
           onClose={() => {
-            setShowItineraryAttendanceOverlay(false);
+            setShowScheduleAttendanceOverlay(false);
             setPendingJoin(false);
           }}
           onSave={handleSaveAttendance}
