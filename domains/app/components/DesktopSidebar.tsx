@@ -1,4 +1,4 @@
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { Bell, CalendarDays, Compass, Plus, Users as UsersIcon } from 'lucide-react';
 import type React from 'react';
 
@@ -11,6 +11,7 @@ interface DesktopSidebarProps {
   activeSection: ActiveSection;
   eventsView: EventsView;
   onComingSoon: (e: React.MouseEvent) => void;
+  onCreateInvite: () => void;
 }
 
 export function DesktopSidebar({
@@ -18,9 +19,8 @@ export function DesktopSidebar({
   activeSection,
   eventsView,
   onComingSoon,
+  onCreateInvite,
 }: DesktopSidebarProps) {
-  const navigate = useNavigate();
-
   return (
     <nav className="hidden md:flex w-20 lg:w-64 bg-slate-900 border-r border-slate-800 flex-col justify-between items-center p-4 z-20 shrink-0">
       <div className="flex flex-col items-center gap-8 w-full">
@@ -72,7 +72,7 @@ export function DesktopSidebar({
           </Link>
 
           <button
-            onClick={() => navigate({ to: '/events/new', search: { view: eventsView } })}
+            onClick={onCreateInvite}
             className="p-3 rounded-xl transition-all flex items-center justify-start gap-3 w-full bg-primary hover:bg-primary/90 text-white shadow-lg shadow-primary/25 group"
             type="button"
           >

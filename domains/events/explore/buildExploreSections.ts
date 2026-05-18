@@ -1,4 +1,6 @@
+import { EVENT_CATEGORY_ORDER } from '../../../lib/constants';
 import type { SocialEvent } from '../types';
+import { getEventSortTime } from '../utils/eventSchedule';
 
 export type ExploreSectionId = 'happening-soon' | 'upcoming' | `category:${string}`;
 
@@ -15,6 +17,7 @@ const CATEGORY_EMOJI: Record<string, string> = {
   entertainment: '🎭',
   errand: '🛒',
   food: '🍽️',
+  music: '🎵',
   social: '🥂',
   sport: '⚽',
   travel: '✈️',
@@ -28,7 +31,13 @@ function withEmoji(category: string): string {
 }
 
 function compareChronologically(a: SocialEvent, b: SocialEvent) {
-  return new Date(a.startTime).getTime() - new Date(b.startTime).getTime();
+  return getEventSortTime(a) - getEventSortTime(b);
+}
+
+function getCategorySortIndex(category: string) {
+  const normalized = category.trim().toLowerCase();
+  const index = EVENT_CATEGORY_ORDER.findIndex(item => item.toLowerCase() === normalized);
+  return index === -1 ? Number.POSITIVE_INFINITY : index;
 }
 
 function matchesSearch(event: SocialEvent, searchTerm: string) {
@@ -53,14 +62,14 @@ export function buildExploreSections(
   const upcomingCutoff = nowMs + 7 * DAY_MS;
 
   const futureEvents = events
-    .filter(event => new Date(event.startTime).getTime() >= nowMs)
+    .filter(event => getEventSortTime(event) >= nowMs)
     .filter(event => matchesSearch(event, searchTerm))
     .sort(compareChronologically);
 
   const usedIds = new Set<string>();
 
   const happeningSoon = futureEvents.filter(event => {
-    const startMs = new Date(event.startTime).getTime();
+    const startMs = getEventSortTime(event);
     const isMatch = startMs < soonCutoff;
     if (isMatch) usedIds.add(event.id);
     return isMatch;
@@ -68,7 +77,7 @@ export function buildExploreSections(
 
   const upcoming = futureEvents.filter(event => {
     if (usedIds.has(event.id)) return false;
-    const startMs = new Date(event.startTime).getTime();
+    const startMs = getEventSortTime(event);
     const isMatch = startMs >= soonCutoff && startMs < upcomingCutoff;
     if (isMatch) usedIds.add(event.id);
     return isMatch;
@@ -98,7 +107,10 @@ export function buildExploreSections(
   }
 
   const categorySections = [...groupedByCategory.entries()]
-    .sort(([left], [right]) => left.localeCompare(right))
+    .sort(([left], [right]) => {
+      const indexDelta = getCategorySortIndex(left) - getCategorySortIndex(right);
+      return indexDelta || left.localeCompare(right);
+    })
     .map(([activityType, categoryEvents]) => ({
       id: `category:${activityType}` as const,
       title: withEmoji(activityType),

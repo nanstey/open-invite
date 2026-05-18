@@ -378,6 +378,7 @@ export type Database = {
           header_image_url: string | null;
           host_id: string;
           id: string;
+          is_all_day: boolean;
           is_flexible_end: boolean;
           is_flexible_start: boolean;
           itinerary_time_display: string;
@@ -386,6 +387,7 @@ export type Database = {
           location_data: Json | null;
           max_seats: number | null;
           no_phones: boolean;
+          published_at: string | null;
           slug: string;
           start_time: string;
           title: string;
@@ -403,6 +405,7 @@ export type Database = {
           header_image_url?: string | null;
           host_id: string;
           id?: string;
+          is_all_day?: boolean;
           is_flexible_end?: boolean;
           is_flexible_start?: boolean;
           itinerary_time_display?: string;
@@ -411,6 +414,7 @@ export type Database = {
           location_data?: Json | null;
           max_seats?: number | null;
           no_phones?: boolean;
+          published_at?: string | null;
           slug: string;
           start_time: string;
           title: string;
@@ -428,6 +432,7 @@ export type Database = {
           header_image_url?: string | null;
           host_id?: string;
           id?: string;
+          is_all_day?: boolean;
           is_flexible_end?: boolean;
           is_flexible_start?: boolean;
           itinerary_time_display?: string;
@@ -436,6 +441,7 @@ export type Database = {
           location_data?: Json | null;
           max_seats?: number | null;
           no_phones?: boolean;
+          published_at?: string | null;
           slug?: string;
           start_time?: string;
           title?: string;

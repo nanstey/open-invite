@@ -292,9 +292,11 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                       >
                         {icon}
                         <span className="truncate hidden md:inline">
-                          {new Date(event.startTime)
-                            .toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
-                            .toLowerCase()}{' '}
+                          {event.isAllDay
+                            ? 'All day'
+                            : new Date(event.startTime)
+                                .toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
+                                .toLowerCase()}{' '}
                           {event.title}
                         </span>
                         <span className="truncate md:hidden">{event.title}</span>
@@ -386,11 +388,15 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                   {/* Events */}
                   {dayEvents.map(event => {
                     const start = new Date(event.startTime);
-                    const startMinutes = start.getHours() * 60 + start.getMinutes();
+                    const startMinutes = event.isAllDay
+                      ? 0
+                      : start.getHours() * 60 + start.getMinutes();
                     const end = event.endTime ? new Date(event.endTime) : null;
-                    const duration = end
-                      ? Math.max(30, Math.round((end.getTime() - start.getTime()) / 60_000))
-                      : 60;
+                    const duration = event.isAllDay
+                      ? 60
+                      : end
+                        ? Math.max(30, Math.round((end.getTime() - start.getTime()) / 60_000))
+                        : 60;
                     const { classes, icon, isInvolved, theme } = getEventStyles(event);
 
                     return (
@@ -423,7 +429,9 @@ export const CalendarView: React.FC<CalendarViewProps> = ({
                           className={`truncate flex items-center gap-1 text-[10px] ${isInvolved ? 'text-white/80' : 'text-slate-400'}`}
                         >
                           <Clock className="w-3 h-3 hidden md:block" />
-                          {start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                          {event.isAllDay
+                            ? 'All day'
+                            : start.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
                         </div>
                       </button>
                     );

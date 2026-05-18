@@ -12,6 +12,7 @@ function makeEvent(overrides: Partial<SocialEvent>): SocialEvent {
     activityType: overrides.activityType ?? 'Social',
     location: overrides.location ?? 'Downtown',
     startTime: overrides.startTime ?? '2026-05-13T10:00:00.000Z',
+    isAllDay: overrides.isAllDay ?? false,
     isFlexibleStart: overrides.isFlexibleStart ?? false,
     isFlexibleEnd: overrides.isFlexibleEnd ?? false,
     visibilityType: overrides.visibilityType ?? EventVisibility.INVITE_ONLY,
@@ -70,13 +71,13 @@ describe('buildExploreSections', () => {
     expect(sections.map(section => section.id)).toEqual([
       'happening-soon',
       'upcoming',
-      'category:Food',
       'category:Social',
+      'category:Food',
     ]);
     expect(sections[0]?.events.map(event => event.id)).toEqual(['soon-1', 'soon-2']);
     expect(sections[1]?.events.map(event => event.id)).toEqual(['upcoming-1']);
-    expect(sections[2]?.events.map(event => event.id)).toEqual(['cat-2']);
-    expect(sections[3]?.events.map(event => event.id)).toEqual(['cat-1']);
+    expect(sections[2]?.events.map(event => event.id)).toEqual(['cat-1']);
+    expect(sections[3]?.events.map(event => event.id)).toEqual(['cat-2']);
   });
 
   it('sorts events chronologically within each section and excludes duplicates', () => {
@@ -146,5 +147,26 @@ describe('buildExploreSections', () => {
   it('omits empty sections entirely', () => {
     const sections = buildExploreSections([], '', now);
     expect(sections).toEqual([]);
+  });
+
+  it('orders remaining category sections using the updated shared category order', () => {
+    const sections = buildExploreSections(
+      [
+        makeEvent({ id: 'sport', activityType: 'Sport', startTime: '2026-05-24T18:00:00.000Z' }),
+        makeEvent({ id: 'music', activityType: 'Music', startTime: '2026-05-24T18:00:00.000Z' }),
+        makeEvent({ id: 'food', activityType: 'Food', startTime: '2026-05-24T18:00:00.000Z' }),
+        makeEvent({ id: 'social', activityType: 'Social', startTime: '2026-05-24T18:00:00.000Z' }),
+      ],
+      '',
+      now
+    );
+
+    expect(sections.map(section => section.id)).toEqual([
+      'category:Social',
+      'category:Food',
+      'category:Music',
+      'category:Sport',
+    ]);
+    expect(sections[2]?.title).toBe('🎵 Music');
   });
 });

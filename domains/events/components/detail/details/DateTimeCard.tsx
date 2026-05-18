@@ -64,7 +64,18 @@ export function DateTimeCard(props: {
         )
       ) : (
         <div className="text-slate-300">
-          {dateTime.showMultiDay ? (
+          {dateTime.isAllDay && dateTime.showMultiDay ? (
+            <>
+              <div className="font-bold text-white">{dateTime.startDateText}</div>
+              {dateTime.endDateText ? (
+                <div className="font-bold text-white">{dateTime.endDateText}</div>
+              ) : null}
+              <div className="text-sm text-slate-400">
+                All day
+                {isFlexibleStart && <span className="italic"> (Flexible)</span>}
+              </div>
+            </>
+          ) : dateTime.showMultiDay ? (
             <>
               <div className="leading-tight text-white">
                 <span className="font-bold">{dateTime.startDateText}</span>{' '}

@@ -173,6 +173,7 @@ export function useEventEditorController(props: {
   onSuccess: (event: SocialEvent) => void;
 }) {
   const isUpdate = props.mode === 'update';
+  const isDraftUpdate = isUpdate && !props.initialEvent?.publishedAt;
   const draftIdRef = React.useRef<string>(globalThis.crypto?.randomUUID?.() ?? String(Date.now()));
   const defaultStartTimeIsoRef = React.useRef<string>(new Date().toISOString());
 
@@ -326,6 +327,7 @@ export function useEventEditorController(props: {
           description,
           startTime: times.startTime,
           endTime: times.endTime,
+          isAllDay: false,
           activityType,
           isFlexibleStart: value.isFlexibleStart,
           isFlexibleEnd: value.isFlexibleEnd,
@@ -367,6 +369,7 @@ export function useEventEditorController(props: {
 
       const updated = await updateEvent(props.initialEvent.id, {
         title,
+        publishedAt: isDraftUpdate ? new Date().toISOString() : props.initialEvent.publishedAt,
         headerImageUrl: value.headerImageUrl.trim() || undefined,
         headerImagePositionY: value.headerImagePositionY,
         location,
@@ -417,7 +420,15 @@ export function useEventEditorController(props: {
 
       props.onSuccess(refreshed ?? updated);
     },
-    [hasItinerary, isUpdate, itineraryItems, expenseItems, props.initialEvent, props.onSuccess]
+    [
+      hasItinerary,
+      isDraftUpdate,
+      isUpdate,
+      itineraryItems,
+      expenseItems,
+      props.initialEvent,
+      props.onSuccess,
+    ]
   );
 
   const form = useForm({
@@ -459,6 +470,7 @@ export function useEventEditorController(props: {
       id: editingEventId,
       slug: isUpdate ? (props.initialEvent?.slug ?? 'draft') : 'draft',
       hostId: props.currentUser.id,
+      publishedAt: props.initialEvent?.publishedAt ?? null,
       title: values.title,
       headerImageUrl: values.headerImageUrl,
       headerImagePositionY: values.headerImagePositionY,
@@ -469,6 +481,7 @@ export function useEventEditorController(props: {
       locationData: values.locationData,
       startTime: times?.startTime ?? defaultStartTimeIsoRef.current,
       endTime: times?.endTime ?? props.initialEvent?.endTime,
+      isAllDay: props.initialEvent?.isAllDay ?? false,
       isFlexibleStart: values.isFlexibleStart,
       isFlexibleEnd: values.isFlexibleEnd,
       visibilityType: values.visibilityType,
@@ -499,6 +512,8 @@ export function useEventEditorController(props: {
     props.initialEvent?.attendees,
     props.initialEvent?.comments,
     props.initialEvent?.endTime,
+    props.initialEvent?.isAllDay,
+    props.initialEvent?.publishedAt,
     props.initialEvent?.reactions,
     props.initialEvent?.slug,
     values.activityType,
@@ -671,7 +686,7 @@ export function useEventEditorController(props: {
     };
   }, [expenseEditItems, onAddExpense, onDeleteExpense, onReorderExpenses, onUpdateExpense]);
 
-  const primaryLabel = isUpdate ? 'Save changes' : 'Publish invite';
+  const primaryLabel = isDraftUpdate ? 'Publish' : isUpdate ? 'Save changes' : 'Publish invite';
 
   const onSave = React.useCallback(() => {
     if (!canSubmit) {

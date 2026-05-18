@@ -128,7 +128,7 @@ export const EventCard: React.FC<EventCardProps> = ({
   }, []);
 
   const date = new Date(event.startTime);
-  const timeString = formatEventTimeLabel(date, event.isFlexibleStart);
+  const timeString = event.isAllDay ? 'All day' : formatEventTimeLabel(date, event.isFlexibleStart);
   const dateString = formatEventDateLabel(date);
 
   const attendeeCount = event.attendees.length;

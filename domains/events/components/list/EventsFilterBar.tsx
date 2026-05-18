@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import type React from 'react';
 import { useState } from 'react';
+import { EVENT_CATEGORY_ORDER } from '../../../../lib/constants';
 import { FormSelect } from '../../../../lib/ui/components/FormControls';
 
 export type TimeFilter = 'ALL' | 'TODAY' | 'TOMORROW' | 'WEEK';
@@ -48,16 +49,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const categories = [
-    'ALL',
-    'Social',
-    'Sport',
-    'Entertainment',
-    'Food',
-    'Work',
-    'Errand',
-    'Travel',
-  ];
+  const categories = ['ALL', ...EVENT_CATEGORY_ORDER];
 
   const statusTabs: { id: StatusFilter; label: string; icon: React.ReactNode }[] = [
     { id: 'ALL', label: 'All Events', icon: <Layout className="w-4 h-4" /> },

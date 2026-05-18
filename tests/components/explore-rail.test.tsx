@@ -14,6 +14,7 @@ function makeEvent(id: string): SocialEvent {
     activityType: 'Social',
     location: 'Downtown',
     startTime: '2026-05-20T18:00:00.000Z',
+    isAllDay: false,
     isFlexibleStart: false,
     isFlexibleEnd: false,
     visibilityType: EventVisibility.INVITE_ONLY,

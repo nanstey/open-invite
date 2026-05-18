@@ -23,6 +23,7 @@ import { GuestsTab } from './guests/GuestsTab';
 import { HeroHeader } from './header/HeroHeader';
 import { KeyFactsCard } from './header/KeyFactsCard';
 import { HeaderImageModal } from './images/HeaderImageModal';
+import { SendInvitesDialog } from './invites/SendInvitesDialog';
 import { ScheduleAttendanceOverlay } from './itineraries/ScheduleAttendanceOverlay';
 import type { EventTab } from './route/routing';
 import { buildEventDateTimeModel } from './utils/eventDateTimeModel';
@@ -48,6 +49,8 @@ interface EventDetailProps {
   showBackButton?: boolean;
   layout?: 'shell' | 'public';
   mode?: 'view' | 'edit';
+  autoOpenSendInvites?: boolean;
+  onAutoOpenSendInvitesHandled?: () => void;
   edit?: {
     canEdit: boolean;
     isSaving?: boolean;
@@ -128,6 +131,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   showBackButton = true,
   layout = 'shell',
   mode = 'view',
+  autoOpenSendInvites,
+  onAutoOpenSendInvitesHandled,
   edit,
 }) => {
   // --- Layout / navigation ---
@@ -148,6 +153,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   // --- Local UI state ---
   const [showHeaderImageModal, setShowHeaderImageModal] = useState(false);
   const [showScheduleAttendanceOverlay, setShowScheduleAttendanceOverlay] = useState(false);
+  const [showSendInvitesDialog, setShowSendInvitesDialog] = useState(false);
   const [guestScheduleFilterId, setGuestScheduleFilterId] = useState('');
   const [pendingJoin, setPendingJoin] = useState(false);
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
@@ -213,6 +219,12 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     onUpdateEvent,
   });
   const isJoinDisabled = attendance.isJoinDisabled;
+
+  React.useEffect(() => {
+    if (!autoOpenSendInvites || !isHost || isEditMode) return;
+    setShowSendInvitesDialog(true);
+    onAutoOpenSendInvitesHandled?.();
+  }, [autoOpenSendInvites, isEditMode, isHost, onAutoOpenSendInvitesHandled]);
 
   // --- Itinerary models ---
   const itineraryItems: ItineraryItem[] =
@@ -300,9 +312,10 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       buildEventDateTimeModel({
         eventStartTime: event.startTime,
         eventEndTime: event.endTime,
+        isAllDay: event.isAllDay,
         itineraryItems,
       }),
-    [event.endTime, event.startTime, itineraryItems]
+    [event.endTime, event.isAllDay, event.startTime, itineraryItems]
   );
 
   const seats = React.useMemo(() => {
@@ -330,6 +343,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     mode: isEditMode ? 'edit' : 'view',
     inviteCopied,
     onShareInvite: handleShareInvite,
+    onSendInvites: isHost ? () => setShowSendInvitesDialog(true) : undefined,
     showDismiss: !!onDismiss && !isInvolved && !isEditMode,
     onDismiss,
     isHost,
@@ -445,15 +459,6 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               itineraryFilterId={guestScheduleFilterId}
               onChangeItineraryFilterId={setGuestScheduleFilterId}
               onChangeAttendees={nextAttendees => edit?.onChange({ attendees: nextAttendees })}
-              onChangeMaxSeats={next => edit?.onChange({ maxSeats: next })}
-              onChangeVisibility={next => edit?.onChange({ visibilityType: next })}
-              onChangeGroupIds={nextGroupIds => edit?.onChange({ groupIds: nextGroupIds })}
-              groupOptions={edit?.groups}
-              groupsLoading={edit?.groupsLoading}
-              groupError={edit?.errors?.groupIds}
-              onChangeItineraryAttendanceEnabled={next =>
-                edit?.onChange({ itineraryAttendanceEnabled: next })
-              }
             />
           ) : null}
 
@@ -508,6 +513,15 @@ export const EventDetail: React.FC<EventDetailProps> = ({
             setPendingJoin(false);
           }}
           onSave={handleSaveAttendance}
+        />
+      ) : null}
+
+      {currentUserId ? (
+        <SendInvitesDialog
+          open={showSendInvitesDialog}
+          eventId={event.id}
+          currentUserId={currentUserId}
+          onOpenChange={setShowSendInvitesDialog}
         />
       ) : null}
 
