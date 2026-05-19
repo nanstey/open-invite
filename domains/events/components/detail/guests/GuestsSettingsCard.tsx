@@ -1,6 +1,5 @@
 import * as React from 'react';
 import type { Group } from '../../../../../lib/types';
-import { Checkbox } from '../../../../../lib/ui/9ui/checkbox';
 import {
   Combobox,
   ComboboxChip,
@@ -18,26 +17,16 @@ import { EventVisibility } from '../../../types';
 
 type GuestsSettingsCardProps = {
   event: SocialEvent;
-  onChangeMaxSeats?: (next: number | undefined) => void;
   onChangeVisibility?: (next: EventVisibility) => void;
   onChangeGroupIds?: (nextGroupIds: string[]) => void;
   groupOptions?: Group[];
   groupsLoading?: boolean;
   groupError?: string;
-  onChangeItineraryAttendanceEnabled?: (next: boolean) => void;
 };
 
 export function GuestsSettingsCard(props: GuestsSettingsCardProps) {
-  const {
-    event,
-    onChangeMaxSeats,
-    onChangeVisibility,
-    onChangeGroupIds,
-    groupOptions,
-    groupsLoading,
-    groupError,
-    onChangeItineraryAttendanceEnabled,
-  } = props;
+  const { event, onChangeVisibility, onChangeGroupIds, groupOptions, groupsLoading, groupError } =
+    props;
   const [pickerValue, setPickerValue] = React.useState<Group | null>(null);
 
   const selectedGroupIds = event.groupIds ?? [];
@@ -55,12 +44,7 @@ export function GuestsSettingsCard(props: GuestsSettingsCardProps) {
   const addGroup = React.useCallback(
     (group: Group | null) => {
       setPickerValue(null);
-      if (!group) {
-        return;
-      }
-      if (selectedGroupIds.includes(group.id)) {
-        return;
-      }
+      if (!group || selectedGroupIds.includes(group.id)) return;
       onChangeGroupIds?.([...selectedGroupIds, group.id]);
     },
     [onChangeGroupIds, selectedGroupIds]
@@ -72,44 +56,22 @@ export function GuestsSettingsCard(props: GuestsSettingsCardProps) {
     },
     [onChangeGroupIds, selectedGroupIds]
   );
-  const itineraryAttendanceId = React.useId();
 
   return (
     <div className="bg-surface border border-slate-700 rounded-2xl p-5 space-y-4">
-      <h2 className="text-lg font-bold text-white">Attendance & visibility</h2>
+      <h1 className="text-2xl font-bold text-white">Privacy &amp; Sharing</h1>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <div className="space-y-1">
-          <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Seats</div>
-          <input
-            type="number"
-            min={0}
-            step={1}
-            value={event.maxSeats ?? ''}
-            onChange={e => {
-              const raw = e.target.value;
-              const n = raw === '' ? undefined : Number(raw);
-              onChangeMaxSeats?.(n && n > 0 ? n : undefined);
-            }}
-            placeholder="Unlimited"
-            className="w-full bg-slate-900 border rounded-lg py-3 px-4 text-white outline-none border-slate-700 focus:border-primary"
-          />
-          <div className="text-xs text-slate-500 mt-1">Leave blank for unlimited.</div>
-        </div>
-        <div className="space-y-1">
-          <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">
-            Visibility
-          </div>
-          <FormSelect
-            value={event.visibilityType}
-            size="lg"
-            onChange={e => onChangeVisibility?.(e.target.value as EventVisibility)}
-          >
-            <option value={EventVisibility.ALL_FRIENDS}>All Friends</option>
-            <option value={EventVisibility.GROUPS}>Groups</option>
-            <option value={EventVisibility.INVITE_ONLY}>Invite only</option>
-          </FormSelect>
-        </div>
+      <div className="space-y-1">
+        <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Visibility</div>
+        <FormSelect
+          value={event.visibilityType}
+          size="lg"
+          onChange={e => onChangeVisibility?.(e.target.value as EventVisibility)}
+        >
+          <option value={EventVisibility.ALL_FRIENDS}>All Friends</option>
+          <option value={EventVisibility.GROUPS}>Groups</option>
+          <option value={EventVisibility.INVITE_ONLY}>Invite only</option>
+        </FormSelect>
       </div>
 
       {event.visibilityType === EventVisibility.GROUPS ? (
@@ -171,24 +133,6 @@ export function GuestsSettingsCard(props: GuestsSettingsCardProps) {
           </div>
         </div>
       ) : null}
-
-      <div className="space-y-2">
-        <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">
-          Schedule attendance
-        </div>
-        <div className="flex items-center gap-2 text-sm text-slate-200">
-          <Checkbox
-            id={itineraryAttendanceId}
-            checked={event.itineraryAttendanceEnabled ?? false}
-            onChange={e => onChangeItineraryAttendanceEnabled?.(e.target.checked)}
-          />
-          <label htmlFor={itineraryAttendanceId}>Enable partial attendance</label>
-        </div>
-        <div className="text-xs text-slate-500">
-          Attendees select schedule items when they join, and expense totals are calculated
-          accordingly.
-        </div>
-      </div>
     </div>
   );
 }

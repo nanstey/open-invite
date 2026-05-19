@@ -1,145 +1,184 @@
-import * as React from 'react'
-import { FormattingHelpModal, FORMATTING_EXAMPLE } from './FormattingHelpModal'
-import { MrkdwnRenderer } from './MrkdwnRenderer'
-import { useEmojiAutocomplete } from '../../../../../lib/hooks/useEmojiAutocomplete'
-import { Button } from '../../../../../lib/ui/9ui/button'
-import { Card } from '../../../../../lib/ui/9ui/card'
-import { EmojiPicker } from '../../../../../lib/ui/9ui/emoji-picker'
-import { Popover, PopoverContent } from '../../../../../lib/ui/9ui/popover'
-import { Textarea } from '../../../../../lib/ui/9ui/textarea'
+import { ChevronDown, Plus } from 'lucide-react';
+import * as React from 'react';
+import { useEmojiAutocomplete } from '../../../../../lib/hooks/useEmojiAutocomplete';
+import { Button } from '../../../../../lib/ui/9ui/button';
+import { Card } from '../../../../../lib/ui/9ui/card';
+import { EmojiPicker } from '../../../../../lib/ui/9ui/emoji-picker';
+import { Popover, PopoverContent } from '../../../../../lib/ui/9ui/popover';
+import { Textarea } from '../../../../../lib/ui/9ui/textarea';
+import { FORMATTING_EXAMPLE, FormattingHelpModal } from './FormattingHelpModal';
+import { MrkdwnRenderer } from './MrkdwnRenderer';
 
-type ViewMode = 'edit' | 'preview'
+type ViewMode = 'edit' | 'preview';
 
 export function AboutCard(props: {
-  isEditMode: boolean
-  description: string
-  onChangeDescription?: (next: string) => void
-  error?: string
+  isEditMode: boolean;
+  description: string;
+  onChangeDescription?: (next: string) => void;
+  error?: string;
+  title?: string;
+  collapsible?: boolean;
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
+  collapsedActionStyle?: 'plus' | 'chevron';
 }) {
-  const { isEditMode, description, onChangeDescription, error } = props
-  const [viewMode, setViewMode] = React.useState<ViewMode>('edit')
-  const [showFormattingHelp, setShowFormattingHelp] = React.useState(false)
-  const textareaRef = React.useRef<HTMLTextAreaElement>(null)
+  const {
+    isEditMode,
+    description,
+    onChangeDescription,
+    error,
+    title = 'About',
+    collapsible = false,
+    expanded = true,
+    onToggleExpanded,
+    collapsedActionStyle = 'chevron',
+  } = props;
+  const [viewMode, setViewMode] = React.useState<ViewMode>('edit');
+  const [showFormattingHelp, setShowFormattingHelp] = React.useState(false);
+  const textareaRef = React.useRef<HTMLTextAreaElement>(null);
   const handleDescriptionChange = React.useCallback(
     (next: string) => {
-      onChangeDescription?.(next)
+      onChangeDescription?.(next);
     },
-    [onChangeDescription],
-  )
+    [onChangeDescription]
+  );
 
   const emojiAutocomplete = useEmojiAutocomplete({
     value: description,
     onChange: handleDescriptionChange,
     inputRef: textareaRef,
-  })
+  });
 
   const handleInsertExample = () => {
-    const separator = description.trim() ? '\n\n' : ''
-    onChangeDescription?.(description + separator + FORMATTING_EXAMPLE)
-    setShowFormattingHelp(false)
-  }
+    const separator = description.trim() ? '\n\n' : '';
+    onChangeDescription?.(description + separator + FORMATTING_EXAMPLE);
+    setShowFormattingHelp(false);
+  };
 
   React.useEffect(() => {
     if (isEditMode) {
-      setViewMode('edit')
+      setViewMode('edit');
     }
-  }, [isEditMode])
+  }, [isEditMode]);
 
   React.useEffect(() => {
-    const textarea = textareaRef.current
+    const textarea = textareaRef.current;
     if (textarea && viewMode === 'edit') {
-      textarea.style.height = 'auto'
-      textarea.style.height = `${Math.max(128, textarea.scrollHeight)}px`
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.max(128, textarea.scrollHeight)}px`;
     }
-  }, [viewMode])
+  }, [viewMode]);
 
   const cardClassName = isEditMode
     ? 'bg-surface border border-slate-700 rounded-2xl p-5'
-    : 'bg-background border border-transparent rounded-2xl p-5'
+    : 'bg-background border border-transparent rounded-2xl p-5';
+  const contentVisible = !collapsible || expanded;
+  const HeaderIcon = collapsedActionStyle === 'plus' && !expanded ? Plus : ChevronDown;
 
   return (
     <Card className={cardClassName}>
-      <h1 className="text-2xl font-bold text-white mb-3">About</h1>
-      {isEditMode ? (
-        <>
-          <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-            <div className="inline-flex rounded-lg border border-slate-700 bg-slate-900 p-1">
-              <Button
-                type="button"
-                variant={viewMode === 'edit' ? 'primary' : 'ghost'}
-                onClick={() => setViewMode('edit')}
-                aria-pressed={viewMode === 'edit'}
-                className="px-3 py-1 text-sm font-medium rounded-md"
-              >
-                Edit
-              </Button>
-              <Button
-                type="button"
-                variant={viewMode === 'preview' ? 'primary' : 'ghost'}
-                onClick={() => setViewMode('preview')}
-                aria-pressed={viewMode === 'preview'}
-                className="px-3 py-1 text-sm font-medium rounded-md"
-              >
-                Preview
-              </Button>
-            </div>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setShowFormattingHelp(true)}
-              className="text-xs text-slate-400 hover:text-slate-200 underline px-0"
-            >
-              Formatting help
-            </Button>
-          </div>
-          {viewMode === 'edit' ? (
-            <Popover open={emojiAutocomplete.isOpen} onOpenChange={emojiAutocomplete.setIsOpen} className="w-full">
-              <div className="w-full relative">
-                <Textarea
-                  ref={textareaRef}
-                  value={description}
-                  onChange={emojiAutocomplete.handleChange}
-                  onKeyDown={emojiAutocomplete.handleKeyDown}
-                  placeholder="What's the vibe?"
-                  required
-                  className={`w-full bg-slate-900 border rounded-lg py-3 px-4 text-white outline-none min-h-[8rem] resize-none overflow-hidden ${
-                    error ? 'border-red-500 focus:border-red-500' : 'border-slate-700 focus:border-primary'
-                  }`}
-                />
-                <PopoverContent
-                  align="start"
-                  className="w-[320px] p-0"
-                  style={{
-                    left: emojiAutocomplete.popoverPosition.left,
-                    top: emojiAutocomplete.popoverPosition.top,
-                    marginTop: 0,
-                  }}
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold text-white">{title}</h1>
+        {collapsible ? (
+          <button
+            type="button"
+            onClick={onToggleExpanded}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 bg-slate-900/80 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+            aria-expanded={expanded}
+            aria-label={expanded ? `Collapse ${title}` : `Expand ${title}`}
+          >
+            <HeaderIcon
+              className={`h-4 w-4 ${collapsedActionStyle === 'plus' && !expanded ? '' : 'transition-transform'} ${expanded ? 'rotate-180' : ''}`}
+            />
+          </button>
+        ) : null}
+      </div>
+      {contentVisible ? (
+        isEditMode ? (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+              <div className="inline-flex rounded-lg border border-slate-700 bg-slate-900 p-1">
+                <Button
+                  type="button"
+                  variant={viewMode === 'edit' ? 'primary' : 'ghost'}
+                  onClick={() => setViewMode('edit')}
+                  aria-pressed={viewMode === 'edit'}
+                  className="px-3 py-1 text-sm font-medium rounded-md"
                 >
-                  <EmojiPicker
-                    emojis={emojiAutocomplete.emojis}
-                    highlightedIndex={emojiAutocomplete.highlightedIndex}
-                    onHighlightChange={emojiAutocomplete.setHighlightedIndex}
-                    onSelect={emojiAutocomplete.handleEmojiSelect}
-                  />
-                </PopoverContent>
+                  Edit
+                </Button>
+                <Button
+                  type="button"
+                  variant={viewMode === 'preview' ? 'primary' : 'ghost'}
+                  onClick={() => setViewMode('preview')}
+                  aria-pressed={viewMode === 'preview'}
+                  className="px-3 py-1 text-sm font-medium rounded-md"
+                >
+                  Preview
+                </Button>
               </div>
-            </Popover>
-          ) : (
-            <div className="w-full bg-slate-900 border border-slate-700 rounded-lg p-4 min-h-[8rem]">
-              <MrkdwnRenderer
-                content={description}
-              />
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setShowFormattingHelp(true)}
+                className="text-xs text-slate-400 hover:text-slate-200 underline px-0"
+              >
+                Formatting help
+              </Button>
             </div>
-          )}
-        </>
-      ) : (
-        <div className="w-full rounded-lg">
-          <MrkdwnRenderer
-            content={description}
-          />
-        </div>
-      )}
-      {isEditMode && error ? <div className="text-xs text-red-400 mt-2">{error}</div> : null}
+            {viewMode === 'edit' ? (
+              <Popover
+                open={emojiAutocomplete.isOpen}
+                onOpenChange={emojiAutocomplete.setIsOpen}
+                className="w-full"
+              >
+                <div className="w-full relative">
+                  <Textarea
+                    ref={textareaRef}
+                    value={description}
+                    onChange={emojiAutocomplete.handleChange}
+                    onKeyDown={emojiAutocomplete.handleKeyDown}
+                    placeholder="What's the vibe?"
+                    required
+                    className={`w-full bg-slate-900 border rounded-lg py-3 px-4 text-white outline-none min-h-[8rem] resize-none overflow-hidden ${
+                      error
+                        ? 'border-red-500 focus:border-red-500'
+                        : 'border-slate-700 focus:border-primary'
+                    }`}
+                  />
+                  <PopoverContent
+                    align="start"
+                    className="w-[320px] p-0"
+                    style={{
+                      left: emojiAutocomplete.popoverPosition.left,
+                      top: emojiAutocomplete.popoverPosition.top,
+                      marginTop: 0,
+                    }}
+                  >
+                    <EmojiPicker
+                      emojis={emojiAutocomplete.emojis}
+                      highlightedIndex={emojiAutocomplete.highlightedIndex}
+                      onHighlightChange={emojiAutocomplete.setHighlightedIndex}
+                      onSelect={emojiAutocomplete.handleEmojiSelect}
+                    />
+                  </PopoverContent>
+                </div>
+              </Popover>
+            ) : (
+              <div className="w-full bg-slate-900 border border-slate-700 rounded-lg p-4 min-h-[8rem]">
+                <MrkdwnRenderer content={description} />
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="w-full rounded-lg">
+            <MrkdwnRenderer content={description} />
+          </div>
+        )
+      ) : null}
+      {contentVisible && isEditMode && error ? (
+        <div className="text-xs text-red-400 mt-2">{error}</div>
+      ) : null}
 
       {showFormattingHelp && (
         <FormattingHelpModal
@@ -148,5 +187,5 @@ export function AboutCard(props: {
         />
       )}
     </Card>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import { MapPin } from 'lucide-react';
+import { ChevronDown, MapPin, Plus } from 'lucide-react';
 import * as React from 'react';
 import { getTheme } from '../../../../../lib/constants';
 import { Card } from '../../../../../lib/ui/9ui/card';
@@ -33,6 +33,10 @@ export function LocationCard(props: {
   onChangeLocationText?: (text: string) => void;
   onSelectLocation?: (selection: LocationSuggestion) => void;
   locationError?: string;
+  collapsible?: boolean;
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
+  collapsedActionStyle?: 'plus' | 'chevron';
 }) {
   const [showMapModal, setShowMapModal] = React.useState(false);
   const themeHex = getTheme(props.activityType).hex;
@@ -100,80 +104,102 @@ export function LocationCard(props: {
   const cardClassName = props.isEditMode
     ? 'bg-surface border border-slate-700 rounded-2xl p-5'
     : 'bg-background border border-transparent rounded-2xl p-5';
+  const contentVisible = !props.collapsible || props.expanded !== false;
+  const HeaderIcon =
+    props.collapsedActionStyle === 'plus' && props.expanded === false ? Plus : ChevronDown;
 
   return (
     <Card className={cardClassName}>
-      <h1 className="text-2xl font-bold text-white mb-3">Location</h1>
-      <div className="flex items-start gap-3">
-        <div className="p-2 bg-slate-800 rounded-lg shrink-0">
-          <MapPin className="w-5 h-5 text-accent" />
-        </div>
-        <div className="min-w-0 flex-1">
-          {props.isEditMode ? (
-            <>
-              <LocationAutocomplete
-                value={props.locationValue}
-                onChangeText={text => props.onChangeLocationText?.(text)}
-                onSelect={selection => props.onSelectLocation?.(selection)}
-                placeholder="Location"
-                className={`w-full bg-slate-900 border rounded-lg py-2 px-3 text-white outline-none ${
-                  props.locationError
-                    ? 'border-red-500 focus:border-red-500'
-                    : 'border-slate-700 focus:border-primary'
-                }`}
-              />
-              {props.locationError ? (
-                <div className="text-xs text-red-400 mt-1">{props.locationError}</div>
-              ) : null}
-              {hasItinerary ? (
-                <div className="mt-4 pt-4 border-t border-slate-800">
-                  <div className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">
-                    Schedule locations
-                  </div>
-                  <ScheduleLocationList
-                    itineraryLocationList={itineraryLocationList}
-                    formatRawLocationForDisplay={props.formatRawLocationForDisplay}
-                    formatItineraryLocationForDisplay={props.formatItineraryLocationForDisplay}
-                    onOpenItineraryLocationInMaps={props.onOpenItineraryLocationInMaps}
-                  />
-                </div>
-              ) : null}
-            </>
-          ) : hasItinerary ? (
-            <ScheduleLocationList
-              itineraryLocationList={itineraryLocationList}
-              formatRawLocationForDisplay={props.formatRawLocationForDisplay}
-              formatItineraryLocationForDisplay={props.formatItineraryLocationForDisplay}
-              onOpenItineraryLocationInMaps={props.onOpenItineraryLocationInMaps}
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h1 className="text-2xl font-bold text-white">Location</h1>
+        {props.collapsible ? (
+          <button
+            type="button"
+            onClick={props.onToggleExpanded}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 bg-slate-900/80 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+            aria-expanded={props.expanded}
+            aria-label={props.expanded ? 'Collapse Location' : 'Expand Location'}
+          >
+            <HeaderIcon
+              className={`h-4 w-4 ${props.collapsedActionStyle === 'plus' && props.expanded === false ? '' : 'transition-transform'} ${props.expanded ? 'rotate-180' : ''}`}
             />
-          ) : displayLocation.secondary ? (
-            <div className="min-w-0">
-              <div className="font-bold text-white truncate">{displayLocation.primary}</div>
-              <div className="text-sm text-slate-400 truncate">{displayLocation.secondary}</div>
-            </div>
-          ) : (
-            <div className="font-bold text-white">{displayLocation.primary}</div>
-          )}
-
-          {!hasItinerary && !props.isEditMode && hasMiniMapPoints ? (
-            <button
-              className="text-sm text-slate-500 underline decoration-slate-600 decoration-dashed hover:text-slate-300 transition-colors"
-              type="button"
-              onClick={openMap}
-            >
-              Open map
-            </button>
-          ) : null}
-        </div>
+          </button>
+        ) : null}
       </div>
+      {contentVisible ? (
+        <div className="flex items-start gap-3">
+          <div className="p-2 bg-slate-800 rounded-lg shrink-0">
+            <MapPin className="w-5 h-5 text-accent" />
+          </div>
+          <div className="min-w-0 flex-1">
+            {props.isEditMode ? (
+              <>
+                <LocationAutocomplete
+                  value={props.locationValue}
+                  onChangeText={text => props.onChangeLocationText?.(text)}
+                  onSelect={selection => props.onSelectLocation?.(selection)}
+                  placeholder="Location"
+                  className={`w-full bg-slate-900 border rounded-lg py-2 px-3 text-white outline-none ${
+                    props.locationError
+                      ? 'border-red-500 focus:border-red-500'
+                      : 'border-slate-700 focus:border-primary'
+                  }`}
+                />
+                {props.locationError ? (
+                  <div className="text-xs text-red-400 mt-1">{props.locationError}</div>
+                ) : null}
+                {hasItinerary ? (
+                  <div className="mt-4 pt-4 border-t border-slate-800">
+                    <div className="text-xs text-slate-500 font-bold uppercase tracking-wider mb-2">
+                      Schedule locations
+                    </div>
+                    <ScheduleLocationList
+                      itineraryLocationList={itineraryLocationList}
+                      formatRawLocationForDisplay={props.formatRawLocationForDisplay}
+                      formatItineraryLocationForDisplay={props.formatItineraryLocationForDisplay}
+                      onOpenItineraryLocationInMaps={props.onOpenItineraryLocationInMaps}
+                    />
+                  </div>
+                ) : null}
+              </>
+            ) : hasItinerary ? (
+              <ScheduleLocationList
+                itineraryLocationList={itineraryLocationList}
+                formatRawLocationForDisplay={props.formatRawLocationForDisplay}
+                formatItineraryLocationForDisplay={props.formatItineraryLocationForDisplay}
+                onOpenItineraryLocationInMaps={props.onOpenItineraryLocationInMaps}
+              />
+            ) : displayLocation.secondary ? (
+              <div className="min-w-0">
+                <div className="font-bold text-white truncate">{displayLocation.primary}</div>
+                <div className="text-sm text-slate-400 truncate">{displayLocation.secondary}</div>
+              </div>
+            ) : (
+              <div className="font-bold text-white">{displayLocation.primary}</div>
+            )}
 
-      <LeafletMiniMapPreview
-        points={miniMapPoints}
-        themeHex={themeHex}
-        hasItinerary={hasItinerary}
-        itineraryGeoLoading={itineraryGeoLoading}
-        onOpen={openMap}
-      />
+            {!hasItinerary && !props.isEditMode && hasMiniMapPoints ? (
+              <button
+                className="text-sm text-slate-500 underline decoration-slate-600 decoration-dashed hover:text-slate-300 transition-colors"
+                type="button"
+                onClick={openMap}
+              >
+                Open map
+              </button>
+            ) : null}
+          </div>
+        </div>
+      ) : null}
+
+      {contentVisible ? (
+        <LeafletMiniMapPreview
+          points={miniMapPoints}
+          themeHex={themeHex}
+          hasItinerary={hasItinerary}
+          itineraryGeoLoading={itineraryGeoLoading}
+          onOpen={openMap}
+        />
+      ) : null}
 
       {showMapModal ? (
         <FullScreenMapModal

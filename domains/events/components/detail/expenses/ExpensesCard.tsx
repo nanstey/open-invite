@@ -14,7 +14,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ChevronUp, GripVertical } from 'lucide-react';
+import { ChevronDown, ChevronUp, GripVertical, Plus } from 'lucide-react';
 import * as React from 'react';
 import { Card } from '../../../../../lib/ui/9ui/card';
 import { useOutsideClick } from '../../../hooks/useOutsideClick';
@@ -71,6 +71,10 @@ export function ExpensesCard(props: {
   people: Person[];
   itineraryItems?: ItineraryItem[];
   expenseApi?: ExpenseApi;
+  collapsible?: boolean;
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
+  collapsedActionStyle?: 'plus' | 'chevron';
 }) {
   const {
     isEditMode,
@@ -82,6 +86,10 @@ export function ExpensesCard(props: {
     people,
     itineraryItems,
     expenseApi,
+    collapsible = false,
+    expanded: sectionExpanded = true,
+    onToggleExpanded,
+    collapsedActionStyle = 'chevron',
   } = props;
   const [expanded, setExpanded] = React.useState(false);
   const [expandedExpenseId, setExpandedExpenseId] = React.useState<string | null>(null);
@@ -110,6 +118,8 @@ export function ExpensesCard(props: {
   const cardClassName = isEditMode
     ? 'bg-surface border border-slate-700 rounded-2xl p-5'
     : 'bg-background border border-transparent rounded-2xl p-5';
+  const contentVisible = !collapsible || sectionExpanded;
+  const HeaderIcon = collapsedActionStyle === 'plus' && !sectionExpanded ? Plus : ChevronDown;
 
   const currency = expenses[0]?.currency ?? 'USD';
 
@@ -229,12 +239,23 @@ export function ExpensesCard(props: {
   return (
     <Card className={cardClassName}>
       <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Expenses</h1>
-        </div>
+        <h1 className="text-2xl font-bold text-white">Expenses</h1>
+        {collapsible ? (
+          <button
+            type="button"
+            onClick={onToggleExpanded}
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 bg-slate-900/80 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+            aria-expanded={sectionExpanded}
+            aria-label={sectionExpanded ? 'Collapse Expenses' : 'Expand Expenses'}
+          >
+            <HeaderIcon
+              className={`h-4 w-4 ${collapsedActionStyle === 'plus' && !sectionExpanded ? '' : 'transition-transform'} ${sectionExpanded ? 'rotate-180' : ''}`}
+            />
+          </button>
+        ) : null}
       </div>
 
-      {showExpenseList ? (
+      {contentVisible && showExpenseList ? (
         <div className="mt-4 space-y-3">
           {!canEditExpenses && expanded ? (
             <button
@@ -366,7 +387,7 @@ export function ExpensesCard(props: {
         </div>
       ) : null}
 
-      {!canEditExpenses ? (
+      {contentVisible && !canEditExpenses ? (
         <ExpensesSummarySection
           expenseCalculator={expenseCalculator}
           expenseCount={expenses.length}
