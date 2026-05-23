@@ -2,7 +2,6 @@ import * as React from 'react';
 import type { Group, User } from '../../../../../lib/types';
 import type { LocationSuggestion } from '../../../../../lib/ui/components/LocationAutocomplete';
 import { openExternalUrl } from '../../../../../lib/ui/utils/openExternalUrl';
-import type { DraftStartDateTimeLocalModel } from '../../../hooks/useDraftStartDateTimeLocal';
 import type { ItineraryItem, SocialEvent } from '../../../types';
 import { ExpensesCard } from '../expenses/ExpensesCard';
 import type { EventExpense, ExpenseApi, Person } from '../expenses/types';
@@ -25,18 +24,20 @@ import { TitleCard } from './TitleCard';
 type DetailsTabEditModel = {
   errors?: Partial<
     Record<
-      | 'title'
-      | 'description'
-      | 'startTime'
-      | 'location'
-      | 'activityType'
-      | 'durationHours'
-      | 'groupIds',
+      'title' | 'description' | 'startTime' | 'endTime' | 'location' | 'activityType' | 'groupIds',
       string
     >
   >;
-  durationHours?: number | '';
-  onChangeDurationHours?: (value: number | '') => void;
+  startDate?: string;
+  endDate?: string;
+  startTime?: string;
+  endTime?: string;
+  isAllDay?: boolean;
+  onChangeStartDate?: (value: string) => void;
+  onChangeEndDate?: (value: string) => void;
+  onChangeStartTime?: (value: string) => void;
+  onChangeEndTime?: (value: string) => void;
+  onChangeIsAllDay?: (value: boolean) => void;
   onChange: (patch: Partial<SocialEvent>) => void;
   groups?: Group[];
   groupsLoading?: boolean;
@@ -76,7 +77,6 @@ type DetailsTabProps = {
   itineraryItems: ItineraryItem[];
   hasItinerary: boolean;
   dateTime: EventDateTimeModel;
-  draftStart: DraftStartDateTimeLocalModel;
   edit?: DetailsTabEditModel;
   showItineraryStartTimeOnly: boolean;
   onChangeItineraryStartTimeOnly: (next: boolean) => void;
@@ -86,7 +86,15 @@ type DetailsTabProps = {
   attendanceByItem?: Map<string, User[]>;
 };
 
-type OptionalSectionId = 'description' | 'schedule' | 'location' | 'expenses' | 'capacity';
+type EditSectionId =
+  | 'privacy'
+  | 'title'
+  | 'dateTime'
+  | 'description'
+  | 'schedule'
+  | 'location'
+  | 'expenses'
+  | 'capacity';
 type CollapsedActionStyle = 'plus' | 'chevron';
 
 export function DetailsTab(props: DetailsTabProps) {
@@ -103,7 +111,6 @@ export function DetailsTab(props: DetailsTabProps) {
     itineraryItems,
     hasItinerary,
     dateTime,
-    draftStart,
     edit,
     showItineraryStartTimeOnly,
     onChangeItineraryStartTimeOnly,
@@ -119,8 +126,11 @@ export function DetailsTab(props: DetailsTabProps) {
     openExternalUrl(buildGoogleMapsSearchUrl(q));
   };
 
-  const optionalSectionHasContent = React.useMemo<Record<OptionalSectionId, boolean>>(
+  const editSectionHasContent = React.useMemo<Record<EditSectionId, boolean>>(
     () => ({
+      privacy: true,
+      title: true,
+      dateTime: true,
       description: event.description.trim().length > 0,
       schedule: itineraryItems.length > 0,
       location:
@@ -142,30 +152,33 @@ export function DetailsTab(props: DetailsTabProps) {
     ]
   );
 
-  const [optionalSectionsOpen, setOptionalSectionsOpen] = React.useState<
-    Record<OptionalSectionId, boolean>
-  >(() => {
-    const defaults: Record<OptionalSectionId, boolean> = {
-      description: false,
-      schedule: false,
-      location: false,
-      expenses: false,
-      capacity: false,
-    };
+  const [editSectionsOpen, setEditSectionsOpen] = React.useState<Record<EditSectionId, boolean>>(
+    () => {
+      const defaults: Record<EditSectionId, boolean> = {
+        privacy: true,
+        title: true,
+        dateTime: true,
+        description: false,
+        schedule: false,
+        location: false,
+        expenses: false,
+        capacity: false,
+      };
 
-    if (typeof window === 'undefined') return defaults;
+      if (typeof window === 'undefined') return defaults;
 
-    const next = { ...defaults };
-    (Object.keys(defaults) as OptionalSectionId[]).forEach(id => {
-      const stored = window.localStorage.getItem(`event-edit-section:${id}`);
-      if (stored === 'open') next[id] = true;
-      if (stored === 'closed') next[id] = false;
-    });
-    return next;
-  });
+      const next = { ...defaults };
+      (Object.keys(defaults) as EditSectionId[]).forEach(id => {
+        const stored = window.localStorage.getItem(`event-edit-section:${id}`);
+        if (stored === 'open') next[id] = true;
+        if (stored === 'closed') next[id] = false;
+      });
+      return next;
+    }
+  );
 
-  const toggleOptionalSection = React.useCallback((id: OptionalSectionId) => {
-    setOptionalSectionsOpen(prev => {
+  const toggleEditSection = React.useCallback((id: EditSectionId) => {
+    setEditSectionsOpen(prev => {
       const nextValue = !prev[id];
       if (typeof window !== 'undefined') {
         window.localStorage.setItem(`event-edit-section:${id}`, nextValue ? 'open' : 'closed');
@@ -176,20 +189,39 @@ export function DetailsTab(props: DetailsTabProps) {
 
   const getOptionalSectionChrome = React.useCallback(
     (
-      id: OptionalSectionId
+      id: EditSectionId
     ): {
       collapsible: boolean;
       expanded: boolean;
       onToggleExpanded: () => void;
       collapsedActionStyle: CollapsedActionStyle;
+      isEmptyState: boolean;
     } => ({
       collapsible: isEditMode,
-      expanded: optionalSectionsOpen[id],
-      onToggleExpanded: () => toggleOptionalSection(id),
-      collapsedActionStyle: optionalSectionHasContent[id] ? 'chevron' : 'plus',
+      expanded: editSectionsOpen[id],
+      onToggleExpanded: () => toggleEditSection(id),
+      collapsedActionStyle: editSectionHasContent[id] ? 'chevron' : 'plus',
+      isEmptyState: !editSectionHasContent[id],
     }),
-    [isEditMode, optionalSectionHasContent, optionalSectionsOpen, toggleOptionalSection]
+    [editSectionHasContent, editSectionsOpen, isEditMode, toggleEditSection]
   );
+
+  const showDescriptionSection = isEditMode || editSectionHasContent.description;
+  const showDateTimeSection = true;
+  const showScheduleSection = isEditMode || hasItinerary;
+  const showLocationSection = isEditMode || editSectionHasContent.location;
+  const showExpensesSection = isEditMode || editSectionHasContent.expenses;
+  const showDividerAfterDescription =
+    !isEditMode &&
+    showDescriptionSection &&
+    (showDateTimeSection || showScheduleSection || showLocationSection || showExpensesSection);
+  const showDividerAfterDateTime =
+    !isEditMode &&
+    showDateTimeSection &&
+    (showScheduleSection || showLocationSection || showExpensesSection);
+  const showDividerAfterSchedule =
+    !isEditMode && showScheduleSection && (showLocationSection || showExpensesSection);
+  const showDividerAfterLocation = !isEditMode && showLocationSection && showExpensesSection;
 
   return (
     <div className="space-y-4">
@@ -201,6 +233,7 @@ export function DetailsTab(props: DetailsTabProps) {
           groupOptions={edit?.groups}
           groupsLoading={edit?.groupsLoading}
           groupError={edit?.errors?.groupIds}
+          {...getOptionalSectionChrome('privacy')}
         />
       ) : null}
 
@@ -212,76 +245,57 @@ export function DetailsTab(props: DetailsTabProps) {
           onChangeTitle={next => edit?.onChange({ title: next })}
           onChangeActivityType={next => edit?.onChange({ activityType: next })}
           errors={{ title: edit?.errors?.title, activityType: edit?.errors?.activityType }}
+          {...getOptionalSectionChrome('title')}
         />
       ) : (
         <TitleCard isEditMode={isEditMode} title={event.title} activityType={event.activityType} />
       )}
 
+      {showDescriptionSection ? (
+        isEditMode ? (
+          <AboutCard
+            isEditMode={isEditMode}
+            title="Description"
+            description={event.description}
+            onChangeDescription={next => edit?.onChange({ description: next })}
+            error={edit?.errors?.description}
+            {...getOptionalSectionChrome('description')}
+          />
+        ) : (
+          <AboutCard isEditMode={isEditMode} description={event.description} />
+        )
+      ) : null}
+
+      {showDividerAfterDescription ? <hr className="border-slate-700" /> : null}
+
       {isEditMode ? (
         <DateTimeCard
           isEditMode={isEditMode}
-          hasItinerary={hasItinerary}
           dateTime={dateTime}
           isFlexibleStart={event.isFlexibleStart}
-          draft={draftStart}
-          durationHours={edit?.durationHours}
-          onChangeDurationHours={edit?.onChangeDurationHours}
+          startDate={edit?.startDate ?? ''}
+          endDate={edit?.endDate ?? ''}
+          startTime={edit?.startTime ?? ''}
+          endTime={edit?.endTime ?? ''}
+          isAllDay={edit?.isAllDay ?? false}
+          onChangeStartDate={edit?.onChangeStartDate}
+          onChangeEndDate={edit?.onChangeEndDate}
+          onChangeStartTime={edit?.onChangeStartTime}
+          onChangeEndTime={edit?.onChangeEndTime}
+          onChangeIsAllDay={edit?.onChangeIsAllDay}
           errorStartTime={edit?.errors?.startTime}
-          errorDurationHours={edit?.errors?.durationHours}
+          errorEndTime={edit?.errors?.endTime}
+          {...getOptionalSectionChrome('dateTime')}
         />
       ) : (
         <DateTimeCard
           isEditMode={isEditMode}
-          hasItinerary={hasItinerary}
           dateTime={dateTime}
           isFlexibleStart={event.isFlexibleStart}
-          draft={draftStart}
         />
       )}
 
-      {isEditMode ? (
-        <AboutCard
-          isEditMode={isEditMode}
-          title="Description"
-          description={event.description}
-          onChangeDescription={next => edit?.onChange({ description: next })}
-          error={edit?.errors?.description}
-          {...getOptionalSectionChrome('description')}
-        />
-      ) : (
-        <AboutCard isEditMode={isEditMode} description={event.description} />
-      )}
-
-      {!isEditMode && <hr className="border-slate-700" />}
-
-      <LocationCard
-        itineraryItems={itineraryItems}
-        formatRawLocationForDisplay={formatRawLocationForDisplay}
-        formatItineraryLocationForDisplay={formatItineraryLocationForDisplay}
-        onOpenItineraryLocationInMaps={openItineraryLocationInMaps}
-        activityType={event.activityType}
-        title={event.title || 'Map'}
-        eventLocation={event.location}
-        eventLocationData={event.locationData}
-        eventCoordinates={event.coordinates}
-        isEditMode={isEditMode}
-        locationValue={event.location}
-        onChangeLocationText={text =>
-          edit?.onChange({ location: text, coordinates: undefined, locationData: undefined })
-        }
-        onSelectLocation={(selection: LocationSuggestion) =>
-          edit?.onChange({
-            location: selection.locationData.display.full,
-            coordinates: {
-              lat: selection.locationData.geo.lat,
-              lng: selection.locationData.geo.lng,
-            },
-            locationData: selection.locationData,
-          })
-        }
-        locationError={isEditMode ? edit?.errors?.location : undefined}
-        {...(isEditMode ? getOptionalSectionChrome('location') : {})}
-      />
+      {showDividerAfterDateTime ? <hr className="border-slate-700" /> : null}
 
       {isEditMode ? (
         <CapacityCard
@@ -291,9 +305,7 @@ export function DetailsTab(props: DetailsTabProps) {
         />
       ) : null}
 
-      {!isEditMode && hasItinerary && <hr className="border-slate-700" />}
-
-      {isEditMode || hasItinerary ? (
+      {showScheduleSection ? (
         <ScheduleCard
           isEditMode={isEditMode}
           hasScheduleItems={hasItinerary}
@@ -324,8 +336,6 @@ export function DetailsTab(props: DetailsTabProps) {
                 showItineraryTimesOnly={dateTime.showItineraryTimesOnly}
                 showItineraryStartTimeOnly={showItineraryStartTimeOnly}
                 hasItinerary={hasItinerary}
-                draftStartIso={draftStart.draftStartIso}
-                durationHours={edit?.durationHours}
                 formatItineraryLocationForDisplay={formatItineraryLocationForDisplay}
                 openItineraryLocationInMaps={openItineraryLocationInMaps}
                 itineraryApi={edit.itinerary}
@@ -346,20 +356,55 @@ export function DetailsTab(props: DetailsTabProps) {
         </ScheduleCard>
       ) : null}
 
-      {!isEditMode && <hr className="border-slate-700" />}
+      {showDividerAfterSchedule ? <hr className="border-slate-700" /> : null}
 
-      <ExpensesCard
-        isEditMode={isEditMode}
-        isGuest={isGuest}
-        onRequireAuth={onRequireAuth}
-        currentUserId={currentUserId}
-        hostId={hostId}
-        expenses={expenses}
-        expenseApi={expenseApi}
-        people={people}
-        itineraryItems={itineraryItems}
-        {...(isEditMode ? getOptionalSectionChrome('expenses') : {})}
-      />
+      {showLocationSection ? (
+        <LocationCard
+          itineraryItems={itineraryItems}
+          formatRawLocationForDisplay={formatRawLocationForDisplay}
+          formatItineraryLocationForDisplay={formatItineraryLocationForDisplay}
+          onOpenItineraryLocationInMaps={openItineraryLocationInMaps}
+          activityType={event.activityType}
+          title={event.title || 'Map'}
+          eventLocation={event.location}
+          eventLocationData={event.locationData}
+          eventCoordinates={event.coordinates}
+          isEditMode={isEditMode}
+          locationValue={event.location}
+          onChangeLocationText={text =>
+            edit?.onChange({ location: text, coordinates: undefined, locationData: undefined })
+          }
+          onSelectLocation={(selection: LocationSuggestion) =>
+            edit?.onChange({
+              location: selection.locationData.display.full,
+              coordinates: {
+                lat: selection.locationData.geo.lat,
+                lng: selection.locationData.geo.lng,
+              },
+              locationData: selection.locationData,
+            })
+          }
+          locationError={isEditMode ? edit?.errors?.location : undefined}
+          {...(isEditMode ? getOptionalSectionChrome('location') : {})}
+        />
+      ) : null}
+
+      {showDividerAfterLocation ? <hr className="border-slate-700" /> : null}
+
+      {showExpensesSection ? (
+        <ExpensesCard
+          isEditMode={isEditMode}
+          isGuest={isGuest}
+          onRequireAuth={onRequireAuth}
+          currentUserId={currentUserId}
+          hostId={hostId}
+          expenses={expenses}
+          expenseApi={expenseApi}
+          people={people}
+          itineraryItems={itineraryItems}
+          {...(isEditMode ? getOptionalSectionChrome('expenses') : {})}
+        />
+      ) : null}
     </div>
   );
 }

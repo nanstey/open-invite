@@ -6,7 +6,6 @@ import { TabGroup, type TabOption } from '../../../../lib/ui/components/TabGroup
 import { fetchEventById } from '../../../../services/eventService';
 import { upsertItineraryAttendance } from '../../../../services/itineraryAttendanceService';
 import { useAttendanceToggle } from '../../hooks/useAttendanceToggle';
-import { useDraftStartDateTimeLocal } from '../../hooks/useDraftStartDateTimeLocal';
 import { useEventPeople } from '../../hooks/useEventPeople';
 import { useEventTabsController } from '../../hooks/useEventTabsController';
 import { useFriendsForGuests } from '../../hooks/useFriendsForGuests';
@@ -62,17 +61,23 @@ interface EventDetailProps {
         | 'title'
         | 'description'
         | 'startTime'
+        | 'endTime'
         | 'location'
         | 'activityType'
-        | 'durationHours'
         | 'groupIds',
         string
       >
     >;
-    startDateTimeLocal?: string;
-    onChangeStartDateTimeLocal?: (value: string) => void;
-    durationHours?: number | '';
-    onChangeDurationHours?: (value: number | '') => void;
+    startDate?: string;
+    endDate?: string;
+    startTime?: string;
+    endTime?: string;
+    isAllDay?: boolean;
+    onChangeStartDate?: (value: string) => void;
+    onChangeEndDate?: (value: string) => void;
+    onChangeStartTime?: (value: string) => void;
+    onChangeEndTime?: (value: string) => void;
+    onChangeIsAllDay?: (value: boolean) => void;
     onChange: (patch: Partial<SocialEvent>) => void;
     itinerary?: {
       items: ItineraryItem[];
@@ -193,13 +198,6 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     return Array.from(uniq.values());
   }, [attendeesList, currentUser, host]);
 
-  // --- Edit form draft state ---
-  const draftStart = useDraftStartDateTimeLocal({
-    enabled: isEditMode,
-    startDateTimeLocal: edit?.startDateTimeLocal,
-    onChangeStartDateTimeLocal: edit?.onChangeStartDateTimeLocal,
-  });
-
   // --- Attendance / permissions ---
   const isHost = !!currentUserId && event.hostId === currentUserId;
   const isAttending = !!currentUserId && event.attendees.includes(currentUserId);
@@ -313,9 +311,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
         eventStartTime: event.startTime,
         eventEndTime: event.endTime,
         isAllDay: event.isAllDay,
-        itineraryItems,
       }),
-    [event.endTime, event.isAllDay, event.startTime, itineraryItems]
+    [event.endTime, event.isAllDay, event.startTime]
   );
 
   const seats = React.useMemo(() => {
@@ -436,7 +433,6 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               itineraryItems={itineraryItems}
               hasItinerary={hasItinerary}
               dateTime={dateTime}
-              draftStart={draftStart}
               edit={edit}
               showItineraryStartTimeOnly={showItineraryStartTimeOnly}
               onChangeItineraryStartTimeOnly={handleChangeItineraryStartTimeOnly}

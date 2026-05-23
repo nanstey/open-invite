@@ -8,8 +8,11 @@ const baseValues = {
   description: 'Bring snacks',
   location: 'Downtown',
   activityType: 'Social',
-  startDateTimeLocal: '2026-02-28T19:00',
-  durationHours: 2,
+  startDate: '2026-02-28',
+  endDate: '2026-02-28',
+  startTime: '19:00',
+  endTime: '21:00',
+  isAllDay: false,
 };
 
 describe('EventEditor integration: group visibility validation', () => {
@@ -49,5 +52,34 @@ describe('EventEditor integration: group visibility validation', () => {
     );
 
     expect(errors.groupIds).toBeUndefined();
+  });
+
+  it('requires end time to be after start time for timed events', () => {
+    const errors = validateEventEditor(
+      {
+        ...baseValues,
+        endTime: '18:30',
+      },
+      false
+    );
+
+    expect(errors.startTime).toBe('End time must be after start time.');
+    expect(errors.endTime).toBe('End time must be after start time.');
+  });
+
+  it('allows all-day events with an end date on or after the start date', () => {
+    const errors = validateEventEditor(
+      {
+        ...baseValues,
+        isAllDay: true,
+        startTime: '',
+        endTime: '',
+        endDate: '2026-03-01',
+      },
+      false
+    );
+
+    expect(errors.startTime).toBeUndefined();
+    expect(errors.endTime).toBeUndefined();
   });
 });

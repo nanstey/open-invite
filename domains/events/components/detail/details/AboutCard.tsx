@@ -1,11 +1,10 @@
-import { ChevronDown, Plus } from 'lucide-react';
 import * as React from 'react';
 import { useEmojiAutocomplete } from '../../../../../lib/hooks/useEmojiAutocomplete';
 import { Button } from '../../../../../lib/ui/9ui/button';
-import { Card } from '../../../../../lib/ui/9ui/card';
 import { EmojiPicker } from '../../../../../lib/ui/9ui/emoji-picker';
 import { Popover, PopoverContent } from '../../../../../lib/ui/9ui/popover';
 import { Textarea } from '../../../../../lib/ui/9ui/textarea';
+import { SectionCard } from '../SectionCard';
 import { FORMATTING_EXAMPLE, FormattingHelpModal } from './FormattingHelpModal';
 import { MrkdwnRenderer } from './MrkdwnRenderer';
 
@@ -21,6 +20,7 @@ export function AboutCard(props: {
   expanded?: boolean;
   onToggleExpanded?: () => void;
   collapsedActionStyle?: 'plus' | 'chevron';
+  isEmptyState?: boolean;
 }) {
   const {
     isEditMode,
@@ -32,6 +32,7 @@ export function AboutCard(props: {
     expanded = true,
     onToggleExpanded,
     collapsedActionStyle = 'chevron',
+    isEmptyState = false,
   } = props;
   const [viewMode, setViewMode] = React.useState<ViewMode>('edit');
   const [showFormattingHelp, setShowFormattingHelp] = React.useState(false);
@@ -68,31 +69,18 @@ export function AboutCard(props: {
       textarea.style.height = `${Math.max(128, textarea.scrollHeight)}px`;
     }
   }, [viewMode]);
-
-  const cardClassName = isEditMode
-    ? 'bg-surface border border-slate-700 rounded-2xl p-5'
-    : 'bg-background border border-transparent rounded-2xl p-5';
   const contentVisible = !collapsible || expanded;
-  const HeaderIcon = collapsedActionStyle === 'plus' && !expanded ? Plus : ChevronDown;
 
   return (
-    <Card className={cardClassName}>
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold text-white">{title}</h1>
-        {collapsible ? (
-          <button
-            type="button"
-            onClick={onToggleExpanded}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 bg-slate-900/80 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
-            aria-expanded={expanded}
-            aria-label={expanded ? `Collapse ${title}` : `Expand ${title}`}
-          >
-            <HeaderIcon
-              className={`h-4 w-4 ${collapsedActionStyle === 'plus' && !expanded ? '' : 'transition-transform'} ${expanded ? 'rotate-180' : ''}`}
-            />
-          </button>
-        ) : null}
-      </div>
+    <SectionCard
+      title={title}
+      collapsible={collapsible}
+      expanded={expanded}
+      onToggleExpanded={onToggleExpanded}
+      collapsedActionStyle={collapsedActionStyle}
+      isEmptyState={isEmptyState}
+      surface={isEditMode ? 'edit' : 'read'}
+    >
       {contentVisible ? (
         isEditMode ? (
           <>
@@ -186,6 +174,6 @@ export function AboutCard(props: {
           onInsertExample={handleInsertExample}
         />
       )}
-    </Card>
+    </SectionCard>
   );
 }

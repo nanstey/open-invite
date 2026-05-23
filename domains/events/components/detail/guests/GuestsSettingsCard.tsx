@@ -14,6 +14,7 @@ import {
 import { FormSelect } from '../../../../../lib/ui/components/FormControls';
 import type { SocialEvent } from '../../../types';
 import { EventVisibility } from '../../../types';
+import { SectionCard } from '../SectionCard';
 
 type GuestsSettingsCardProps = {
   event: SocialEvent;
@@ -22,11 +23,23 @@ type GuestsSettingsCardProps = {
   groupOptions?: Group[];
   groupsLoading?: boolean;
   groupError?: string;
+  collapsible?: boolean;
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
 };
 
 export function GuestsSettingsCard(props: GuestsSettingsCardProps) {
-  const { event, onChangeVisibility, onChangeGroupIds, groupOptions, groupsLoading, groupError } =
-    props;
+  const {
+    event,
+    onChangeVisibility,
+    onChangeGroupIds,
+    groupOptions,
+    groupsLoading,
+    groupError,
+    collapsible,
+    expanded,
+    onToggleExpanded,
+  } = props;
   const [pickerValue, setPickerValue] = React.useState<Group | null>(null);
 
   const selectedGroupIds = event.groupIds ?? [];
@@ -58,9 +71,14 @@ export function GuestsSettingsCard(props: GuestsSettingsCardProps) {
   );
 
   return (
-    <div className="bg-surface border border-slate-700 rounded-2xl p-5 space-y-4">
-      <h1 className="text-2xl font-bold text-white">Privacy &amp; Sharing</h1>
-
+    <SectionCard
+      title="Privacy & Sharing"
+      surface="edit"
+      contentClassName="space-y-4"
+      collapsible={collapsible}
+      expanded={expanded}
+      onToggleExpanded={onToggleExpanded}
+    >
       <div className="space-y-1">
         <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Visibility</div>
         <FormSelect
@@ -133,6 +151,6 @@ export function GuestsSettingsCard(props: GuestsSettingsCardProps) {
           </div>
         </div>
       ) : null}
-    </div>
+    </SectionCard>
   );
 }

@@ -39,6 +39,16 @@ export function LeafletMiniMapPreview(props: {
     }
   }, []);
 
+  const fitMultiPointBounds = React.useCallback((map: any, layer: any) => {
+    const bounds = layer?.getBounds?.();
+    if (!bounds?.isValid?.()) return;
+    try {
+      map.fitBounds(bounds, { padding: [18, 18], maxZoom: 15, animate: false });
+    } catch {
+      // ignore
+    }
+  }, []);
+
   React.useEffect(() => {
     if (!containerRef.current) return;
 
@@ -151,26 +161,22 @@ export function LeafletMiniMapPreview(props: {
         opacity: 0.55,
       }).addTo(map);
 
-      const bounds = layer.getBounds?.();
-      if (bounds?.isValid?.()) {
-        try {
-          map.fitBounds(bounds, { padding: [18, 18], maxZoom: 15, animate: false });
-        } catch {
-          // ignore
-        }
-      }
+      fitMultiPointBounds(map, layer);
     }
 
     if (map?.invalidateSize) {
       requestAnimationFrame(() => {
         try {
           map.invalidateSize(true);
+          if (points.length > 1 && markerLayerRef.current) {
+            fitMultiPointBounds(map, markerLayerRef.current);
+          }
         } catch {
           // ignore
         }
       });
     }
-  }, [destroyMap, hasPoints, points, themeHex]);
+  }, [destroyMap, fitMultiPointBounds, hasPoints, points, themeHex]);
 
   React.useEffect(() => {
     return () => destroyMap();

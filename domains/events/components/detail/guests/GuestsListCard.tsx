@@ -3,6 +3,7 @@ import { Users } from 'lucide-react';
 import type { User } from '../../../../../lib/types';
 import { FormSelect } from '../../../../../lib/ui/components/FormControls';
 import type { SocialEvent } from '../../../types';
+import { SectionCard } from '../SectionCard';
 import { GuestRow } from './GuestRow';
 
 type GuestsListCardProps = {
@@ -49,22 +50,17 @@ export function GuestsListCard(props: GuestsListCardProps) {
   } = props;
 
   return (
-    <div
-      className={
-        isEditMode
-          ? 'bg-surface border border-slate-700 rounded-2xl p-5'
-          : 'bg-background border border-transparent rounded-2xl p-5'
-      }
-    >
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-bold text-white flex items-center gap-2">
-          <Users className="w-5 h-5 text-slate-400" /> Guests
-        </h2>
+    <SectionCard
+      title="Guests"
+      titleLevel="secondary"
+      titleIcon={<Users className="w-5 h-5" />}
+      headerActions={
         <div className="text-sm text-slate-400 font-medium">
           {event.maxSeats ? goingLabel : `${attendeeCount}`}
         </div>
-      </div>
-
+      }
+      surface={isEditMode ? 'edit' : 'read'}
+    >
       {showFilter ? (
         <div className="mb-4 flex flex-col sm:flex-row sm:items-center gap-2">
           <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">
@@ -129,6 +125,6 @@ export function GuestsListCard(props: GuestsListCardProps) {
           {openSpots} spot{openSpots === 1 ? '' : 's'} open
         </div>
       ) : null}
-    </div>
+    </SectionCard>
   );
 }

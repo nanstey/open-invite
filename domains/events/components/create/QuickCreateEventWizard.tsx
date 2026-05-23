@@ -19,22 +19,14 @@ import { DatePickerField } from '../../../../lib/ui/components/DatePickerField';
 import { TimePickerField } from '../../../../lib/ui/components/TimePickerField';
 import { createDraftEvent } from '../../../../services/eventService';
 import type { SocialEvent } from '../../types';
+import {
+  computeEventDateTimePayload,
+  getEventDateTimeValidationError,
+} from '../../utils/eventDateTimeDraft';
 import { CategoryBadgePicker } from './CategoryBadgePicker';
 
 const desktopMediaQuery = '(min-width: 768px)';
 const dateTimeGridClass = 'grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3 md:grid-cols-2';
-
-function combineLocalDateTime(date: string, time: string): string {
-  return new Date(`${date}T${time}:00`).toISOString();
-}
-
-function combineAllDayEndDateTime(date: string): string {
-  return new Date(`${date}T23:59:00`).toISOString();
-}
-
-function parseLocalDate(date: string): Date {
-  return new Date(`${date}T00:00:00`);
-}
 
 export function QuickCreateEventWizard(props: {
   open: boolean;
@@ -84,35 +76,16 @@ export function QuickCreateEventWizard(props: {
     isAllDay;
 
   const validationError = React.useMemo(() => {
-    if (!title.trim() || !category || !startDate || !endDate) {
+    if (!title.trim() || !category) {
       return 'Add a title, category, start date, and end date.';
     }
-
-    if (isAllDay) {
-      const start = parseLocalDate(startDate);
-      const end = parseLocalDate(endDate);
-      if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-        return 'Choose valid start and end dates.';
-      }
-      if (end < start) {
-        return 'End date must be on or after start date.';
-      }
-      return null;
-    }
-
-    if (!startTime || !endTime) {
-      return 'Add a start time and end time.';
-    }
-
-    const start = new Date(`${startDate}T${startTime}:00`);
-    const end = new Date(`${endDate}T${endTime}:00`);
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
-      return 'Choose valid start and end times.';
-    }
-    if (end <= start) {
-      return 'End time must be after start time.';
-    }
-    return null;
+    return getEventDateTimeValidationError({
+      startDate,
+      endDate,
+      startTime,
+      endTime,
+      isAllDay,
+    });
   }, [category, endDate, endTime, isAllDay, startDate, startTime, title]);
 
   const canContinue = !validationError && !isSaving;
@@ -127,16 +100,21 @@ export function QuickCreateEventWizard(props: {
     setError(null);
     setIsSaving(true);
     try {
+      const payload = computeEventDateTimePayload({
+        startDate,
+        endDate,
+        startTime,
+        endTime,
+        isAllDay,
+      });
+      if (!payload) throw new Error('Draft event could not be created.');
+
       const draft = await createDraftEvent({
         title: title.trim(),
         activityType: category,
-        isAllDay,
-        startTime: isAllDay
-          ? combineLocalDateTime(startDate, '00:00')
-          : combineLocalDateTime(startDate, startTime),
-        endTime: isAllDay
-          ? combineAllDayEndDateTime(endDate)
-          : combineLocalDateTime(endDate, endTime),
+        isAllDay: payload.isAllDay,
+        startTime: payload.startTime,
+        endTime: payload.endTime,
       });
       if (!draft) throw new Error('Draft event could not be created.');
       props.onCreated(draft);

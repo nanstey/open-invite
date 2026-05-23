@@ -50,8 +50,6 @@ type ScheduleEditorProps = {
   showItineraryTimesOnly: boolean;
   showItineraryStartTimeOnly: boolean;
   hasItinerary: boolean;
-  draftStartIso: string | null;
-  durationHours?: number | '';
   formatItineraryLocationForDisplay: (location: string | undefined) => {
     full: string;
     label: string;
@@ -68,8 +66,6 @@ export function ScheduleEditor(props: ScheduleEditorProps) {
     showItineraryTimesOnly,
     showItineraryStartTimeOnly,
     hasItinerary,
-    draftStartIso,
-    durationHours,
     formatItineraryLocationForDisplay,
     openItineraryLocationInMaps,
     itineraryApi,
@@ -101,19 +97,26 @@ export function ScheduleEditor(props: ScheduleEditorProps) {
     setShowCreateSchedule(true);
     if (itineraryItems.length > 0) return;
 
-    const startIso = draftStartIso ?? event.startTime;
-    const durationMinutes = durationHoursToMinutes(durationHours, 60);
+    const durationMinutes = event.endTime
+      ? durationHoursToMinutes(
+          Math.max(
+            0,
+            (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / 3_600_000
+          ),
+          60
+        )
+      : 60;
 
     const newId = await itineraryApi.onAdd({
       title: '',
-      startTime: startIso,
+      startTime: event.startTime,
       durationMinutes,
       location: undefined,
       description: undefined,
     });
 
     if (typeof newId === 'string') setExpandedItineraryItemId(newId);
-  }, [draftStartIso, durationHours, event.startTime, itineraryApi, itineraryItems.length]);
+  }, [event.endTime, event.startTime, itineraryApi, itineraryItems.length]);
 
   const toggleExpanded = React.useCallback((id: string) => {
     setExpandedItineraryItemId(prev => (prev === id ? null : id));

@@ -48,6 +48,3 @@ It is intentionally non-automator-specific.
 ## 7) Automation boundary
 - Keep root `AGENTS.md` focused on repository-wide coding norms.
 - Keep autonomous workflow rules in `automation/ai-workflow/`.
-
-## 8) Testing
-- When testing in the browser, authenticate using test user credentials (alex@example.com password123)

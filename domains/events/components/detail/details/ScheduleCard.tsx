@@ -1,8 +1,7 @@
-import { ChevronDown, Plus } from 'lucide-react';
 import type * as React from 'react';
-import { Card } from '../../../../../lib/ui/9ui/card';
 import { Switch } from '../../../../../lib/ui/9ui/switch';
 import { FormSelect } from '../../../../../lib/ui/components/FormControls';
+import { SectionCard } from '../SectionCard';
 
 export function ScheduleCard(props: {
   children: React.ReactNode;
@@ -17,41 +16,21 @@ export function ScheduleCard(props: {
   expanded?: boolean;
   onToggleExpanded?: () => void;
   collapsedActionStyle?: 'plus' | 'chevron';
+  isEmptyState?: boolean;
 }) {
-  const cardClassName = props.isEditMode
-    ? 'bg-surface border border-slate-700 rounded-2xl p-5'
-    : 'bg-background border border-transparent rounded-2xl p-5';
   const contentVisible = !props.collapsible || props.expanded !== false;
-  const HeaderIcon =
-    props.collapsedActionStyle === 'plus' && props.expanded === false ? Plus : ChevronDown;
 
   return (
-    <Card className={cardClassName}>
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
-        <h1 className="text-2xl font-bold text-white">Schedule</h1>
-        <div className="shrink-0 flex flex-wrap items-center gap-2">
-          {contentVisible && props.headerActions ? (
-            <div className="shrink-0 flex flex-wrap items-center gap-2">
-              {props.headerActions ? (
-                <div className="flex items-center gap-2">{props.headerActions}</div>
-              ) : null}
-            </div>
-          ) : null}
-          {props.collapsible ? (
-            <button
-              type="button"
-              onClick={props.onToggleExpanded}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 bg-slate-900/80 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
-              aria-expanded={props.expanded}
-              aria-label={props.expanded ? 'Collapse Schedule' : 'Expand Schedule'}
-            >
-              <HeaderIcon
-                className={`h-4 w-4 ${props.collapsedActionStyle === 'plus' && props.expanded === false ? '' : 'transition-transform'} ${props.expanded ? 'rotate-180' : ''}`}
-              />
-            </button>
-          ) : null}
-        </div>
-      </div>
+    <SectionCard
+      title="Schedule"
+      collapsible={props.collapsible}
+      expanded={props.expanded}
+      onToggleExpanded={props.onToggleExpanded}
+      collapsedActionStyle={props.collapsedActionStyle}
+      headerActions={contentVisible ? props.headerActions : undefined}
+      isEmptyState={props.isEmptyState}
+      surface={props.isEditMode ? 'edit' : 'read'}
+    >
       {contentVisible ? (
         <>
           {props.isEditMode && props.hasScheduleItems ? (
@@ -97,6 +76,6 @@ export function ScheduleCard(props: {
           {props.children}
         </>
       ) : null}
-    </Card>
+    </SectionCard>
   );
 }

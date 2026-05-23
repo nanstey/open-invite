@@ -14,11 +14,11 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { ChevronDown, ChevronUp, GripVertical, Plus } from 'lucide-react';
+import { ChevronUp, GripVertical } from 'lucide-react';
 import * as React from 'react';
-import { Card } from '../../../../../lib/ui/9ui/card';
 import { useOutsideClick } from '../../../hooks/useOutsideClick';
 import type { ItineraryItem } from '../../../types';
+import { SectionCard } from '../SectionCard';
 import { ExpenseEditRow } from './components/ExpenseEditRow';
 import { ExpenseReadOnlyRow } from './components/ExpenseReadOnlyRow';
 import { ExpensesSummarySection } from './components/ExpensesSummarySection';
@@ -75,6 +75,7 @@ export function ExpensesCard(props: {
   expanded?: boolean;
   onToggleExpanded?: () => void;
   collapsedActionStyle?: 'plus' | 'chevron';
+  isEmptyState?: boolean;
 }) {
   const {
     isEditMode,
@@ -90,6 +91,7 @@ export function ExpensesCard(props: {
     expanded: sectionExpanded = true,
     onToggleExpanded,
     collapsedActionStyle = 'chevron',
+    isEmptyState = false,
   } = props;
   const [expanded, setExpanded] = React.useState(false);
   const [expandedExpenseId, setExpandedExpenseId] = React.useState<string | null>(null);
@@ -115,11 +117,7 @@ export function ExpensesCard(props: {
     onOutsideClick: () => setOpenMenuExpenseId(null),
   });
 
-  const cardClassName = isEditMode
-    ? 'bg-surface border border-slate-700 rounded-2xl p-5'
-    : 'bg-background border border-transparent rounded-2xl p-5';
   const contentVisible = !collapsible || sectionExpanded;
-  const HeaderIcon = collapsedActionStyle === 'plus' && !sectionExpanded ? Plus : ChevronDown;
 
   const currency = expenses[0]?.currency ?? 'USD';
 
@@ -237,26 +235,17 @@ export function ExpensesCard(props: {
   };
 
   return (
-    <Card className={cardClassName}>
-      <div className="flex items-start justify-between gap-3">
-        <h1 className="text-2xl font-bold text-white">Expenses</h1>
-        {collapsible ? (
-          <button
-            type="button"
-            onClick={onToggleExpanded}
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-700 bg-slate-900/80 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
-            aria-expanded={sectionExpanded}
-            aria-label={sectionExpanded ? 'Collapse Expenses' : 'Expand Expenses'}
-          >
-            <HeaderIcon
-              className={`h-4 w-4 ${collapsedActionStyle === 'plus' && !sectionExpanded ? '' : 'transition-transform'} ${sectionExpanded ? 'rotate-180' : ''}`}
-            />
-          </button>
-        ) : null}
-      </div>
-
+    <SectionCard
+      title="Expenses"
+      collapsible={collapsible}
+      expanded={sectionExpanded}
+      onToggleExpanded={onToggleExpanded}
+      collapsedActionStyle={collapsedActionStyle}
+      isEmptyState={isEmptyState}
+      surface={isEditMode ? 'edit' : 'read'}
+    >
       {contentVisible && showExpenseList ? (
-        <div className="mt-4 space-y-3">
+        <div className="space-y-3">
           {!canEditExpenses && expanded ? (
             <button
               type="button"
@@ -396,6 +385,6 @@ export function ExpensesCard(props: {
           currency={currency}
         />
       ) : null}
-    </Card>
+    </SectionCard>
   );
 }

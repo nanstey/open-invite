@@ -1,7 +1,7 @@
 import { EVENT_CATEGORY_ORDER } from '../../../../../lib/constants';
-import { Card } from '../../../../../lib/ui/9ui/card';
 import { Input } from '../../../../../lib/ui/9ui/input';
 import { FormSelect } from '../../../../../lib/ui/components/FormControls';
+import { SectionCard } from '../SectionCard';
 
 export function TitleCard(props: {
   isEditMode: boolean;
@@ -10,14 +10,32 @@ export function TitleCard(props: {
   onChangeTitle?: (next: string) => void;
   onChangeActivityType?: (next: string) => void;
   errors?: { title?: string; activityType?: string };
+  collapsible?: boolean;
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
 }) {
-  const { isEditMode, title, activityType, onChangeTitle, onChangeActivityType, errors } = props;
+  const {
+    isEditMode,
+    title,
+    activityType,
+    onChangeTitle,
+    onChangeActivityType,
+    errors,
+    collapsible,
+    expanded,
+    onToggleExpanded,
+  } = props;
 
   if (!isEditMode) return null;
 
   return (
-    <Card className="bg-surface border border-slate-700 rounded-2xl p-5">
-      <h1 className="text-2xl font-bold text-white mb-3">Title</h1>
+    <SectionCard
+      title="Title"
+      surface="edit"
+      collapsible={collapsible}
+      expanded={expanded}
+      onToggleExpanded={onToggleExpanded}
+    >
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         <div className="md:col-span-2">
           <Input
@@ -53,6 +71,6 @@ export function TitleCard(props: {
           ) : null}
         </div>
       </div>
-    </Card>
+    </SectionCard>
   );
 }
