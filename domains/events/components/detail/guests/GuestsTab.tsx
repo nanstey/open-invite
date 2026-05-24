@@ -1,10 +1,11 @@
 import * as React from 'react';
 
-import type { User } from '../../../../../lib/types';
+import type { Group, User } from '../../../../../lib/types';
 import { useGuestFriendRequests } from '../../../hooks/useGuestFriendRequests';
 import { useGuestsEditActions } from '../../../hooks/useGuestsEditActions';
-import type { SocialEvent } from '../../../types';
+import type { EventVisibility, SocialEvent } from '../../../types';
 import { GuestsListCard } from './GuestsListCard';
+import { GuestsSettingsCard } from './GuestsSettingsCard';
 import {
   getGoingLabel,
   getOpenSpots,
@@ -23,6 +24,12 @@ export function GuestsTab(props: {
   itineraryFilterId?: string;
   onChangeItineraryFilterId?: (next: string) => void;
   onChangeAttendees?: (nextAttendees: string[]) => void;
+  onChangeVisibility?: (next: EventVisibility) => void;
+  onChangeGroupIds?: (nextGroupIds: string[]) => void;
+  groupOptions?: Group[];
+  groupsEnabled?: boolean;
+  groupsLoading?: boolean;
+  groupError?: string;
 }) {
   const {
     event,
@@ -35,6 +42,12 @@ export function GuestsTab(props: {
     itineraryFilterId,
     onChangeItineraryFilterId,
     onChangeAttendees,
+    onChangeVisibility,
+    onChangeGroupIds,
+    groupOptions,
+    groupsEnabled,
+    groupsLoading,
+    groupError,
   } = props;
   const { pendingRequestIds, sendingRequestIds, handleSendFriendRequest } =
     useGuestFriendRequests();
@@ -69,6 +82,18 @@ export function GuestsTab(props: {
 
   return (
     <div className="space-y-4">
+      {isEditMode ? (
+        <GuestsSettingsCard
+          event={event}
+          onChangeVisibility={onChangeVisibility}
+          onChangeGroupIds={onChangeGroupIds}
+          groupOptions={groupOptions}
+          groupsEnabled={groupsEnabled}
+          groupsLoading={groupsLoading}
+          groupError={groupError}
+        />
+      ) : null}
+
       <GuestsListCard
         event={event}
         attendees={orderedAttendeesList}

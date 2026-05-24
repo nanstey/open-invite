@@ -21,6 +21,7 @@ type GuestsSettingsCardProps = {
   onChangeVisibility?: (next: EventVisibility) => void;
   onChangeGroupIds?: (nextGroupIds: string[]) => void;
   groupOptions?: Group[];
+  groupsEnabled?: boolean;
   groupsLoading?: boolean;
   groupError?: string;
   collapsible?: boolean;
@@ -34,6 +35,7 @@ export function GuestsSettingsCard(props: GuestsSettingsCardProps) {
     onChangeVisibility,
     onChangeGroupIds,
     groupOptions,
+    groupsEnabled = true,
     groupsLoading,
     groupError,
     collapsible,
@@ -82,17 +84,21 @@ export function GuestsSettingsCard(props: GuestsSettingsCardProps) {
       <div className="space-y-1">
         <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">Visibility</div>
         <FormSelect
-          value={event.visibilityType}
+          value={
+            !groupsEnabled && event.visibilityType === EventVisibility.GROUPS
+              ? EventVisibility.INVITE_ONLY
+              : event.visibilityType
+          }
           size="lg"
           onChange={e => onChangeVisibility?.(e.target.value as EventVisibility)}
         >
           <option value={EventVisibility.ALL_FRIENDS}>All Friends</option>
-          <option value={EventVisibility.GROUPS}>Groups</option>
+          {groupsEnabled ? <option value={EventVisibility.GROUPS}>Groups</option> : null}
           <option value={EventVisibility.INVITE_ONLY}>Invite only</option>
         </FormSelect>
       </div>
 
-      {event.visibilityType === EventVisibility.GROUPS ? (
+      {groupsEnabled && event.visibilityType === EventVisibility.GROUPS ? (
         <div className="space-y-2">
           <div className="text-xs text-slate-500 font-bold uppercase tracking-wider">
             Group visibility

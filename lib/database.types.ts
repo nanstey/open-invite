@@ -450,6 +450,30 @@ export type Database = {
         };
         Relationships: [];
       };
+      feature_flags: {
+        Row: {
+          description: string | null;
+          enabled: boolean;
+          key: string;
+          updated_at: string;
+          updated_by: string | null;
+        };
+        Insert: {
+          description?: string | null;
+          enabled: boolean;
+          key: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Update: {
+          description?: string | null;
+          enabled?: boolean;
+          key?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
       feedback_project_items: {
         Row: {
           created_at: string | null;
