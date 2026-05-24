@@ -1,6 +1,7 @@
 import { useRouterState } from '@tanstack/react-router';
 import { Info, MessageSquare, Users } from 'lucide-react';
 import React, { useState } from 'react';
+import { useFeatureFlag } from '../../../../lib/featureFlags';
 import type { Group, User } from '../../../../lib/types';
 import { TabGroup, type TabOption } from '../../../../lib/ui/components/TabGroup';
 import { fetchEventById } from '../../../../services/eventService';
@@ -148,6 +149,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   // --- Mode / edit capability ---
   const isEditMode = mode === 'edit' && !!edit;
   const canSave = !!edit?.canEdit;
+  const sendInvitesEnabled = useFeatureFlag('sendInvites');
 
   // --- Share / invite ---
   const { inviteCopied, shareInvite: handleShareInvite } = useInviteShare({
@@ -220,10 +222,10 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   const isJoinDisabled = attendance.isJoinDisabled;
 
   React.useEffect(() => {
-    if (!autoOpenSendInvites || !isHost || isEditMode) return;
+    if (!sendInvitesEnabled || !autoOpenSendInvites || !isHost || isEditMode) return;
     setShowSendInvitesDialog(true);
     onAutoOpenSendInvitesHandled?.();
-  }, [autoOpenSendInvites, isEditMode, isHost, onAutoOpenSendInvitesHandled]);
+  }, [autoOpenSendInvites, isEditMode, isHost, onAutoOpenSendInvitesHandled, sendInvitesEnabled]);
 
   // --- Itinerary models ---
   const itineraryItems: ItineraryItem[] =
@@ -341,7 +343,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     mode: isEditMode ? 'edit' : 'view',
     inviteCopied,
     onShareInvite: handleShareInvite,
-    onSendInvites: isHost ? () => setShowSendInvitesDialog(true) : undefined,
+    onSendInvites: isHost && sendInvitesEnabled ? () => setShowSendInvitesDialog(true) : undefined,
     showDismiss: !!onDismiss && !isInvolved && !isEditMode,
     onDismiss,
     isHost,
@@ -519,7 +521,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
         />
       ) : null}
 
-      {currentUserId ? (
+      {currentUserId && sendInvitesEnabled ? (
         <SendInvitesDialog
           open={showSendInvitesDialog}
           eventId={event.id}
