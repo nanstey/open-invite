@@ -1,70 +1,172 @@
-import * as React from 'react'
+import { Clock } from 'lucide-react';
+import { Switch } from '../../../../../lib/ui/9ui/switch';
+import { DatePickerField } from '../../../../../lib/ui/components/DatePickerField';
+import { TimePickerField } from '../../../../../lib/ui/components/TimePickerField';
+import { SectionCard } from '../SectionCard';
+import type { EventDateTimeModel } from '../utils/eventDateTimeModel';
 
-import { DateTimeFields } from '../../../../../lib/ui/components/DateTimeFields'
-import { buildQuarterHourTimeOptions } from '../../../../../lib/ui/utils/datetime'
-import { Card } from '../../../../../lib/ui/9ui/card'
-import type { EventDateTimeModel } from '../utils/eventDateTimeModel'
-import type { DraftStartDateTimeLocalModel } from '../../../hooks/useDraftStartDateTimeLocal'
+const dateTimeGridClass = 'grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3 md:grid-cols-2';
 
 export function DateTimeCard(props: {
-  isEditMode: boolean
-  hasItinerary: boolean
-  dateTime: EventDateTimeModel
-  isFlexibleStart: boolean
-  draft?: DraftStartDateTimeLocalModel
-  durationHours?: number | ''
-  onChangeDurationHours?: (next: number | '') => void
-  errorStartTime?: string
-  errorDurationHours?: string
+  isEditMode: boolean;
+  dateTime: EventDateTimeModel;
+  isFlexibleStart: boolean;
+  startDate?: string;
+  endDate?: string;
+  startTime?: string;
+  endTime?: string;
+  isAllDay?: boolean;
+  onChangeStartDate?: (next: string) => void;
+  onChangeEndDate?: (next: string) => void;
+  onChangeStartTime?: (next: string) => void;
+  onChangeEndTime?: (next: string) => void;
+  onChangeIsAllDay?: (next: boolean) => void;
+  errorStartTime?: string;
+  errorEndTime?: string;
+  collapsible?: boolean;
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
 }) {
   const {
     isEditMode,
-    hasItinerary,
     dateTime,
     isFlexibleStart,
-    draft,
-    durationHours,
-    onChangeDurationHours,
+    startDate,
+    endDate,
+    startTime,
+    endTime,
+    isAllDay = false,
+    onChangeStartDate,
+    onChangeEndDate,
+    onChangeStartTime,
+    onChangeEndTime,
+    onChangeIsAllDay,
     errorStartTime,
-    errorDurationHours,
-  } = props
-
-  const timeOptions = React.useMemo(() => buildQuarterHourTimeOptions(), [])
-
-  const cardClassName = isEditMode
-    ? 'bg-surface border border-slate-700 rounded-2xl p-5'
-    : 'bg-background border border-transparent rounded-2xl p-5'
+    errorEndTime,
+    collapsible,
+    expanded,
+    onToggleExpanded,
+  } = props;
+  const errorText = errorStartTime || errorEndTime;
 
   return (
-    <Card className={cardClassName}>
-      <h1 className="text-2xl font-bold text-white mb-3">Date &amp; Time</h1>
+    <SectionCard
+      title="Date & Time"
+      surface={isEditMode ? 'edit' : 'read'}
+      collapsible={collapsible}
+      expanded={expanded}
+      onToggleExpanded={onToggleExpanded}
+    >
       {isEditMode ? (
-        hasItinerary ? (
-          <div className="text-sm text-slate-400 bg-slate-900/40 border border-slate-800 rounded-xl p-4">
-            Event time is derived from itinerary items. Edit the itinerary below to change the overall time.
+        <div className="space-y-4">
+          <div className="flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center">
+                <Switch
+                  aria-label="All Day"
+                  checked={isAllDay}
+                  onCheckedChange={checked => onChangeIsAllDay?.(checked)}
+                />
+              </div>
+              <div className="text-xs font-black uppercase tracking-[0.22em] text-slate-400">
+                All Day
+              </div>
+            </div>
           </div>
-        ) : (
-          <DateTimeFields
-            date={draft?.draftDate ?? ''}
-            time={draft?.draftTime ?? ''}
-            durationHours={durationHours ?? ''}
-            timeOptions={timeOptions}
-            required
-            size="lg"
-            minDurationHours={0}
-            durationStepHours={0.25}
-            durationPlaceholder="e.g. 2"
-            invalidStartTime={!!errorStartTime}
-            invalidDuration={!!errorDurationHours}
-            durationErrorText={errorDurationHours}
-            onChangeDate={(nextDate) => draft?.onChangeDraftDate(nextDate)}
-            onChangeTime={(nextTime) => draft?.onChangeDraftTime(nextTime)}
-            onChangeDurationHours={(next) => onChangeDurationHours?.(next)}
-          />
-        )
+
+          <div className="space-y-3">
+            <div className={dateTimeGridClass}>
+              <div className="h-12">
+                <label htmlFor="event-start-date" className="sr-only">
+                  Start date
+                </label>
+                <DatePickerField
+                  id="event-start-date"
+                  value={startDate ?? ''}
+                  onChange={next => onChangeStartDate?.(next)}
+                  invalid={!!errorStartTime}
+                  className="h-12 rounded-xl bg-slate-900"
+                />
+              </div>
+              <div
+                className={`relative h-12 ${isAllDay ? 'invisible' : ''}`}
+                aria-hidden={isAllDay}
+              >
+                {!isAllDay ? (
+                  <>
+                    <label htmlFor="event-start-time" className="sr-only">
+                      Start time
+                    </label>
+                    <Clock className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                    <TimePickerField
+                      id="event-start-time"
+                      ariaLabel="Start time"
+                      value={startTime ?? ''}
+                      onChange={next => onChangeStartTime?.(next)}
+                      className="h-12 rounded-xl bg-slate-900 pl-10 pr-3"
+                      invalid={!!errorStartTime}
+                    />
+                  </>
+                ) : null}
+              </div>
+            </div>
+
+            <div className={dateTimeGridClass}>
+              <div className="h-12">
+                <label htmlFor="event-end-date" className="sr-only">
+                  End date
+                </label>
+                <DatePickerField
+                  id="event-end-date"
+                  value={endDate ?? ''}
+                  onChange={next => onChangeEndDate?.(next)}
+                  min={startDate}
+                  invalid={!!errorEndTime}
+                  className="h-12 rounded-xl bg-slate-900"
+                />
+              </div>
+              <div
+                className={`relative h-12 ${isAllDay ? 'invisible' : ''}`}
+                aria-hidden={isAllDay}
+              >
+                {!isAllDay ? (
+                  <>
+                    <label htmlFor="event-end-time" className="sr-only">
+                      End time
+                    </label>
+                    <Clock className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                    <TimePickerField
+                      id="event-end-time"
+                      ariaLabel="End time"
+                      value={endTime ?? ''}
+                      onChange={next => onChangeEndTime?.(next)}
+                      className="h-12 rounded-xl bg-slate-900 pl-10 pr-3"
+                      invalid={!!errorEndTime}
+                    />
+                  </>
+                ) : null}
+              </div>
+            </div>
+          </div>
+
+          {errorText ? (
+            <div className="rounded-xl bg-red-500/10 p-3 text-sm text-red-300">{errorText}</div>
+          ) : null}
+        </div>
       ) : (
         <div className="text-slate-300">
-          {dateTime.showMultiDay ? (
+          {dateTime.isAllDay && dateTime.showMultiDay ? (
+            <>
+              <div className="font-bold text-white">{dateTime.startDateText}</div>
+              {dateTime.endDateText ? (
+                <div className="font-bold text-white">{dateTime.endDateText}</div>
+              ) : null}
+              <div className="text-sm text-slate-400">
+                All day
+                {isFlexibleStart && <span className="italic"> (Flexible)</span>}
+              </div>
+            </>
+          ) : dateTime.showMultiDay ? (
             <>
               <div className="leading-tight text-white">
                 <span className="font-bold">{dateTime.startDateText}</span>{' '}
@@ -76,7 +178,9 @@ export function DateTimeCard(props: {
                   <span className="font-normal text-slate-400">{dateTime.endTimeText}</span>
                 </div>
               )}
-              {isFlexibleStart ? <div className="text-sm text-slate-400 leading-tight italic">(Flexible)</div> : null}
+              {isFlexibleStart ? (
+                <div className="text-sm text-slate-400 leading-tight italic">(Flexible)</div>
+              ) : null}
             </>
           ) : (
             <>
@@ -89,7 +193,6 @@ export function DateTimeCard(props: {
           )}
         </div>
       )}
-      {isEditMode && errorStartTime ? <div className="text-xs text-red-400 mt-2">{errorStartTime}</div> : null}
-    </Card>
-  )
+    </SectionCard>
+  );
 }

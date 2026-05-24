@@ -106,7 +106,7 @@ export function DialogContent({ className, children }: React.HTMLAttributes<HTML
       />
       <div
         className={cn(
-          'relative z-[1001] w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 p-6 text-white shadow-lg',
+          'relative z-[1001] w-full max-w-lg rounded-2xl border border-slate-700 bg-slate-900 text-white shadow-lg',
           className
         )}
         role="dialog"

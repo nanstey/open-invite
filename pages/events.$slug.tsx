@@ -71,6 +71,7 @@ export const Route = createFileRoute('/events/$slug')({
       });
 
     const [isEditing, setIsEditing] = React.useState(false);
+    const [autoInviteEventId, setAutoInviteEventId] = React.useState<string | null>(null);
 
     // Treat opening an event while authenticated as "invited by link" so it shows up in Pending/Going.
     React.useEffect(() => {
@@ -107,6 +108,15 @@ export const Route = createFileRoute('/events/$slug')({
       setEvent,
     });
 
+    const isHost = !!user && !!event && event.hostId === user.id;
+
+    React.useEffect(() => {
+      if (!event || !isHost) return;
+      if (!event.publishedAt) {
+        setIsEditing(true);
+      }
+    }, [event, isHost]);
+
     if (!user) return null;
 
     const onClose = () => returnToOrigin();
@@ -126,9 +136,8 @@ export const Route = createFileRoute('/events/$slug')({
       );
     }
 
-    const isHost = event.hostId === user.id;
-
     if (isEditing && isHost) {
+      const wasDraft = !event.publishedAt;
       return (
         <EventEditor
           mode="update"
@@ -140,6 +149,9 @@ export const Route = createFileRoute('/events/$slug')({
           onSuccess={updated => {
             setEvent(updated);
             setIsEditing(false);
+            if (wasDraft && updated.publishedAt) {
+              setAutoInviteEventId(updated.id);
+            }
           }}
         />
       );
@@ -156,6 +168,8 @@ export const Route = createFileRoute('/events/$slug')({
         onJoin={handleJoinEvent}
         onLeave={handleLeaveEvent}
         onEditRequested={isHost ? () => setIsEditing(true) : undefined}
+        autoOpenSendInvites={autoInviteEventId === event.id}
+        onAutoOpenSendInvitesHandled={() => setAutoInviteEventId(null)}
         activeTab={activeTab}
         onTabChange={handleTabChange}
       />

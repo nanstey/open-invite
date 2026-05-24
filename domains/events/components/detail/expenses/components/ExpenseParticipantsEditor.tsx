@@ -78,12 +78,12 @@ export function ExpenseParticipantsEditor(props: {
           <option value="EVERYONE">Everyone</option>
           <option value="HOST_ONLY">Host Only</option>
           <option value="GUESTS_ONLY">Guests Only</option>
-          {hasItineraryItems ? <option value="ITINERARY_ITEM">Itinerary Item</option> : null}
+          {hasItineraryItems ? <option value="ITINERARY_ITEM">Schedule Item</option> : null}
           <option value="CUSTOM">Custom</option>
         </FormSelect>
         <div className="md:col-span-2 text-xs text-slate-500 flex items-center">
           {isItineraryMode
-            ? 'Participants are derived from the itinerary item selection.'
+            ? 'Participants are derived from the schedule item selection.'
             : 'Pick a preset to quickly set participants. Choose Custom to fine-tune below.'}
         </div>
       </div>
@@ -105,7 +105,7 @@ export function ExpenseParticipantsEditor(props: {
             ))}
           </FormSelect>
           <div className="md:col-span-2 text-xs text-slate-500 flex items-center">
-            This expense applies only to attendees who select the item.
+            This expense applies only to attendees who select that schedule item.
           </div>
         </div>
       ) : null}

@@ -16,7 +16,6 @@ import { Route as EventsRouteImport } from './pages/events'
 import { Route as AlertsRouteImport } from './pages/alerts'
 import { Route as AdminRouteImport } from './pages/admin'
 import { Route as IndexRouteImport } from './pages/index'
-import { Route as EventsNewRouteImport } from './pages/events.new'
 import { Route as EventsSlugRouteImport } from './pages/events.$slug'
 import { Route as ESlugRouteImport } from './pages/e.$slug'
 import { Route as AuthCallbackRouteImport } from './pages/auth.callback'
@@ -58,11 +57,6 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const EventsNewRoute = EventsNewRouteImport.update({
-  id: '/new',
-  path: '/new',
-  getParentRoute: () => EventsRoute,
-} as any)
 const EventsSlugRoute = EventsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -102,7 +96,6 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/e/$slug': typeof ESlugRoute
   '/events/$slug': typeof EventsSlugRoute
-  '/events/new': typeof EventsNewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -117,7 +110,6 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/e/$slug': typeof ESlugRoute
   '/events/$slug': typeof EventsSlugRoute
-  '/events/new': typeof EventsNewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -133,7 +125,6 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/e/$slug': typeof ESlugRoute
   '/events/$slug': typeof EventsSlugRoute
-  '/events/new': typeof EventsNewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -150,7 +141,6 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/e/$slug'
     | '/events/$slug'
-    | '/events/new'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -165,7 +155,6 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/e/$slug'
     | '/events/$slug'
-    | '/events/new'
   id:
     | '__root__'
     | '/'
@@ -180,7 +169,6 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/e/$slug'
     | '/events/$slug'
-    | '/events/new'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -246,13 +234,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/events/new': {
-      id: '/events/new'
-      path: '/new'
-      fullPath: '/events/new'
-      preLoaderRoute: typeof EventsNewRouteImport
-      parentRoute: typeof EventsRoute
-    }
     '/events/$slug': {
       id: '/events/$slug'
       path: '/$slug'
@@ -305,12 +286,10 @@ const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface EventsRouteChildren {
   EventsSlugRoute: typeof EventsSlugRoute
-  EventsNewRoute: typeof EventsNewRoute
 }
 
 const EventsRouteChildren: EventsRouteChildren = {
   EventsSlugRoute: EventsSlugRoute,
-  EventsNewRoute: EventsNewRoute,
 }
 
 const EventsRouteWithChildren =

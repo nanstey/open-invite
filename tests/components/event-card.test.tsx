@@ -94,6 +94,7 @@ const makeEvent = (overrides: Partial<SocialEvent> = {}): SocialEvent => ({
   activityType: 'Social',
   location: 'Kits Beach',
   startTime: '2026-08-05T18:30:00.000Z',
+  isAllDay: false,
   isFlexibleStart: false,
   isFlexibleEnd: false,
   visibilityType: EventVisibility.ALL_FRIENDS,

@@ -6,7 +6,6 @@ import { TabGroup, type TabOption } from '../../../../lib/ui/components/TabGroup
 import { fetchEventById } from '../../../../services/eventService';
 import { upsertItineraryAttendance } from '../../../../services/itineraryAttendanceService';
 import { useAttendanceToggle } from '../../hooks/useAttendanceToggle';
-import { useDraftStartDateTimeLocal } from '../../hooks/useDraftStartDateTimeLocal';
 import { useEventPeople } from '../../hooks/useEventPeople';
 import { useEventTabsController } from '../../hooks/useEventTabsController';
 import { useFriendsForGuests } from '../../hooks/useFriendsForGuests';
@@ -23,7 +22,8 @@ import { GuestsTab } from './guests/GuestsTab';
 import { HeroHeader } from './header/HeroHeader';
 import { KeyFactsCard } from './header/KeyFactsCard';
 import { HeaderImageModal } from './images/HeaderImageModal';
-import { ItineraryAttendanceOverlay } from './itineraries/ItineraryAttendanceOverlay';
+import { SendInvitesDialog } from './invites/SendInvitesDialog';
+import { ScheduleAttendanceOverlay } from './itineraries/ScheduleAttendanceOverlay';
 import type { EventTab } from './route/routing';
 import { buildEventDateTimeModel } from './utils/eventDateTimeModel';
 
@@ -48,6 +48,8 @@ interface EventDetailProps {
   showBackButton?: boolean;
   layout?: 'shell' | 'public';
   mode?: 'view' | 'edit';
+  autoOpenSendInvites?: boolean;
+  onAutoOpenSendInvitesHandled?: () => void;
   edit?: {
     canEdit: boolean;
     isSaving?: boolean;
@@ -56,14 +58,26 @@ interface EventDetailProps {
     groupsLoading?: boolean;
     errors?: Partial<
       Record<
-        'title' | 'description' | 'startTime' | 'location' | 'activityType' | 'durationHours' | 'groupIds',
+        | 'title'
+        | 'description'
+        | 'startTime'
+        | 'endTime'
+        | 'location'
+        | 'activityType'
+        | 'groupIds',
         string
       >
     >;
-    startDateTimeLocal?: string;
-    onChangeStartDateTimeLocal?: (value: string) => void;
-    durationHours?: number | '';
-    onChangeDurationHours?: (value: number | '') => void;
+    startDate?: string;
+    endDate?: string;
+    startTime?: string;
+    endTime?: string;
+    isAllDay?: boolean;
+    onChangeStartDate?: (value: string) => void;
+    onChangeEndDate?: (value: string) => void;
+    onChangeStartTime?: (value: string) => void;
+    onChangeEndTime?: (value: string) => void;
+    onChangeIsAllDay?: (value: boolean) => void;
     onChange: (patch: Partial<SocialEvent>) => void;
     itinerary?: {
       items: ItineraryItem[];
@@ -122,6 +136,8 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   showBackButton = true,
   layout = 'shell',
   mode = 'view',
+  autoOpenSendInvites,
+  onAutoOpenSendInvitesHandled,
   edit,
 }) => {
   // --- Layout / navigation ---
@@ -141,8 +157,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
 
   // --- Local UI state ---
   const [showHeaderImageModal, setShowHeaderImageModal] = useState(false);
-  const [showItineraryAttendanceOverlay, setShowItineraryAttendanceOverlay] = useState(false);
-  const [guestItineraryFilterId, setGuestItineraryFilterId] = useState('');
+  const [showScheduleAttendanceOverlay, setShowScheduleAttendanceOverlay] = useState(false);
+  const [showSendInvitesDialog, setShowSendInvitesDialog] = useState(false);
+  const [guestScheduleFilterId, setGuestScheduleFilterId] = useState('');
   const [pendingJoin, setPendingJoin] = useState(false);
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
 
@@ -181,13 +198,6 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     return Array.from(uniq.values());
   }, [attendeesList, currentUser, host]);
 
-  // --- Edit form draft state ---
-  const draftStart = useDraftStartDateTimeLocal({
-    enabled: isEditMode,
-    startDateTimeLocal: edit?.startDateTimeLocal,
-    onChangeStartDateTimeLocal: edit?.onChangeStartDateTimeLocal,
-  });
-
   // --- Attendance / permissions ---
   const isHost = !!currentUserId && event.hostId === currentUserId;
   const isAttending = !!currentUserId && event.attendees.includes(currentUserId);
@@ -207,6 +217,12 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     onUpdateEvent,
   });
   const isJoinDisabled = attendance.isJoinDisabled;
+
+  React.useEffect(() => {
+    if (!autoOpenSendInvites || !isHost || isEditMode) return;
+    setShowSendInvitesDialog(true);
+    onAutoOpenSendInvitesHandled?.();
+  }, [autoOpenSendInvites, isEditMode, isHost, onAutoOpenSendInvitesHandled]);
 
   // --- Itinerary models ---
   const itineraryItems: ItineraryItem[] =
@@ -242,12 +258,12 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     wasAttendingRef.current = isAttending;
 
     if (!wasAttending && isAttending && canManageItineraryAttendance) {
-      setShowItineraryAttendanceOverlay(true);
+      setShowScheduleAttendanceOverlay(true);
       return;
     }
 
     if (shouldPromptItineraryAttendance) {
-      setShowItineraryAttendanceOverlay(true);
+      setShowScheduleAttendanceOverlay(true);
     }
   }, [canManageItineraryAttendance, isAttending, shouldPromptItineraryAttendance]);
 
@@ -294,9 +310,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       buildEventDateTimeModel({
         eventStartTime: event.startTime,
         eventEndTime: event.endTime,
-        itineraryItems,
+        isAllDay: event.isAllDay,
       }),
-    [event.endTime, event.startTime, itineraryItems]
+    [event.endTime, event.isAllDay, event.startTime]
   );
 
   const seats = React.useMemo(() => {
@@ -308,7 +324,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
   }, [attendeesList.length, event.maxSeats]);
 
   // --- UI options ---
-  // Time options are now owned by `DateTimeCard` and `ItineraryEditor`.
+  // Time options are now owned by `DateTimeCard` and `ScheduleEditor`.
 
   const tabs: TabOption[] = [
     { id: 'details', label: 'Details', icon: <Info className="w-4 h-4" /> },
@@ -324,6 +340,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
     mode: isEditMode ? 'edit' : 'view',
     inviteCopied,
     onShareInvite: handleShareInvite,
+    onSendInvites: isHost ? () => setShowSendInvitesDialog(true) : undefined,
     showDismiss: !!onDismiss && !isInvolved && !isEditMode,
     onDismiss,
     isHost,
@@ -335,7 +352,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
       }
       if (shouldGateJoin) {
         setPendingJoin(true);
-        setShowItineraryAttendanceOverlay(true);
+        setShowScheduleAttendanceOverlay(true);
         return;
       }
       await attendance.onJoinLeave();
@@ -416,12 +433,11 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               itineraryItems={itineraryItems}
               hasItinerary={hasItinerary}
               dateTime={dateTime}
-              draftStart={draftStart}
               edit={edit}
               showItineraryStartTimeOnly={showItineraryStartTimeOnly}
               onChangeItineraryStartTimeOnly={handleChangeItineraryStartTimeOnly}
               canManageItineraryAttendance={!!canManageItineraryAttendance}
-              onOpenItineraryAttendance={() => setShowItineraryAttendanceOverlay(true)}
+              onOpenItineraryAttendance={() => setShowScheduleAttendanceOverlay(true)}
               hasCurrentAttendance={!!currentAttendance}
               attendanceByItem={attendanceByItem}
             />
@@ -436,16 +452,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               incomingRequestMap={incomingRequestMap}
               currentUserId={currentUserId ?? undefined}
               isEditMode={isEditMode}
-              itineraryFilterId={guestItineraryFilterId}
-              onChangeItineraryFilterId={setGuestItineraryFilterId}
-              onChangeAttendees={(nextAttendees) => edit?.onChange({ attendees: nextAttendees })}
-              onChangeMaxSeats={(next) => edit?.onChange({ maxSeats: next })}
-              onChangeVisibility={(next) => edit?.onChange({ visibilityType: next })}
-              onChangeGroupIds={(nextGroupIds) => edit?.onChange({ groupIds: nextGroupIds })}
-              groupOptions={edit?.groups}
-              groupsLoading={edit?.groupsLoading}
-              groupError={edit?.errors?.groupIds}
-              onChangeItineraryAttendanceEnabled={(next) => edit?.onChange({ itineraryAttendanceEnabled: next })}
+              itineraryFilterId={guestScheduleFilterId}
+              onChangeItineraryFilterId={setGuestScheduleFilterId}
+              onChangeAttendees={nextAttendees => edit?.onChange({ attendees: nextAttendees })}
             />
           ) : null}
 
@@ -485,9 +494,9 @@ export const EventDetail: React.FC<EventDetailProps> = ({
         />
       ) : null}
 
-      {showItineraryAttendanceOverlay ? (
-        <ItineraryAttendanceOverlay
-          open={showItineraryAttendanceOverlay}
+      {showScheduleAttendanceOverlay ? (
+        <ScheduleAttendanceOverlay
+          open={showScheduleAttendanceOverlay}
           title={event.title}
           itineraryItems={itineraryItems}
           expenses={event.expenses ?? []}
@@ -496,10 +505,19 @@ export const EventDetail: React.FC<EventDetailProps> = ({
           initialSelectedIds={currentAttendanceIds}
           mode={pendingJoin ? 'join' : currentAttendance ? 'edit' : 'join'}
           onClose={() => {
-            setShowItineraryAttendanceOverlay(false);
+            setShowScheduleAttendanceOverlay(false);
             setPendingJoin(false);
           }}
           onSave={handleSaveAttendance}
+        />
+      ) : null}
+
+      {currentUserId ? (
+        <SendInvitesDialog
+          open={showSendInvitesDialog}
+          eventId={event.id}
+          currentUserId={currentUserId}
+          onOpenChange={setShowSendInvitesDialog}
         />
       ) : null}
 

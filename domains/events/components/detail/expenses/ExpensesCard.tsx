@@ -16,9 +16,9 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { ChevronUp, GripVertical } from 'lucide-react';
 import * as React from 'react';
-import { Card } from '../../../../../lib/ui/9ui/card';
 import { useOutsideClick } from '../../../hooks/useOutsideClick';
 import type { ItineraryItem } from '../../../types';
+import { SectionCard } from '../SectionCard';
 import { ExpenseEditRow } from './components/ExpenseEditRow';
 import { ExpenseReadOnlyRow } from './components/ExpenseReadOnlyRow';
 import { ExpensesSummarySection } from './components/ExpensesSummarySection';
@@ -71,6 +71,11 @@ export function ExpensesCard(props: {
   people: Person[];
   itineraryItems?: ItineraryItem[];
   expenseApi?: ExpenseApi;
+  collapsible?: boolean;
+  expanded?: boolean;
+  onToggleExpanded?: () => void;
+  collapsedActionStyle?: 'plus' | 'chevron';
+  isEmptyState?: boolean;
 }) {
   const {
     isEditMode,
@@ -82,6 +87,11 @@ export function ExpensesCard(props: {
     people,
     itineraryItems,
     expenseApi,
+    collapsible = false,
+    expanded: sectionExpanded = true,
+    onToggleExpanded,
+    collapsedActionStyle = 'chevron',
+    isEmptyState = false,
   } = props;
   const [expanded, setExpanded] = React.useState(false);
   const [expandedExpenseId, setExpandedExpenseId] = React.useState<string | null>(null);
@@ -107,9 +117,7 @@ export function ExpensesCard(props: {
     onOutsideClick: () => setOpenMenuExpenseId(null),
   });
 
-  const cardClassName = isEditMode
-    ? 'bg-surface border border-slate-700 rounded-2xl p-5'
-    : 'bg-background border border-transparent rounded-2xl p-5';
+  const contentVisible = !collapsible || sectionExpanded;
 
   const currency = expenses[0]?.currency ?? 'USD';
 
@@ -227,15 +235,17 @@ export function ExpensesCard(props: {
   };
 
   return (
-    <Card className={cardClassName}>
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Expenses</h1>
-        </div>
-      </div>
-
-      {showExpenseList ? (
-        <div className="mt-4 space-y-3">
+    <SectionCard
+      title="Expenses"
+      collapsible={collapsible}
+      expanded={sectionExpanded}
+      onToggleExpanded={onToggleExpanded}
+      collapsedActionStyle={collapsedActionStyle}
+      isEmptyState={isEmptyState}
+      surface={isEditMode ? 'edit' : 'read'}
+    >
+      {contentVisible && showExpenseList ? (
+        <div className="space-y-3">
           {!canEditExpenses && expanded ? (
             <button
               type="button"
@@ -366,7 +376,7 @@ export function ExpensesCard(props: {
         </div>
       ) : null}
 
-      {!canEditExpenses ? (
+      {contentVisible && !canEditExpenses ? (
         <ExpensesSummarySection
           expenseCalculator={expenseCalculator}
           expenseCount={expenses.length}
@@ -375,6 +385,6 @@ export function ExpensesCard(props: {
           currency={currency}
         />
       ) : null}
-    </Card>
+    </SectionCard>
   );
 }

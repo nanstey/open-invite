@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import React from 'react';
 
 import type { Group, GroupRole, User } from '../../../lib/types';
-import { toLocalDateTimeInputValue } from '../../../lib/ui/utils/datetime';
+import { splitLocalDateTime, toLocalDateTimeInputValue } from '../../../lib/ui/utils/datetime';
 import { createEvent, fetchEventById, updateEvent } from '../../../services/eventService';
 import {
   createEventExpense,
@@ -45,8 +45,11 @@ type EventEditorValues = {
   headerImagePositionY: number;
   location: string;
   description: string;
-  startDateTimeLocal: string;
-  durationHours: number | '';
+  startDate: string;
+  endDate: string;
+  startTime: string;
+  endTime: string;
+  isAllDay: boolean;
   activityType: string;
   isFlexibleStart: boolean;
   isFlexibleEnd: boolean;
@@ -173,6 +176,7 @@ export function useEventEditorController(props: {
   onSuccess: (event: SocialEvent) => void;
 }) {
   const isUpdate = props.mode === 'update';
+  const isDraftUpdate = isUpdate && !props.initialEvent?.publishedAt;
   const draftIdRef = React.useRef<string>(globalThis.crypto?.randomUUID?.() ?? String(Date.now()));
   const defaultStartTimeIsoRef = React.useRef<string>(new Date().toISOString());
 
@@ -210,22 +214,23 @@ export function useEventEditorController(props: {
   const defaultValues = React.useMemo<EventEditorValues>(() => {
     const ev = props.initialEvent;
     if (ev) {
-      const durationHours = ev.endTime
-        ? Math.max(
-            0,
-            Math.round(
-              ((new Date(ev.endTime).getTime() - new Date(ev.startTime).getTime()) / 3_600_000) * 4
-            ) / 4
-          )
-        : '';
+      const { date: startDate, time: startTime } = splitLocalDateTime(
+        toLocalDateTimeInputValue(ev.startTime)
+      );
+      const { date: endDate, time: endTime } = splitLocalDateTime(
+        toLocalDateTimeInputValue(ev.endTime ?? ev.startTime)
+      );
       return {
         title: ev.title,
         headerImageUrl: ev.headerImageUrl ?? '',
         headerImagePositionY: ev.headerImagePositionY ?? 50,
         location: ev.location,
         description: ev.description,
-        startDateTimeLocal: toLocalDateTimeInputValue(ev.startTime),
-        durationHours: durationHours === 0 ? '' : durationHours,
+        startDate,
+        endDate,
+        startTime,
+        endTime,
+        isAllDay: ev.isAllDay ?? false,
         activityType: ev.activityType,
         isFlexibleStart: ev.isFlexibleStart,
         isFlexibleEnd: ev.isFlexibleEnd,
@@ -246,8 +251,11 @@ export function useEventEditorController(props: {
       headerImagePositionY: 50,
       location: '',
       description: '',
-      startDateTimeLocal: '',
-      durationHours: '',
+      startDate: '',
+      endDate: '',
+      startTime: '',
+      endTime: '',
+      isAllDay: false,
       activityType: 'Social',
       isFlexibleStart: false,
       isFlexibleEnd: false,
@@ -265,6 +273,13 @@ export function useEventEditorController(props: {
   const [groups, setGroups] = React.useState<Group[]>([]);
   const [groupsLoading, setGroupsLoading] = React.useState(false);
   const [groupRoles, setGroupRoles] = React.useState<Map<string, GroupRole>>(new Map());
+  const [endDateTouched, setEndDateTouched] = React.useState(() => {
+    const ev = props.initialEvent;
+    if (!ev?.endTime) return false;
+    const { date: startDate } = splitLocalDateTime(toLocalDateTimeInputValue(ev.startTime));
+    const { date: endDate } = splitLocalDateTime(toLocalDateTimeInputValue(ev.endTime));
+    return !!endDate && endDate !== startDate;
+  });
 
   React.useEffect(() => {
     let isMounted = true;
@@ -297,22 +312,24 @@ export function useEventEditorController(props: {
       const location = value.location.trim();
       const description = value.description.trim();
       const activityType = String(value.activityType ?? '').trim();
-      const startDateTimeLocal = value.startDateTimeLocal;
 
       const errors = validateEventEditor(value, hasItinerary);
       if (Object.values(errors).some(Boolean)) throw new Error('Missing required fields');
 
       const times = computeEventTimes({
         hasItinerary,
-        strictItinerary: hasItinerary,
         itineraryItems,
-        startDateTimeLocal,
-        durationHours: value.durationHours,
+        dateTimeDraft: {
+          startDate: value.startDate,
+          endDate: value.endDate,
+          startTime: value.startTime,
+          endTime: value.endTime,
+          isAllDay: value.isAllDay,
+        },
         fallbackStartIso: defaultStartTimeIsoRef.current,
       });
       if (!times) throw new Error('Missing required fields');
-      if (!hasItinerary && !times.endTime) throw new Error('Missing required fields');
-      if (hasItinerary && !times.endTime) throw new Error('Itinerary is missing required fields');
+      if (!times.endTime) throw new Error('Missing required fields');
 
       const maxSeats = value.maxSeats === '' ? undefined : Number(value.maxSeats);
       const normalizedMaxSeats = maxSeats && maxSeats > 0 ? maxSeats : undefined;
@@ -326,6 +343,7 @@ export function useEventEditorController(props: {
           description,
           startTime: times.startTime,
           endTime: times.endTime,
+          isAllDay: value.isAllDay,
           activityType,
           isFlexibleStart: value.isFlexibleStart,
           isFlexibleEnd: value.isFlexibleEnd,
@@ -367,11 +385,14 @@ export function useEventEditorController(props: {
 
       const updated = await updateEvent(props.initialEvent.id, {
         title,
+        publishedAt: isDraftUpdate ? new Date().toISOString() : props.initialEvent.publishedAt,
         headerImageUrl: value.headerImageUrl.trim() || undefined,
         headerImagePositionY: value.headerImagePositionY,
         location,
         description,
-        ...(hasItinerary ? {} : { startTime: times.startTime, endTime: times.endTime }),
+        startTime: times.startTime,
+        endTime: times.endTime,
+        isAllDay: value.isAllDay,
         activityType,
         isFlexibleStart: value.isFlexibleStart,
         isFlexibleEnd: value.isFlexibleEnd,
@@ -417,7 +438,15 @@ export function useEventEditorController(props: {
 
       props.onSuccess(refreshed ?? updated);
     },
-    [hasItinerary, isUpdate, itineraryItems, expenseItems, props.initialEvent, props.onSuccess]
+    [
+      hasItinerary,
+      isDraftUpdate,
+      isUpdate,
+      itineraryItems,
+      expenseItems,
+      props.initialEvent,
+      props.onSuccess,
+    ]
   );
 
   const form = useForm({
@@ -448,10 +477,14 @@ export function useEventEditorController(props: {
   const previewEvent: SocialEvent = React.useMemo(() => {
     const times = computeEventTimes({
       hasItinerary,
-      strictItinerary: false,
       itineraryItems,
-      startDateTimeLocal: values.startDateTimeLocal,
-      durationHours: values.durationHours,
+      dateTimeDraft: {
+        startDate: values.startDate,
+        endDate: values.endDate,
+        startTime: values.startTime,
+        endTime: values.endTime,
+        isAllDay: values.isAllDay,
+      },
       fallbackStartIso: defaultStartTimeIsoRef.current,
     });
 
@@ -459,6 +492,7 @@ export function useEventEditorController(props: {
       id: editingEventId,
       slug: isUpdate ? (props.initialEvent?.slug ?? 'draft') : 'draft',
       hostId: props.currentUser.id,
+      publishedAt: props.initialEvent?.publishedAt ?? null,
       title: values.title,
       headerImageUrl: values.headerImageUrl,
       headerImagePositionY: values.headerImagePositionY,
@@ -469,6 +503,7 @@ export function useEventEditorController(props: {
       locationData: values.locationData,
       startTime: times?.startTime ?? defaultStartTimeIsoRef.current,
       endTime: times?.endTime ?? props.initialEvent?.endTime,
+      isAllDay: values.isAllDay,
       isFlexibleStart: values.isFlexibleStart,
       isFlexibleEnd: values.isFlexibleEnd,
       visibilityType: values.visibilityType,
@@ -499,15 +534,18 @@ export function useEventEditorController(props: {
     props.initialEvent?.attendees,
     props.initialEvent?.comments,
     props.initialEvent?.endTime,
+    props.initialEvent?.publishedAt,
     props.initialEvent?.reactions,
     props.initialEvent?.slug,
     values.activityType,
     values.coordinates,
+    values.endDate,
+    values.endTime,
     values.headerImageUrl,
     values.headerImagePositionY,
+    values.isAllDay,
     values.locationData,
     values.description,
-    values.durationHours,
     values.isFlexibleEnd,
     values.isFlexibleStart,
     values.itineraryAttendanceEnabled,
@@ -517,7 +555,8 @@ export function useEventEditorController(props: {
     values.location,
     values.maxSeats,
     values.noPhones,
-    values.startDateTimeLocal,
+    values.startDate,
+    values.startTime,
     values.title,
   ]);
 
@@ -547,21 +586,53 @@ export function useEventEditorController(props: {
       }
       if ('coordinates' in patch) form.setFieldValue('coordinates', patch.coordinates);
       if ('locationData' in patch) form.setFieldValue('locationData', patch.locationData);
-      if (patch.startTime !== undefined)
-        form.setFieldValue('startDateTimeLocal', toLocalDateTimeInputValue(patch.startTime));
+      if (patch.startTime !== undefined) {
+        const { date, time } = splitLocalDateTime(toLocalDateTimeInputValue(patch.startTime));
+        form.setFieldValue('startDate', date);
+        form.setFieldValue('startTime', time);
+      }
+      if (patch.endTime !== undefined) {
+        const { date, time } = splitLocalDateTime(toLocalDateTimeInputValue(patch.endTime));
+        form.setFieldValue('endDate', date);
+        form.setFieldValue('endTime', time);
+      }
+      if (patch.isAllDay !== undefined) form.setFieldValue('isAllDay', patch.isAllDay);
       if (patch.itineraryTimeDisplay !== undefined)
         form.setFieldValue('itineraryTimeDisplay', patch.itineraryTimeDisplay);
     },
     [form]
   );
 
-  const onChangeStartDateTimeLocal = React.useCallback(
-    (value: string) => form.setFieldValue('startDateTimeLocal', value),
+  const onChangeStartDate = React.useCallback(
+    (value: string) => {
+      form.setFieldValue('startDate', value);
+      if (!endDateTouched) {
+        form.setFieldValue('endDate', value);
+      }
+    },
+    [endDateTouched, form]
+  );
+
+  const onChangeEndDate = React.useCallback(
+    (value: string) => {
+      setEndDateTouched(true);
+      form.setFieldValue('endDate', value);
+    },
     [form]
   );
 
-  const onChangeDurationHours = React.useCallback(
-    (value: number | '') => form.setFieldValue('durationHours', value),
+  const onChangeStartTime = React.useCallback(
+    (value: string) => form.setFieldValue('startTime', value),
+    [form]
+  );
+
+  const onChangeEndTime = React.useCallback(
+    (value: string) => form.setFieldValue('endTime', value),
+    [form]
+  );
+
+  const onChangeIsAllDay = React.useCallback(
+    (value: boolean) => form.setFieldValue('isAllDay', value),
     [form]
   );
 
@@ -671,7 +742,7 @@ export function useEventEditorController(props: {
     };
   }, [expenseEditItems, onAddExpense, onDeleteExpense, onReorderExpenses, onUpdateExpense]);
 
-  const primaryLabel = isUpdate ? 'Save changes' : 'Publish invite';
+  const primaryLabel = isDraftUpdate ? 'Publish' : isUpdate ? 'Save changes' : 'Publish invite';
 
   const onSave = React.useCallback(() => {
     if (!canSubmit) {
@@ -687,10 +758,16 @@ export function useEventEditorController(props: {
       isSaving: submitMutation.isPending,
       primaryLabel,
       errors: showValidation ? detailErrors : undefined,
-      startDateTimeLocal: values.startDateTimeLocal,
-      onChangeStartDateTimeLocal,
-      durationHours: values.durationHours,
-      onChangeDurationHours,
+      startDate: values.startDate,
+      endDate: values.endDate,
+      startTime: values.startTime,
+      endTime: values.endTime,
+      isAllDay: values.isAllDay,
+      onChangeStartDate,
+      onChangeEndDate,
+      onChangeStartTime,
+      onChangeEndTime,
+      onChangeIsAllDay,
       onChange: applyPatch,
       groups: eligibleGroups,
       groupsLoading,
@@ -707,15 +784,21 @@ export function useEventEditorController(props: {
     expenseApi,
     groupsLoading,
     itineraryApi,
-    onChangeDurationHours,
-    onChangeStartDateTimeLocal,
+    onChangeEndDate,
+    onChangeEndTime,
+    onChangeIsAllDay,
+    onChangeStartDate,
+    onChangeStartTime,
     onSave,
     primaryLabel,
     props.onCancel,
     showValidation,
     submitMutation.isPending,
-    values.durationHours,
-    values.startDateTimeLocal,
+    values.endDate,
+    values.endTime,
+    values.isAllDay,
+    values.startDate,
+    values.startTime,
   ]);
 
   return { previewEvent, editModel };

@@ -7,7 +7,7 @@ import { computeExpenseSummaryForExpenses } from '../expenses/useExpenseCalculat
 import { filterExpensesForItinerarySelection, formatSummaryCents } from '../expenses/utils';
 import { sortByStartTime } from './itinerary';
 
-export function ItineraryAttendanceOverlay(props: {
+export function ScheduleAttendanceOverlay(props: {
   open: boolean;
   title: string;
   itineraryItems: ItineraryItem[];
@@ -72,6 +72,7 @@ export function ItineraryAttendanceOverlay(props: {
     [expenses, selectedIds]
   );
   const currency = expenses[0]?.currency ?? 'USD';
+  const hasRelatedExpenses = expenses.length > 0;
 
   const summary = React.useMemo(
     () => computeExpenseSummaryForExpenses(filteredExpenses, currentUserId, hostId),
@@ -128,7 +129,7 @@ export function ItineraryAttendanceOverlay(props: {
         <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-900/60 shrink-0">
           <div>
             <div className="text-xs text-slate-400 uppercase tracking-wider font-semibold">
-              Select itinerary items
+              Select schedule items
             </div>
             <h2 className="text-lg font-bold text-white">{title}</h2>
           </div>
@@ -143,12 +144,12 @@ export function ItineraryAttendanceOverlay(props: {
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 custom-scrollbar space-y-4">
           <div className="text-sm text-slate-400">
-            Choose the itinerary items you plan to attend. Expense totals update as you select
-            items.
+            Choose the schedule items you plan to attend.
+            {hasRelatedExpenses ? ' Expense totals update as you select items.' : ''}
           </div>
 
           {orderedItems.length === 0 ? (
-            <div className="text-sm text-slate-500 italic">No itinerary items yet.</div>
+            <div className="text-sm text-slate-500 italic">No schedule items yet.</div>
           ) : (
             <div className="space-y-3">
               {orderedItems.map(item => {
@@ -200,80 +201,82 @@ export function ItineraryAttendanceOverlay(props: {
             </div>
           )}
 
-          <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 space-y-3">
-            <div className="text-sm font-bold text-white">Expense summary</div>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
-                <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
-                  Up Front
+          {hasRelatedExpenses ? (
+            <div className="rounded-2xl border border-slate-800 bg-slate-900/40 p-4 space-y-3">
+              <div className="text-sm font-bold text-white">Expense summary</div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+                  <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+                    Up Front
+                  </div>
+                  <div className="text-lg text-white font-bold">
+                    {formatSummaryCents(summary.upFrontCents, { currency, isEstimate: false })}
+                  </div>
                 </div>
-                <div className="text-lg text-white font-bold">
-                  {formatSummaryCents(summary.upFrontCents, { currency, isEstimate: false })}
+                <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+                  <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+                    Settled Later
+                  </div>
+                  <div className="text-lg text-white font-bold">
+                    {formatSummaryCents(summary.settledAfterCents, {
+                      currency,
+                      isEstimate: summary.hasEstimate,
+                    })}
+                  </div>
+                </div>
+                <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+                  <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+                    Total
+                  </div>
+                  <div className="text-lg text-white font-bold">
+                    {formatSummaryCents(summary.totalCents, {
+                      currency,
+                      isEstimate: summary.hasEstimate,
+                    })}
+                  </div>
                 </div>
               </div>
-              <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
-                <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
-                  Settled Later
-                </div>
-                <div className="text-lg text-white font-bold">
-                  {formatSummaryCents(summary.settledAfterCents, {
-                    currency,
-                    isEstimate: summary.hasEstimate,
-                  })}
-                </div>
-              </div>
-              <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
-                <div className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
-                  Total
-                </div>
-                <div className="text-lg text-white font-bold">
-                  {formatSummaryCents(summary.totalCents, {
-                    currency,
-                    isEstimate: summary.hasEstimate,
-                  })}
-                </div>
-              </div>
+
+              {requiresUpFrontAck ? (
+                <label
+                  htmlFor="ack-up-front"
+                  className="flex items-start gap-3 text-sm text-slate-200"
+                >
+                  <Checkbox
+                    id="ack-up-front"
+                    checked={ackUpFront}
+                    onChange={e => setAckUpFront(e.target.checked)}
+                  />
+                  <span>
+                    I acknowledge I owe{' '}
+                    {formatSummaryCents(summary.upFrontCents, { currency, isEstimate: false })} up
+                    front.
+                  </span>
+                </label>
+              ) : null}
+
+              {requiresSettledAck ? (
+                <label
+                  htmlFor="ack-settled"
+                  className="flex items-start gap-3 text-sm text-slate-200"
+                >
+                  <Checkbox
+                    id="ack-settled"
+                    checked={ackSettled}
+                    onChange={e => setAckSettled(e.target.checked)}
+                  />
+                  <span>
+                    I acknowledge I will owe{' '}
+                    {formatSummaryCents(summary.settledAfterCents, {
+                      currency,
+                      isEstimate: summary.hasEstimate,
+                    })}{' '}
+                    after the event.
+                  </span>
+                </label>
+              ) : null}
             </div>
-
-            {requiresUpFrontAck ? (
-              <label
-                htmlFor="ack-up-front"
-                className="flex items-start gap-3 text-sm text-slate-200"
-              >
-                <Checkbox
-                  id="ack-up-front"
-                  checked={ackUpFront}
-                  onChange={e => setAckUpFront(e.target.checked)}
-                />
-                <span>
-                  I acknowledge I owe{' '}
-                  {formatSummaryCents(summary.upFrontCents, { currency, isEstimate: false })} up
-                  front.
-                </span>
-              </label>
-            ) : null}
-
-            {requiresSettledAck ? (
-              <label
-                htmlFor="ack-settled"
-                className="flex items-start gap-3 text-sm text-slate-200"
-              >
-                <Checkbox
-                  id="ack-settled"
-                  checked={ackSettled}
-                  onChange={e => setAckSettled(e.target.checked)}
-                />
-                <span>
-                  I acknowledge I will owe{' '}
-                  {formatSummaryCents(summary.settledAfterCents, {
-                    currency,
-                    isEstimate: summary.hasEstimate,
-                  })}{' '}
-                  after the event.
-                </span>
-              </label>
-            ) : null}
-          </div>
+          ) : null}
 
           {error ? (
             <div className="text-sm text-red-300 bg-red-500/10 border border-red-500/30 rounded-xl p-3">

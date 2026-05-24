@@ -1,5 +1,6 @@
 import { Bell, CalendarDays, Map as MapIcon, MapPin, Sparkles, Users } from 'lucide-react';
 import type React from 'react';
+import { CATEGORY_THEMES, EVENT_CATEGORY_ORDER } from '../../lib/constants';
 import { Card } from '../../lib/ui/9ui/card';
 
 // ============================================================================
@@ -50,14 +51,22 @@ const FEATURES: Feature[] = [
   },
 ];
 
-const CATEGORIES: Category[] = [
-  { name: 'Social', color: 'bg-pink-500', icon: '🎉' },
-  { name: 'Sport', color: 'bg-orange-500', icon: '⚽' },
-  { name: 'Food', color: 'bg-emerald-500', icon: '🍕' },
-  { name: 'Work', color: 'bg-blue-500', icon: '💼' },
-  { name: 'Travel', color: 'bg-violet-500', icon: '✈️' },
-  { name: 'Entertainment', color: 'bg-rose-500', icon: '🎬' },
-];
+const CATEGORY_ICONS: Record<string, string> = {
+  Social: '🎉',
+  Food: '🍕',
+  Music: '🎵',
+  Entertainment: '🎬',
+  Sport: '⚽',
+  Work: '💼',
+  Travel: '✈️',
+  Errand: '🛒',
+};
+
+const CATEGORIES: Category[] = EVENT_CATEGORY_ORDER.map(category => ({
+  name: category,
+  color: CATEGORY_THEMES[category].bg,
+  icon: CATEGORY_ICONS[category],
+}));
 
 // ============================================================================
 // Subcomponents

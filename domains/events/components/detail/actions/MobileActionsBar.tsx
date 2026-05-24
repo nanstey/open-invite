@@ -1,13 +1,11 @@
-
-
-import { EventActions } from './EventActions'
-import type { EventActionsModel } from './types'
+import { EventActions } from './EventActions';
+import type { EventActionsModel } from './types';
 
 export function MobileActionsBar(props: {
-  reserveBottomNavSpace: boolean
-  actions: EventActionsModel
+  reserveBottomNavSpace: boolean;
+  actions: EventActionsModel;
 }) {
-  const { reserveBottomNavSpace, actions } = props
+  const { reserveBottomNavSpace, actions } = props;
 
   return (
     <div
@@ -21,6 +19,7 @@ export function MobileActionsBar(props: {
           mode={actions.mode}
           inviteCopied={actions.inviteCopied}
           onShareInvite={actions.onShareInvite}
+          onSendInvites={actions.onSendInvites}
           showDismiss={actions.showDismiss}
           onDismiss={actions.onDismiss}
           isHost={actions.isHost}
@@ -37,7 +36,5 @@ export function MobileActionsBar(props: {
         />
       </div>
     </div>
-  )
+  );
 }
-
-

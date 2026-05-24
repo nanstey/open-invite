@@ -12,7 +12,9 @@ import { MobileTopHeader } from '../domains/app/components/MobileTopHeader';
 import { HeaderTabsProvider, useHeaderTabs } from '../domains/app/HeaderTabsContext';
 import { getActiveSection, getPageTitle } from '../domains/app/routing';
 import { useAuth } from '../domains/auth/AuthProvider';
+import { QuickCreateEventWizard } from '../domains/events/components/create/QuickCreateEventWizard';
 import { coerceEventsView, type EventsView } from '../domains/events/hooks/useEventNavigation';
+import type { SocialEvent } from '../domains/events/types';
 import { ComingSoonPopover, useComingSoonPopover } from '../lib/ui/components/ComingSoonPopover';
 import { TabGroup } from '../lib/ui/components/TabGroup';
 import type { RouterContext } from '../routerContext';
@@ -22,6 +24,7 @@ function AppShellLayout() {
   const navigate = useNavigate();
   const comingSoon = useComingSoonPopover();
   const headerTabs = useHeaderTabs();
+  const [isCreateInviteOpen, setIsCreateInviteOpen] = React.useState(false);
   const { pathname, search } = useRouterState({
     select: s => ({ pathname: s.location.pathname, search: s.location.search }),
   });
@@ -40,9 +43,23 @@ function AppShellLayout() {
     [search]
   );
 
+  const handleInviteCreated = React.useCallback(
+    (event: SocialEvent) => {
+      setIsCreateInviteOpen(false);
+      navigate({
+        to: '/events/$slug',
+        params: { slug: event.slug },
+        search: { view: undefined, tab: undefined, from: undefined },
+        replace: true,
+        state: { fromEventsView: eventsView },
+      });
+    },
+    [eventsView, navigate]
+  );
+
   React.useEffect(() => {
     if (!loading && !user && activeSection !== 'PUBLIC') {
-      if (pathname.startsWith('/events/') && pathname !== '/events/new') {
+      if (pathname.startsWith('/events/')) {
         const eventId = pathname.slice('/events/'.length).split('/')[0];
         if (eventId) {
           navigate({
@@ -81,6 +98,7 @@ function AppShellLayout() {
         activeSection={activeSection}
         eventsView={eventsView}
         onComingSoon={handleComingSoon}
+        onCreateInvite={() => setIsCreateInviteOpen(true)}
       />
 
       {!hideShellHeaderForRoute && <MobileTopHeader pageTitle={pageTitle} />}
@@ -118,8 +136,19 @@ function AppShellLayout() {
       </main>
 
       {!hideMobileBottomNavForRoute && (
-        <MobileBottomNav user={user} activeSection={activeSection} eventsView={eventsView} />
+        <MobileBottomNav
+          user={user}
+          activeSection={activeSection}
+          eventsView={eventsView}
+          onCreateInvite={() => setIsCreateInviteOpen(true)}
+        />
       )}
+
+      <QuickCreateEventWizard
+        open={isCreateInviteOpen}
+        onOpenChange={setIsCreateInviteOpen}
+        onCreated={handleInviteCreated}
+      />
 
       <ComingSoonPopover state={comingSoon.state} />
     </div>

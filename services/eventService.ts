@@ -15,6 +15,7 @@ import {
   fetchEventItineraryAttendance,
 } from './itineraryAttendanceService';
 import { fetchItineraryItems } from './itineraryService';
+import { searchPexelsImages } from './pexelsService';
 
 type EventRow = Database['public']['Tables']['events']['Row'];
 type EventAttendeeRow = Database['public']['Tables']['event_attendees']['Row'];
@@ -92,6 +93,7 @@ function transformEventRow(
     id: row.id,
     slug: row.slug,
     hostId: row.host_id,
+    publishedAt: row.published_at ?? null,
     title: row.title,
     headerImageUrl: row.header_image_url || undefined,
     headerImagePositionY: row.header_image_position_y ?? undefined,
@@ -102,6 +104,7 @@ function transformEventRow(
     locationData: row.location_data ? (row.location_data as LocationData) : undefined,
     startTime: row.start_time,
     endTime: row.end_time || undefined,
+    isAllDay: row.is_all_day ?? false,
     isFlexibleStart: row.is_flexible_start,
     isFlexibleEnd: row.is_flexible_end,
     visibilityType: row.visibility_type as EventVisibility,
@@ -124,10 +127,12 @@ function transformEventRow(
  * Fetch all events visible to the current user
  */
 export async function fetchEvents(currentUserId?: string): Promise<SocialEvent[]> {
-  const { data: eventsData, error } = await supabase
-    .from('events')
-    .select('*')
-    .order('start_time', { ascending: true });
+  let query = supabase.from('events').select('*');
+  query = currentUserId
+    ? query.or(`published_at.not.is.null,host_id.eq.${currentUserId}`)
+    : query.not('published_at', 'is', null);
+
+  const { data: eventsData, error } = await query.order('start_time', { ascending: true });
 
   if (error) {
     console.error('Error fetching events:', error);
@@ -512,6 +517,7 @@ export async function createEvent(
     location_data: (eventData.locationData ?? null) as any,
     start_time: eventData.startTime,
     end_time: eventData.endTime || null,
+    is_all_day: eventData.isAllDay ?? false,
     is_flexible_start: eventData.isFlexibleStart,
     is_flexible_end: eventData.isFlexibleEnd,
     visibility_type: eventData.visibilityType,
@@ -520,6 +526,8 @@ export async function createEvent(
     itinerary_attendance_enabled: eventData.itineraryAttendanceEnabled ?? false,
     no_phones: eventData.noPhones,
     itinerary_time_display: eventData.itineraryTimeDisplay,
+    published_at:
+      eventData.publishedAt === null ? null : (eventData.publishedAt ?? new Date().toISOString()),
   };
 
   const result = await supabase
@@ -561,6 +569,69 @@ export async function createEvent(
   return fetchEventById(eventRow.id);
 }
 
+const FALLBACK_HEADER_IMAGES: Record<string, string> = {
+  Social:
+    'https://images.pexels.com/photos/3171837/pexels-photo-3171837.jpeg?auto=compress&cs=tinysrgb&w=1600',
+  Food: 'https://images.pexels.com/photos/1640774/pexels-photo-1640774.jpeg?auto=compress&cs=tinysrgb&w=1600',
+  Music:
+    'https://images.pexels.com/photos/1763075/pexels-photo-1763075.jpeg?auto=compress&cs=tinysrgb&w=1600',
+  Entertainment:
+    'https://images.pexels.com/photos/2747449/pexels-photo-2747449.jpeg?auto=compress&cs=tinysrgb&w=1600',
+  Sport:
+    'https://images.pexels.com/photos/2294361/pexels-photo-2294361.jpeg?auto=compress&cs=tinysrgb&w=1600',
+  Work: 'https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=1600',
+  Errand:
+    'https://images.pexels.com/photos/3962285/pexels-photo-3962285.jpeg?auto=compress&cs=tinysrgb&w=1600',
+  Travel:
+    'https://images.pexels.com/photos/3155666/pexels-photo-3155666.jpeg?auto=compress&cs=tinysrgb&w=1600',
+};
+
+async function chooseDraftHeaderImage(title: string, activityType: string): Promise<string> {
+  try {
+    const images = await searchPexelsImages(`${title} ${activityType}`, { pageSize: 1 });
+    const first = images[0]?.fullUrl;
+    if (first) return first;
+  } catch (error) {
+    console.warn('Falling back to default draft header image:', error);
+  }
+
+  return FALLBACK_HEADER_IMAGES[activityType] ?? FALLBACK_HEADER_IMAGES.Social;
+}
+
+export async function createDraftEvent(input: {
+  title: string;
+  activityType: string;
+  startTime: string;
+  endTime: string;
+  isAllDay?: boolean;
+}): Promise<SocialEvent | null> {
+  const headerImageUrl = await chooseDraftHeaderImage(input.title, input.activityType);
+
+  return createEvent({
+    title: input.title,
+    description: '',
+    activityType: input.activityType,
+    headerImageUrl,
+    headerImagePositionY: 50,
+    location: '',
+    coordinates: undefined,
+    locationData: undefined,
+    startTime: input.startTime,
+    endTime: input.endTime,
+    isAllDay: input.isAllDay ?? false,
+    isFlexibleStart: false,
+    isFlexibleEnd: false,
+    visibilityType: 'INVITE_ONLY' as EventVisibility,
+    groupIds: [],
+    allowFriendInvites: false,
+    maxSeats: undefined,
+    itineraryAttendanceEnabled: false,
+    noPhones: false,
+    itineraryTimeDisplay: 'START_AND_END',
+    publishedAt: null,
+  });
+}
+
 /**
  * Update an existing event
  */
@@ -581,6 +652,7 @@ export async function updateEvent(
   if (updates.locationData !== undefined) updateData.location_data = updates.locationData;
   if (updates.startTime !== undefined) updateData.start_time = updates.startTime;
   if (updates.endTime !== undefined) updateData.end_time = updates.endTime;
+  if (updates.isAllDay !== undefined) updateData.is_all_day = updates.isAllDay;
   if (updates.isFlexibleStart !== undefined) updateData.is_flexible_start = updates.isFlexibleStart;
   if (updates.isFlexibleEnd !== undefined) updateData.is_flexible_end = updates.isFlexibleEnd;
   if (updates.visibilityType !== undefined) updateData.visibility_type = updates.visibilityType;
@@ -592,6 +664,7 @@ export async function updateEvent(
   if (updates.noPhones !== undefined) updateData.no_phones = updates.noPhones;
   if (updates.itineraryTimeDisplay !== undefined)
     updateData.itinerary_time_display = updates.itineraryTimeDisplay;
+  if (updates.publishedAt !== undefined) updateData.published_at = updates.publishedAt;
 
   // type EventUpdate = Database['public']['Tables']['events']['Update']; // unused
   const result = await supabase
@@ -622,6 +695,10 @@ export async function updateEvent(
   }
 
   return fetchEventById(eventId);
+}
+
+export async function publishEvent(eventId: string): Promise<SocialEvent | null> {
+  return updateEvent(eventId, { publishedAt: new Date().toISOString() });
 }
 
 /**

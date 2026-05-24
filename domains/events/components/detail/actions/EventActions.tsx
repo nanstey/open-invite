@@ -1,40 +1,41 @@
+import { CheckCircle2, EyeOff, Link, Save, Send, X } from 'lucide-react';
 
-import { CheckCircle2, EyeOff, Link, Save, Send, X } from 'lucide-react'
-
-export type EventActionsVariant = 'md_row' | 'lg_column' | 'mobile_row'
+export type EventActionsVariant = 'md_row' | 'lg_column' | 'mobile_row';
 
 export function EventActions(props: {
-  variant: EventActionsVariant
-  mode: 'view' | 'edit'
+  variant: EventActionsVariant;
+  mode: 'view' | 'edit';
 
   // Share
-  inviteCopied: boolean
-  onShareInvite: () => void | Promise<void>
+  inviteCopied: boolean;
+  onShareInvite: () => void | Promise<void>;
+  onSendInvites?: () => void;
 
   // Hide (view mode)
-  showDismiss?: boolean
-  onDismiss?: () => void
+  showDismiss?: boolean;
+  onDismiss?: () => void;
 
   // Primary (view mode)
-  isHost: boolean
-  onEditRequested?: () => void
-  onJoinLeave?: () => void | Promise<void>
-  isJoinDisabled?: boolean
-  isAttending?: boolean
-  isFull?: boolean
+  isHost: boolean;
+  onEditRequested?: () => void;
+  onJoinLeave?: () => void | Promise<void>;
+  isJoinDisabled?: boolean;
+  isAttending?: boolean;
+  isFull?: boolean;
 
   // Edit mode buttons
-  onSave?: () => void
-  onCancel?: () => void
-  canSave?: boolean
-  isSaving?: boolean
-  primaryLabel?: string
+  onSave?: () => void;
+  onCancel?: () => void;
+  canSave?: boolean;
+  isSaving?: boolean;
+  primaryLabel?: string;
 }) {
   const {
     variant,
     mode,
     inviteCopied,
     onShareInvite,
+    onSendInvites,
     showDismiss,
     onDismiss,
     isHost,
@@ -48,9 +49,9 @@ export function EventActions(props: {
     canSave,
     isSaving,
     primaryLabel,
-  } = props
+  } = props;
 
-  const showHide = !!showDismiss && !!onDismiss && mode === 'view'
+  const showHide = !!showDismiss && !!onDismiss && mode === 'view';
 
   if (variant === 'lg_column') {
     return (
@@ -62,7 +63,9 @@ export function EventActions(props: {
               disabled={!!isSaving}
               aria-disabled={!canSave}
               className={`w-full py-3 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all shadow-lg ${
-                canSave ? 'bg-primary hover:bg-primary/90 text-white shadow-primary/25' : 'bg-slate-700 text-slate-300'
+                canSave
+                  ? 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
+                  : 'bg-slate-700 text-slate-300'
               } disabled:opacity-60`}
               type="button"
             >
@@ -79,14 +82,25 @@ export function EventActions(props: {
         ) : null}
 
         {mode === 'view' ? (
-          <button
-            onClick={() => void onShareInvite()}
-            className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all border border-slate-700"
-            type="button"
-          >
-            {inviteCopied ? <Link className="w-5 h-5" /> : <Send className="w-5 h-5" />}{' '}
-            {inviteCopied ? 'URL Copied!' : 'Share Invite'}
-          </button>
+          <div className="space-y-2">
+            {isHost && onSendInvites ? (
+              <button
+                onClick={() => onSendInvites()}
+                className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 bg-primary/15 text-primary hover:bg-primary/25 transition-all border border-primary/40"
+                type="button"
+              >
+                <Send className="w-5 h-5" /> Send Invites
+              </button>
+            ) : null}
+            <button
+              onClick={() => void onShareInvite()}
+              className="w-full py-3 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all border border-slate-700"
+              type="button"
+            >
+              {inviteCopied ? <Link className="w-5 h-5" /> : <Send className="w-5 h-5" />}{' '}
+              {inviteCopied ? 'URL Copied!' : 'Share Link'}
+            </button>
+          </div>
         ) : null}
 
         {showHide ? (
@@ -137,17 +151,17 @@ export function EventActions(props: {
           )
         ) : null}
       </div>
-    )
+    );
   }
 
-  const isMobile = variant === 'mobile_row'
+  const isMobile = variant === 'mobile_row';
   const shareClassName = isMobile
     ? 'w-1/3 py-3.5 rounded-2xl font-bold text-base flex items-center justify-center gap-2 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200 transition-all border border-slate-700 hover:border-slate-600'
-    : 'py-3 px-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all border border-slate-700'
+    : 'py-3 px-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all border border-slate-700';
 
   const dismissClassName = isMobile
     ? 'w-1/3 py-3.5 rounded-2xl font-bold text-base flex items-center justify-center gap-2 bg-slate-800 text-slate-400 hover:bg-slate-700 hover:text-slate-200 transition-all border border-slate-700 hover:border-slate-600'
-    : 'py-3 px-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all border border-slate-700'
+    : 'py-3 px-4 rounded-2xl font-bold text-sm flex items-center justify-center gap-2 bg-slate-800 text-slate-300 hover:bg-slate-700 transition-all border border-slate-700';
 
   return (
     <div className="flex gap-3">
@@ -165,7 +179,9 @@ export function EventActions(props: {
             disabled={!!isSaving}
             aria-disabled={!canSave}
             className={`flex-1 ${isMobile ? 'py-3.5 text-base' : 'py-3 text-base'} rounded-2xl font-bold flex items-center justify-center gap-2 transition-all shadow-lg ${
-              canSave ? 'bg-primary hover:bg-primary/90 text-white shadow-primary/25' : 'bg-slate-700 text-slate-300'
+              canSave
+                ? 'bg-primary hover:bg-primary/90 text-white shadow-primary/25'
+                : 'bg-slate-700 text-slate-300'
             } disabled:opacity-60`}
             type="button"
           >
@@ -175,10 +191,23 @@ export function EventActions(props: {
       ) : null}
 
       {mode === 'view' ? (
-        <button onClick={() => void onShareInvite()} className={shareClassName} type="button">
-          {isMobile ? <Send className="w-5 h-5" /> : inviteCopied ? <Link className="w-5 h-5" /> : <Send className="w-5 h-5" />}{' '}
-          {inviteCopied ? 'URL Copied!' : 'Share Invite'}
-        </button>
+        <>
+          {isHost && onSendInvites ? (
+            <button onClick={() => onSendInvites()} className={shareClassName} type="button">
+              <Send className="w-5 h-5" /> Send Invites
+            </button>
+          ) : null}
+          <button onClick={() => void onShareInvite()} className={shareClassName} type="button">
+            {isMobile ? (
+              <Send className="w-5 h-5" />
+            ) : inviteCopied ? (
+              <Link className="w-5 h-5" />
+            ) : (
+              <Send className="w-5 h-5" />
+            )}{' '}
+            {inviteCopied ? 'URL Copied!' : 'Share Link'}
+          </button>
+        </>
       ) : null}
 
       {showHide ? (
@@ -225,7 +254,5 @@ export function EventActions(props: {
         )
       ) : null}
     </div>
-  )
+  );
 }
-
-

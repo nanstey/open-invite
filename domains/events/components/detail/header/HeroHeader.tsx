@@ -141,7 +141,7 @@ export function HeroHeader(props: {
       ref={containerRef}
       role="img"
       aria-label="Event cover image"
-      className={`relative w-full h-56 md:h-72 bg-slate-800 ${isAdjusting ? 'cursor-grab' : ''} ${isDragging ? 'cursor-grabbing' : ''}`}
+      className={`relative w-full md:max-w-6xl md:mx-auto h-72 md:h-96 lg:h-auto lg:aspect-[5/2] bg-slate-800 ${isAdjusting ? 'cursor-grab' : ''} ${isDragging ? 'cursor-grabbing' : ''}`}
       style={{ touchAction: isAdjusting ? 'none' : 'auto' }}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
@@ -174,7 +174,7 @@ export function HeroHeader(props: {
 
       {!isAdjusting ? (
         <div className="absolute bottom-0 left-0 right-0">
-          <div className="max-w-6xl mx-auto px-4 md:px-6 pb-5">
+          <div className="w-full px-4 md:px-6 pb-5">
             <div
               className={`inline-block px-2 py-0.5 rounded text-xs font-bold text-white ${themeBgClass}`}
             >
@@ -222,7 +222,7 @@ export function HeroHeader(props: {
 
       {isAdjusting ? (
         <div className="absolute bottom-8 left-0 right-0 pointer-events-none">
-          <div className="max-w-6xl mx-auto px-4 md:px-6 flex justify-end">
+          <div className="w-full px-4 md:px-6 flex justify-end">
             <div className="flex items-center gap-3 pointer-events-auto">
               <button
                 type="button"

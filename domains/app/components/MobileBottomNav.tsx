@@ -1,4 +1,4 @@
-import { Link, useNavigate } from '@tanstack/react-router';
+import { Link } from '@tanstack/react-router';
 import { CalendarDays, Compass, Plus, Users as UsersIcon } from 'lucide-react';
 
 import type { User } from '../../../lib/types';
@@ -9,11 +9,15 @@ interface MobileBottomNavProps {
   user: User;
   activeSection: ActiveSection;
   eventsView: EventsView;
+  onCreateInvite: () => void;
 }
 
-export function MobileBottomNav({ user, activeSection, eventsView }: MobileBottomNavProps) {
-  const navigate = useNavigate();
-
+export function MobileBottomNav({
+  user,
+  activeSection,
+  eventsView,
+  onCreateInvite,
+}: MobileBottomNavProps) {
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-slate-900 border-t border-slate-800 z-50 grid grid-cols-5 items-center justify-items-center px-2 pb-safe-area shadow-[0_-5px_20px_rgba(0,0,0,0.3)]">
       <Link
@@ -39,7 +43,7 @@ export function MobileBottomNav({ user, activeSection, eventsView }: MobileBotto
 
       <div className="w-full flex justify-center">
         <button
-          onClick={() => navigate({ to: '/events/new', search: { view: eventsView } })}
+          onClick={onCreateInvite}
           className="-mt-8 bg-primary text-white p-3 rounded-full shadow-lg shadow-primary/30 border-4 border-slate-900 transform transition-transform hover:scale-105 active:scale-95"
           type="button"
         >

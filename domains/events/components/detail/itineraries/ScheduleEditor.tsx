@@ -44,14 +44,12 @@ type ItineraryApi = {
   onDelete: (id: string) => Promise<void> | void;
 };
 
-type ItineraryEditorProps = {
+type ScheduleEditorProps = {
   event: SocialEvent;
   itineraryItems: ItineraryItem[];
   showItineraryTimesOnly: boolean;
   showItineraryStartTimeOnly: boolean;
   hasItinerary: boolean;
-  draftStartIso: string | null;
-  durationHours?: number | '';
   formatItineraryLocationForDisplay: (location: string | undefined) => {
     full: string;
     label: string;
@@ -61,15 +59,13 @@ type ItineraryEditorProps = {
   itineraryApi: ItineraryApi;
 };
 
-export function ItineraryEditor(props: ItineraryEditorProps) {
+export function ScheduleEditor(props: ScheduleEditorProps) {
   const {
     event,
     itineraryItems,
     showItineraryTimesOnly,
     showItineraryStartTimeOnly,
     hasItinerary,
-    draftStartIso,
-    durationHours,
     formatItineraryLocationForDisplay,
     openItineraryLocationInMaps,
     itineraryApi,
@@ -77,7 +73,7 @@ export function ItineraryEditor(props: ItineraryEditorProps) {
 
   const timeOptions = React.useMemo(() => buildQuarterHourTimeOptions(), []);
 
-  const [showCreateItinerary, setShowCreateItinerary] = React.useState(false);
+  const [showCreateSchedule, setShowCreateSchedule] = React.useState(false);
   const [expandedItineraryItemId, setExpandedItineraryItemId] = React.useState<string | null>(null);
   const [openItineraryMenuItemId, setOpenItineraryMenuItemId] = React.useState<string | null>(null);
 
@@ -86,34 +82,41 @@ export function ItineraryEditor(props: ItineraryEditorProps) {
     onOutsideClick: () => setOpenItineraryMenuItemId(null),
   });
 
-  // If the parent clears the itinerary list, reset local UI state.
+  // If the parent clears the schedule list, reset local UI state.
   React.useEffect(() => {
     if (itineraryItems.length !== 0) return;
-    setShowCreateItinerary(false);
+    setShowCreateSchedule(false);
     setExpandedItineraryItemId(null);
     setOpenItineraryMenuItemId(null);
   }, [itineraryItems.length]);
 
-  const showItineraryBuilder = hasItinerary || showCreateItinerary;
+  const showScheduleBuilder = hasItinerary || showCreateSchedule;
   const orderedItems = React.useMemo(() => sortByStartTime(itineraryItems), [itineraryItems]);
 
-  const handleCreateItinerary = React.useCallback(async () => {
-    setShowCreateItinerary(true);
+  const handleCreateSchedule = React.useCallback(async () => {
+    setShowCreateSchedule(true);
     if (itineraryItems.length > 0) return;
 
-    const startIso = draftStartIso ?? event.startTime;
-    const durationMinutes = durationHoursToMinutes(durationHours, 60);
+    const durationMinutes = event.endTime
+      ? durationHoursToMinutes(
+          Math.max(
+            0,
+            (new Date(event.endTime).getTime() - new Date(event.startTime).getTime()) / 3_600_000
+          ),
+          60
+        )
+      : 60;
 
     const newId = await itineraryApi.onAdd({
       title: '',
-      startTime: startIso,
+      startTime: event.startTime,
       durationMinutes,
       location: undefined,
       description: undefined,
     });
 
     if (typeof newId === 'string') setExpandedItineraryItemId(newId);
-  }, [draftStartIso, durationHours, event.startTime, itineraryApi, itineraryItems.length]);
+  }, [event.endTime, event.startTime, itineraryApi, itineraryItems.length]);
 
   const toggleExpanded = React.useCallback((id: string) => {
     setExpandedItineraryItemId(prev => (prev === id ? null : id));
@@ -150,10 +153,10 @@ export function ItineraryEditor(props: ItineraryEditorProps) {
 
   return (
     <div className="space-y-4">
-      {!showItineraryBuilder ? (
-        <CreateItineraryButton onClick={handleCreateItinerary} />
+      {!showScheduleBuilder ? (
+        <CreateScheduleButton onClick={handleCreateSchedule} />
       ) : (
-        <ItineraryBuilder
+        <ScheduleBuilder
           itineraryItems={itineraryItems}
           orderedItems={orderedItems}
           expandedItineraryItemId={expandedItineraryItemId}
@@ -175,19 +178,19 @@ export function ItineraryEditor(props: ItineraryEditorProps) {
   );
 }
 
-function CreateItineraryButton(props: { onClick: () => void }) {
+function CreateScheduleButton(props: { onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={props.onClick}
       className="w-full py-3 rounded-xl font-bold text-sm bg-slate-800 text-white hover:bg-slate-700 transition-colors border border-slate-700"
     >
-      Create Itinerary
+      Create Schedule
     </button>
   );
 }
 
-function ItineraryBuilder(props: {
+function ScheduleBuilder(props: {
   itineraryItems: ItineraryItem[];
   orderedItems: ItineraryItem[];
   expandedItineraryItemId: string | null;
@@ -229,11 +232,11 @@ function ItineraryBuilder(props: {
   return (
     <div className="space-y-3">
       {itineraryItems.length === 0 ? (
-        <div className="text-sm text-slate-500 italic">No itinerary items yet.</div>
+        <div className="text-sm text-slate-500 italic">No schedule items yet.</div>
       ) : null}
 
       {orderedItems.map(item => (
-        <ItineraryItemCard
+        <ScheduleItemCard
           key={item.id}
           item={item}
           isExpanded={expandedItineraryItemId === item.id}
@@ -262,7 +265,7 @@ function ItineraryBuilder(props: {
   );
 }
 
-function ItineraryItemCard(props: {
+function ScheduleItemCard(props: {
   // `key` is a special React prop; some TS setups still want it declared explicitly on local components.
   key?: React.Key;
   item: ItineraryItem;
@@ -323,7 +326,7 @@ function ItineraryItemCard(props: {
   return (
     <Card className="rounded-xl border border-slate-800 bg-slate-900/30">
       <div className="p-4">
-        <ItineraryItemHeader
+        <ScheduleItemHeader
           title={item.title}
           dateLabel={date}
           timeLabel={time}
@@ -340,7 +343,7 @@ function ItineraryItemCard(props: {
       </div>
 
       {isExpanded ? (
-        <ItineraryItemFields
+        <ScheduleItemFields
           item={item}
           itemDate={itemDate}
           itemTime={itemTime}
@@ -353,7 +356,7 @@ function ItineraryItemCard(props: {
   );
 }
 
-function ItineraryItemHeader(props: {
+function ScheduleItemHeader(props: {
   title: string;
   dateLabel: string;
   timeLabel: string;
@@ -384,7 +387,7 @@ function ItineraryItemHeader(props: {
 
   return (
     <div className="flex items-start justify-between gap-3">
-      <ItineraryItemSummary
+      <ScheduleItemSummary
         title={title}
         dateLabel={dateLabel}
         timeLabel={timeLabel}
@@ -395,7 +398,7 @@ function ItineraryItemHeader(props: {
         onToggleExpanded={onToggleExpanded}
       />
 
-      <ItineraryItemActions
+      <ScheduleItemActions
         isExpanded={isExpanded}
         isMenuOpen={isMenuOpen}
         onToggleExpanded={onToggleExpanded}
@@ -407,7 +410,7 @@ function ItineraryItemHeader(props: {
   );
 }
 
-function ItineraryItemSummary(props: {
+function ScheduleItemSummary(props: {
   title: string;
   dateLabel: string;
   timeLabel: string;
@@ -460,7 +463,7 @@ function ItineraryItemSummary(props: {
   );
 }
 
-function ItineraryItemActions(props: {
+function ScheduleItemActions(props: {
   isExpanded: boolean;
   isMenuOpen: boolean;
   onToggleExpanded: () => void;
@@ -480,7 +483,7 @@ function ItineraryItemActions(props: {
             onToggleMenu();
           }}
           className="p-2 rounded-lg border border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700 transition-colors"
-          aria-label="Itinerary item menu"
+          aria-label="Schedule item menu"
         >
           <MoreVertical className="w-4 h-4" />
         </button>
@@ -518,7 +521,7 @@ function ItineraryItemActions(props: {
   );
 }
 
-function ItineraryItemFields(props: {
+function ScheduleItemFields(props: {
   item: ItineraryItem;
   itemDate: string;
   itemTime: string;

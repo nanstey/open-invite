@@ -5,6 +5,7 @@ import type { User } from '../../../../../lib/types';
 import { EmojiPicker } from '../../../../../lib/ui/9ui/emoji-picker';
 import { Popover, PopoverContent } from '../../../../../lib/ui/9ui/popover';
 import type { Comment, SocialEvent } from '../../../types';
+import { SectionCard } from '../SectionCard';
 import { CommentReactionBar, CommentReactionPicker } from './CommentReactionBar';
 
 const LONG_PRESS_DELAY_MS = 450;
@@ -288,14 +289,8 @@ export function ChatTab(props: {
     ]
   );
 
-  const cardClassName = isEditMode
-    ? 'bg-surface border border-slate-700 rounded-2xl p-5'
-    : 'bg-background border border-transparent rounded-2xl p-5';
-
   return (
-    <div className={cardClassName}>
-      <h2 className="text-lg font-bold text-white mb-4">Chat</h2>
-
+    <SectionCard title="Chat" titleLevel="secondary" surface={isEditMode ? 'edit' : 'read'}>
       <div className="space-y-4 mb-4">
         {event.comments.length === 0 && (
           <div className="text-center py-8 bg-slate-800/30 rounded-xl border border-dashed border-slate-800">
@@ -386,6 +381,6 @@ export function ChatTab(props: {
           </Popover>
         </form>
       )}
-    </div>
+    </SectionCard>
   );
 }

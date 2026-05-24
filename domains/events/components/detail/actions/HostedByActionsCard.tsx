@@ -1,18 +1,16 @@
-
-
-import type { User } from '../../../../../lib/types'
-import { EventActions } from './EventActions'
-import type { EventActionsModel } from './types'
-import { Card } from '../../../../../lib/ui/9ui/card'
+import type { User } from '../../../../../lib/types';
+import { Card } from '../../../../../lib/ui/9ui/card';
+import { EventActions } from './EventActions';
+import type { EventActionsModel } from './types';
 
 export function HostedByActionsCard(props: {
-  host?: User | null
-  seats: { goingLabel: string; spotsLeft: number | null }
-  actions: EventActionsModel
+  host?: User | null;
+  seats: { goingLabel: string; spotsLeft: number | null };
+  actions: EventActionsModel;
   /** 'inline' renders above content on md screens; 'sticky' renders in sidebar on lg screens */
-  variant?: 'inline' | 'sticky'
+  variant?: 'inline' | 'sticky';
 }) {
-  const { host, seats, actions, variant = 'inline' } = props
+  const { host, seats, actions, variant = 'inline' } = props;
 
   if (variant === 'sticky') {
     return (
@@ -21,13 +19,21 @@ export function HostedByActionsCard(props: {
           <Card className="bg-surface border border-slate-700 rounded-2xl p-5 shadow-sm">
             <div className="flex items-center gap-4">
               {host ? (
-                <img src={host.avatar} className="w-12 h-12 rounded-full border-2 border-slate-700" alt={host.name} />
+                <img
+                  src={host.avatar}
+                  className="w-12 h-12 rounded-full border-2 border-slate-700"
+                  alt={host.name}
+                />
               ) : (
                 <div className="w-12 h-12 rounded-full bg-slate-700 animate-pulse border-2 border-slate-700" />
               )}
               <div className="min-w-0">
-                <div className="text-xs text-slate-400">{actions.mode === 'edit' ? 'Editing as' : 'Hosted by'}</div>
-                <div className="font-bold text-white text-lg truncate">{host?.name || 'Loading...'}</div>
+                <div className="text-xs text-slate-400">
+                  {actions.mode === 'edit' ? 'Editing as' : 'Hosted by'}
+                </div>
+                <div className="font-bold text-white text-lg truncate">
+                  {host?.name || 'Loading...'}
+                </div>
               </div>
             </div>
 
@@ -48,6 +54,7 @@ export function HostedByActionsCard(props: {
               mode={actions.mode}
               inviteCopied={actions.inviteCopied}
               onShareInvite={actions.onShareInvite}
+              onSendInvites={actions.onSendInvites}
               showDismiss={actions.showDismiss}
               onDismiss={actions.onDismiss}
               isHost={actions.isHost}
@@ -65,7 +72,7 @@ export function HostedByActionsCard(props: {
           </Card>
         </div>
       </aside>
-    )
+    );
   }
 
   return (
@@ -74,13 +81,21 @@ export function HostedByActionsCard(props: {
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-4 min-w-0">
             {host ? (
-              <img src={host.avatar} className="w-12 h-12 rounded-full border-2 border-slate-700" alt={host.name} />
+              <img
+                src={host.avatar}
+                className="w-12 h-12 rounded-full border-2 border-slate-700"
+                alt={host.name}
+              />
             ) : (
               <div className="w-12 h-12 rounded-full bg-slate-700 animate-pulse border-2 border-slate-700" />
             )}
             <div className="min-w-0">
-              <div className="text-xs text-slate-400">{actions.mode === 'edit' ? 'Editing as' : 'Hosted by'}</div>
-              <div className="font-bold text-white text-lg truncate">{host?.name || 'Loading...'}</div>
+              <div className="text-xs text-slate-400">
+                {actions.mode === 'edit' ? 'Editing as' : 'Hosted by'}
+              </div>
+              <div className="font-bold text-white text-lg truncate">
+                {host?.name || 'Loading...'}
+              </div>
             </div>
           </div>
 
@@ -101,6 +116,7 @@ export function HostedByActionsCard(props: {
             mode={actions.mode}
             inviteCopied={actions.inviteCopied}
             onShareInvite={actions.onShareInvite}
+            onSendInvites={actions.onSendInvites}
             showDismiss={actions.showDismiss}
             onDismiss={actions.onDismiss}
             isHost={actions.isHost}
@@ -118,5 +134,5 @@ export function HostedByActionsCard(props: {
         </div>
       </Card>
     </div>
-  )
+  );
 }
