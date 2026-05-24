@@ -33,7 +33,12 @@ describe('feature flags', () => {
   });
 
   it('applies database overrides for known flags', () => {
-    expect(resolveFeatureFlags([{ key: 'groups', enabled: true }])).toEqual({ groups: true });
+    expect(
+      resolveFeatureFlags([
+        { key: 'groups', enabled: true },
+        { key: 'sendInvites', enabled: true },
+      ])
+    ).toEqual({ groups: true, sendInvites: true });
   });
 
   it('falls back to defaults when the flag query fails', async () => {
