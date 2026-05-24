@@ -2,6 +2,7 @@ import { useForm, useStore } from '@tanstack/react-form';
 import { useMutation } from '@tanstack/react-query';
 import React from 'react';
 
+import { useFeatureFlag } from '../../../lib/featureFlags';
 import type { Group, GroupRole, User } from '../../../lib/types';
 import { splitLocalDateTime, toLocalDateTimeInputValue } from '../../../lib/ui/utils/datetime';
 import { createEvent, fetchEventById, updateEvent } from '../../../services/eventService';
@@ -280,8 +281,16 @@ export function useEventEditorController(props: {
     const { date: endDate } = splitLocalDateTime(toLocalDateTimeInputValue(ev.endTime));
     return !!endDate && endDate !== startDate;
   });
+  const groupsEnabled = useFeatureFlag('groups');
 
   React.useEffect(() => {
+    if (!groupsEnabled) {
+      setGroups([]);
+      setGroupRoles(new Map());
+      setGroupsLoading(false);
+      return;
+    }
+
     let isMounted = true;
     const loadGroups = async () => {
       setGroupsLoading(true);
@@ -297,14 +306,15 @@ export function useEventEditorController(props: {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [groupsEnabled]);
 
   const eligibleGroups = React.useMemo(() => {
+    if (!groupsEnabled) return [];
     return groups.filter(group => {
       const role = groupRoles.get(group.id);
       return role === 'ADMIN' || group.allowMembersCreateEvents;
     });
-  }, [groupRoles, groups]);
+  }, [groupRoles, groups, groupsEnabled]);
 
   const onSubmit = React.useCallback(
     async ({ value }: { value: EventEditorValues }) => {
@@ -313,7 +323,7 @@ export function useEventEditorController(props: {
       const description = value.description.trim();
       const activityType = String(value.activityType ?? '').trim();
 
-      const errors = validateEventEditor(value, hasItinerary);
+      const errors = validateEventEditor(value, hasItinerary, groupsEnabled);
       if (Object.values(errors).some(Boolean)) throw new Error('Missing required fields');
 
       const times = computeEventTimes({
@@ -439,11 +449,12 @@ export function useEventEditorController(props: {
       props.onSuccess(refreshed ?? updated);
     },
     [
+      expenseItems,
+      groupsEnabled,
       hasItinerary,
       isDraftUpdate,
       isUpdate,
       itineraryItems,
-      expenseItems,
       props.initialEvent,
       props.onSuccess,
     ]
@@ -458,8 +469,8 @@ export function useEventEditorController(props: {
 
   const detailErrors = React.useMemo(() => {
     const hasItinerary = itineraryItems.length > 0;
-    return validateEventEditor(values, hasItinerary);
-  }, [itineraryItems.length, values]);
+    return validateEventEditor(values, hasItinerary, groupsEnabled);
+  }, [groupsEnabled, itineraryItems.length, values]);
 
   const canSubmit = Object.values(detailErrors).every(v => !v);
   const [showValidation, setShowValidation] = React.useState(false);
@@ -770,6 +781,7 @@ export function useEventEditorController(props: {
       onChangeIsAllDay,
       onChange: applyPatch,
       groups: eligibleGroups,
+      groupsEnabled,
       groupsLoading,
       itinerary: itineraryApi,
       expenses: expenseApi,
@@ -781,6 +793,7 @@ export function useEventEditorController(props: {
     canSubmit,
     detailErrors,
     eligibleGroups,
+    groupsEnabled,
     expenseApi,
     groupsLoading,
     itineraryApi,

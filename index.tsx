@@ -1,14 +1,15 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
 import { AuthProvider, useAuth } from './domains/auth/AuthProvider';
-import { AppRouterProvider } from './router';
+import { FeatureFlagsProvider } from './lib/featureFlags';
 import { queryClient } from './lib/queryClient';
+import { AppRouterProvider } from './router';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
+  throw new Error('Could not find root element to mount to');
 }
 
 const root = ReactDOM.createRoot(rootElement);
@@ -22,11 +23,16 @@ root.render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <div className="root">
-          <Root />
-        </div>
+        <FeatureFlagsProvider>
+          <div className="root">
+            <Root />
+          </div>
+        </FeatureFlagsProvider>
       </AuthProvider>
-      {import.meta.env.VITE_SHOW_DEVTOOLS === 'true' || (import.meta.env.VITE_SHOW_DEVTOOLS === undefined && import.meta.env.DEV) ? <ReactQueryDevtools initialIsOpen={false} /> : null}
+      {import.meta.env.VITE_SHOW_DEVTOOLS === 'true' ||
+      (import.meta.env.VITE_SHOW_DEVTOOLS === undefined && import.meta.env.DEV) ? (
+        <ReactQueryDevtools initialIsOpen={false} />
+      ) : null}
     </QueryClientProvider>
   </React.StrictMode>
 );

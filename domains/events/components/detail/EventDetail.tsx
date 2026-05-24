@@ -55,6 +55,7 @@ interface EventDetailProps {
     isSaving?: boolean;
     primaryLabel?: string;
     groups?: Group[];
+    groupsEnabled?: boolean;
     groupsLoading?: boolean;
     errors?: Partial<
       Record<
@@ -455,6 +456,12 @@ export const EventDetail: React.FC<EventDetailProps> = ({
               itineraryFilterId={guestScheduleFilterId}
               onChangeItineraryFilterId={setGuestScheduleFilterId}
               onChangeAttendees={nextAttendees => edit?.onChange({ attendees: nextAttendees })}
+              onChangeVisibility={next => edit?.onChange({ visibilityType: next })}
+              onChangeGroupIds={nextGroupIds => edit?.onChange({ groupIds: nextGroupIds })}
+              groupOptions={edit?.groups}
+              groupsEnabled={edit?.groupsEnabled}
+              groupsLoading={edit?.groupsLoading}
+              groupError={edit?.errors?.groupIds}
             />
           ) : null}
 

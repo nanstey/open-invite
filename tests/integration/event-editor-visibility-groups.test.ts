@@ -35,7 +35,8 @@ describe('EventEditor integration: group visibility validation', () => {
         visibilityType: EventVisibility.GROUPS,
         groupIds: [],
       },
-      false
+      false,
+      true
     );
 
     expect(errors.groupIds).toBe('Select at least one group');
@@ -48,6 +49,21 @@ describe('EventEditor integration: group visibility validation', () => {
         visibilityType: EventVisibility.GROUPS,
         groupIds: ['group-1'],
       },
+      false,
+      true
+    );
+
+    expect(errors.groupIds).toBeUndefined();
+  });
+
+  it('does not require groups when the feature flag is off', () => {
+    const errors = validateEventEditor(
+      {
+        ...baseValues,
+        visibilityType: EventVisibility.GROUPS,
+        groupIds: [],
+      },
+      false,
       false
     );
 

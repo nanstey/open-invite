@@ -16,7 +16,8 @@ type EventEditorValuesLike = {
 
 export function validateEventEditor(
   values: EventEditorValuesLike,
-  _hasItinerary: boolean
+  _hasItinerary: boolean,
+  groupsEnabled = true
 ): {
   title?: string;
   activityType?: string;
@@ -44,7 +45,9 @@ export function validateEventEditor(
     endTime: dateTimeError ?? undefined,
     location: undefined,
     groupIds:
-      values.visibilityType === 'GROUPS' && (!values.groupIds || values.groupIds.length === 0)
+      groupsEnabled &&
+      values.visibilityType === 'GROUPS' &&
+      (!values.groupIds || values.groupIds.length === 0)
         ? 'Select at least one group'
         : undefined,
   };
