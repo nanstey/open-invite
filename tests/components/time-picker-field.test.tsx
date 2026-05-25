@@ -115,6 +115,30 @@ describe('TimePickerField', () => {
     });
   });
 
+  it('preserves parseable partial desktop input while typing', async () => {
+    stubViewport(true);
+    render(<TestHarness />);
+
+    const input = screen.getByLabelText('Time');
+    fireEvent.focus(input);
+    fireEvent.change(input, { target: { value: '1' } });
+
+    await waitFor(() => {
+      expect(screen.getByTestId('value')).not.toHaveTextContent('');
+    });
+    expect(input).toHaveValue('1');
+
+    fireEvent.change(input, { target: { value: '10:30' } });
+    expect(input).toHaveValue('10:30');
+
+    fireEvent.blur(input);
+
+    await waitFor(() => {
+      expect(input).toHaveValue('10:30 AM');
+      expect(screen.getByTestId('value')).toHaveTextContent('10:30');
+    });
+  });
+
   it('clears invalid desktop input on blur', async () => {
     stubViewport(true);
     render(<TestHarness initialValue="09:00" />);

@@ -121,8 +121,10 @@ function TimeTextEntryPanel({
   const [highlightedIndex, setHighlightedIndex] = React.useState(() => findHighlightedIndex(value));
   const optionRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
   const rootRef = React.useRef<HTMLDivElement | null>(null);
+  const isEditingRef = React.useRef(false);
 
   React.useEffect(() => {
+    if (isEditingRef.current) return;
     setInputValue(formatTimeValue12h(value));
     setHighlightedIndex(findHighlightedIndex(value));
   }, [value]);
@@ -163,6 +165,7 @@ function TimeTextEntryPanel({
 
   const selectOption = React.useCallback(
     (nextValue: string) => {
+      isEditingRef.current = false;
       setInputValue(formatTimeValue12h(nextValue));
       setHighlightedIndex(findHighlightedIndex(nextValue));
       onDraftChange(nextValue);
@@ -175,6 +178,7 @@ function TimeTextEntryPanel({
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const nextValue = event.target.value;
+    isEditingRef.current = true;
     setInputValue(nextValue);
     setOpen(true);
 
@@ -188,6 +192,7 @@ function TimeTextEntryPanel({
   const handleInputBlur = () => {
     window.setTimeout(() => {
       if (rootRef.current?.contains(document.activeElement)) return;
+      isEditingRef.current = false;
       normalizeInput();
       if (!mobilePanel) {
         setOpen(false);
@@ -215,6 +220,7 @@ function TimeTextEntryPanel({
       if (open) {
         selectOption(quarterHourOptions[highlightedIndex]?.value ?? value);
       } else {
+        isEditingRef.current = false;
         normalizeInput();
       }
       onCommitValue?.();
@@ -223,6 +229,7 @@ function TimeTextEntryPanel({
 
     if (event.key === 'Escape') {
       event.preventDefault();
+      isEditingRef.current = false;
       setInputValue(formatTimeValue12h(value));
       setHighlightedIndex(findHighlightedIndex(value));
       if (!mobilePanel) {
