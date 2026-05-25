@@ -1,4 +1,4 @@
-import { CalendarIcon, ChevronsUpDownIcon, X } from 'lucide-react';
+import { CalendarIcon, ChevronsUpDownIcon } from 'lucide-react';
 import * as React from 'react';
 
 import { useMediaQuery } from '../../hooks/useMediaQuery';
@@ -132,26 +132,13 @@ export function DatePickerField({
             <div className="sr-only">
               <DialogTitle>Start date</DialogTitle>
             </div>
-            <div className="flex items-start justify-between gap-4 px-5 py-4">
-              <div>
-                <div className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">
-                  {label}
-                </div>
-                <div className="mt-1 text-base font-semibold text-white">
-                  {draftDate ? formatDateLongEnUS(draftDate) : placeholder}
-                </div>
+            <div className="px-5 py-4">
+              <div className="text-xs font-black uppercase tracking-[0.22em] text-slate-500">
+                {label}
               </div>
-              <button
-                type="button"
-                aria-label="Close date picker"
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
-                onClick={() => {
-                  setDraftDate(selectedDate);
-                  setOpen(false);
-                }}
-              >
-                <X className="h-4 w-4" />
-              </button>
+              <div className="mt-1 text-base font-semibold text-white">
+                {draftDate ? formatDateLongEnUS(draftDate) : placeholder}
+              </div>
             </div>
             <div className="px-3 pt-2">{calendar}</div>
             <div className="flex items-center justify-end gap-2 px-5 py-4">

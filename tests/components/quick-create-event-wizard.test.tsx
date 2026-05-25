@@ -178,15 +178,18 @@ describe('QuickCreateEventWizard', () => {
       expect(document.querySelector('[data-slot="dialog-content"]')).toBeInTheDocument()
     );
     const dialog = document.querySelector('[data-slot="dialog-content"]') as HTMLElement;
-    expect(within(dialog).getByRole('button', { name: /close date picker/i })).toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole('button', { name: /close date picker/i })
+    ).not.toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: /cancel/i })).toBeInTheDocument();
     expect(document.querySelector('[data-slot="dialog-positioner"]')).toHaveClass('z-[1100]');
     expect(document.body.style.overflow).toBe('hidden');
 
-    const closeDatePicker = within(dialog).getByRole('button', { name: /close date picker/i });
+    const closeDatePicker = within(dialog).getByRole('button', { name: /cancel/i });
     fireEvent.click(closeDatePicker);
 
     await waitFor(() =>
-      expect(screen.queryByRole('button', { name: /close date picker/i })).not.toBeInTheDocument()
+      expect(screen.queryByRole('button', { name: /cancel/i })).not.toBeInTheDocument()
     );
 
     expect(document.querySelector('[data-slot="drawer-content"]')).toBeInTheDocument();

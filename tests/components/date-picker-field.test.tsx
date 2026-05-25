@@ -83,6 +83,9 @@ describe('DatePickerField', () => {
     );
     const dialog = document.querySelector('[data-slot="dialog-content"]') as HTMLElement;
     expect(within(dialog).getByText('May 2026')).toBeInTheDocument();
+    expect(
+      within(dialog).queryByRole('button', { name: /close date picker/i })
+    ).not.toBeInTheDocument();
     expect(document.querySelector('[data-slot="drawer-content"]')).toHaveClass('z-[1001]');
     expect(document.querySelector('[data-slot="dialog-positioner"]')).toHaveClass('z-[1100]');
 
