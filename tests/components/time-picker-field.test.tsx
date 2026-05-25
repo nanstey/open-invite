@@ -5,48 +5,38 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TimePickerField } from '../../lib/ui/components/TimePickerField';
 import { formatTimeValue12h } from '../../lib/ui/utils/datetime';
 
-vi.mock('timepicker-ui', () => {
-  class MockTimepickerUI {
-    wrapper: HTMLElement;
-    handlers = new Map<string, (data: any) => void>();
-    constructor(wrapper: HTMLElement) {
-      this.wrapper = wrapper;
-    }
-    create() {
-      const confirmButton = document.createElement('button');
-      confirmButton.type = 'button';
-      confirmButton.textContent = 'Confirm mobile time';
-      confirmButton.addEventListener('click', () => {
-        this.handlers.get('confirm')?.({ hour: '4', minutes: '15', type: 'PM' });
-      });
+const timepickerReactMock = vi.fn();
 
-      const cancelButton = document.createElement('button');
-      cancelButton.type = 'button';
-      cancelButton.textContent = 'Cancel mobile time';
-      cancelButton.addEventListener('click', () => {
-        this.handlers.get('cancel')?.({});
-      });
-
-      this.wrapper.appendChild(confirmButton);
-      this.wrapper.appendChild(cancelButton);
-    }
-    on(event: string, handler: (data: any) => void) {
-      this.handlers.set(event, handler);
-    }
-    setValue(value: string) {
-      const input = this.wrapper.querySelector('input');
-      if (input) {
-        input.value = value;
-      }
-    }
-    destroy() {
-      this.wrapper.querySelectorAll('button').forEach(button => {
-        button.remove();
-      });
-    }
-  }
-
-  return { TimepickerUI: MockTimepickerUI };
+vi.mock('timepicker-ui-react', () => {
+  return {
+    Timepicker: (props: any) => {
+      timepickerReactMock(props);
+      return (
+        <div data-testid="mock-timepicker-react">
+          <input
+            aria-label={props['aria-label']}
+            aria-invalid={props['aria-invalid']}
+            disabled={props.disabled}
+            placeholder={props.placeholder}
+            readOnly
+            value={props.value ?? ''}
+          />
+          <button
+            type="button"
+            onClick={() => props.onConfirm?.({ hour: '4', minutes: '15', type: 'PM' })}
+          >
+            Confirm 4:15 PM
+          </button>
+          <button
+            type="button"
+            onClick={() => props.onConfirm?.({ hour: '6', minutes: '30', type: 'PM' })}
+          >
+            Confirm 6:30 PM
+          </button>
+        </div>
+      );
+    },
+  };
 });
 
 function stubViewport(matchesDesktop: boolean) {
@@ -79,6 +69,7 @@ function TestHarness({ initialValue = '' }: { initialValue?: string }) {
 describe('TimePickerField', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.stubGlobal('scrollTo', vi.fn());
   });
 
   afterEach(() => {
@@ -179,14 +170,33 @@ describe('TimePickerField', () => {
     });
   });
 
-  it('uses the mobile timepicker and commits on confirm only', async () => {
+  it('renders mobile through timepicker-ui-react with scoped mobile theme options', async () => {
     stubViewport(false);
     render(<TestHarness initialValue="09:00" />);
 
-    expect(await screen.findByLabelText('Time')).toHaveValue('9:00 AM');
-    expect(await screen.findByRole('button', { name: 'Confirm mobile time' })).toBeInTheDocument();
+    expect(screen.getByTestId('mock-timepicker-react')).toBeInTheDocument();
+    expect(screen.getByLabelText('Time')).toHaveValue('9:00 AM');
+    expect(timepickerReactMock).toHaveBeenCalled();
+    expect(timepickerReactMock.mock.lastCall?.[0].options).toMatchObject({
+      clock: { type: '12h' },
+      ui: {
+        theme: 'dark',
+        mobile: true,
+        mode: 'clock',
+        enableSwitchIcon: true,
+      },
+      labels: {
+        mobileTime: 'Time',
+        cancel: 'Cancel',
+        ok: 'Done',
+      },
+    });
+    expect(timepickerReactMock.mock.lastCall?.[0].options.behavior.id).toContain(
+      'open-invite-mobile-timepicker-'
+    );
+    expect(typeof timepickerReactMock.mock.lastCall?.[0].onOpen).toBe('function');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Confirm mobile time' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm 4:15 PM' }));
 
     await waitFor(() => {
       expect(screen.getByTestId('value')).toHaveTextContent('16:15');
@@ -194,15 +204,16 @@ describe('TimePickerField', () => {
     });
   });
 
-  it('keeps the current value on mobile cancel', async () => {
+  it('commits the confirmed mobile value from the wrapper', async () => {
     stubViewport(false);
     render(<TestHarness initialValue="09:00" />);
 
-    expect(await screen.findByRole('button', { name: 'Cancel mobile time' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel mobile time' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm 6:30 PM' }));
 
-    expect(screen.getByTestId('value')).toHaveTextContent('09:00');
-    expect(screen.getByLabelText('Time')).toHaveValue('9:00 AM');
+    await waitFor(() => {
+      expect(screen.getByTestId('value')).toHaveTextContent('18:30');
+      expect(screen.getByLabelText('Time')).toHaveValue('6:30 PM');
+    });
   });
 
   it('handles viewport switching without crashing', async () => {
@@ -219,7 +230,7 @@ describe('TimePickerField', () => {
     }));
 
     const { rerender } = render(<TestHarness initialValue="09:00" />);
-    expect(await screen.findByLabelText('Time')).toHaveValue(formatTimeValue12h('09:00'));
+    expect(screen.getByLabelText('Time')).toHaveValue(formatTimeValue12h('09:00'));
 
     matchesDesktop = true;
     rerender(<TestHarness initialValue="09:00" />);

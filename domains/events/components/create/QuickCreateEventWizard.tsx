@@ -1,5 +1,6 @@
 import { Clock, X } from 'lucide-react';
 import * as React from 'react';
+import { useBodyScrollLock } from '../../../../lib/hooks/useBodyScrollLock';
 import { useMediaQuery } from '../../../../lib/hooks/useMediaQuery';
 import {
   AlertDialog,
@@ -26,7 +27,7 @@ import {
 import { CategoryBadgePicker } from './CategoryBadgePicker';
 
 const desktopMediaQuery = '(min-width: 768px)';
-const dateTimeGridClass = 'grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3 md:grid-cols-2';
+const dateTimeGridClass = 'grid grid-cols-2 gap-3';
 
 export function QuickCreateEventWizard(props: {
   open: boolean;
@@ -34,6 +35,7 @@ export function QuickCreateEventWizard(props: {
   onCreated: (event: SocialEvent) => void;
 }) {
   const isDesktop = useMediaQuery(desktopMediaQuery);
+  useBodyScrollLock(props.open && !isDesktop);
   const today = React.useMemo(() => new Date().toISOString().slice(0, 10), []);
   const [title, setTitle] = React.useState('');
   const [category, setCategory] = React.useState('Social');
@@ -238,6 +240,7 @@ export function QuickCreateEventWizard(props: {
                   value={startDate}
                   onChange={handleStartDateChange}
                   className="h-12 rounded-xl bg-slate-900"
+                  label="Start Date"
                 />
               </div>
               <div
@@ -256,6 +259,7 @@ export function QuickCreateEventWizard(props: {
                       value={startTime}
                       onChange={setStartTime}
                       className="h-12 rounded-xl bg-slate-900 pl-10 pr-3"
+                      label="Start Time"
                     />
                   </>
                 ) : null}
@@ -273,6 +277,7 @@ export function QuickCreateEventWizard(props: {
                   value={endDate}
                   onChange={handleEndDateChange}
                   className="h-12 rounded-xl bg-slate-900"
+                  label="End Date"
                 />
               </div>
               <div
@@ -291,6 +296,7 @@ export function QuickCreateEventWizard(props: {
                       value={endTime}
                       onChange={setEndTime}
                       className="h-12 rounded-xl bg-slate-900 pl-10 pr-3"
+                      label="End Time"
                     />
                   </>
                 ) : null}
@@ -338,7 +344,9 @@ export function QuickCreateEventWizard(props: {
           open={props.open}
           direction="bottom"
           shouldScaleBackground
+          fixed
           dismissible={false}
+          repositionInputs={false}
           onOpenChange={handleOpenChange}
         >
           <DrawerContent className="max-h-[92vh] overflow-hidden border-slate-800 bg-slate-950">

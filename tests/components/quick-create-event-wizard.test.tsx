@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { QuickCreateEventWizard } from '../../domains/events/components/create/QuickCreateEventWizard';
 import { createDraftEvent } from '../../services/eventService';
@@ -20,6 +20,19 @@ function stubDesktopViewport() {
   }));
 }
 
+function stubMobileViewport() {
+  vi.stubGlobal('matchMedia', (query: string) => ({
+    matches: false,
+    media: query,
+    onchange: null,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    addListener: vi.fn(),
+    removeListener: vi.fn(),
+    dispatchEvent: vi.fn(),
+  }));
+}
+
 class ResizeObserverMock {
   observe = vi.fn();
   unobserve = vi.fn();
@@ -31,6 +44,7 @@ describe('QuickCreateEventWizard', () => {
     vi.clearAllMocks();
     stubDesktopViewport();
     vi.stubGlobal('ResizeObserver', ResizeObserverMock);
+    vi.stubGlobal('scrollTo', vi.fn());
     vi.mocked(createDraftEvent).mockResolvedValue({
       id: 'event-1',
       slug: 'board-games-20260516-event1',
@@ -143,5 +157,46 @@ describe('QuickCreateEventWizard', () => {
     fireEvent.click(screen.getByRole('button', { name: /discard invite/i }));
 
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('keeps the nested mobile start-date picker above the drawer and restores drawer control on close', async () => {
+    stubMobileViewport();
+
+    const { rerender } = render(
+      <QuickCreateEventWizard open onOpenChange={vi.fn()} onCreated={vi.fn()} />
+    );
+
+    await waitFor(() => {
+      expect(document.body.style.overflow).toBe('hidden');
+    });
+
+    const drawer = document.querySelector('[data-slot="drawer-content"]');
+    expect(drawer).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start date' }));
+    await waitFor(() =>
+      expect(document.querySelector('[data-slot="dialog-content"]')).toBeInTheDocument()
+    );
+    const dialog = document.querySelector('[data-slot="dialog-content"]') as HTMLElement;
+    expect(within(dialog).getByRole('button', { name: /close date picker/i })).toBeInTheDocument();
+    expect(document.querySelector('[data-slot="dialog-positioner"]')).toHaveClass('z-[1100]');
+    expect(document.body.style.overflow).toBe('hidden');
+
+    const closeDatePicker = within(dialog).getByRole('button', { name: /close date picker/i });
+    fireEvent.click(closeDatePicker);
+
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: /close date picker/i })).not.toBeInTheDocument()
+    );
+
+    expect(document.querySelector('[data-slot="drawer-content"]')).toBeInTheDocument();
+    expect(document.body.style.overflow).toBe('hidden');
+    expect(screen.getByRole('button', { name: /save/i })).toBeInTheDocument();
+
+    rerender(<QuickCreateEventWizard open={false} onOpenChange={vi.fn()} onCreated={vi.fn()} />);
+
+    await waitFor(() => {
+      expect(document.body.style.overflow).toBe('');
+    });
   });
 });

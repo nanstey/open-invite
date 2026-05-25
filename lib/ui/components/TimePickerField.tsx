@@ -1,6 +1,9 @@
 import * as React from 'react';
 import 'timepicker-ui/main.css';
 import 'timepicker-ui/theme-dark.css';
+import type { TimepickerOptions } from 'timepicker-ui';
+import { Timepicker } from 'timepicker-ui-react';
+import './timepicker-ui-overrides.css';
 
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { Input } from '../9ui/input';
@@ -27,6 +30,22 @@ export type TimePickerFieldProps = {
   invalid?: boolean;
   name?: string;
   ariaLabel?: string;
+  label?: string;
+};
+
+type TimeTextEntryPanelProps = {
+  id?: string;
+  value: string;
+  disabled?: boolean;
+  required?: boolean;
+  placeholder: string;
+  invalid?: boolean;
+  name?: string;
+  ariaLabel?: string;
+  inputClassName: string;
+  mobilePanel?: boolean;
+  onCommitValue?: () => void;
+  onDraftChange: (nextTime: string) => void;
 };
 
 function findHighlightedIndex(value: string) {
@@ -35,253 +54,148 @@ function findHighlightedIndex(value: string) {
   return exactMatchIndex >= 0 ? exactMatchIndex : 0;
 }
 
-function normalizeTimepickerValue(data: {
-  hour?: string | number;
-  minutes?: string | number;
-  type?: string;
+function TimeOptionsList({
+  activeValue,
+  highlightedIndex,
+  optionRefs,
+  onHighlight,
+  onSelect,
+  optionClassName,
+}: {
+  activeValue: string;
+  highlightedIndex: number;
+  optionRefs: React.MutableRefObject<Array<HTMLButtonElement | null>>;
+  onHighlight: (index: number) => void;
+  onSelect: (nextValue: string) => void;
+  optionClassName?: string;
 }) {
-  const rawHour = Number(data.hour);
-  const rawMinute = Number(data.minutes);
-  const type = data.type?.toUpperCase();
+  return (
+    <div role="listbox" aria-label="Time options" className="space-y-1">
+      {quarterHourOptions.map((option, index) => {
+        const isSelected = option.value === activeValue;
+        const isHighlighted = index === highlightedIndex;
 
-  if (Number.isNaN(rawHour) || Number.isNaN(rawMinute)) {
-    return '';
-  }
-
-  let hour = rawHour;
-  if (type === 'PM' && hour < 12) hour += 12;
-  if (type === 'AM' && hour === 12) hour = 0;
-
-  return formatTimePartsValue(hour, rawMinute);
+        return (
+          <button
+            key={option.value}
+            ref={node => {
+              optionRefs.current[index] = node;
+            }}
+            type="button"
+            role="option"
+            aria-selected={isSelected}
+            className={cn(
+              'flex w-full items-center rounded-lg px-3 py-2 text-left text-sm text-white transition-colors',
+              isHighlighted ? 'bg-slate-700' : 'hover:bg-slate-800',
+              isSelected && !isHighlighted && 'bg-slate-800',
+              optionClassName
+            )}
+            onMouseDown={event => event.preventDefault()}
+            onMouseEnter={() => onHighlight(index)}
+            onClick={() => onSelect(option.value)}
+          >
+            {option.label}
+          </button>
+        );
+      })}
+    </div>
+  );
 }
 
-function MobileTimePickerField({
+function TimeTextEntryPanel({
   id,
   value,
-  onChange,
-  required,
   disabled,
+  required,
   placeholder,
+  invalid,
+  name,
+  ariaLabel,
   inputClassName,
-  invalid,
-  name,
-  ariaLabel,
-}: Omit<TimePickerFieldProps, 'className'> & { inputClassName: string }) {
-  const hostRef = React.useRef<HTMLDivElement | null>(null);
-  const instanceRef = React.useRef<any>(null);
-  const inputRef = React.useRef<HTMLInputElement | null>(null);
-
-  React.useEffect(() => {
-    let disposed = false;
-
-    async function setup() {
-      if (!hostRef.current) return;
-
-      const [{ TimepickerUI }] = await Promise.all([import('timepicker-ui')]);
-      if (disposed || !hostRef.current) return;
-
-      const wrapper = document.createElement('div');
-      wrapper.className = 'tp-ui w-full';
-
-      const input = document.createElement('input');
-      input.type = 'text';
-      input.readOnly = true;
-      input.className = inputClassName;
-      input.placeholder = placeholder ?? '';
-      if (id) input.id = id;
-      if (name) input.name = name;
-      if (ariaLabel) input.setAttribute('aria-label', ariaLabel);
-      if (invalid) input.setAttribute('aria-invalid', 'true');
-      if (disabled) input.disabled = true;
-      if (required) input.required = true;
-      input.inputMode = 'none';
-
-      wrapper.appendChild(input);
-      hostRef.current.replaceChildren(wrapper);
-
-      inputRef.current = input;
-
-      const instance = new TimepickerUI(wrapper, {
-        clock: { type: '12h' },
-        ui: { mobile: true, theme: 'dark', mode: 'clock' },
-      });
-
-      instanceRef.current = instance;
-      instance.create();
-      if (value) {
-        instance.setValue(formatTimeValue12h(value), true);
-      }
-      instance.on(
-        'confirm',
-        (data: { hour?: string | number; minutes?: string | number; type?: string }) => {
-          const nextValue = normalizeTimepickerValue(data);
-          if (nextValue) {
-            onChange(nextValue);
-          }
-        }
-      );
-    }
-
-    setup();
-
-    return () => {
-      disposed = true;
-      const instance = instanceRef.current;
-      instanceRef.current = null;
-      inputRef.current = null;
-      if (instance) {
-        instance.destroy({ keepInputValue: true });
-      }
-      hostRef.current?.replaceChildren();
-    };
-  }, [
-    ariaLabel,
-    disabled,
-    id,
-    inputClassName,
-    invalid,
-    name,
-    onChange,
-    placeholder,
-    required,
-    value,
-  ]);
-
-  React.useEffect(() => {
-    const input = inputRef.current;
-    if (!input) return;
-
-    input.disabled = Boolean(disabled);
-    input.required = Boolean(required);
-    if (invalid) {
-      input.setAttribute('aria-invalid', 'true');
-    } else {
-      input.removeAttribute('aria-invalid');
-    }
-  }, [disabled, invalid, required]);
-
-  React.useEffect(() => {
-    const instance = instanceRef.current;
-    if (!instance) return;
-
-    if (!value) {
-      const input = inputRef.current;
-      if (input) input.value = '';
-      return;
-    }
-
-    instance.setValue(formatTimeValue12h(value), true);
-  }, [value]);
-
-  return <div ref={hostRef} className="w-full" />;
-}
-
-export function TimePickerField({
-  id,
-  value,
-  onChange,
-  required,
-  disabled,
-  placeholder = 'Select time',
-  className,
-  invalid,
-  name,
-  ariaLabel,
-}: TimePickerFieldProps) {
-  const isDesktop = useMediaQuery(desktopMediaQuery);
-  const [open, setOpen] = React.useState(false);
+  mobilePanel = false,
+  onCommitValue,
+  onDraftChange,
+}: TimeTextEntryPanelProps) {
   const [inputValue, setInputValue] = React.useState(() => formatTimeValue12h(value));
-  const [isEditing, setIsEditing] = React.useState(false);
+  const [open, setOpen] = React.useState(mobilePanel);
   const [highlightedIndex, setHighlightedIndex] = React.useState(() => findHighlightedIndex(value));
-  const rootRef = React.useRef<HTMLDivElement | null>(null);
   const optionRefs = React.useRef<Array<HTMLButtonElement | null>>([]);
-  const isEditingRef = React.useRef(isEditing);
+  const rootRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
-    isEditingRef.current = isEditing;
-  }, [isEditing]);
-
-  React.useEffect(() => {
-    if (isEditingRef.current) return;
     setInputValue(formatTimeValue12h(value));
     setHighlightedIndex(findHighlightedIndex(value));
   }, [value]);
 
   React.useEffect(() => {
+    setOpen(mobilePanel);
+  }, [mobilePanel]);
+
+  React.useEffect(() => {
     if (!open) return;
     const highlightedOption = optionRefs.current[highlightedIndex];
-    if (highlightedOption && typeof highlightedOption.scrollIntoView === 'function') {
-      highlightedOption.scrollIntoView({ block: 'nearest' });
-    }
+    highlightedOption?.scrollIntoView?.({ block: 'nearest' });
   }, [highlightedIndex, open]);
 
-  const inputClassName = cn(
-    'w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-primary focus:outline-none',
-    invalid && 'border-red-500 focus:border-red-500',
-    className
-  );
-
-  const commitInputValue = React.useCallback(() => {
+  const normalizeInput = React.useCallback(() => {
     const trimmed = inputValue.trim();
     if (!trimmed) {
       setInputValue('');
       setHighlightedIndex(0);
-      onChange('');
-      setOpen(false);
-      setIsEditing(false);
-      return;
+      onDraftChange('');
+      return '';
     }
 
     const parsed = parseUserTimeInput(trimmed);
     if (!parsed) {
       setInputValue('');
       setHighlightedIndex(0);
-      onChange('');
-      setOpen(false);
-      setIsEditing(false);
-      return;
+      onDraftChange('');
+      return '';
     }
 
-    setInputValue(formatTimeValue12h(parsed));
+    const formatted = formatTimeValue12h(parsed);
+    setInputValue(formatted);
     setHighlightedIndex(findHighlightedIndex(parsed));
-    onChange(parsed);
-    setOpen(false);
-    setIsEditing(false);
-  }, [inputValue, onChange]);
+    onDraftChange(parsed);
+    return parsed;
+  }, [inputValue, onDraftChange]);
 
   const selectOption = React.useCallback(
     (nextValue: string) => {
       setInputValue(formatTimeValue12h(nextValue));
       setHighlightedIndex(findHighlightedIndex(nextValue));
-      setOpen(false);
-      setIsEditing(false);
-      onChange(nextValue);
+      onDraftChange(nextValue);
+      if (!mobilePanel) {
+        setOpen(false);
+      }
     },
-    [onChange]
+    [mobilePanel, onDraftChange]
   );
 
-  const handleDesktopInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const nextValue = event.target.value;
     setInputValue(nextValue);
     setOpen(true);
 
     const parsed = parseUserTimeInput(nextValue);
     if (parsed) {
-      onChange(parsed);
+      onDraftChange(parsed);
       setHighlightedIndex(findHighlightedIndex(parsed));
     }
   };
 
-  const handleDesktopInputBlur = () => {
+  const handleInputBlur = () => {
     window.setTimeout(() => {
-      if (rootRef.current?.contains(document.activeElement)) {
-        return;
+      if (rootRef.current?.contains(document.activeElement)) return;
+      normalizeInput();
+      if (!mobilePanel) {
+        setOpen(false);
       }
-      commitInputValue();
     }, 0);
   };
 
-  const handleDesktopInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       setOpen(true);
@@ -301,8 +215,9 @@ export function TimePickerField({
       if (open) {
         selectOption(quarterHourOptions[highlightedIndex]?.value ?? value);
       } else {
-        commitInputValue();
+        normalizeInput();
       }
+      onCommitValue?.();
       return;
     }
 
@@ -310,10 +225,189 @@ export function TimePickerField({
       event.preventDefault();
       setInputValue(formatTimeValue12h(value));
       setHighlightedIndex(findHighlightedIndex(value));
-      setOpen(false);
-      setIsEditing(false);
+      if (!mobilePanel) {
+        setOpen(false);
+      }
     }
   };
+
+  const parsedCurrentValue = parseUserTimeInput(inputValue);
+  const activeValue = parsedCurrentValue ?? value;
+  const options = (
+    <TimeOptionsList
+      activeValue={activeValue}
+      highlightedIndex={highlightedIndex}
+      optionRefs={optionRefs}
+      onHighlight={setHighlightedIndex}
+      onSelect={selectOption}
+    />
+  );
+
+  const input = (
+    <Input
+      id={id}
+      name={name}
+      type="text"
+      autoComplete="off"
+      value={inputValue}
+      placeholder={placeholder}
+      disabled={disabled}
+      required={required}
+      aria-label={ariaLabel}
+      aria-invalid={invalid || undefined}
+      className={inputClassName}
+      onFocus={() => {
+        setOpen(true);
+        setHighlightedIndex(findHighlightedIndex(activeValue));
+      }}
+      onClick={() => setOpen(true)}
+      onChange={handleInputChange}
+      onBlur={handleInputBlur}
+      onKeyDown={handleInputKeyDown}
+    />
+  );
+
+  if (mobilePanel) {
+    return (
+      <div ref={rootRef} className="w-full">
+        {input}
+        <div className="mt-4 max-h-72 overflow-y-auto rounded-2xl border border-slate-800 bg-slate-950 p-1">
+          {options}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <Popover open={open} onOpenChange={setOpen} className="w-full">
+      <div ref={rootRef} className="w-full">
+        {input}
+        <PopoverContent
+          align="start"
+          side="auto"
+          sideOffset={6}
+          className="w-full min-w-0 max-h-64 overflow-y-auto p-1"
+        >
+          {options}
+        </PopoverContent>
+      </div>
+    </Popover>
+  );
+}
+
+function MobileTimePickerField({
+  id,
+  value,
+  required,
+  disabled,
+  placeholder,
+  inputClassName,
+  invalid,
+  name,
+  ariaLabel,
+  label = 'Time',
+  onChange,
+}: Omit<TimePickerFieldProps, 'className'> & { inputClassName: string }) {
+  const displayedValue = value ? formatTimeValue12h(value) : '';
+  const instanceId = React.useId().replace(/:/g, '-');
+  const ownerId = `open-invite-mobile-timepicker-${instanceId}`;
+  const options = React.useMemo(
+    (): TimepickerOptions => ({
+      clock: { type: '12h' as const, incrementMinutes: 5, autoSwitchToMinutes: true },
+      ui: {
+        theme: 'dark' as const,
+        mobile: true,
+        mode: 'clock' as const,
+        enableSwitchIcon: true,
+      },
+      labels: {
+        mobileTime: label,
+        cancel: 'Cancel',
+        ok: 'Done',
+      },
+      behavior: {
+        id: ownerId,
+      },
+    }),
+    [label, ownerId]
+  );
+
+  const handleOpen = React.useCallback(() => {
+    window.setTimeout(() => {
+      const modal = document.querySelector(`[data-owner-id="${ownerId}"]`);
+      const wrapper = modal?.querySelector('.tp-ui-wrapper');
+      const switchButton = modal?.querySelector<HTMLElement>('.tp-ui-keyboard-icon-wrapper');
+      const selectTimeEl = modal?.querySelector('.tp-ui-select-time');
+
+      if (selectTimeEl) {
+        selectTimeEl.textContent = label;
+      }
+
+      if (!modal || !wrapper || !switchButton || wrapper.classList.contains('expanded')) {
+        return;
+      }
+
+      switchButton.click();
+    }, 0);
+  }, [label, ownerId]);
+
+  const handleConfirm = React.useCallback(
+    (data: { hour?: string | number; minutes?: string | number; type?: string }) => {
+      const rawHour = Number(data.hour);
+      const rawMinute = Number(data.minutes);
+      const type = data.type?.toUpperCase();
+
+      if (Number.isNaN(rawHour) || Number.isNaN(rawMinute)) {
+        onChange('');
+        return;
+      }
+
+      let hour = rawHour;
+      if (type === 'PM' && hour < 12) hour += 12;
+      if (type === 'AM' && hour === 12) hour = 0;
+
+      onChange(formatTimePartsValue(hour, rawMinute));
+    },
+    [onChange]
+  );
+
+  return (
+    <Timepicker
+      id={id}
+      name={name}
+      value={displayedValue}
+      disabled={disabled}
+      required={required}
+      placeholder={placeholder}
+      aria-label={ariaLabel}
+      aria-invalid={invalid || undefined}
+      className={inputClassName}
+      options={options}
+      onOpen={handleOpen}
+      onConfirm={handleConfirm}
+    />
+  );
+}
+
+export function TimePickerField({
+  id,
+  value,
+  onChange,
+  required,
+  disabled,
+  placeholder = 'Select time',
+  className,
+  invalid,
+  name,
+  ariaLabel,
+  label,
+}: TimePickerFieldProps) {
+  const isDesktop = useMediaQuery(desktopMediaQuery);
+  const inputClassName = cn(
+    'w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-white placeholder:text-slate-500 focus:border-primary focus:outline-none',
+    invalid && 'border-red-500 focus:border-red-500',
+    className
+  );
 
   if (!isDesktop) {
     return (
@@ -326,77 +420,26 @@ export function TimePickerField({
         required={required}
         ariaLabel={ariaLabel}
         invalid={invalid}
+        label={label}
         inputClassName={inputClassName}
         onChange={onChange}
       />
     );
   }
 
-  const parsedCurrentValue = parseUserTimeInput(inputValue);
-  const activeValue = parsedCurrentValue ?? value;
-
   return (
-    <Popover open={open} onOpenChange={setOpen} className="w-full">
-      <div ref={rootRef} className="w-full">
-        <Input
-          id={id}
-          name={name}
-          type="text"
-          autoComplete="off"
-          value={inputValue}
-          placeholder={placeholder}
-          disabled={disabled}
-          required={required}
-          aria-label={ariaLabel}
-          aria-invalid={invalid || undefined}
-          className={inputClassName}
-          onFocus={() => {
-            setIsEditing(true);
-            setOpen(true);
-            setHighlightedIndex(findHighlightedIndex(activeValue));
-          }}
-          onClick={() => setOpen(true)}
-          onChange={handleDesktopInputChange}
-          onBlur={handleDesktopInputBlur}
-          onKeyDown={handleDesktopInputKeyDown}
-        />
-
-        <PopoverContent
-          align="start"
-          side="auto"
-          sideOffset={6}
-          className="w-full min-w-0 max-h-64 overflow-y-auto p-1"
-        >
-          <div role="listbox" aria-label="Time options" className="space-y-1">
-            {quarterHourOptions.map((option, index) => {
-              const isSelected = option.value === activeValue;
-              const isHighlighted = index === highlightedIndex;
-
-              return (
-                <button
-                  key={option.value}
-                  ref={node => {
-                    optionRefs.current[index] = node;
-                  }}
-                  type="button"
-                  role="option"
-                  aria-selected={isSelected}
-                  className={cn(
-                    'flex w-full items-center rounded-lg px-3 py-2 text-left text-sm text-white transition-colors',
-                    isHighlighted ? 'bg-slate-700' : 'hover:bg-slate-800',
-                    isSelected && !isHighlighted && 'bg-slate-800'
-                  )}
-                  onMouseDown={event => event.preventDefault()}
-                  onMouseEnter={() => setHighlightedIndex(index)}
-                  onClick={() => selectOption(option.value)}
-                >
-                  {option.label}
-                </button>
-              );
-            })}
-          </div>
-        </PopoverContent>
-      </div>
-    </Popover>
+    <TimeTextEntryPanel
+      id={id}
+      name={name}
+      value={value}
+      onDraftChange={onChange}
+      placeholder={placeholder}
+      disabled={disabled}
+      required={required}
+      ariaLabel={ariaLabel}
+      invalid={invalid}
+      inputClassName={inputClassName}
+      mobilePanel={false}
+    />
   );
 }
