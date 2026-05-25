@@ -5,7 +5,7 @@ import { TimePickerField } from '../../../../../lib/ui/components/TimePickerFiel
 import { SectionCard } from '../SectionCard';
 import type { EventDateTimeModel } from '../utils/eventDateTimeModel';
 
-const dateTimeGridClass = 'grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)] gap-3 md:grid-cols-2';
+const dateTimeGridClass = 'grid grid-cols-2 gap-3';
 
 export function DateTimeCard(props: {
   isEditMode: boolean;
@@ -86,6 +86,7 @@ export function DateTimeCard(props: {
                   onChange={next => onChangeStartDate?.(next)}
                   invalid={!!errorStartTime}
                   className="h-12 rounded-xl bg-slate-900"
+                  label="Start Date"
                 />
               </div>
               <div
@@ -105,6 +106,7 @@ export function DateTimeCard(props: {
                       onChange={next => onChangeStartTime?.(next)}
                       className="h-12 rounded-xl bg-slate-900 pl-10 pr-3"
                       invalid={!!errorStartTime}
+                      label="Start Time"
                     />
                   </>
                 ) : null}
@@ -123,6 +125,7 @@ export function DateTimeCard(props: {
                   min={startDate}
                   invalid={!!errorEndTime}
                   className="h-12 rounded-xl bg-slate-900"
+                  label="End Date"
                 />
               </div>
               <div
@@ -142,6 +145,7 @@ export function DateTimeCard(props: {
                       onChange={next => onChangeEndTime?.(next)}
                       className="h-12 rounded-xl bg-slate-900 pl-10 pr-3"
                       invalid={!!errorEndTime}
+                      label="End Time"
                     />
                   </>
                 ) : null}

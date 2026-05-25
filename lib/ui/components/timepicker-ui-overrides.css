@@ -1,0 +1,198 @@
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] {
+  z-index: 1100;
+}
+
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-footer,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-footer.mobile,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-footer.expanded {
+  padding: 1rem 1.25rem 1.25rem;
+}
+
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-footer .tp-ui-wrapper-btn,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"]
+  .tp-ui-footer
+  .tp-ui-wrapper-btn.mobile,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"]
+  .tp-ui-footer
+  .tp-ui-wrapper-btn.expanded {
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-cancel-btn,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-cancel-btn.expanded,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-cancel-btn.mobile,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-ok-btn,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-ok-btn.expanded,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-ok-btn.mobile,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-clear-btn,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-clear-btn.expanded,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-clear-btn.mobile,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-clear-btn.mobile.expanded {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 2.25rem;
+  min-width: auto;
+  border-radius: 9999px;
+  padding: 0.5rem 1rem !important;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border: 0 !important;
+  box-shadow: none !important;
+  line-height: 1;
+  text-align: center;
+  overflow: hidden;
+}
+
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-cancel-btn,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-cancel-btn.expanded,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-cancel-btn.mobile,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-cancel-btn.mobile.expanded {
+  color: #cbd5e1 !important;
+  background-color: transparent !important;
+}
+
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-ok-btn,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-ok-btn.expanded,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-ok-btn.mobile,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-ok-btn.mobile.expanded {
+  background-color: #6366f1 !important;
+  color: #ffffff !important;
+}
+
+/* ==========================================================
+   A. CSS variable overrides — app design-system token alignment
+   ========================================================== */
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] {
+  --tp-bg: #020617;
+  --tp-surface: #0f172a;
+  --tp-input-bg: #0f172a;
+  --tp-primary: #6366f1;
+  --tp-on-primary: #ffffff;
+  --tp-primary-container: #6366f1;
+  --tp-on-primary-container: #ffffff;
+  --tp-am-pm-active: #6366f1;
+  --tp-am-pm-text-selected: #ffffff;
+  --tp-am-pm-text-unselected: #94a3b8;
+  --tp-border: #1e293b;
+  --tp-outline: #6366f1;
+  --tp-text: #f8fafc;
+  --tp-text-secondary: #94a3b8;
+  --tp-text-icon: #94a3b8;
+  --tp-surface-hover: #1e293b;
+  --tp-border-radius: 1.75rem;
+}
+
+/* ==========================================================
+   B. Modal backdrop — match bg-black/70
+   :not(.removed) avoids conflicting with the library's close animation
+   ========================================================== */
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"]:not(.removed) {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+/* ==========================================================
+   C. Wrapper shape
+   ========================================================== */
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-wrapper {
+  border: 1px solid #1e293b;
+}
+
+/* ==========================================================
+   D. Header padding and bottom border — match date picker header
+   ========================================================== */
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-header.mobile,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-header.mobile.expanded {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 1rem 1.25rem;
+  border-bottom: none;
+}
+
+/* ==========================================================
+   E. "TIME" eyebrow label — match date picker's "DATE" style
+   ========================================================== */
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-select-time,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-select-time.mobile {
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  color: #64748b;
+  padding: 1rem 1.25rem;
+}
+
+/* ==========================================================
+   F. Large time display — semibold white, match date picker date text
+   ========================================================== */
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-wrapper-time.mobile,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-wrapper-time.mobile.expanded {
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+/* ==========================================================
+   G. Clock face background — slate-900 surface
+   ========================================================== */
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-clock-face {
+  background-color: #0f172a;
+}
+
+/* ==========================================================
+   H. Keyboard mode inputs — slate-900 bg, slate-50 text, rounded-lg
+   ========================================================== */
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-hour.mobile,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-hour.mobile.expanded,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-minutes.mobile,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-minutes.mobile.expanded {
+  background-color: #0f172a;
+  color: #f8fafc;
+  border-radius: 0.5rem;
+}
+
+/* ==========================================================
+   I. Keyboard toggle icon — hidden (clock-only mode)
+   enableSwitchIcon stays true in options so handleOpen can still
+   click the button programmatically to force clock mode on open
+   ========================================================== */
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-keyboard-icon-wrapper {
+  display: none;
+}
+
+/* ==========================================================
+   J. Cancel button hover — slate-800 bg, white text
+   ========================================================== */
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-cancel-btn:hover,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-cancel-btn.mobile:hover,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-cancel-btn.expanded:hover,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"]
+  .tp-ui-cancel-btn.mobile.expanded:hover {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+}
+
+/* ==========================================================
+   K. OK button hover — opacity-90
+   ========================================================== */
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-ok-btn:hover,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-ok-btn.mobile:hover,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-ok-btn.expanded:hover,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-ok-btn.mobile.expanded:hover {
+  opacity: 0.9 !important;
+}
+
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-cancel-btn::after,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-cancel-btn.expanded::after,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-cancel-btn.mobile::after,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"]
+  .tp-ui-cancel-btn.mobile.expanded::after,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-ok-btn::after,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-ok-btn.expanded::after,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-ok-btn.mobile::after,
+.tp-ui-modal[data-owner-id^="open-invite-mobile-timepicker-"] .tp-ui-ok-btn.mobile.expanded::after {
+  border-radius: 9999px;
+}

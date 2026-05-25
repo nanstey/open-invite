@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { cn } from './utils';
 
 type SheetContextValue = {
@@ -87,6 +88,7 @@ type SheetContentProps = React.HTMLAttributes<HTMLDivElement> & {
 
 export function SheetContent({ className, side = 'right', children, ...props }: SheetContentProps) {
   const { open, setOpen } = useSheetContext();
+  useBodyScrollLock(open);
 
   if (!open) {
     return null;

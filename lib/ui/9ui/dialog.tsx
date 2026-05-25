@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { cn } from './utils';
 
 type DialogContextValue = {
@@ -86,17 +87,33 @@ export function DialogClose({
   );
 }
 
-export function DialogContent({ className, children }: React.HTMLAttributes<HTMLDivElement>) {
+type DialogContentProps = React.HTMLAttributes<HTMLDivElement> & {
+  containerClassName?: string;
+  overlayClassName?: string;
+};
+
+export function DialogContent({
+  className,
+  children,
+  containerClassName,
+  overlayClassName,
+  ...props
+}: DialogContentProps) {
   const { open, setOpen } = useDialogContext();
+  useBodyScrollLock(open);
 
   if (!open) {
     return null;
   }
 
   return createPortal(
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center">
+    <div
+      data-slot="dialog-positioner"
+      className={cn('fixed inset-0 z-[1000] flex items-center justify-center', containerClassName)}
+    >
       <div
-        className="fixed inset-0 bg-black/70"
+        data-slot="dialog-overlay"
+        className={cn('fixed inset-0 bg-black/70', overlayClassName)}
         onClick={() => setOpen(false)}
         onKeyDown={e => {
           if (e.key === 'Escape') setOpen(false);
@@ -111,6 +128,8 @@ export function DialogContent({ className, children }: React.HTMLAttributes<HTML
         )}
         role="dialog"
         aria-modal="true"
+        data-slot="dialog-content"
+        {...props}
       >
         {children}
       </div>

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { createPortal } from 'react-dom';
+import { useBodyScrollLock } from '../../hooks/useBodyScrollLock';
 import { cn } from './utils';
 
 type AlertDialogContextValue = {
@@ -91,6 +92,7 @@ export function AlertDialogClose({ className, render, ...props }: AlertDialogAct
 
 export function AlertDialogContent({ className, children }: React.HTMLAttributes<HTMLDivElement>) {
   const { open } = useAlertDialogContext();
+  useBodyScrollLock(open);
 
   if (!open) return null;
 
