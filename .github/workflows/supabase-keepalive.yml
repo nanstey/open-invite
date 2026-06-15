@@ -1,0 +1,48 @@
+name: Supabase Keep-Alive
+
+# Supabase pauses free-tier projects after ~7 days of inactivity.
+# This workflow issues a lightweight authenticated REST query against
+# both environments on a schedule to keep the databases awake.
+
+on:
+  schedule:
+    # Every day at 06:00 UTC. Well within the ~7-day pause window.
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [staging, production]
+    environment: ${{ matrix.target }}
+
+    steps:
+      - name: Ping Supabase (${{ matrix.target }})
+        env:
+          SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${SUPABASE_URL}" ] || [ -z "${SUPABASE_ANON_KEY}" ]; then
+            echo "Error: missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY for ${{ matrix.target }}"
+            exit 1
+          fi
+
+          # Hit a real table so the query reaches the database (not just the API gateway).
+          # `events` has anon read access; select a single row to keep the payload tiny.
+          status=$(curl -sS -o /dev/null -w '%{http_code}' \
+            "${SUPABASE_URL}/rest/v1/events?select=id&limit=1" \
+            -H "apikey: ${SUPABASE_ANON_KEY}" \
+            -H "Authorization: Bearer ${SUPABASE_ANON_KEY}")
+
+          echo "${{ matrix.target }} responded with HTTP ${status}"
+
+          if [ "${status}" -lt 200 ] || [ "${status}" -ge 300 ]; then
+            echo "Error: unexpected status code ${status} from ${{ matrix.target }}"
+            exit 1
+          fi
