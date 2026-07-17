@@ -103,7 +103,8 @@ The design keeps the blast radius small: no new column on `events`, no change to
   (`image/jpeg`, `image/png`, `image/webp`; **not** `image/svg+xml`) or exceed the size cap,
   **before** upload, with a user-visible message.
 - **FR-3 Normalization (shared).** Before upload, downscale to a max long-edge
-  (e.g. 2400px), re-encode to WebP/JPEG at a quality target, and thereby strip EXIF.
+  (default **1600px**, see §11 Q3), re-encode to WebP at a quality target (≈0.82), and thereby
+  strip EXIF.
 - **FR-4 Banner upload UX.** The header-image modal gains an **Upload** source (tab/segment)
   with device file selection, a preview, and progress/error states. On success it calls the
   existing `onUpdate(publicUrl)` seam — the same one search results use.
@@ -199,7 +200,7 @@ mega-bucket so each surface's authz predicate stays simple and auditable.
 ```ts
 export type UploadImageOptions = {
   maxBytes?: number;            // default from bucket policy (5 MB)
-  maxEdgePx?: number;           // default 2400
+  maxEdgePx?: number;           // default 1600 (see §11 Q3)
   mime?: readonly string[];     // default ['image/jpeg','image/png','image/webp']
   onProgress?: (fraction: number) => void;
 };
@@ -279,11 +280,13 @@ a corner, not built in this slice.
 - **Replace:** when a host uploads a new banner and the previous `header_image_url` pointed at
   an object **in our bucket** (URL matches the bucket's public prefix), delete the old object
   after the new URL is saved. External URLs (Pexels/picsum) are left alone.
-- **Cancelled/orphaned uploads:** because paths are `event-banners/{event_id}/…`, a scheduled
-  job (Supabase scheduled function / `pg_cron`, consistent with the notification reminder
-  scanner already in the tree) lists objects whose `event_id` prefix has no event, or whose
-  object URL isn't referenced by that event's `header_image_url`, and removes those older than
-  a grace window (e.g. 24h). Log counts; never delete inside the grace window.
+- **Cancelled/orphaned uploads:** because paths are `event-banners/{event_id}/…`, a
+  **scheduled function deletes real blobs via the Storage API** (pure `pg_cron`/SQL only
+  touches `storage.objects` rows, not the underlying blob — see §11 Q4). It runs on the same
+  cadence/ownership convention as the notification reminder scanner, lists objects whose
+  `event_id` prefix has no event or whose URL isn't referenced by that event's
+  `header_image_url`, and removes those older than a grace window (e.g. 24h). Log counts;
+  never delete inside the grace window.
 
 ## 7. Migration Plan (append-only)
 1. **Migration A** — create the `event-banners` bucket (public, 5 MB, raster MIME allowlist).
@@ -336,20 +339,45 @@ a corner, not built in this slice.
 | Scope creep into a general DAM | Ship one bucket + one consumer; `uploads` table and extra surfaces are explicitly deferred. |
 
 ## 11. Open Questions
+
+Each carries a **leaning** (the current default) with its trade-off. Items 1, 2, 5, 6 match
+the MVP defaults; items 3 and 4 revise the draft above and are reflected in §6.
+
 1. **Store URL or path?** MVP stores the full public URL in `header_image_url` (zero render
-   change). Do we instead want to store the storage **path** and resolve URLs at read time
-   (more portable if the bucket/CDN domain ever changes)? Trade-off: a render-layer change.
-2. **Public bucket vs signed URLs?** Events are publicly viewable when published, so a public
-   bucket is simplest. Do unpublished/private events need banner reads gated behind signed
-   URLs?
-3. **Size/dimension targets.** Is 5 MB / 2400px long-edge / WebP the right default, or should
-   we target a tighter banner budget (e.g. 1600px)?
-4. **Cleanup mechanism.** Reuse the notifications reminder scanner's scheduling approach, or a
-   dedicated Supabase scheduled function? (Affects where the cleanup job lives.)
-5. **Content moderation.** Do we need any moderation/report path before enabling
-   user-uploaded imagery in production, even without automated detection?
-6. **Do we backfill Pexels/picsum banners into storage?** Default: no — leave external URLs
-   as-is; only new uploads use storage.
+   change). Alternative: store the storage **path** and resolve at read time (portable if the
+   bucket/CDN domain changes) — but that overloads a column already holding external URLs and
+   needs a `header_image_source` discriminator.
+   - *Leaning:* **store the public URL.** The column already holds heterogeneous external
+     URLs; keep that contract. Revisit only if Q2 or a domain migration forces read-time
+     resolution, and add a discriminator then rather than overloading one text field.
+2. **Public bucket vs signed URLs?** A public bucket matches "anon can view published events"
+   and keeps banners usable in OG/social-share tags and emails. Signed URLs would gate
+   unpublished-event banners precisely but **expire** — breaking share cards and static meta.
+   - *Leaning:* **public bucket.** Random-UUID paths make unpublished banners unguessable in
+     practice; sharing is core to an invites app. If leak-before-publish is unacceptable, the
+     cheaper fix is delete/replace, not going fully private.
+3. **Size/dimension/format targets.** *(Revised from the draft's 5 MB / 2400px.)* The hero is
+   a fixed `aspect-[5/2]` band rendered at most ~1200px wide today.
+   - *Leaning:* **client-normalize to 1600px long-edge, ~2 MB, WebP q≈0.82** (1600px covers
+     2× DPI at current sizes). Keep the **bucket** cap at 5 MB for the raw pre-normalization
+     upload. Easy to raise later; hard to reclaim storage already spent.
+4. **Cleanup mechanism.** *(Clarified from the draft.)* `pg_cron`/SQL operates on
+   `storage.objects` rows and can't cleanly delete the underlying blob, so pure SQL is
+   insufficient for orphan removal.
+   - *Leaning:* **a dedicated scheduled function deletes real blobs via the Storage API**,
+     on the same cadence/ownership convention as the notification reminder scanner (one mental
+     model). Delete-on-replace stays inline in the service; the job only sweeps true orphans
+     past the grace window.
+5. **Content moderation.** Hosts upload to **their own** events (bounded blast radius, not a
+   shared feed), so automated moderation isn't an MVP blocker.
+   - *Leaning:* **ship flag-gated without automated moderation**, but add a lightweight
+     **admin takedown** (delete object + null the URL) before *public* prod enablement. A
+     user report path can follow. Do not block M1–M2 on it.
+6. **Backfill existing external banners?** Re-hosting Pexels content raises licensing/
+   attribution questions the current search flow already handles; picsum images are
+   placeholders not worth persisting.
+   - *Leaning:* **no backfill.** External URLs keep working; only new uploads use storage. If
+     Pexels-URL rot becomes real, backfill *only* Pexels as a separate, licensing-reviewed task.
 
 ## 12. Milestones
 - **M1 — Foundation:** `event-banners` bucket + `storage.objects` RLS + `storageService.ts` +
