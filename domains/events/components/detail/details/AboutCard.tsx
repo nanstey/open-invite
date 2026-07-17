@@ -10,6 +10,11 @@ import { MrkdwnRenderer } from './MrkdwnRenderer';
 
 type ViewMode = 'edit' | 'preview';
 
+// Auto-grow bounds for the description editor (px). Below the max the field
+// grows to fit; at the max it stops growing and scrolls internally instead.
+const DESCRIPTION_MIN_HEIGHT = 128; // matches min-h-[8rem]
+const DESCRIPTION_MAX_HEIGHT = 384; // matches max-h-96
+
 export function AboutCard(props: {
   isEditMode: boolean;
   description: string;
@@ -62,13 +67,21 @@ export function AboutCard(props: {
     }
   }, [isEditMode]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-run on `description` so the auto-grow height tracks typed content (scrollHeight depends on the value via the DOM)
   React.useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea && viewMode === 'edit') {
       textarea.style.height = 'auto';
-      textarea.style.height = `${Math.max(128, textarea.scrollHeight)}px`;
+      const contentHeight = textarea.scrollHeight;
+      const nextHeight = Math.min(
+        DESCRIPTION_MAX_HEIGHT,
+        Math.max(DESCRIPTION_MIN_HEIGHT, contentHeight)
+      );
+      textarea.style.height = `${nextHeight}px`;
+      // Grow to fit until the cap, then scroll internally instead of clipping.
+      textarea.style.overflowY = contentHeight > nextHeight ? 'auto' : 'hidden';
     }
-  }, [viewMode]);
+  }, [viewMode, description]);
   const contentVisible = !collapsible || expanded;
 
   return (
@@ -128,7 +141,7 @@ export function AboutCard(props: {
                     onKeyDown={emojiAutocomplete.handleKeyDown}
                     placeholder="What's the vibe?"
                     required
-                    className={`w-full bg-slate-900 border rounded-lg py-3 px-4 text-white outline-none min-h-[8rem] resize-none overflow-hidden ${
+                    className={`w-full bg-slate-900 border rounded-lg py-3 px-4 text-white outline-none min-h-[8rem] max-h-96 resize-none overflow-x-hidden overscroll-contain ${
                       error
                         ? 'border-red-500 focus:border-red-500'
                         : 'border-slate-700 focus:border-primary'
