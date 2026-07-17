@@ -79,7 +79,11 @@ on `notifications` inserts, so an open insert policy would become an
   originating tables (or by `SECURITY DEFINER` RPCs called from services), never by
   direct client inserts.
 - **FR-2 Event wiring.** Emit notifications for:
-  - **INVITE** — on `event_attendees` insert / invite issued (notify invitee; actor = host/inviter).
+  - **INVITE** — on `event_invites` insert (notify invitee `user_id`; actor = `invited_by`).
+    Use `event_invites`, **not** `event_attendees`: invite issuance writes `event_invites`
+    (`services/eventInviteService.ts#sendEventInvites`), whereas `event_attendees` is
+    populated on join/accept and is also used for non-invite joins — keying INVITE off
+    it would miss the invite-sent moment and mislabel ordinary attendance as invites.
   - **COMMENT** — on `comments` insert (notify event host + other participants; actor = commenter).
   - **REACTION** — on `reactions` insert (notify comment/event owner; actor = reactor). *(Digest-friendly.)*
   - **REMINDER** — from a scheduled job for upcoming events (notify attendees; actor = system).
@@ -116,7 +120,18 @@ If a definer RPC is used for `SYSTEM` messages, it validates the caller (e.g. ad
 flag) before inserting.
 
 ### 6.2 Server-side creation via triggers
-Add `AFTER INSERT` triggers on the source tables that call a shared helper:
+
+> **Do not expose the helper as an RPC.** PostgreSQL grants `EXECUTE` on new functions
+> to `PUBLIC` by default, and Supabase/PostgREST exposes callable functions **in the
+> `public` schema** as REST RPCs. A `SECURITY DEFINER` helper left in `public` would
+> therefore be callable by any authenticated client with arbitrary `p_user_id` /
+> `p_actor_id` — recreating the exact spoofing hole we are closing once the table
+> INSERT policy is removed. Mitigate with **both**: (a) put the helper in a **private,
+> non-exposed schema** (not in PostgREST's `db-schemas`, e.g. `internal`), and
+> (b) explicitly `REVOKE EXECUTE ... FROM PUBLIC, anon, authenticated`. Only trigger
+> functions and authorized wrapper RPCs call it.
+
+Add `AFTER INSERT` triggers on the source tables that call a shared, non-exposed helper:
 
 ```sql
 -- Add a dedup key so the same logical event can't notify twice.
@@ -125,10 +140,14 @@ ALTER TABLE public.notifications
 CREATE UNIQUE INDEX IF NOT EXISTS uq_notifications_dedup
   ON public.notifications (dedup_key) WHERE dedup_key IS NOT NULL;
 
-CREATE OR REPLACE FUNCTION public.create_notification(
+-- Private schema, NOT listed in PostgREST db-schemas, so it is never exposed as an RPC.
+CREATE SCHEMA IF NOT EXISTS internal;
+
+CREATE OR REPLACE FUNCTION internal.create_notification(
   p_user_id UUID, p_type notification_type, p_title TEXT, p_message TEXT,
   p_related_event_id UUID, p_actor_id UUID, p_dedup_key TEXT
-) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER AS $$
+) RETURNS VOID LANGUAGE plpgsql SECURITY DEFINER
+   SET search_path = '' AS $$   -- pin search_path to prevent function hijacking
 BEGIN
   -- Self-suppression
   IF p_actor_id IS NOT NULL AND p_actor_id = p_user_id THEN
@@ -140,17 +159,21 @@ BEGIN
     (p_user_id, p_type, p_title, p_message, p_related_event_id, p_actor_id, p_dedup_key)
   ON CONFLICT (dedup_key) WHERE dedup_key IS NOT NULL DO NOTHING;
 END; $$;
+
+-- Belt and suspenders: even in a private schema, strip default EXECUTE grants.
+REVOKE ALL ON FUNCTION internal.create_notification(
+  UUID, notification_type, TEXT, TEXT, UUID, UUID, TEXT) FROM PUBLIC, anon, authenticated;
 ```
 
 Example wiring (comment → notify host):
 
 ```sql
-CREATE OR REPLACE FUNCTION public.notify_on_comment()
-RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER AS $$
+CREATE OR REPLACE FUNCTION internal.notify_on_comment()
+RETURNS TRIGGER LANGUAGE plpgsql SECURITY DEFINER SET search_path = '' AS $$
 DECLARE v_host UUID;
 BEGIN
   SELECT host_id INTO v_host FROM public.events WHERE id = NEW.event_id;
-  PERFORM public.create_notification(
+  PERFORM internal.create_notification(
     v_host, 'COMMENT', 'New comment', left(NEW.text, 140),
     NEW.event_id, NEW.user_id, 'comment:' || NEW.id || ':' || v_host
   );
@@ -159,19 +182,26 @@ END; $$;
 
 CREATE TRIGGER trg_notify_on_comment
 AFTER INSERT ON public.comments
-FOR EACH ROW EXECUTE FUNCTION public.notify_on_comment();
+FOR EACH ROW EXECUTE FUNCTION internal.notify_on_comment();
 ```
 
-Analogous triggers for `event_attendees` (INVITE) and `reactions` (REACTION). REMINDER
-comes from a scheduled scanner (shared with the email PRD's reminder job, or a small
-`pg_cron` job that calls `create_notification`).
+Trigger functions are also placed in `internal` and pin `search_path`. They are invoked
+only by the trigger machinery, never as RPCs.
+
+Analogous triggers for `event_invites` (INVITE — recipient `NEW.user_id`, actor
+`NEW.invited_by`) and `reactions` (REACTION). REMINDER comes from a scheduled scanner
+(shared with the email PRD's reminder job, or a small `pg_cron` job that calls the
+helper).
 
 ### 6.3 Service layer
 - Deprecate the client-callable `createNotification` insert path; keep `fetch*` and
   `markAsRead` untouched.
 - If any UI genuinely needs to create a notification (e.g. an admin SYSTEM broadcast),
-  route it through a `SECURITY DEFINER` RPC (`rpc('create_system_notification', …)`)
-  that authorizes the caller — never a raw table insert.
+  route it through a **thin, authorized** `SECURITY DEFINER` wrapper RPC
+  (`rpc('create_system_notification', …)`) that (a) lives in `public` only because it
+  must be callable, (b) first checks the caller is authorized (e.g. admin flag on
+  `user_profiles`) and rejects otherwise, and (c) delegates to
+  `internal.create_notification`. The unchecked helper itself is never exposed.
 
 ### 6.4 Interaction with the email PRD
 Once creation is server-side and RLS is closed:
@@ -210,7 +240,8 @@ Once creation is server-side and RLS is closed:
 | --- | --- |
 | Dropping the insert policy breaks a hidden client insert path | Grep confirms no production caller; add definer RPC for any legitimate need before removing. |
 | Trigger fan-out (comment on a busy event) creates many rows | Notify host + participants only; dedup key; batch/digest at the email layer. |
-| `SECURITY DEFINER` misuse | Functions validate inputs and derive actor server-side; minimal surface; reviewed. |
+| `SECURITY DEFINER` helper callable as an RPC (default `PUBLIC` EXECUTE + PostgREST exposure) | Helper lives in a private `internal` schema (not in PostgREST `db-schemas`) and has `EXECUTE` revoked from `PUBLIC`/`anon`/`authenticated`; only triggers and an authorized wrapper RPC call it; functions pin `search_path`. |
+| INVITE keyed off the wrong table | Source INVITE from `event_invites` (invite issuance), not `event_attendees` (join/accept), so invitees are notified at send time and joins aren't mislabeled. |
 | Migration ordering drift after rebase | Use fresh timestamps per AGENTS.md §6. |
 | Reminder job overlap with email PRD | Share one scanner; `create_notification` is idempotent via dedup key. |
 
