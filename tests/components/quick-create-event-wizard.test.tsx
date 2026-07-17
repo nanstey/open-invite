@@ -134,6 +134,24 @@ describe('QuickCreateEventWizard', () => {
     expect(onCreated).toHaveBeenCalled();
   });
 
+  it('toggles All Day on mobile without crashing after the time picker mounts', async () => {
+    stubMobileViewport();
+
+    render(<QuickCreateEventWizard open onOpenChange={vi.fn()} onCreated={vi.fn()} />);
+
+    // Wait for the lazily-imported timepicker-ui widget to mount and re-parent
+    // its <input>; unmounting it (by toggling All Day) previously threw
+    // NotFoundError and tripped the app error boundary.
+    await waitFor(() => expect(screen.getByRole('switch')).toBeInTheDocument());
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    fireEvent.click(screen.getByRole('switch'));
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    expect(screen.getByRole('switch')).toBeInTheDocument();
+    expect(screen.queryByLabelText('Start time')).not.toBeInTheDocument();
+  });
+
   it('requires the end time to be after the start time', () => {
     render(<QuickCreateEventWizard open onOpenChange={vi.fn()} onCreated={vi.fn()} />);
 
