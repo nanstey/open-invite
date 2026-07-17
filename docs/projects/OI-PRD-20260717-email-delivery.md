@@ -6,6 +6,9 @@
 - **Created:** 2026-07-17
 - **Change type prefix:** `feat`
 - **Reserved branch:** `claude/email-delivery-notifications-um8uju`
+- **Depends on (blocking):** `OI-PRD-20260717-harden-notifications` — email **must not**
+  be wired to the `notifications` table until notification creation is server-side and
+  the insert policy is locked down (see §5.1 FR-0 and §11).
 
 ---
 
@@ -57,9 +60,14 @@ system.
 | Config | Feature flags table (`20260523000000_add_feature_flags.sql`); `VITE_APP_ENV` = local/staging/prod. |
 | User email | Lives in `auth.users.email` (Supabase Auth). `user_profiles` has no email column. |
 
-**Key constraint:** notifications are currently created **client-side**. For reliable
-email we must not depend on the client staying online, so enqueue must happen
-server-side (DB trigger) rather than in the browser.
+**Key constraint (blocking):** notifications are currently created **client-side**, and
+the insert policy is `WITH CHECK (true)` — any authenticated client can insert a
+notification for **any** `user_id` with a spoofed `actor_id`. Wiring email to fire on
+those inserts would turn that hole into an **"email anyone, as anyone"** vector. For
+reliable *and safe* email, notification creation must first be moved server-side and the
+insert policy locked down. That work is specified in
+`OI-PRD-20260717-harden-notifications` and is a **hard precondition** for enabling any
+sending here (see FR-0).
 
 ## 4. User Stories
 
@@ -76,6 +84,13 @@ server-side (DB trigger) rather than in the browser.
 ## 5. Requirements
 
 ### 5.1 Functional
+- **FR-0 Trusted notification source (precondition).** Sending **must not** be enabled
+  until notification creation is server-side (triggers / authorized definer RPCs) and the
+  `notifications` insert policy no longer allows arbitrary client inserts — delivered by
+  `OI-PRD-20260717-harden-notifications`. Until then the enqueue trigger may be installed
+  but the `email_notifications` flag stays off (enqueue/dark-launch only). This prevents
+  a client from forging a notification for another user and thereby triggering email to
+  them.
 - **FR-1 Enqueue on notification create.** A row inserted into `notifications` whose
   type is email-eligible enqueues an `email_outbox` row in the same transaction (DB
   trigger). No client involvement.
@@ -177,12 +192,15 @@ CREATE TABLE public.email_outbox (
   status            email_status NOT NULL DEFAULT 'pending',
   attempts          INT NOT NULL DEFAULT 0,
   next_attempt_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  claimed_at        TIMESTAMPTZ,            -- when a worker last claimed this row
+  lock_until        TIMESTAMPTZ,            -- claim lease expiry; past = reclaimable
   last_error        TEXT,
   provider_message_id TEXT,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-CREATE INDEX idx_email_outbox_claim ON public.email_outbox (status, next_attempt_at);
+-- Claim index covers both fresh pending rows and stale (lease-expired) sending rows.
+CREATE INDEX idx_email_outbox_claim ON public.email_outbox (status, next_attempt_at, lock_until);
 
 CREATE TABLE public.email_delivery_log (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -239,17 +257,51 @@ resolves to `skipped` when a preference/suppression blocks the send.
 ### 6.4 Worker (Supabase Edge Function, Deno)
 
 `supabase/functions/email-worker/index.ts`:
-1. Claim up to `BATCH_SIZE` rows: `status='pending' AND next_attempt_at <= now()`
-   using `FOR UPDATE SKIP LOCKED`, set `status='sending'`.
+1. **Claim a batch with a lease.** Select up to `BATCH_SIZE` rows that are either fresh
+   or reclaimable, using `FOR UPDATE SKIP LOCKED`, and stamp a lease. A row is claimable
+   when:
+   - `status='pending' AND next_attempt_at <= now()`, **or**
+   - `status='sending' AND lock_until < now()` — a **stale claim** whose worker died
+     mid-flight (see below).
+
+   On claim, set `status='sending'`, `claimed_at=now()`, `lock_until=now() + LEASE`
+   (e.g. 5 min, comfortably longer than the function timeout), and `attempts=attempts+1`.
+   Incrementing `attempts` at claim time (not only on failure) means a worker that keeps
+   crashing before it can update status still counts toward `MAX_ATTEMPTS` and eventually
+   dead-letters instead of looping forever.
+
+   ```sql
+   WITH claimable AS (
+     SELECT id FROM public.email_outbox
+     WHERE (status = 'pending' AND next_attempt_at <= now())
+        OR (status = 'sending' AND lock_until < now())   -- reclaim stale rows
+     ORDER BY next_attempt_at
+     FOR UPDATE SKIP LOCKED
+     LIMIT :batch_size
+   )
+   UPDATE public.email_outbox o
+     SET status = 'sending', claimed_at = now(),
+         lock_until = now() + interval '5 minutes', attempts = attempts + 1
+   FROM claimable c WHERE o.id = c.id
+   RETURNING o.*;
+   ```
 2. For each row: resolve recipient email (`auth.users`), check `email_preferences`
    (category enabled + not globally unsubscribed) and `email_suppressions`. If blocked
-   → `status='skipped'`.
+   → `status='skipped'`, clear `lock_until`.
 3. Render template (subject + HTML/text) from `template` + `payload`, injecting
    deep-link (`/events/:slug`) and signed unsubscribe URL.
-4. POST to Resend with an idempotency key. On success → `status='sent'`, store
-   `provider_message_id`, log `sent`. On transient failure → `attempts++`,
-   `next_attempt_at = now() + backoff(attempts)`, `status='pending'`; when
-   `attempts >= MAX_ATTEMPTS` → `status='dead'`.
+4. POST to Resend with an idempotency key. On success → `status='sent'`,
+   `lock_until=NULL`, store `provider_message_id`, log `sent`. On transient failure →
+   `next_attempt_at = now() + backoff(attempts)`, `status='pending'`, `lock_until=NULL`;
+   when `attempts >= MAX_ATTEMPTS` → `status='dead'`. (`attempts` is already incremented
+   at claim time.)
+
+**Crash safety.** Because the claim sets a lease and bumps `attempts`, a worker that
+times out or crashes after claiming — before writing `sent`/`pending` — leaves the row
+in `sending` only until `lock_until` passes; the next run reclaims it. Rows are never
+stuck forever, and the provider `idempotency_key` prevents a double-send if the original
+worker had actually reached Resend before dying. A monitor alerts if a row's `attempts`
+climbs without terminal status (chronic mid-send crash).
 
 Invocation: Postgres `pg_cron` (or Supabase scheduled function) every 1 min, plus an
 optional `pg_net` nudge from the trigger for low-latency transactional email. A
@@ -286,6 +338,9 @@ GitHub Actions cron is the fallback if `pg_cron`/scheduled functions are unavail
 
 ## 7. Rollout Plan
 
+0. **Precondition — notification hardening shipped** (`OI-PRD-20260717-harden-notifications`):
+   creation is server-side and the `notifications` insert policy is locked down. No real
+   sending is enabled before this lands (FR-0).
 1. **Migration + preferences UI** behind flag off. Backfill `email_preferences`
    defaults for existing users (trigger on new user; batch upsert for existing).
 2. **Dark launch:** enqueue + worker in `skipped/log-only` mode (flag on for internal
@@ -327,7 +382,7 @@ GitHub Actions cron is the fallback if `pg_cron`/scheduled functions are unavail
 
 | Risk | Mitigation |
 | --- | --- |
-| Client-side notification creation misses server enqueue | Trigger fires on the DB insert regardless of client; move sensitive creates server-side over time. |
+| Open insert policy → forged notifications trigger email to arbitrary users | **Blocking precondition (FR-0):** `OI-PRD-20260717-harden-notifications` moves creation server-side and locks down the insert policy before the `email_notifications` flag is turned on. Enqueue trigger fires only on trustworthy inserts. |
 | Duplicate sends under concurrent workers | `FOR UPDATE SKIP LOCKED` claim + unique idempotency key + status guard. |
 | No Edge Functions/`pg_cron` in current stack | Add `supabase/functions/`; fall back to GitHub Actions cron (already used) to invoke the worker. |
 | Provider outage | Outbox retries with backoff; DLQ; no product write blocked. |
