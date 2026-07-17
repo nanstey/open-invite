@@ -62,13 +62,14 @@ export function AboutCard(props: {
     }
   }, [isEditMode]);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: re-run on `description` so the auto-grow height tracks typed content (scrollHeight depends on the value via the DOM)
   React.useEffect(() => {
     const textarea = textareaRef.current;
     if (textarea && viewMode === 'edit') {
       textarea.style.height = 'auto';
       textarea.style.height = `${Math.max(128, textarea.scrollHeight)}px`;
     }
-  }, [viewMode]);
+  }, [viewMode, description]);
   const contentVisible = !collapsible || expanded;
 
   return (
