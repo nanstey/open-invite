@@ -490,6 +490,7 @@ export const EventDetail: React.FC<EventDetailProps> = ({
 
       {showHeaderImageModal ? (
         <HeaderImageModal
+          eventId={event.id}
           defaultQuery={event.title || ''}
           initialSelectedUrl={event.headerImageUrl}
           onClose={() => setShowHeaderImageModal(false)}
