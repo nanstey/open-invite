@@ -5,12 +5,13 @@ const supabase = vi.hoisted(() => ({
     getUser: vi.fn(),
   },
   from: vi.fn(),
+  rpc: vi.fn(),
 }));
 
 vi.mock('../lib/supabase', () => ({ supabase }));
 
 import {
-  createNotification,
+  createSystemNotification,
   fetchNotifications,
   markAllNotificationsAsRead,
   markNotificationAsRead,
@@ -178,115 +179,68 @@ describe('notificationService', () => {
     });
   });
 
-  describe('createNotification', () => {
-    it('inserts required fields and null optional ids when omitted', async () => {
-      const single = vi.fn(async () => ({
-        data: {
-          id: 'n1',
-          type: 'SYSTEM',
-          title: 'Created',
-          message: 'Message',
-          timestamp: '2024-01-01T00:00:00.000Z',
-          related_event_id: null,
-          is_read: false,
-          actor_id: null,
-        },
-        error: null,
-      }));
-      const select = vi.fn(() => ({ single }));
-      const insert = vi.fn(() => ({ select }));
-      mockNotificationsTable(() => ({ insert }));
+  describe('createSystemNotification', () => {
+    it('calls the authorized RPC with mapped params and returns true on success', async () => {
+      supabase.rpc.mockResolvedValue({ data: null, error: null });
 
-      const result = await createNotification('user-1', 'SYSTEM', 'Created', 'Message');
-
-      expect(insert).toHaveBeenCalledWith({
-        user_id: 'user-1',
-        type: 'SYSTEM',
-        title: 'Created',
-        message: 'Message',
-        related_event_id: null,
-        actor_id: null,
-      });
-      expect(result).toEqual({
-        id: 'n1',
-        type: 'SYSTEM',
-        title: 'Created',
-        message: 'Message',
-        timestamp: '2024-01-01T00:00:00.000Z',
-        relatedEventId: undefined,
-        isRead: false,
-        actorId: undefined,
-      });
-    });
-
-    it('returns mapped notification object on success', async () => {
-      mockNotificationsTable(() => ({
-        insert: () => ({
-          select: () => ({
-            single: async () => ({
-              data: {
-                id: 'n2',
-                type: 'COMMENT',
-                title: 'Updated',
-                message: 'Updated message',
-                timestamp: '2024-01-02T00:00:00.000Z',
-                related_event_id: 'event-1',
-                is_read: true,
-                actor_id: 'actor-1',
-              },
-              error: null,
-            }),
-          }),
-        }),
-      }));
-
-      const result = await createNotification(
-        'user-1',
-        'COMMENT',
-        'Updated',
-        'Updated message',
-        'event-1',
-        'actor-1'
-      );
-
-      expect(result).toEqual({
-        id: 'n2',
-        type: 'COMMENT',
-        title: 'Updated',
-        message: 'Updated message',
-        timestamp: '2024-01-02T00:00:00.000Z',
+      const result = await createSystemNotification({
+        userId: 'user-1',
+        title: 'Heads up',
+        message: 'Scheduled maintenance tonight',
         relatedEventId: 'event-1',
-        isRead: true,
-        actorId: 'actor-1',
+        dedupKey: 'system:maint-2026-07-17',
       });
+
+      expect(supabase.rpc).toHaveBeenCalledWith('create_system_notification', {
+        p_user_id: 'user-1',
+        p_title: 'Heads up',
+        p_message: 'Scheduled maintenance tonight',
+        p_related_event_id: 'event-1',
+        p_dedup_key: 'system:maint-2026-07-17',
+      });
+      expect(result).toBe(true);
     });
 
-    it('returns null on insert/select error', async () => {
-      mockNotificationsTable(() => ({
-        insert: () => ({
-          select: () => ({
-            single: async () => ({ data: null, error: new Error('db error') }),
-          }),
-        }),
-      }));
+    it('passes null for omitted optional params', async () => {
+      supabase.rpc.mockResolvedValue({ data: null, error: null });
 
-      const result = await createNotification('user-1', 'SYSTEM', 'Title', 'Message');
+      const result = await createSystemNotification({
+        userId: 'user-1',
+        title: 'Title',
+        message: 'Message',
+      });
 
-      expect(result).toBeNull();
+      expect(supabase.rpc).toHaveBeenCalledWith('create_system_notification', {
+        p_user_id: 'user-1',
+        p_title: 'Title',
+        p_message: 'Message',
+        p_related_event_id: null,
+        p_dedup_key: null,
+      });
+      expect(result).toBe(true);
     });
 
-    it('returns null when row is missing', async () => {
-      mockNotificationsTable(() => ({
-        insert: () => ({
-          select: () => ({
-            single: async () => ({ data: null, error: null }),
-          }),
-        }),
-      }));
+    it('returns false when the RPC errors (e.g. caller is not an admin)', async () => {
+      supabase.rpc.mockResolvedValue({
+        data: null,
+        error: new Error('Only admins may create system notifications'),
+      });
 
-      const result = await createNotification('user-1', 'SYSTEM', 'Title', 'Message');
+      const result = await createSystemNotification({
+        userId: 'user-1',
+        title: 'Title',
+        message: 'Message',
+      });
 
-      expect(result).toBeNull();
+      expect(result).toBe(false);
+    });
+
+    it('does not perform a direct table insert', async () => {
+      supabase.rpc.mockResolvedValue({ data: null, error: null });
+
+      await createSystemNotification({ userId: 'user-1', title: 'T', message: 'M' });
+
+      expect(supabase.from).not.toHaveBeenCalled();
     });
   });
 });

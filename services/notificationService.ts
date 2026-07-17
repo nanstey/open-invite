@@ -5,7 +5,9 @@ import type { Notification } from '../lib/types';
  * Fetch notifications for the current user
  */
 export async function fetchNotifications(): Promise<Notification[]> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) {
     return [];
   }
@@ -49,7 +51,9 @@ export async function markNotificationAsRead(notificationId: string): Promise<bo
  * Mark all notifications as read
  */
 export async function markAllNotificationsAsRead(): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   if (!user) {
     return false;
   }
@@ -64,43 +68,36 @@ export async function markAllNotificationsAsRead(): Promise<boolean> {
 }
 
 /**
- * Create a notification (typically called by backend/triggers)
+ * Create a SYSTEM notification for a user.
+ *
+ * Activity notifications (INVITE/COMMENT/REACTION/REMINDER) are created server-side
+ * by database triggers and the reminder scanner — clients never insert those. The
+ * only client-initiated case is an admin SYSTEM broadcast, which goes through the
+ * `create_system_notification` RPC. That RPC authorizes the caller (admin only) and
+ * delegates to the trusted server-side helper, so a non-admin call is rejected and
+ * the notifications table's insert path stays closed to direct client writes.
+ *
+ * Returns true on success, false if the RPC errors (e.g. caller is not an admin).
  */
-export async function createNotification(
-  userId: string,
-  type: Notification['type'],
-  title: string,
-  message: string,
-  relatedEventId?: string,
-  actorId?: string
-): Promise<Notification | null> {
-  const { data: notification, error } = await supabase
-    .from('notifications')
-    .insert({
-      user_id: userId,
-      type,
-      title,
-      message,
-      related_event_id: relatedEventId || null,
-      actor_id: actorId || null,
-    })
-    .select()
-    .single();
+export async function createSystemNotification(args: {
+  userId: string;
+  title: string;
+  message: string;
+  relatedEventId?: string;
+  dedupKey?: string;
+}): Promise<boolean> {
+  const { error } = await supabase.rpc('create_system_notification', {
+    p_user_id: args.userId,
+    p_title: args.title,
+    p_message: args.message,
+    p_related_event_id: args.relatedEventId ?? null,
+    p_dedup_key: args.dedupKey ?? null,
+  });
 
-  if (error || !notification) {
-    console.error('Error creating notification:', error);
-    return null;
+  if (error) {
+    console.error('Error creating system notification:', error);
+    return false;
   }
 
-  return {
-    id: notification.id,
-    type: notification.type as Notification['type'],
-    title: notification.title,
-    message: notification.message,
-    timestamp: notification.timestamp ?? '',
-    relatedEventId: notification.related_event_id || undefined,
-    isRead: notification.is_read,
-    actorId: notification.actor_id || undefined,
-  };
+  return true;
 }
-

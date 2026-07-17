@@ -654,6 +654,7 @@ export type Database = {
         Row: {
           actor_id: string | null;
           created_at: string | null;
+          dedup_key: string | null;
           id: string;
           is_read: boolean;
           message: string;
@@ -666,6 +667,7 @@ export type Database = {
         Insert: {
           actor_id?: string | null;
           created_at?: string | null;
+          dedup_key?: string | null;
           id?: string;
           is_read?: boolean;
           message: string;
@@ -678,6 +680,7 @@ export type Database = {
         Update: {
           actor_id?: string | null;
           created_at?: string | null;
+          dedup_key?: string | null;
           id?: string;
           is_read?: boolean;
           message?: string;
@@ -878,6 +881,16 @@ export type Database = {
       compute_expense_participants: {
         Args: { applies_to_param: string; event_id_param: string };
         Returns: string[];
+      };
+      create_system_notification: {
+        Args: {
+          p_user_id: string;
+          p_title: string;
+          p_message: string;
+          p_related_event_id?: string | null;
+          p_dedup_key?: string | null;
+        };
+        Returns: undefined;
       };
       generate_event_slug: {
         Args: { id_uuid: string; start_time_ts: string; title_text: string };
