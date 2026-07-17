@@ -378,21 +378,30 @@ function MobileTimePickerField({
     [onChange]
   );
 
+  // timepicker-ui wraps the underlying <input> in its own `.tp-ui` div by
+  // re-parenting the node (insertBefore + appendChild). If that <input> is the
+  // root DOM node React owns, React's unmount tries to remove it from its
+  // original parent and throws `NotFoundError` (crashing the app when e.g. the
+  // All Day toggle unmounts this field). Rendering a stable wrapper <div> that
+  // React owns keeps the re-parented input safely nested, so unmount removes
+  // the wrapper instead.
   return (
-    <Timepicker
-      id={id}
-      name={name}
-      value={displayedValue}
-      disabled={disabled}
-      required={required}
-      placeholder={placeholder}
-      aria-label={ariaLabel}
-      aria-invalid={invalid || undefined}
-      className={inputClassName}
-      options={options}
-      onOpen={handleOpen}
-      onConfirm={handleConfirm}
-    />
+    <div className="h-full w-full">
+      <Timepicker
+        id={id}
+        name={name}
+        value={displayedValue}
+        disabled={disabled}
+        required={required}
+        placeholder={placeholder}
+        aria-label={ariaLabel}
+        aria-invalid={invalid || undefined}
+        className={inputClassName}
+        options={options}
+        onOpen={handleOpen}
+        onConfirm={handleConfirm}
+      />
+    </div>
   );
 }
 
