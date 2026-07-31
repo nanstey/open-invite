@@ -38,7 +38,7 @@ describe('feature flags', () => {
         { key: 'groups', enabled: true },
         { key: 'sendInvites', enabled: true },
       ])
-    ).toEqual({ groups: true, sendInvites: true });
+    ).toEqual({ ...DEFAULT_FEATURE_FLAGS, groups: true, sendInvites: true });
   });
 
   it('falls back to defaults when the flag query fails', async () => {
