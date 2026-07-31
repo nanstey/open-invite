@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { Bell } from 'lucide-react';
 
 import { TabGroup } from '../../../lib/ui/components/TabGroup';
-import { NotificationBadge } from '../../alerts/NotificationBadge';
+import { alertsAriaLabel, NotificationBadge } from '../../alerts/NotificationBadge';
 import { useHeaderTabs } from '../HeaderTabsContext';
 
 interface MobileTopHeaderProps {
@@ -28,7 +28,7 @@ export function MobileTopHeader({ pageTitle, unreadCount, isAlertsActive }: Mobi
         )}
         <Link
           to="/alerts"
-          aria-label="Alerts"
+          aria-label={alertsAriaLabel(unreadCount)}
           className={`relative p-1 transition-colors ${
             isAlertsActive ? 'text-primary' : 'text-slate-300 hover:text-white'
           }`}

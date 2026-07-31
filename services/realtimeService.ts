@@ -13,6 +13,10 @@ class RealtimeService {
   private commentSubscriptions: Map<string, any> = new Map();
   private reactionSubscriptions: Map<string, any> = new Map();
   private notificationSubscription: any = null;
+  // Bumped on every subscribeToNotifications call so a call whose async auth lookup
+  // resolves after a newer call started can detect it's been superseded and bail out
+  // instead of clobbering the newer subscription.
+  private notificationSubToken = 0;
 
   /**
    * Subscribe to changes for a specific event
@@ -226,9 +230,17 @@ class RealtimeService {
    * Subscribe to notifications for the current user
    */
   async subscribeToNotifications(callback: NotificationCallback): Promise<() => void> {
+    const token = ++this.notificationSubToken;
+
     const {
       data: { user },
     } = await supabase.auth.getUser();
+
+    // A newer subscribe call started while we were awaiting auth — it owns the
+    // subscription now, so do nothing destructive and hand back a no-op.
+    if (token !== this.notificationSubToken) {
+      return () => {};
+    }
     if (!user) {
       return () => {}; // No-op unsubscribe
     }
@@ -268,7 +280,11 @@ class RealtimeService {
 
     return () => {
       subscription.unsubscribe();
-      this.notificationSubscription = null;
+      // Only clear the shared handle if it still points at this subscription; a
+      // superseding call may have already installed a newer one.
+      if (this.notificationSubscription === subscription) {
+        this.notificationSubscription = null;
+      }
     };
   }
 

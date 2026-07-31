@@ -112,6 +112,35 @@ describe('NotificationsProvider', () => {
     expect(screen.getByTestId('count').textContent).toBe('2');
   });
 
+  it('keeps a realtime insert that races the initial fetch (merge, not overwrite)', async () => {
+    let resolveFetch: (value: Notification[]) => void = () => {};
+    fetchNotifications.mockReturnValue(
+      new Promise<Notification[]>(resolve => {
+        resolveFetch = resolve;
+      })
+    );
+
+    renderProvider();
+
+    // Subscription is live before the initial fetch resolves.
+    await waitFor(() => expect(subscribeToNotifications).toHaveBeenCalled());
+
+    // A new notification arrives while the initial fetch is still in flight.
+    await act(async () => {
+      realtimeCb(notif({ id: 'live', isRead: false }));
+    });
+    expect(screen.getByTestId('count').textContent).toBe('1');
+
+    // The fetch now resolves with an older snapshot that predates the live insert.
+    await act(async () => {
+      resolveFetch([notif({ id: 'old', isRead: true })]);
+    });
+
+    // Both rows survive — the live insert was merged in, not clobbered.
+    await waitFor(() => expect(screen.getByTestId('count').textContent).toBe('2'));
+    expect(screen.getByTestId('unread').textContent).toBe('1');
+  });
+
   it('marks all as read optimistically and calls the service', async () => {
     fetchNotifications.mockResolvedValue([
       notif({ id: 'a', isRead: false }),

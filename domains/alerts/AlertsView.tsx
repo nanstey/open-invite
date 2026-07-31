@@ -1,6 +1,6 @@
 import { Bell, Calendar, Check, Inbox, MessageCircle, Zap } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { User } from '../../lib/types';
 import { fetchUsers } from '../../services/userService';
 import { useNotifications } from './NotificationsProvider';
@@ -8,16 +8,24 @@ import { useNotifications } from './NotificationsProvider';
 export const AlertsView: React.FC = () => {
   const { notifications, loading, markAllAsRead } = useNotifications();
   const [users, setUsers] = useState<Map<string, User>>(new Map());
+  // Actor ids we've already tried to fetch. Tracking *attempts* (not just resolved
+  // users) means an actor the lookup can't return — e.g. a deleted account — is
+  // requested once, not re-fetched on every subsequent stream change.
+  const requestedActorIds = useRef<Set<string>>(new Set());
 
-  // Resolve avatars for any actors we don't already have cached. Runs whenever the
+  // Resolve avatars for any actors we haven't fetched yet. Runs whenever the
   // notification stream changes (including realtime inserts), fetching only the gaps.
   useEffect(() => {
     const missingActorIds = [
       ...new Set(notifications.map(n => n.actorId).filter((id): id is string => id !== undefined)),
-    ].filter(id => !users.has(id));
+    ].filter(id => !requestedActorIds.current.has(id));
 
     if (missingActorIds.length === 0) {
       return;
+    }
+
+    for (const id of missingActorIds) {
+      requestedActorIds.current.add(id);
     }
 
     let cancelled = false;
@@ -34,12 +42,19 @@ export const AlertsView: React.FC = () => {
           return next;
         });
       })
-      .catch(error => console.error('Error loading notification actors:', error));
+      .catch(error => {
+        // The request itself failed (network/etc.), so allow a retry on the next
+        // change rather than marking these ids permanently attempted.
+        for (const id of missingActorIds) {
+          requestedActorIds.current.delete(id);
+        }
+        console.error('Error loading notification actors:', error);
+      });
 
     return () => {
       cancelled = true;
     };
-  }, [notifications, users]);
+  }, [notifications]);
 
   const handleMarkAllAsRead = async () => {
     await markAllAsRead();

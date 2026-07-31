@@ -2,7 +2,7 @@ import { Link } from '@tanstack/react-router';
 import { Bell, CalendarDays, Compass, Plus, Users as UsersIcon } from 'lucide-react';
 
 import type { User } from '../../../lib/types';
-import { NotificationBadge } from '../../alerts/NotificationBadge';
+import { alertsAriaLabel, NotificationBadge } from '../../alerts/NotificationBadge';
 import type { EventsView } from '../../events/hooks/useEventNavigation';
 import type { ActiveSection } from '../routing';
 
@@ -85,6 +85,7 @@ export function DesktopSidebar({
       <div className="flex flex-col gap-4 w-full">
         <Link
           to="/alerts"
+          aria-label={alertsAriaLabel(unreadCount)}
           className={`p-3 rounded-xl transition-all flex items-center justify-start gap-3 w-full ${
             activeSection === 'ALERTS'
               ? 'bg-primary/10 text-primary'
