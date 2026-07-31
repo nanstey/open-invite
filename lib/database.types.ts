@@ -827,27 +827,45 @@ export type Database = {
       user_profiles: {
         Row: {
           avatar: string;
+          bio: string | null;
           created_at: string | null;
           id: string;
           is_admin: boolean;
+          location: string | null;
           name: string;
+          profile_visibility: string;
+          pronouns: string | null;
+          social_links: Json;
           updated_at: string | null;
+          username: string;
         };
         Insert: {
           avatar: string;
+          bio?: string | null;
           created_at?: string | null;
           id: string;
           is_admin?: boolean;
+          location?: string | null;
           name: string;
+          profile_visibility?: string;
+          pronouns?: string | null;
+          social_links?: Json;
           updated_at?: string | null;
+          username: string;
         };
         Update: {
           avatar?: string;
+          bio?: string | null;
           created_at?: string | null;
           id?: string;
           is_admin?: boolean;
+          location?: string | null;
           name?: string;
+          profile_visibility?: string;
+          pronouns?: string | null;
+          social_links?: Json;
           updated_at?: string | null;
+          username?: string;
         };
         Relationships: [];
       };

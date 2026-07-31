@@ -23,31 +23,56 @@ type AuthSessionUserLike = {
 
 const PROFILE_FETCH_TIMEOUT_MS = 2000;
 
-function getDefaultProfileFields(authUser: AuthSessionUserLike): { name: string; avatar: string } {
+// Derive a valid, effectively-unique username from a display name + user id.
+// The user id suffix (hex) guarantees uniqueness without an availability probe;
+// users can rename it later from the profile editor.
+function generateDefaultUsername(name: string, userId: string): string {
+  const slug =
+    name
+      .toLowerCase()
+      .replace(/[^a-z0-9_]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 20) || 'user';
+  const suffix = userId.replace(/-/g, '').slice(0, 6) || '000000';
+  return `${slug}_${suffix}`;
+}
+
+function getDefaultProfileFields(authUser: AuthSessionUserLike): {
+  name: string;
+  avatar: string;
+  username: string;
+} {
   const oauthName = authUser.user_metadata?.full_name || authUser.user_metadata?.name;
   const oauthAvatar = authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture;
   const defaultName = oauthName || authUser.email?.split('@')[0] || 'User';
   const defaultAvatar =
-    oauthAvatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultName)}&background=random`;
-  return { name: defaultName, avatar: defaultAvatar };
+    oauthAvatar ||
+    `https://ui-avatars.com/api/?name=${encodeURIComponent(defaultName)}&background=random`;
+  const username = generateDefaultUsername(defaultName, authUser.id ?? '');
+  return { name: defaultName, avatar: defaultAvatar, username };
 }
 
 function buildDefaultUser(authUser: AuthSessionUserLike): User | null {
   if (!authUser.id) return null;
-  const { name, avatar } = getDefaultProfileFields(authUser);
-  return { id: authUser.id, name, avatar, isCurrentUser: true };
+  const { name, avatar, username } = getDefaultProfileFields(authUser);
+  return {
+    id: authUser.id,
+    name,
+    avatar,
+    username,
+    profileVisibility: 'private',
+    isCurrentUser: true,
+  };
 }
 
 function isNoRowsProfileError(profileError: any): boolean {
   return profileError?.code === 'PGRST116' || profileError?.message?.includes('No rows');
 }
 
-async function fetchUserProfileWithTimeout(userId: string): Promise<{ profile: any; profileError: any }> {
-  const profilePromise = supabase
-    .from('user_profiles')
-    .select('*')
-    .eq('id', userId)
-    .single();
+async function fetchUserProfileWithTimeout(
+  userId: string
+): Promise<{ profile: any; profileError: any }> {
+  const profilePromise = supabase.from('user_profiles').select('*').eq('id', userId).single();
 
   const timeoutPromise = new Promise((_, reject) => {
     setTimeout(() => reject(new Error('Profile fetch timeout')), PROFILE_FETCH_TIMEOUT_MS);
@@ -58,12 +83,20 @@ async function fetchUserProfileWithTimeout(userId: string): Promise<{ profile: a
   return { profile, profileError };
 }
 
-async function createDefaultUserProfile(userId: string, fields: { name: string; avatar: string }): Promise<any | null> {
+async function createDefaultUserProfile(
+  userId: string,
+  fields: { name: string; avatar: string; username: string }
+): Promise<any | null> {
   const { data: newProfile, error: insertError } = await supabase
     .from('user_profiles')
     // Our Supabase client isn't strongly typed with Database here, so insert typing defaults to never.
     // Cast to any to avoid TS false positives (runtime shape is correct).
-    .insert({ id: userId, name: fields.name, avatar: fields.avatar } as any)
+    .insert({
+      id: userId,
+      name: fields.name,
+      avatar: fields.avatar,
+      username: fields.username,
+    } as any)
     .select()
     .single();
 
@@ -75,11 +108,29 @@ async function createDefaultUserProfile(userId: string, fields: { name: string; 
   return newProfile;
 }
 
+function sanitizeSocialLinksValue(input: unknown): User['socialLinks'] {
+  if (!input || typeof input !== 'object') return undefined;
+  const source = input as Record<string, unknown>;
+  const result: NonNullable<User['socialLinks']> = {};
+  for (const [key, value] of Object.entries(source)) {
+    if (typeof value === 'string' && value.trim()) {
+      (result as Record<string, string>)[key] = value.trim();
+    }
+  }
+  return Object.keys(result).length > 0 ? result : undefined;
+}
+
 function buildUserFromProfile(userId: string, profile: any): User {
   return {
     id: userId,
     name: profile.name,
     avatar: profile.avatar,
+    username: profile.username ?? undefined,
+    bio: profile.bio ?? undefined,
+    location: profile.location ?? undefined,
+    pronouns: profile.pronouns ?? undefined,
+    socialLinks: sanitizeSocialLinksValue(profile.social_links),
+    profileVisibility: (profile.profile_visibility as User['profileVisibility']) ?? undefined,
     isCurrentUser: true,
   };
 }
@@ -139,7 +190,10 @@ export async function getCurrentUser(): Promise<User | null> {
   try {
     devLog('getCurrentUser: Starting...');
     // Prefer session (no network) vs auth.getUser() (network)
-    const { data: { session }, error } = await supabase.auth.getSession();
+    const {
+      data: { session },
+      error,
+    } = await supabase.auth.getSession();
     if (error || !session?.user) {
       devLog('getCurrentUser: No session user found:', error);
       return null;
@@ -167,9 +221,10 @@ export async function signUp(email: string, password: string, name: string, avat
   }
 
   // Create user profile
+  const username = generateDefaultUsername(name, authData.user.id);
   const { error: profileError } = await supabase
     .from('user_profiles')
-    .insert({ id: authData.user.id, name, avatar } as any);
+    .insert({ id: authData.user.id, name, avatar, username } as any);
 
   if (profileError) {
     return { error: profileError };
@@ -192,27 +247,25 @@ export async function signIn(email: string, password: string) {
  * Sign in with Google OAuth
  */
 export async function signInWithGoogle(redirectPath?: string) {
-  const origin = window.location.origin
+  const origin = window.location.origin;
 
   const safeRedirect =
-    redirectPath?.startsWith('/') &&
-    !redirectPath.startsWith('//') &&
-    !redirectPath.includes('://')
+    redirectPath?.startsWith('/') && !redirectPath.startsWith('//') && !redirectPath.includes('://')
       ? redirectPath
-      : undefined
+      : undefined;
 
   const redirectUrl = safeRedirect
     ? `${origin}/auth/callback?redirect=${encodeURIComponent(safeRedirect)}`
-    : `${origin}/auth/callback`
+    : `${origin}/auth/callback`;
 
-  devLog('Signing in with Google, redirect URL:', redirectUrl)
+  devLog('Signing in with Google, redirect URL:', redirectUrl);
 
   return await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
       redirectTo: redirectUrl,
     },
-  })
+  });
 }
 
 /**
@@ -240,20 +293,20 @@ export function onAuthStateChange(callback: (user: User | null) => void) {
         try {
           // Add a small delay to ensure the session is fully established
           await new Promise(resolve => setTimeout(resolve, 100));
-          
+
           // Set a timeout for profile fetch to prevent hanging
           // IMPORTANT: Never "UI logout" due to a slow profile fetch.
           // If we have an auth session, we keep the user authenticated and fall back to a default profile.
           const fallbackUser = buildDefaultUser(session.user);
 
           const userPromise = getUserFromAuthSessionUser(session.user);
-          const timeoutPromise = new Promise<User | null>((resolve) => {
+          const timeoutPromise = new Promise<User | null>(resolve => {
             setTimeout(() => {
               devWarn('Profile fetch slow; using fallback user to avoid UI logout');
               resolve(fallbackUser);
             }, 3000);
           });
-          
+
           const user = await Promise.race([userPromise, timeoutPromise]);
           devLog('Got user from getCurrentUser:', user?.id, user?.name);
           callback(user ?? fallbackUser);
@@ -273,10 +326,9 @@ export function onAuthStateChange(callback: (user: User | null) => void) {
     return {
       data: {
         subscription: {
-          unsubscribe: () => {}
-        }
-      }
+          unsubscribe: () => {},
+        },
+      },
     };
   }
 }
-

@@ -4,7 +4,10 @@ import {
   ChevronRight,
   ClipboardList,
   Edit2,
+  Globe,
+  Link as LinkIcon,
   LogOut,
+  MapPin,
   MessageSquarePlus,
   Moon,
   Settings,
@@ -13,12 +16,22 @@ import {
 import type React from 'react';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabase';
-import type { User } from '../../lib/types';
+import { SOCIAL_PLATFORMS, type User } from '../../lib/types';
 import { ComingSoonPopover, useComingSoonPopover } from '../../lib/ui/components/ComingSoonPopover';
 import { checkIsAdmin } from '../../services/feedbackService';
 import { fetchFriends } from '../../services/friendService';
 import { useAuth } from '../auth/AuthProvider';
 import { FeedbackModal } from '../feedback/components/feedback/FeedbackModal';
+import { EditProfileModal } from './EditProfileModal';
+
+const SOCIAL_LABELS: Record<(typeof SOCIAL_PLATFORMS)[number], string> = {
+  instagram: 'Instagram',
+  x: 'X',
+  tiktok: 'TikTok',
+  linkedin: 'LinkedIn',
+  facebook: 'Facebook',
+  website: 'Website',
+};
 
 interface ProfileViewProps {
   currentUser: User;
@@ -34,6 +47,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   useEffect(() => {
     if (!currentUser) {
@@ -113,14 +127,23 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
           </div>
           <button
             type="button"
+            onClick={() => setShowEditModal(true)}
+            aria-label="Edit profile"
             className="absolute bottom-0 right-0 p-2 bg-slate-800 rounded-full border border-slate-600 text-white hover:bg-slate-700"
           >
             <Edit2 className="w-4 h-4" />
           </button>
         </div>
-        <h2 className="text-2xl font-bold text-white mb-1">{currentUser.name}</h2>
+        <div className="flex items-center gap-2 mb-1">
+          <h2 className="text-2xl font-bold text-white">{currentUser.name}</h2>
+          {currentUser.pronouns && (
+            <span className="text-xs text-slate-500 border border-slate-700 rounded-full px-2 py-0.5">
+              {currentUser.pronouns}
+            </span>
+          )}
+        </div>
         <p className="text-slate-400 text-sm mb-4">
-          {currentUser.name.toLowerCase().replace(/\s+/g, '_')}
+          @{currentUser.username ?? currentUser.name.toLowerCase().replace(/\s+/g, '_')}
         </p>
 
         <div className="flex gap-4 text-center">
@@ -140,15 +163,40 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
       </div>
 
       {/* Bio / About */}
-      <div className="bg-surface rounded-xl p-5 border border-slate-700 mb-6 shadow-sm">
-        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">About</h3>
-        <p className="text-slate-300 text-sm leading-relaxed mb-4">
-          {/* Bio field not yet in database - can be added later */}
-        </p>
-        <div className="flex flex-col gap-2 text-sm text-slate-400">
-          {/* Location and social links not yet in database - can be added later */}
+      {(currentUser.bio ||
+        currentUser.location ||
+        (currentUser.socialLinks && Object.keys(currentUser.socialLinks).length > 0)) && (
+        <div className="bg-surface rounded-xl p-5 border border-slate-700 mb-6 shadow-sm">
+          <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">About</h3>
+          {currentUser.bio && (
+            <p className="text-slate-300 text-sm leading-relaxed mb-4 whitespace-pre-wrap">
+              {currentUser.bio}
+            </p>
+          )}
+          <div className="flex flex-col gap-2 text-sm text-slate-400">
+            {currentUser.location && (
+              <div className="flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-slate-500" />
+                <span>{currentUser.location}</span>
+              </div>
+            )}
+            {currentUser.socialLinks &&
+              SOCIAL_PLATFORMS.filter(p => currentUser.socialLinks?.[p]).map(platform => (
+                <div key={platform} className="flex items-center gap-2">
+                  {platform === 'website' ? (
+                    <Globe className="w-4 h-4 text-slate-500" />
+                  ) : (
+                    <LinkIcon className="w-4 h-4 text-slate-500" />
+                  )}
+                  <span className="text-slate-500 w-20 shrink-0">{SOCIAL_LABELS[platform]}</span>
+                  <span className="text-slate-300 truncate">
+                    {currentUser.socialLinks?.[platform]}
+                  </span>
+                </div>
+              ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Settings List */}
       <div className="space-y-3">
@@ -279,6 +327,14 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
       <ComingSoonPopover state={comingSoon.state} />
 
       {showFeedbackModal && <FeedbackModal onClose={() => setShowFeedbackModal(false)} />}
+
+      {showEditModal && (
+        <EditProfileModal
+          currentUser={currentUser}
+          onClose={() => setShowEditModal(false)}
+          onSaved={() => auth.refreshUser?.()}
+        />
+      )}
     </div>
   );
 };
