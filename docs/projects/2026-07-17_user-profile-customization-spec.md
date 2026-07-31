@@ -31,7 +31,7 @@ that the data model does not support.
 ## 2) Goals
 
 1. Let a user **edit** their own profile: display name, unique username, bio,
-   location, pronouns, and social links.
+   location, pronouns, social links, and profile visibility (public/private).
 2. Support **avatar upload** (not just a URL), stored in Supabase Storage, with
    sensible size/type limits and a fallback to the current default avatar.
 3. Persist a **real, unique username** and use it consistently (profile header,
@@ -60,17 +60,45 @@ Add columns to `public.user_profiles` via a **new append-only migration**
 | `bio`           | `TEXT`      | Max ~300 chars (enforced in app + `CHECK`). |
 | `location`      | `TEXT`      | Free text, max ~100 chars. |
 | `pronouns`      | `TEXT`      | Short free text, max ~40 chars. |
-| `social_links`  | `JSONB`     | `{ instagram?, x?, website?, ... }`; validated/whitelisted keys in app layer. |
+| `social_links`  | `JSONB`     | Whitelisted keys only (see below); validated in app layer. |
+| `profile_visibility` | `TEXT` | `'public'` \| `'private'`, default `'private'`. `CHECK` constrained. Drives who can view the profile. |
 | `avatar`        | *(existing)*| Continue to store a URL; uploaded files resolve to a Storage public URL. |
+
+**Social link whitelist ("the usual suspects"):** `instagram`, `x`,
+`tiktok`, `linkedin`, `facebook`, `website`. Keys outside this set are
+rejected in the service layer; values are stored as handles/URLs and
+normalized on save.
+
+**Profile visibility:** `private` means only the user (and, per existing
+friend relationships, their friends) can see profile detail; `public` means
+the profile is viewable by any authenticated user and eligible for a
+shareable profile URL. Default is `private` so the rollout is opt-in.
+Enforcement lives in RLS (see §3 RLS) so it holds regardless of client.
 
 Constraints / indexes:
 
 - `CREATE UNIQUE INDEX ... ON user_profiles (lower(username))` for
   case-insensitive uniqueness.
-- `CHECK` constraints for length bounds and the username character pattern.
+- `CHECK` constraints for length bounds, the username character pattern, and
+  `profile_visibility IN ('public','private')`.
 - Backfill: generate an initial `username` from `name` (slugified) with a
   numeric suffix on collision, so existing rows satisfy uniqueness before the
-  column is made `NOT NULL`.
+  column is made `NOT NULL`. Existing rows default to `profile_visibility =
+  'private'`.
+
+### RLS (visibility enforcement)
+
+The current schema has a `"Users can view all profiles"` policy. To honor
+`profile_visibility` without breaking existing features, split read access:
+
+- Keep a **minimal-fields** read path (id, name, avatar, username) open to
+  authenticated users — event lists, attendee avatars, friends, and feedback
+  enrichment all depend on resolving basic identity and must not break.
+- Gate **detail fields** (bio, location, pronouns, social_links) so they are
+  returned only when `profile_visibility = 'public'`, the viewer is the owner,
+  or the viewer is an accepted friend (reusing the existing friend-check helper
+  in the initial schema).
+- `"Users can update their own profile"` already covers writes; no change.
 
 ### Storage
 
@@ -103,7 +131,8 @@ Constraints / indexes:
    (mirroring the structure/patterns of `FeedbackModal` /
    `domains/auth/LoginModal.tsx`).
 8. Form fields: avatar upload, display name, username (with live availability
-   check), pronouns, bio (char counter), location, social links.
+   check), pronouns, bio (char counter), location, social links (the whitelist
+   set), and a visibility toggle (public/private).
 9. Replace the derived-username line with the real stored `username`.
 10. Populate the Bio / About card from real data (bio, location, links),
     removing the placeholder comments.
@@ -158,8 +187,13 @@ Constraints / indexes:
 - Scope: `medium`
 - LOC: ~250–400 across migrations, service, types, and UI.
 
-## 11) Open Questions
-1. Collect username at **signup**, or only later via edit (default: later)?
-2. Which **social link** platforms to whitelist initially?
-3. Are profiles **publicly viewable** by username URL now, or friends-only
-   (default: keep current visibility, add shareable URL later)?
+## 11) Resolved Decisions
+1. **Username collection:** Not at signup — username is set/changed later via
+   the edit flow. Backfill seeds an initial value; users can rename it once.
+2. **Social link whitelist:** The usual suspects — `instagram`, `x`, `tiktok`,
+   `linkedin`, `facebook`, `website`.
+3. **Visibility:** Add an explicit `profile_visibility` setting
+   (`public` / `private`), defaulting to `private`. Public profiles become
+   viewable by any authenticated user (and gain a shareable URL); private
+   profiles restrict detail fields to the owner and accepted friends. Enforced
+   in RLS.
