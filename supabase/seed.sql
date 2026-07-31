@@ -248,29 +248,29 @@ INSERT INTO auth.identities (
 ON CONFLICT (id) DO NOTHING;
 
 -- Insert user profiles
-INSERT INTO public.user_profiles (id, name, avatar) VALUES
-  ('00000000-0000-0000-0000-000000000001', 'Alex Thompson', 'https://picsum.photos/seed/alex/100/100'),
-  ('00000000-0000-0000-0000-000000000002', 'Sarah Chen', 'https://picsum.photos/seed/sarah/100/100'),
-  ('00000000-0000-0000-0000-000000000003', 'Marcus Williams', 'https://picsum.photos/seed/marcus/100/100'),
-  ('00000000-0000-0000-0000-000000000004', 'Elena Rodriguez', 'https://picsum.photos/seed/elena/100/100'),
-  ('00000000-0000-0000-0000-000000000005', 'Raj Patel', 'https://picsum.photos/seed/raj/100/100'),
-  ('00000000-0000-0000-0000-000000000006', 'Chloe Martin', 'https://picsum.photos/seed/chloe/100/100'),
-  ('00000000-0000-0000-0000-000000000007', 'Tom Baker', 'https://picsum.photos/seed/tom/100/100'),
-  ('00000000-0000-0000-0000-000000000008', 'Maya Singh', 'https://picsum.photos/seed/maya/100/100'),
-  ('00000000-0000-0000-0000-000000000009', 'Ben Carter', 'https://picsum.photos/seed/ben/100/100'),
-  ('00000000-0000-0000-0000-000000000010', 'Nina Kowalski', 'https://picsum.photos/seed/nina/100/100'),
-  ('00000000-0000-0000-0000-000000000011', 'Omar Hassan', 'https://picsum.photos/seed/omar/100/100'),
-  ('00000000-0000-0000-0000-000000000012', 'Zoe Kim', 'https://picsum.photos/seed/zoe/100/100'),
-  ('00000000-0000-0000-0000-000000000013', 'Liam O''Connor', 'https://picsum.photos/seed/liam/100/100'),
-  ('00000000-0000-0000-0000-000000000014', 'Lily Zhang', 'https://picsum.photos/seed/lily/100/100'),
-  ('00000000-0000-0000-0000-000000000015', 'Leo Fernandez', 'https://picsum.photos/seed/leo/100/100'),
-  ('00000000-0000-0000-0000-000000000016', 'Sam Rivera', 'https://picsum.photos/seed/sam/100/100'),
-  ('00000000-0000-0000-0000-000000000017', 'Sophia Nguyen', 'https://picsum.photos/seed/sophia/100/100'),
-  ('00000000-0000-0000-0000-000000000018', 'Jake Morrison', 'https://picsum.photos/seed/jake/100/100'),
-  ('00000000-0000-0000-0000-000000000019', 'Julia Bennett', 'https://picsum.photos/seed/julia/100/100'),
-  ('00000000-0000-0000-0000-000000000020', 'Derek Foster', 'https://picsum.photos/seed/derek/100/100'),
-  ('00000000-0000-0000-0000-000000000021', 'Diana Cruz', 'https://picsum.photos/seed/diana/100/100'),
-  ('00000000-0000-0000-0000-000000000022', 'Daniel Park', 'https://picsum.photos/seed/daniel/100/100')
+INSERT INTO public.user_profiles (id, name, avatar, username) VALUES
+  ('00000000-0000-0000-0000-000000000001', 'Alex Thompson', 'https://picsum.photos/seed/alex/100/100', 'alex_thompson'),
+  ('00000000-0000-0000-0000-000000000002', 'Sarah Chen', 'https://picsum.photos/seed/sarah/100/100', 'sarah_chen'),
+  ('00000000-0000-0000-0000-000000000003', 'Marcus Williams', 'https://picsum.photos/seed/marcus/100/100', 'marcus_williams'),
+  ('00000000-0000-0000-0000-000000000004', 'Elena Rodriguez', 'https://picsum.photos/seed/elena/100/100', 'elena_rodriguez'),
+  ('00000000-0000-0000-0000-000000000005', 'Raj Patel', 'https://picsum.photos/seed/raj/100/100', 'raj_patel'),
+  ('00000000-0000-0000-0000-000000000006', 'Chloe Martin', 'https://picsum.photos/seed/chloe/100/100', 'chloe_martin'),
+  ('00000000-0000-0000-0000-000000000007', 'Tom Baker', 'https://picsum.photos/seed/tom/100/100', 'tom_baker'),
+  ('00000000-0000-0000-0000-000000000008', 'Maya Singh', 'https://picsum.photos/seed/maya/100/100', 'maya_singh'),
+  ('00000000-0000-0000-0000-000000000009', 'Ben Carter', 'https://picsum.photos/seed/ben/100/100', 'ben_carter'),
+  ('00000000-0000-0000-0000-000000000010', 'Nina Kowalski', 'https://picsum.photos/seed/nina/100/100', 'nina_kowalski'),
+  ('00000000-0000-0000-0000-000000000011', 'Omar Hassan', 'https://picsum.photos/seed/omar/100/100', 'omar_hassan'),
+  ('00000000-0000-0000-0000-000000000012', 'Zoe Kim', 'https://picsum.photos/seed/zoe/100/100', 'zoe_kim'),
+  ('00000000-0000-0000-0000-000000000013', 'Liam O''Connor', 'https://picsum.photos/seed/liam/100/100', 'liam_oconnor'),
+  ('00000000-0000-0000-0000-000000000014', 'Lily Zhang', 'https://picsum.photos/seed/lily/100/100', 'lily_zhang'),
+  ('00000000-0000-0000-0000-000000000015', 'Leo Fernandez', 'https://picsum.photos/seed/leo/100/100', 'leo_fernandez'),
+  ('00000000-0000-0000-0000-000000000016', 'Sam Rivera', 'https://picsum.photos/seed/sam/100/100', 'sam_rivera'),
+  ('00000000-0000-0000-0000-000000000017', 'Sophia Nguyen', 'https://picsum.photos/seed/sophia/100/100', 'sophia_nguyen'),
+  ('00000000-0000-0000-0000-000000000018', 'Jake Morrison', 'https://picsum.photos/seed/jake/100/100', 'jake_morrison'),
+  ('00000000-0000-0000-0000-000000000019', 'Julia Bennett', 'https://picsum.photos/seed/julia/100/100', 'julia_bennett'),
+  ('00000000-0000-0000-0000-000000000020', 'Derek Foster', 'https://picsum.photos/seed/derek/100/100', 'derek_foster'),
+  ('00000000-0000-0000-0000-000000000021', 'Diana Cruz', 'https://picsum.photos/seed/diana/100/100', 'diana_cruz'),
+  ('00000000-0000-0000-0000-000000000022', 'Daniel Park', 'https://picsum.photos/seed/daniel/100/100', 'daniel_park')
 ON CONFLICT (id) DO NOTHING;
 
 -- Event ID mappings (e1-e35 to UUIDs)

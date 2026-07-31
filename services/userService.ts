@@ -168,9 +168,10 @@ export async function updateUserProfile(
   if (updates.name !== undefined) updateData.name = updates.name;
   if (updates.avatar !== undefined) updateData.avatar = updates.avatar;
   if (updates.username !== undefined) updateData.username = updates.username.trim().toLowerCase();
-  if (updates.bio !== undefined) updateData.bio = updates.bio;
-  if (updates.location !== undefined) updateData.location = updates.location;
-  if (updates.pronouns !== undefined) updateData.pronouns = updates.pronouns;
+  // Nullable text fields: an empty string clears the value (stored as NULL).
+  if (updates.bio !== undefined) updateData.bio = updates.bio.trim() || null;
+  if (updates.location !== undefined) updateData.location = updates.location.trim() || null;
+  if (updates.pronouns !== undefined) updateData.pronouns = updates.pronouns.trim() || null;
   if (updates.socialLinks !== undefined) {
     updateData.social_links = sanitizeSocialLinks(updates.socialLinks) ?? {};
   }

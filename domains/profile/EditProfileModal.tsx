@@ -152,9 +152,9 @@ export function EditProfileModal({ currentUser, onClose, onSaved }: EditProfileM
         name: name.trim(),
         avatar,
         username: trimmedUsername,
-        bio: bio.trim() || undefined,
-        location: location.trim() || undefined,
-        pronouns: pronouns.trim() || undefined,
+        bio,
+        location,
+        pronouns,
         socialLinks,
         profileVisibility: visibility,
       });
