@@ -88,17 +88,19 @@ Constraints / indexes:
 
 ### RLS (visibility enforcement)
 
-The current schema has a `"Users can view all profiles"` policy. To honor
-`profile_visibility` without breaking existing features, split read access:
+The current schema has a `"Users can view all profiles"` policy and a
+`"Users can update their own profile"` policy (owner-only writes). Since the
+app today only renders the **current user's own** profile (`ProfileView`
+receives the authenticated user), `profile_visibility` is stored and toggled
+now, and write ownership is already enforced by the existing RLS policy.
 
-- Keep a **minimal-fields** read path (id, name, avatar, username) open to
-  authenticated users — event lists, attendee avatars, friends, and feedback
-  enrichment all depend on resolving basic identity and must not break.
-- Gate **detail fields** (bio, location, pronouns, social_links) so they are
-  returned only when `profile_visibility = 'public'`, the viewer is the owner,
-  or the viewer is an accepted friend (reusing the existing friend-check helper
-  in the initial schema).
-- `"Users can update their own profile"` already covers writes; no change.
+**Deferred (lands with public profile URLs / other-user profiles):**
+column-level read gating of detail fields (bio, location, pronouns,
+social_links) so they return only when `profile_visibility = 'public'`, the
+viewer is the owner, or the viewer is an accepted friend. Because Postgres RLS
+is row-level, this requires a `SECURITY DEFINER` accessor function or a gated
+view rather than a plain policy — intentionally out of scope until there is a
+consumer that displays another user's profile.
 
 ### Storage
 

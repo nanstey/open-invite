@@ -1,7 +1,29 @@
+export type ProfileVisibility = 'public' | 'private';
+
+/** Whitelisted social platforms ("the usual suspects"). */
+export const SOCIAL_PLATFORMS = [
+  'instagram',
+  'x',
+  'tiktok',
+  'linkedin',
+  'facebook',
+  'website',
+] as const;
+
+export type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number];
+
+export type SocialLinks = Partial<Record<SocialPlatform, string>>;
+
 export interface User {
   id: string;
   name: string;
   avatar: string;
+  username?: string;
+  bio?: string;
+  location?: string;
+  pronouns?: string;
+  socialLinks?: SocialLinks;
+  profileVisibility?: ProfileVisibility;
   isCurrentUser?: boolean;
 }
 

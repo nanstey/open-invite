@@ -1,6 +1,6 @@
-import { createContext, useState, useEffect, useContext } from 'react';
 import type { ReactNode } from 'react';
-import { onAuthStateChange, getCurrentUser } from '../../lib/supabaseClient';
+import { createContext, useContext, useEffect, useState } from 'react';
+import { getCurrentUser, onAuthStateChange } from '../../lib/supabaseClient';
 import type { User } from '../../lib/types';
 
 const isDev = (import.meta as any).env?.DEV ?? false;
@@ -18,9 +18,15 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any } | null>;
-  signUp: (email: string, password: string, name: string, avatar: string) => Promise<{ error: any } | null>;
+  signUp: (
+    email: string,
+    password: string,
+    name: string,
+    avatar: string
+  ) => Promise<{ error: any } | null>;
   signInWithGoogle: (redirectPath?: string) => Promise<{ error: any } | null>;
   signOut: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 export type { AuthContextType };
@@ -51,7 +57,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     // Listen for auth state changes
     try {
-      const result = onAuthStateChange((user) => {
+      const result = onAuthStateChange(user => {
         devLog('Auth state change callback called with user:', user?.id);
         setUser(user);
         // Always resolve loading when auth state changes
@@ -115,8 +121,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
+  const refreshUser = async () => {
+    try {
+      const currentUser = await getCurrentUser();
+      setUser(currentUser);
+    } catch (error) {
+      devError('Error refreshing user:', error);
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signInWithGoogle, signOut }}>
+    <AuthContext.Provider
+      value={{ user, loading, signIn, signUp, signInWithGoogle, signOut, refreshUser }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -129,4 +146,3 @@ export function useAuth() {
   }
   return context;
 }
-
