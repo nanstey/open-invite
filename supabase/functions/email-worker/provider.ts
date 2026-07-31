@@ -32,15 +32,6 @@ export interface EmailProvider {
   send(email: OutgoingEmail): Promise<SendResult>;
 }
 
-/** Dark-launch provider: records nothing to a real inbox. Used when emailDelivery
- *  is armed but real sending is not yet enabled, to validate rendering/flow. */
-export class NoopProvider implements EmailProvider {
-  send(email: OutgoingEmail): Promise<SendResult> {
-    console.log(`[email-worker] noop send to ${email.to}: ${email.subject}`);
-    return Promise.resolve({ providerMessageId: `noop:${email.idempotencyKey}` });
-  }
-}
-
 /** Resend REST adapter (https://resend.com/docs/api-reference/emails/send-email). */
 export class ResendProvider implements EmailProvider {
   private readonly apiKey: string;
@@ -78,14 +69,20 @@ export class ResendProvider implements EmailProvider {
 
     if (!response.ok) {
       const body = await response.text().catch(() => '');
-      const retryable = response.status === 429 || response.status >= 500;
-      throw new ProviderSendError(`provider ${response.status}: ${body}`, retryable);
+      // Only genuinely permanent, per-message errors should skip retries and
+      // dead-letter: a bad request (400) or unprocessable recipient (422). Auth /
+      // rate-limit / transient statuses (401/403/408/425/429/5xx/network) are
+      // retryable — otherwise a rotated API key would dead-letter the whole backlog
+      // on the first attempt instead of recovering once the key is fixed.
+      const permanent = response.status === 400 || response.status === 422;
+      throw new ProviderSendError(`provider ${response.status}: ${body}`, !permanent);
     }
 
+    // A 2xx means the provider accepted the message. If the body is momentarily
+    // unparseable or missing an id we must NOT throw retryable (that would resend an
+    // already-accepted message); treat it as sent with a best-effort id so the row
+    // reaches a terminal state. The idempotency key still guards a provider-side dupe.
     const json = (await response.json().catch(() => ({}))) as { id?: string };
-    if (!json.id) {
-      throw new ProviderSendError('provider response missing message id', true);
-    }
-    return { providerMessageId: json.id };
+    return { providerMessageId: json.id ?? `resend:unknown:${email.idempotencyKey}` };
   }
 }

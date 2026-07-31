@@ -260,6 +260,11 @@ $$;
 -- --------------------------------------------------------------------------
 -- Worker finalizers.
 -- --------------------------------------------------------------------------
+-- All three finalizers guard on status = 'sending': only the worker that still
+-- legitimately holds the row (it is in 'sending') may write a terminal state. If
+-- the lease expired and another worker already reclaimed and finalized the row,
+-- this UPDATE matches nothing (IF NOT FOUND / status check) and the late finalizer
+-- is a no-op instead of resurrecting a completed row into an endless re-send loop.
 CREATE OR REPLACE FUNCTION public.mark_email_sent(
   p_id UUID,
   p_provider_message_id TEXT
@@ -270,7 +275,11 @@ BEGIN
   UPDATE public.email_outbox
     SET status = 'sent', lock_until = NULL, last_error = NULL,
         provider_message_id = p_provider_message_id
-    WHERE id = p_id;
+    WHERE id = p_id AND status = 'sending';
+
+  IF NOT FOUND THEN
+    RETURN;
+  END IF;
 
   INSERT INTO public.email_delivery_log (outbox_id, event, provider_payload)
   VALUES (p_id, 'sent', jsonb_build_object('provider_message_id', p_provider_message_id));
@@ -286,7 +295,11 @@ AS $$
 BEGIN
   UPDATE public.email_outbox
     SET status = 'skipped', lock_until = NULL, last_error = p_reason
-    WHERE id = p_id;
+    WHERE id = p_id AND status = 'sending';
+
+  IF NOT FOUND THEN
+    RETURN;
+  END IF;
 
   INSERT INTO public.email_delivery_log (outbox_id, event, provider_payload)
   VALUES (p_id, 'skipped', jsonb_build_object('reason', p_reason));
@@ -305,20 +318,27 @@ CREATE OR REPLACE FUNCTION public.mark_email_failed(
 AS $$
 DECLARE
   v_attempts INT;
+  v_status   public.email_status;
 BEGIN
-  SELECT attempts INTO v_attempts FROM public.email_outbox WHERE id = p_id;
+  SELECT attempts, status INTO v_attempts, v_status
+  FROM public.email_outbox WHERE id = p_id;
+
+  -- Only the holder of an active claim may fail the row (see note above).
+  IF v_status IS DISTINCT FROM 'sending' THEN
+    RETURN;
+  END IF;
 
   IF v_attempts >= p_max_attempts THEN
     UPDATE public.email_outbox
       SET status = 'dead', lock_until = NULL, last_error = p_error
-      WHERE id = p_id;
+      WHERE id = p_id AND status = 'sending';
     INSERT INTO public.email_delivery_log (outbox_id, event, provider_payload)
     VALUES (p_id, 'dead', jsonb_build_object('error', p_error, 'attempts', v_attempts));
   ELSE
     UPDATE public.email_outbox
       SET status = 'pending', lock_until = NULL, last_error = p_error,
           next_attempt_at = now() + make_interval(secs => p_backoff_seconds)
-      WHERE id = p_id;
+      WHERE id = p_id AND status = 'sending';
     INSERT INTO public.email_delivery_log (outbox_id, event, provider_payload)
     VALUES (p_id, 'failed', jsonb_build_object('error', p_error, 'attempts', v_attempts));
   END IF;
@@ -339,8 +359,10 @@ CREATE OR REPLACE FUNCTION public.record_email_event(
 AS $$
 DECLARE
   v_outbox_id UUID;
+  v_class     public.email_message_class;
+  v_scope     public.email_suppression_scope;
 BEGIN
-  SELECT id INTO v_outbox_id
+  SELECT id, message_class INTO v_outbox_id, v_class
   FROM public.email_outbox
   WHERE provider_message_id = p_provider_message_id
   LIMIT 1;
@@ -349,8 +371,19 @@ BEGIN
   VALUES (v_outbox_id, p_event, p_payload);
 
   IF p_email IS NOT NULL AND p_event IN ('hard_bounce', 'complaint') THEN
+    -- Scope the suppression to the offending mail. A hard bounce means the address
+    -- is dead, so suppress everything ('all'). A complaint on a MARKETING message
+    -- must only stop marketing — never block the user's transactional invites — so
+    -- it suppresses scope 'marketing'; a complaint on transactional/account mail
+    -- (or an unknown origin) falls back to 'all'.
+    IF p_event = 'complaint' AND v_class = 'marketing' THEN
+      v_scope := 'marketing';
+    ELSE
+      v_scope := 'all';
+    END IF;
+
     INSERT INTO public.email_suppressions (email, scope, reason)
-    VALUES (p_email, 'all', p_event)
+    VALUES (p_email, v_scope, p_event)
     ON CONFLICT (email, scope) DO NOTHING;
   END IF;
 END;

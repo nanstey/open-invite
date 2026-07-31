@@ -14,8 +14,7 @@
 import { backoffSeconds, DEFAULT_MAX_ATTEMPTS } from './backoff.ts';
 import type { EmailMessageClass } from './policy.ts';
 import { resolveDelivery } from './policy.ts';
-import type { EmailProvider } from './provider.ts';
-import { NoopProvider, ProviderSendError, ResendProvider } from './provider.ts';
+import { ProviderSendError, ResendProvider } from './provider.ts';
 import { type EmailPayload, renderTemplate } from './templates.ts';
 import { signUnsubscribeToken, type UnsubscribeScope } from './unsubscribe.ts';
 
@@ -109,11 +108,6 @@ async function processRow(row: ClaimedRow, db: Db, cfg: WorkerConfig): Promise<s
 
   const to = row.resolved_email as string;
 
-  // Producer must be enabled AND a real provider configured, else dark-launch (noop).
-  const producerEnabled = cfg.flags[PRODUCER_FLAG[row.producer] ?? ''] === true;
-  const provider: EmailProvider =
-    producerEnabled && cfg.resendKey ? new ResendProvider(cfg.resendKey) : new NoopProvider();
-
   // Build a signed unsubscribe link + List-Unsubscribe header (skipped for account mail).
   const headers: Record<string, string> = {};
   let unsubscribeUrl: string | undefined;
@@ -138,6 +132,19 @@ async function processRow(row: ClaimedRow, db: Db, cfg: WorkerConfig): Promise<s
     unsubscribeUrl,
     senderIdentity: cfg.senderIdentity,
   });
+
+  // Dark launch: the core (emailDelivery) is armed but this producer isn't enabled
+  // for real sends yet, or no provider key is configured. Rendering above validated
+  // the template; we skip the send rather than fake a 'sent', so the row reaches an
+  // honest terminal state instead of being silently swallowed as delivered.
+  const producerEnabled = cfg.flags[PRODUCER_FLAG[row.producer] ?? ''] === true;
+  if (!producerEnabled || !cfg.resendKey) {
+    const reason = producerEnabled ? 'provider_unconfigured' : 'dark_launch';
+    await db.rpc('mark_email_skipped', { p_id: row.id, p_reason: reason });
+    return `skipped:${reason}`;
+  }
+
+  const provider = new ResendProvider(cfg.resendKey);
 
   try {
     const { providerMessageId } = await provider.send({
@@ -197,7 +204,7 @@ async function runOnce(): Promise<{ processed: number; results: Record<string, n
     flags,
   };
 
-  const batchSize = Number.parseInt(env('EMAIL_BATCH_SIZE', '20'), 10) || 20;
+  const batchSize = Math.max(1, Number.parseInt(env('EMAIL_BATCH_SIZE', '20'), 10) || 20);
   const rows = await db.rpc<ClaimedRow[]>('claim_email_batch', { p_limit: batchSize });
 
   const results: Record<string, number> = {};

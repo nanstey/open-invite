@@ -74,8 +74,12 @@ export const EmailPreferencesView: React.FC = () => {
   }, [prefs]);
 
   const handleToggle = async (topic: string, next: boolean) => {
-    const previous = prefs;
-    // Optimistic update.
+    // Capture only THIS topic's prior state; reverting the whole array on failure
+    // would clobber other toggles that landed while this request was in flight.
+    const prior = prefs.find(p => p.topic === topic);
+    if (!prior) {
+      return;
+    }
     setPrefs(prev =>
       prev.map(p => (p.topic === topic ? { ...p, subscribed: next, isDefault: false } : p))
     );
@@ -89,7 +93,12 @@ export const EmailPreferencesView: React.FC = () => {
       return copy;
     });
     if (!ok) {
-      setPrefs(previous); // revert on failure
+      // Revert just this topic to exactly what it was before the toggle.
+      setPrefs(prev =>
+        prev.map(p =>
+          p.topic === topic ? { ...p, subscribed: prior.subscribed, isDefault: prior.isDefault } : p
+        )
+      );
     }
   };
 
@@ -155,7 +164,7 @@ export const EmailPreferencesView: React.FC = () => {
                     </div>
                     <Switch
                       checked={isAccount ? true : pref.subscribed}
-                      disabled={isAccount || pending.has(pref.topic)}
+                      disabled={isAccount || busyAll || pending.has(pref.topic)}
                       onCheckedChange={next => handleToggle(pref.topic, next)}
                       aria-label={`Toggle ${labelForTopic(pref)}`}
                     />

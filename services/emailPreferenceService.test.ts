@@ -96,6 +96,26 @@ describe('emailPreferenceService', () => {
       expect(prefs[1]).toMatchObject({ subscribed: false, isDefault: true });
     });
 
+    it('an opt-in override turns on a default-off topic', async () => {
+      supabase.auth.getUser.mockResolvedValue({ data: { user: { id: 'u1' } } });
+      mockTables({
+        email_topics: { data: topics, error: null },
+        email_subscriptions: {
+          data: [{ topic: 'notif.reaction', subscribed: true }],
+          error: null,
+        },
+      });
+
+      const prefs = await fetchEmailPreferences();
+
+      // notif.reaction defaults to false; the explicit true override must win.
+      expect(prefs[1]).toMatchObject({
+        topic: 'notif.reaction',
+        subscribed: true,
+        isDefault: false,
+      });
+    });
+
     it('still returns topics (defaults) when signed out', async () => {
       supabase.auth.getUser.mockResolvedValue({ data: { user: null } });
       const builders = mockTables({ email_topics: { data: topics, error: null } });
