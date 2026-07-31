@@ -1,8 +1,8 @@
 import { Link } from '@tanstack/react-router';
 import { Bell, CalendarDays, Compass, Plus, Users as UsersIcon } from 'lucide-react';
-import type React from 'react';
 
 import type { User } from '../../../lib/types';
+import { alertsAriaLabel, NotificationBadge } from '../../alerts/NotificationBadge';
 import type { EventsView } from '../../events/hooks/useEventNavigation';
 import type { ActiveSection } from '../routing';
 
@@ -10,7 +10,7 @@ interface DesktopSidebarProps {
   user: User;
   activeSection: ActiveSection;
   eventsView: EventsView;
-  onComingSoon: (e: React.MouseEvent) => void;
+  unreadCount: number;
   onCreateInvite: () => void;
 }
 
@@ -18,7 +18,7 @@ export function DesktopSidebar({
   user,
   activeSection,
   eventsView,
-  onComingSoon,
+  unreadCount,
   onCreateInvite,
 }: DesktopSidebarProps) {
   return (
@@ -83,18 +83,21 @@ export function DesktopSidebar({
       </div>
 
       <div className="flex flex-col gap-4 w-full">
-        <button
-          type="button"
-          aria-disabled="true"
-          onClick={onComingSoon}
-          className="p-3 rounded-xl transition-all flex items-center justify-start gap-3 w-full text-slate-500 opacity-60 cursor-not-allowed"
-          title="Coming Soon!"
+        <Link
+          to="/alerts"
+          aria-label={alertsAriaLabel(unreadCount)}
+          className={`p-3 rounded-xl transition-all flex items-center justify-start gap-3 w-full ${
+            activeSection === 'ALERTS'
+              ? 'bg-primary/10 text-primary'
+              : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+          }`}
         >
           <div className="relative">
             <Bell className="w-6 h-6" />
+            <NotificationBadge count={unreadCount} className="absolute -top-2 -right-2" />
           </div>
           <span className="hidden lg:block font-medium">Alerts</span>
-        </button>
+        </Link>
 
         <Link
           to="/profile"

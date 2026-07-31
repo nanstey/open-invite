@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-router';
 import { TanStackRouterDevtools } from '@tanstack/react-router-devtools';
 import React from 'react';
+import { NotificationsProvider, useNotifications } from '../domains/alerts/NotificationsProvider';
 import { DesktopSidebar } from '../domains/app/components/DesktopSidebar';
 import { MobileBottomNav } from '../domains/app/components/MobileBottomNav';
 import { MobileTopHeader } from '../domains/app/components/MobileTopHeader';
@@ -15,14 +16,13 @@ import { useAuth } from '../domains/auth/AuthProvider';
 import { QuickCreateEventWizard } from '../domains/events/components/create/QuickCreateEventWizard';
 import { coerceEventsView, type EventsView } from '../domains/events/hooks/useEventNavigation';
 import type { SocialEvent } from '../domains/events/types';
-import { ComingSoonPopover, useComingSoonPopover } from '../lib/ui/components/ComingSoonPopover';
 import { TabGroup } from '../lib/ui/components/TabGroup';
 import type { RouterContext } from '../routerContext';
 
 function AppShellLayout() {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const comingSoon = useComingSoonPopover();
+  const { unreadCount } = useNotifications();
   const headerTabs = useHeaderTabs();
   const [isCreateInviteOpen, setIsCreateInviteOpen] = React.useState(false);
   const { pathname, search } = useRouterState({
@@ -89,19 +89,23 @@ function AppShellLayout() {
 
   if (!user) return null;
 
-  const handleComingSoon = (e: React.MouseEvent) => comingSoon.show(e, 'Coming Soon!');
-
   return (
     <div className="min-h-screen min-h-0 w-full flex flex-col md:flex-row overflow-hidden h-screen text-slate-100 bg-background">
       <DesktopSidebar
         user={user}
         activeSection={activeSection}
         eventsView={eventsView}
-        onComingSoon={handleComingSoon}
+        unreadCount={unreadCount}
         onCreateInvite={() => setIsCreateInviteOpen(true)}
       />
 
-      {!hideShellHeaderForRoute && <MobileTopHeader pageTitle={pageTitle} />}
+      {!hideShellHeaderForRoute && (
+        <MobileTopHeader
+          pageTitle={pageTitle}
+          unreadCount={unreadCount}
+          isAlertsActive={activeSection === 'ALERTS'}
+        />
+      )}
 
       {/* Main Content Area */}
       <main
@@ -149,8 +153,6 @@ function AppShellLayout() {
         onOpenChange={setIsCreateInviteOpen}
         onCreated={handleInviteCreated}
       />
-
-      <ComingSoonPopover state={comingSoon.state} />
     </div>
   );
 }
@@ -166,9 +168,11 @@ export const Route = createRootRouteWithContext<RouterContext>()({
         {activeSection === 'PUBLIC' ? (
           <Outlet />
         ) : (
-          <HeaderTabsProvider>
-            <AppShellLayout />
-          </HeaderTabsProvider>
+          <NotificationsProvider>
+            <HeaderTabsProvider>
+              <AppShellLayout />
+            </HeaderTabsProvider>
+          </NotificationsProvider>
         )}
         {import.meta.env.VITE_SHOW_DEVTOOLS === 'true' ||
         (import.meta.env.VITE_SHOW_DEVTOOLS === undefined && import.meta.env.DEV) ? (

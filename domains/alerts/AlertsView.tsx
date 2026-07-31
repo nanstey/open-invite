@@ -1,55 +1,63 @@
 import { Bell, Calendar, Check, Inbox, MessageCircle, Zap } from 'lucide-react';
 import type React from 'react';
-import { useEffect, useState } from 'react';
-import type { Notification, User } from '../../lib/types';
-import { fetchNotifications, markAllNotificationsAsRead } from '../../services/notificationService';
+import { useEffect, useRef, useState } from 'react';
+import type { User } from '../../lib/types';
 import { fetchUsers } from '../../services/userService';
+import { useNotifications } from './NotificationsProvider';
 
 export const AlertsView: React.FC = () => {
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const { notifications, loading, markAllAsRead } = useNotifications();
   const [users, setUsers] = useState<Map<string, User>>(new Map());
-  const [loading, setLoading] = useState(true);
+  // Actor ids we've already tried to fetch. Tracking *attempts* (not just resolved
+  // users) means an actor the lookup can't return — e.g. a deleted account — is
+  // requested once, not re-fetched on every subsequent stream change.
+  const requestedActorIds = useRef<Set<string>>(new Set());
 
+  // Resolve avatars for any actors we haven't fetched yet. Runs whenever the
+  // notification stream changes (including realtime inserts), fetching only the gaps.
   useEffect(() => {
-    const loadNotifications = async () => {
-      setLoading(true);
-      try {
-        const fetchedNotifications = await fetchNotifications();
-        setNotifications(
-          fetchedNotifications.sort(
-            (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
-          )
-        );
+    const missingActorIds = [
+      ...new Set(notifications.map(n => n.actorId).filter((id): id is string => id !== undefined)),
+    ].filter(id => !requestedActorIds.current.has(id));
 
-        // Fetch all unique actor IDs
-        const actorIds = fetchedNotifications
-          .map(n => n.actorId)
-          .filter((id): id is string => id !== undefined);
+    if (missingActorIds.length === 0) {
+      return;
+    }
 
-        if (actorIds.length > 0) {
-          const uniqueActorIds = [...new Set(actorIds)];
-          const fetchedUsers = await fetchUsers(uniqueActorIds);
-          const usersMap = new Map(fetchedUsers.map(u => [u.id, u]));
-          setUsers(usersMap);
+    for (const id of missingActorIds) {
+      requestedActorIds.current.add(id);
+    }
+
+    let cancelled = false;
+    fetchUsers(missingActorIds)
+      .then(fetchedUsers => {
+        if (cancelled || fetchedUsers.length === 0) {
+          return;
         }
-      } catch (error) {
-        console.error('Error loading notifications:', error);
-        setNotifications([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+        setUsers(prev => {
+          const next = new Map(prev);
+          for (const u of fetchedUsers) {
+            next.set(u.id, u);
+          }
+          return next;
+        });
+      })
+      .catch(error => {
+        // The request itself failed (network/etc.), so allow a retry on the next
+        // change rather than marking these ids permanently attempted.
+        for (const id of missingActorIds) {
+          requestedActorIds.current.delete(id);
+        }
+        console.error('Error loading notification actors:', error);
+      });
 
-    loadNotifications();
-  }, []);
+    return () => {
+      cancelled = true;
+    };
+  }, [notifications]);
 
   const handleMarkAllAsRead = async () => {
-    try {
-      await markAllNotificationsAsRead();
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
-    } catch (error) {
-      console.error('Error marking all as read:', error);
-    }
+    await markAllAsRead();
   };
 
   const getIcon = (type: string) => {
