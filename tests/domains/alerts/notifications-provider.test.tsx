@@ -8,6 +8,7 @@ import {
 import type { Notification } from '../../../lib/types';
 
 const fetchNotifications = vi.fn();
+const fetchUnreadNotificationCount = vi.fn();
 const markAllNotificationsAsRead = vi.fn();
 const markNotificationAsRead = vi.fn();
 const subscribeToNotifications = vi.fn();
@@ -15,6 +16,7 @@ const useAuth = vi.fn();
 
 vi.mock('../../../services/notificationService', () => ({
   fetchNotifications: () => fetchNotifications(),
+  fetchUnreadNotificationCount: () => fetchUnreadNotificationCount(),
   markAllNotificationsAsRead: () => markAllNotificationsAsRead(),
   markNotificationAsRead: (id: string) => markNotificationAsRead(id),
 }));
@@ -71,6 +73,7 @@ describe('NotificationsProvider', () => {
     vi.clearAllMocks();
     realtimeCb = () => {};
     useAuth.mockReturnValue({ user: { id: 'user-1' } });
+    fetchUnreadNotificationCount.mockResolvedValue(0);
     markAllNotificationsAsRead.mockResolvedValue(true);
     markNotificationAsRead.mockResolvedValue(true);
     subscribeToNotifications.mockImplementation((cb: (n: Notification) => void) => {
@@ -79,17 +82,44 @@ describe('NotificationsProvider', () => {
     });
   });
 
-  it('loads notifications and derives the unread count', async () => {
+  it('loads notifications and seeds the unread count from the server', async () => {
     fetchNotifications.mockResolvedValue([
       notif({ id: 'a', isRead: false }),
       notif({ id: 'b', isRead: true }),
     ]);
+    fetchUnreadNotificationCount.mockResolvedValue(1);
 
     renderProvider();
 
     await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
     expect(screen.getByTestId('count').textContent).toBe('2');
     expect(screen.getByTestId('unread').textContent).toBe('1');
+  });
+
+  it('counts unread rows that exist on the server but are not in the loaded list', async () => {
+    // One unread row loaded, but the server reports 3 unread total (2 beyond the page).
+    fetchNotifications.mockResolvedValue([notif({ id: 'a', isRead: false })]);
+    fetchUnreadNotificationCount.mockResolvedValue(3);
+
+    renderProvider();
+
+    await waitFor(() => expect(screen.getByTestId('loading').textContent).toBe('false'));
+    expect(screen.getByTestId('count').textContent).toBe('1');
+    // 1 loaded-unread + 2 beyond the loaded list.
+    expect(screen.getByTestId('unread').textContent).toBe('3');
+
+    // A live insert bumps only the loaded term; the server term is untouched.
+    await waitFor(() => expect(subscribeToNotifications).toHaveBeenCalled());
+    await act(async () => {
+      realtimeCb(notif({ id: 'z', isRead: false }));
+    });
+    expect(screen.getByTestId('unread').textContent).toBe('4');
+
+    // Mark-all clears both terms.
+    await act(async () => {
+      screen.getByText('mark all').click();
+    });
+    expect(screen.getByTestId('unread').textContent).toBe('0');
   });
 
   it('prepends realtime inserts and bumps the unread count, de-duping by id', async () => {
@@ -146,6 +176,7 @@ describe('NotificationsProvider', () => {
       notif({ id: 'a', isRead: false }),
       notif({ id: 'b', isRead: false }),
     ]);
+    fetchUnreadNotificationCount.mockResolvedValue(2);
 
     renderProvider();
     await waitFor(() => expect(screen.getByTestId('unread').textContent).toBe('2'));

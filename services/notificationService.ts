@@ -36,6 +36,35 @@ export async function fetchNotifications(): Promise<Notification[]> {
 }
 
 /**
+ * Count unread notifications for the current user.
+ *
+ * This is the authoritative source for the nav unread badge: a `COUNT` against the
+ * server rather than a tally of whatever the client happens to have loaded, so the
+ * badge stays correct even if the alerts list is ever paginated or capped.
+ */
+export async function fetchUnreadNotificationCount(): Promise<number> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return 0;
+  }
+
+  const { count, error } = await supabase
+    .from('notifications')
+    .select('*', { count: 'exact', head: true })
+    .eq('user_id', user.id)
+    .eq('is_read', false);
+
+  if (error) {
+    console.error('Error counting unread notifications:', error);
+    return 0;
+  }
+
+  return count ?? 0;
+}
+
+/**
  * Mark a notification as read
  */
 export async function markNotificationAsRead(notificationId: string): Promise<boolean> {
