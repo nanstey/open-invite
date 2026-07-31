@@ -1,8 +1,8 @@
 # CRAP tooling — Change Risk Anti-Patterns
 
-`automation/crap` scores individual functions by **CRAP** (Change Risk
-Anti-Patterns) so agents and humans can quickly see which code is risky to
-change and worth refactoring or covering with tests.
+The repo uses [`crap4ts`](https://www.npmjs.com/package/crap4ts) to score
+functions by **CRAP** (Change Risk Anti-Patterns), so agents and humans can see
+which code is risky to change and worth refactoring or covering with tests.
 
 ```
 CRAP(m) = comp(m)² · (1 − coverage(m))³ + comp(m)
@@ -11,103 +11,80 @@ CRAP(m) = comp(m)² · (1 − coverage(m))³ + comp(m)
 - `comp(m)` — cyclomatic complexity of function `m`.
 - `coverage(m)` — its test coverage as a fraction in `[0, 1]`.
 
-A function that is **both complex and under-tested** produces a high score.
-Two facts make the number intuitive:
+A function that is **both complex and under-tested** produces a high score. Two
+facts make the number intuitive:
 
 - At **100% coverage** the score is exactly `comp` — a well-tested function is
   never "crappy".
-- At **0% coverage** the score is `comp² + comp` — so any untested function
-  with complexity ≥ 6 crosses the conventional **threshold of 30**.
+- At **0% coverage** the score is `comp² + comp`, so complexity alone quickly
+  pushes an untested function over the threshold.
 
-## Why it's built this way
-
-- **Complexity** is computed directly from the TypeScript AST
-  (`lib/complexity.mjs`), independent of tests. That means it works on *any*
-  file — including source that no test ever imports, which is exactly the code
-  most likely to be dangerous. The counting rules match ESLint's built-in
-  `complexity` rule (+1 each for `if`, ternary, each `case`, `for`/`for-in`/
-  `for-of`, `while`, `do`, `catch`, and `&&` / `||` / `??`).
-- **Coverage** is read from the Istanbul-format `coverage/coverage-final.json`
-  emitted by Vitest's v8 provider (`lib/coverage.mjs`). Per-function coverage is
-  the fraction of statements inside the function's line range that executed at
-  least once. Files missing from the report are treated as 0% covered.
-
-Because complexity and coverage are matched per function by source location,
-the tool can be pointed at just the files an agent touched — no need to analyze
-the whole repo.
+Configuration lives in [`crap4ts.config.ts`](../../crap4ts.config.ts): source
+dirs (`domains`, `services`, `lib`, `pages`), the coverage file, a threshold of
+`16`, and `line` coverage.
 
 ## Usage
 
-```bash
-# Score specific files (coverage must already exist — see below)
-pnpm crap services/eventService.ts domains/events/utils
-
-# Regenerate coverage first, then score, and exit non-zero if anything is crappy
-pnpm crap -- --run-coverage --fail-over services
-
-# Machine-readable output for agents / CI
-pnpm crap -- --json services lib domains pages
-```
-
-`pnpm crap` forwards to `node automation/crap/crap.mjs`. When passing flags
-through `pnpm`, separate them with `--` as shown.
-
-### Coverage data
-
-The score needs coverage. Generate it once per run of the test suite:
+CRAP needs coverage data. Generate it from the test suite first:
 
 ```bash
-pnpm test:coverage      # writes coverage/coverage-final.json
+pnpm test:coverage        # writes coverage/coverage-final.json (vitest v8 provider)
 ```
 
-Then any number of `pnpm crap <files>` invocations reuse that report. Or pass
-`--run-coverage` to have the tool regenerate it first. Without a coverage file
-every function is scored as 0% covered (and the tool warns you).
+Then score:
 
-### Options
+```bash
+# Whole repo, per config
+pnpm crap
 
-| Flag | Description |
-| --- | --- |
-| `--coverage <path>` | Path to `coverage-final.json` (default `coverage/coverage-final.json`). |
-| `--run-coverage` | Run `pnpm test --coverage` before scoring. |
-| `--threshold <n>` | "Crappy" threshold (default `30`). |
-| `--all` | Show every function, not only those over the threshold. |
-| `--sort <crap\|complexity\|coverage>` | Sort order (default `crap`, descending). |
-| `--json` | Emit JSON instead of a table. |
-| `--fail-over [n]` | Exit `1` if any function's CRAP exceeds `n` (defaults to the threshold). |
-| `--no-color` | Disable ANSI colors. |
+# Only functions in files changed since the base branch — the agent workflow
+pnpm crap:changed                       # = crap4ts --changed-since origin/main
 
-Targets may be files, directories (scanned recursively for source files,
-skipping tests), or globs like `services/*.ts`.
+# Specific files an agent just touched (see note below on --src vs --include)
+pnpm crap --src . --include services/eventService.ts domains/events/**/*.ts
 
-### Reading the output
-
-```
-services/eventService.ts
-      CRAP    Cx    Cov%  Function
-     90.00     9      0%  forEach() callback (arrow @380) ⚠
+# Machine-readable output
+pnpm crap --format json --top 20
 ```
 
-`Cx` is complexity, `Cov%` is the function's coverage, and `⚠` marks scores
-over the threshold. In JSON mode each function also reports `coverageToPass`:
-the coverage percentage that would bring it under the threshold, or `null` when
-the complexity is so high that no amount of testing helps and the function must
-be simplified.
+Pass extra flags directly after `pnpm crap` — **do not** use a `--` separator
+(crap4ts rejects the bare `--` that pnpm would inject).
 
-## Suggested agent workflow
+> **Targeting specific files:** crap4ts's `--src` expects *directories* — a bare
+> file path matches nothing. To score individual files, root at `--src .` and
+> filter with `--include <path-or-glob...>`, or (preferred for agents) use
+> `--changed-since <ref>`, which resolves changed files for you.
 
-After modifying files, run the tool on just those files to check whether the
-change introduced (or sits on) a high-risk hotspot:
+### Suggested agent workflow
+
+After modifying files, regenerate coverage and score just the changed files:
 
 ```bash
 pnpm test:coverage
-pnpm crap -- --fail-over $(git diff --name-only --diff-filter=d HEAD | grep -E '\.(ts|tsx)$')
+pnpm crap:changed          # non-zero exit if anything is over threshold
 ```
 
-If a function is over threshold, either reduce its complexity (extract
-helpers, flatten branching) or add tests to cover it.
+If a function is over threshold, either reduce its complexity (extract helpers,
+flatten branching) or add tests to cover it. Use `crap4ts --breakdown` (JSON) to
+see which constructs contribute the complexity, and `--strict` (threshold 8) to
+tighten.
 
-## Tests
+### Useful flags
 
-Core logic (complexity counting, the CRAP formula, coverage parsing) is covered
-by `lib/crap.test.ts`, run as part of `pnpm test`.
+`crap4ts --help` lists them all. The most relevant:
+
+| Flag | Description |
+| --- | --- |
+| `--changed-since <ref>` / `--diff <ref>` | Only analyze files changed since a git ref. |
+| `--src <paths...>` | Override the configured source paths (files or dirs). |
+| `--threshold <n>` / `--strict` (8) / `--lenient` (30) | CRAP threshold. |
+| `--coverage-metric <line\|branch>` | Coverage basis. |
+| `--format <table\|json\|markdown>` | Output format. |
+| `--top <n>` | Show the N worst functions. |
+| `--breakdown [all\|exceeding]` | (JSON) show what contributes the complexity. |
+| `-q, --quiet` | Exit code only, no output — for CI/agent gating. |
+
+Note on granularity: `crap4ts` scores each **named function**, folding inline
+callbacks into their enclosing function. That is cleaner but can dilute a
+complex, uncovered callback into a better-covered parent — so a low score on a
+large function is not a guarantee every branch inside it is tested.
