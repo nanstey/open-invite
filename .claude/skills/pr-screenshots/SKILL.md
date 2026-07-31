@@ -6,8 +6,9 @@ description: >-
   for screenshots, visual evidence, a UI preview, or "show me what it looks like"
   on a PR, and a logged-in staging/prod session isn't available (no creds, auth
   wall, or blocked CDN). Renders the real components against the app's real theme
-  with mocked data, captures with the pre-installed Chromium, and embeds the
-  images in a PR comment.
+  with mocked data, captures with the pre-installed Chromium, and gets the images
+  onto the PR (committed + Files changed tab + links + user drag-drop; raw-URL
+  embeds are unreliable).
 ---
 
 # PR screenshots for Open Invite
@@ -47,9 +48,14 @@ requester can supply creds + a seeded test account.
   render is unstyled.
 - **`lib/supabase.ts` degrades to a dummy client** when env vars are missing, so
   importing app modules won't crash without credentials.
-- **Public repo** → `raw.githubusercontent.com` URLs render in PR comments. Pin to
-  a **commit SHA**, not the branch name (branches contain `/`, which is ambiguous
-  in raw URLs).
+- **Embedding images in a PR comment is the unreliable part — read §4 carefully.**
+  A `![](raw.githubusercontent.com/...)` embed often shows as a **broken icon**
+  even for a public repo (GitHub's image proxy / the GitHub mobile app frequently
+  fail to load raw URLs). Do NOT trust a local `curl … 200` as proof it will
+  render — curl here goes through this environment's **authenticated** GitHub
+  proxy, so it succeeds even when anonymous GitHub rendering would not. The only
+  method that reliably renders inline is a **drag-and-drop upload** (user-attachment),
+  which the API/MCP tools can't do. See §4 for what to do instead.
 - **`fuser -k <port>/tcp`** to stop the dev server. Do NOT `pkill -f
   "vite.screenshot"` — the pattern matches its own shell and kills the command.
 
@@ -155,20 +161,43 @@ PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers OUT="$SB" node shot.mjs
 Always `Read` the PNGs yourself to confirm they rendered styled/correct before
 publishing.
 
-## 4. Attach to the PR
+## 4. Get the screenshots onto the PR (reliably)
+
+⚠️ **Inline `![](raw.githubusercontent.com/...)` embeds are unreliable and were
+observed rendering as broken icons in a real PR (public repo, valid commit-SHA
+URL) — GitHub's image proxy and especially the GitHub mobile app fail to load
+them. A local `curl` returning `200 image/png` does NOT confirm they'll render;
+that request rides this environment's authenticated GitHub proxy.**
+
+Do this instead:
+
 1. Stop the server (`fuser -k 3999/tcp`) and **delete all scaffolding**
    (`rm -rf ._shot vite.screenshot.config.ts`). Confirm `git status` shows only
    the PNGs.
 2. Copy PNGs into the repo (e.g. `docs/screenshots/<feature>/`), commit, push.
-3. Verify the raw URLs before commenting:
-   ```bash
-   curl -sS -o /dev/null -w "%{http_code} %{content_type}\n" \
-     "https://raw.githubusercontent.com/<owner>/<repo>/<COMMIT_SHA>/docs/screenshots/<feature>/alerts-desktop.png"
+   They are now viewable in the PR's **Files changed** tab regardless of comment
+   rendering — that alone satisfies "screenshots are on the PR".
+3. **Deliver the PNGs to the user** (`SendUserFile`) and tell them to **drag-and-drop
+   them into the PR comment box** if they want guaranteed inline rendering — that
+   uploads to GitHub's user-attachments CDN, the only method that always renders.
+   (The API/MCP tools cannot upload user-attachments, so you cannot do this step
+   yourself.)
+4. Post a PR comment that **links** to the committed images (a Markdown link opens
+   the rendered image on github.com and works on web + mobile app) and points to
+   the Files changed tab — do not rely on an inline embed:
    ```
-4. Post a PR comment (issue comment on the PR number) embedding the SHA-pinned
-   raw URLs with `![alt](url)`. State plainly whether it's a live or
-   component-level capture, and offer to redo live if creds become available.
-   Offer to drop the binaries before merge if the team dislikes images in git.
+   - [Desktop](https://github.com/<owner>/<repo>/blob/<COMMIT_SHA>/docs/screenshots/<feature>/alerts-desktop.png)
+   - [Mobile](https://github.com/<owner>/<repo>/blob/<COMMIT_SHA>/docs/screenshots/<feature>/alerts-mobile.png)
+   ```
+   You may ALSO include a `![](raw…)` embed as a bonus, but never as the only
+   path, and never claim it renders without visual confirmation.
+5. State plainly whether it's a live or component-level capture. Offer to redo
+   live if creds become available, and to drop the binaries before merge if the
+   team dislikes images in git.
+
+**Verification reality:** you cannot confirm inline rendering from the sandbox
+(no anonymous fetch path). Either accept that "committed + Files changed tab +
+links" is sufficient, or ask the user to confirm the comment renders.
 
 ## Pitfalls checklist
 - [ ] Confirmed capture mode (live vs harness) and labeled it in the PR.
@@ -177,4 +206,7 @@ publishing.
 - [ ] Playwright installed OUTSIDE the repo; launched with explicit `executablePath`.
 - [ ] Read the PNGs to verify before pushing.
 - [ ] Harness scaffolding removed; only PNGs committed.
-- [ ] Raw URLs return `200 image/png`; pinned to a commit SHA, not the branch.
+- [ ] Images delivered so they're actually viewable: committed (Files changed tab)
+      + Markdown links in the comment + PNGs sent to the user for drag-drop. Did
+      NOT rely on a `![](raw…)` embed alone, and did NOT treat a local `curl 200`
+      as proof of rendering.
