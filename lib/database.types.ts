@@ -450,6 +450,62 @@ export type Database = {
         };
         Relationships: [];
       };
+      email_subscriptions: {
+        Row: {
+          subscribed: boolean;
+          topic: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          subscribed: boolean;
+          topic: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          subscribed?: boolean;
+          topic?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'email_subscriptions_topic_fkey';
+            columns: ['topic'];
+            isOneToOne: false;
+            referencedRelation: 'email_topics';
+            referencedColumns: ['topic'];
+          },
+        ];
+      };
+      email_topics: {
+        Row: {
+          created_at: string;
+          default_subscribed: boolean;
+          description: string | null;
+          digestible: boolean;
+          message_class: Database['public']['Enums']['email_message_class'];
+          topic: string;
+        };
+        Insert: {
+          created_at?: string;
+          default_subscribed: boolean;
+          description?: string | null;
+          digestible?: boolean;
+          message_class: Database['public']['Enums']['email_message_class'];
+          topic: string;
+        };
+        Update: {
+          created_at?: string;
+          default_subscribed?: boolean;
+          description?: string | null;
+          digestible?: boolean;
+          message_class?: Database['public']['Enums']['email_message_class'];
+          topic?: string;
+        };
+        Relationships: [];
+      };
       feature_flags: {
         Row: {
           description: string | null;
@@ -917,6 +973,9 @@ export type Database = {
       };
     };
     Enums: {
+      email_message_class: 'transactional' | 'marketing' | 'account';
+      email_status: 'pending' | 'sending' | 'sent' | 'failed' | 'dead' | 'skipped';
+      email_suppression_scope: 'all' | 'marketing';
       event_group: 'ALL_FRIENDS' | 'CLIMBERS' | 'FAMILY' | 'WORK';
       event_visibility_type: 'ALL_FRIENDS' | 'GROUPS' | 'INVITE_ONLY';
       feedback_importance: 'low' | 'medium' | 'high' | 'critical';

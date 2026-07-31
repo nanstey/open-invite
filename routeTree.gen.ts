@@ -16,6 +16,7 @@ import { Route as EventsRouteImport } from './pages/events'
 import { Route as AlertsRouteImport } from './pages/alerts'
 import { Route as AdminRouteImport } from './pages/admin'
 import { Route as IndexRouteImport } from './pages/index'
+import { Route as ProfileEmailRouteImport } from './pages/profile_.email'
 import { Route as EventsSlugRouteImport } from './pages/events.$slug'
 import { Route as ESlugRouteImport } from './pages/e.$slug'
 import { Route as AuthCallbackRouteImport } from './pages/auth.callback'
@@ -57,6 +58,11 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProfileEmailRoute = ProfileEmailRouteImport.update({
+  id: '/profile_/email',
+  path: '/profile/email',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EventsSlugRoute = EventsSlugRouteImport.update({
   id: '/$slug',
   path: '/$slug',
@@ -96,6 +102,7 @@ export interface FileRoutesByFullPath {
   '/auth/callback': typeof AuthCallbackRoute
   '/e/$slug': typeof ESlugRoute
   '/events/$slug': typeof EventsSlugRoute
+  '/profile/email': typeof ProfileEmailRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -110,6 +117,7 @@ export interface FileRoutesByTo {
   '/auth/callback': typeof AuthCallbackRoute
   '/e/$slug': typeof ESlugRoute
   '/events/$slug': typeof EventsSlugRoute
+  '/profile/email': typeof ProfileEmailRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -125,6 +133,7 @@ export interface FileRoutesById {
   '/auth/callback': typeof AuthCallbackRoute
   '/e/$slug': typeof ESlugRoute
   '/events/$slug': typeof EventsSlugRoute
+  '/profile_/email': typeof ProfileEmailRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -141,6 +150,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/e/$slug'
     | '/events/$slug'
+    | '/profile/email'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -155,6 +165,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/e/$slug'
     | '/events/$slug'
+    | '/profile/email'
   id:
     | '__root__'
     | '/'
@@ -169,6 +180,7 @@ export interface FileRouteTypes {
     | '/auth/callback'
     | '/e/$slug'
     | '/events/$slug'
+    | '/profile_/email'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -181,6 +193,7 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   AuthCallbackRoute: typeof AuthCallbackRoute
   ESlugRoute: typeof ESlugRoute
+  ProfileEmailRoute: typeof ProfileEmailRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/profile_/email': {
+      id: '/profile_/email'
+      path: '/profile/email'
+      fullPath: '/profile/email'
+      preLoaderRoute: typeof ProfileEmailRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/events/$slug': {
@@ -305,6 +325,7 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   AuthCallbackRoute: AuthCallbackRoute,
   ESlugRoute: ESlugRoute,
+  ProfileEmailRoute: ProfileEmailRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -38,7 +38,12 @@ describe('feature flags', () => {
         { key: 'groups', enabled: true },
         { key: 'sendInvites', enabled: true },
       ])
-    ).toEqual({ groups: true, sendInvites: true });
+    ).toEqual({
+      groups: true,
+      sendInvites: true,
+      emailDelivery: false,
+      emailNotifications: false,
+    });
   });
 
   it('falls back to defaults when the flag query fails', async () => {

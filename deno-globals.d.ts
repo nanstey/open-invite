@@ -1,4 +1,4 @@
-export {}
+export {};
 
 declare global {
   /**
@@ -8,15 +8,8 @@ declare global {
    */
   const Deno: {
     env: {
-      get(key: string): string | undefined
-    }
-  }
+      get(key: string): string | undefined;
+    };
+    serve(handler: (request: Request) => Response | Promise<Response>): unknown;
+  };
 }
-
-
-
-
-
-
-
-

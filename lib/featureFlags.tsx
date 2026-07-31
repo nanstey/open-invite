@@ -4,7 +4,12 @@ import * as React from 'react';
 import type { Database } from './database.types';
 import { supabase } from './supabase';
 
-export const FEATURE_FLAG_KEYS = ['groups', 'sendInvites'] as const;
+export const FEATURE_FLAG_KEYS = [
+  'groups',
+  'sendInvites',
+  'emailDelivery',
+  'emailNotifications',
+] as const;
 
 export type FeatureFlagKey = (typeof FEATURE_FLAG_KEYS)[number];
 export type FeatureFlags = Record<FeatureFlagKey, boolean>;
@@ -12,6 +17,8 @@ export type FeatureFlags = Record<FeatureFlagKey, boolean>;
 export const DEFAULT_FEATURE_FLAGS: FeatureFlags = {
   groups: false,
   sendInvites: false,
+  emailDelivery: false,
+  emailNotifications: false,
 };
 
 type FeatureFlagRow = Pick<Database['public']['Tables']['feature_flags']['Row'], 'enabled' | 'key'>;

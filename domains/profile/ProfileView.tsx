@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import type React from 'react';
 import { useEffect, useState } from 'react';
+import { useFeatureFlag } from '../../lib/featureFlags';
 import { supabase } from '../../lib/supabase';
 import type { User } from '../../lib/types';
 import { ComingSoonPopover, useComingSoonPopover } from '../../lib/ui/components/ComingSoonPopover';
@@ -28,6 +29,7 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
   const auth = useAuth();
   const navigate = useNavigate();
   const comingSoon = useComingSoonPopover();
+  const emailNotificationsEnabled = useFeatureFlag('emailNotifications');
   const [hostedCount, setHostedCount] = useState(0);
   const [attendedCount, setAttendedCount] = useState(0);
   const [friendsCount, setFriendsCount] = useState(0);
@@ -155,22 +157,41 @@ export const ProfileView: React.FC<ProfileViewProps> = ({ currentUser }) => {
         <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider px-1">Settings</h3>
 
         <div className="bg-surface rounded-xl border border-slate-700 overflow-hidden divide-y divide-slate-700/50">
-          <button
-            type="button"
-            onClick={e => comingSoon.show(e, 'Coming Soon!')}
-            className="w-full flex items-center justify-between p-4 transition-colors opacity-60 cursor-not-allowed"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-blue-500/10 rounded-lg text-slate-400">
-                <BellRing className="w-5 h-5" />
+          {emailNotificationsEnabled ? (
+            <button
+              type="button"
+              onClick={() => navigate({ to: '/profile/email' })}
+              className="w-full flex items-center justify-between p-4 transition-colors hover:bg-slate-800/50"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/10 rounded-lg text-blue-400">
+                  <BellRing className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <div className="text-sm font-bold text-slate-300">Email</div>
+                  <div className="text-xs text-slate-500">Manage email notifications</div>
+                </div>
               </div>
-              <div className="text-left">
-                <div className="text-sm font-bold text-slate-300">Notifications</div>
-                <div className="text-xs text-slate-500">Manage push & email alerts</div>
+              <ChevronRight className="w-5 h-5 text-slate-600" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={e => comingSoon.show(e, 'Coming Soon!')}
+              className="w-full flex items-center justify-between p-4 transition-colors opacity-60 cursor-not-allowed"
+            >
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/10 rounded-lg text-slate-400">
+                  <BellRing className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <div className="text-sm font-bold text-slate-300">Notifications</div>
+                  <div className="text-xs text-slate-500">Manage push & email alerts</div>
+                </div>
               </div>
-            </div>
-            <ChevronRight className="w-5 h-5 text-slate-600" />
-          </button>
+              <ChevronRight className="w-5 h-5 text-slate-600" />
+            </button>
+          )}
 
           <button
             type="button"
