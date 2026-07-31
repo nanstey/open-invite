@@ -20,6 +20,9 @@ export function useHeaderImageUpload(args: {
       setError(null);
       setIsUploading(true);
       try {
+        // Each upload writes a fresh object; replacing/abandoning a banner
+        // leaves the prior object behind. Reclaiming orphans is handled by the
+        // cleanup job (PRD M3), not here.
         const path = buildEventBannerPath(eventId);
         const { publicUrl } = await uploadImage(EVENT_BANNER_BUCKET, path, file);
         onUploaded(publicUrl);

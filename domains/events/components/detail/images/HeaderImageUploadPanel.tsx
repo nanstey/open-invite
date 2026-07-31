@@ -32,6 +32,7 @@ export function HeaderImageUploadPanel(props: HeaderImageUploadPanelProps) {
         ref={inputRef}
         type="file"
         accept={ACCEPT}
+        aria-label="Upload banner image from device"
         className="sr-only"
         onChange={handleFileChange}
         disabled={isUploading}
