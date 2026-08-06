@@ -481,32 +481,36 @@ export async function fetchEventBySlug(slug: string): Promise<SocialEvent | null
   return fetchEventById(id);
 }
 
-/**
- * Create a new event
- */
-export async function createEvent(
-  eventData: Omit<SocialEvent, 'id' | 'slug' | 'hostId' | 'attendees' | 'comments' | 'reactions'>
-): Promise<SocialEvent | null> {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    throw new Error('User must be authenticated to create events');
-  }
+type EventInsert = Database['public']['Tables']['events']['Insert'];
 
-  type EventInsert = Database['public']['Tables']['events']['Insert'];
+type CreateEventInput = Omit<
+  SocialEvent,
+  'id' | 'slug' | 'hostId' | 'attendees' | 'comments' | 'reactions'
+>;
 
-  const slug =
-    eventData.title
+function slugifyTitle(title: string): string {
+  return (
+    title
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
-      .substring(0, 100) || 'event';
+      .substring(0, 100) || 'event'
+  );
+}
 
-  const insertData: EventInsert = {
-    slug,
-    // slug will be generated separately
-    host_id: user.id,
+function resolvePublishedAt(publishedAt: CreateEventInput['publishedAt']): string | null {
+  if (publishedAt === null) return null;
+  return publishedAt ?? new Date().toISOString();
+}
+
+/**
+ * Build the events-table insert payload from create input, applying the column
+ * naming and default/fallback rules in one place.
+ */
+function buildEventInsertData(eventData: CreateEventInput, hostId: string): EventInsert {
+  return {
+    slug: slugifyTitle(eventData.title),
+    host_id: hostId,
     title: eventData.title,
     description: eventData.description,
     activity_type: eventData.activityType,
@@ -526,9 +530,22 @@ export async function createEvent(
     itinerary_attendance_enabled: eventData.itineraryAttendanceEnabled ?? false,
     no_phones: eventData.noPhones,
     itinerary_time_display: eventData.itineraryTimeDisplay,
-    published_at:
-      eventData.publishedAt === null ? null : (eventData.publishedAt ?? new Date().toISOString()),
+    published_at: resolvePublishedAt(eventData.publishedAt),
   };
+}
+
+/**
+ * Create a new event
+ */
+export async function createEvent(eventData: CreateEventInput): Promise<SocialEvent | null> {
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    throw new Error('User must be authenticated to create events');
+  }
+
+  const insertData = buildEventInsertData(eventData, user.id);
 
   const result = await supabase
     .from('events')
@@ -633,6 +650,34 @@ export async function createDraftEvent(input: {
 }
 
 /**
+ * Maps SocialEvent fields to their corresponding events-table columns so
+ * updateEvent can build its patch declaratively instead of via a long chain
+ * of `if (updates.x !== undefined)` branches.
+ */
+const EVENT_UPDATE_COLUMN_BY_FIELD: Partial<Record<keyof SocialEvent, string>> = {
+  title: 'title',
+  description: 'description',
+  activityType: 'activity_type',
+  headerImageUrl: 'header_image_url',
+  headerImagePositionY: 'header_image_position_y',
+  location: 'location',
+  coordinates: 'coordinates',
+  locationData: 'location_data',
+  startTime: 'start_time',
+  endTime: 'end_time',
+  isAllDay: 'is_all_day',
+  isFlexibleStart: 'is_flexible_start',
+  isFlexibleEnd: 'is_flexible_end',
+  visibilityType: 'visibility_type',
+  allowFriendInvites: 'allow_friend_invites',
+  maxSeats: 'max_seats',
+  itineraryAttendanceEnabled: 'itinerary_attendance_enabled',
+  noPhones: 'no_phones',
+  itineraryTimeDisplay: 'itinerary_time_display',
+  publishedAt: 'published_at',
+};
+
+/**
  * Update an existing event
  */
 export async function updateEvent(
@@ -641,30 +686,12 @@ export async function updateEvent(
 ): Promise<SocialEvent | null> {
   const updateData: any = {};
 
-  if (updates.title !== undefined) updateData.title = updates.title;
-  if (updates.description !== undefined) updateData.description = updates.description;
-  if (updates.activityType !== undefined) updateData.activity_type = updates.activityType;
-  if (updates.headerImageUrl !== undefined) updateData.header_image_url = updates.headerImageUrl;
-  if (updates.headerImagePositionY !== undefined)
-    updateData.header_image_position_y = updates.headerImagePositionY;
-  if (updates.location !== undefined) updateData.location = updates.location;
-  if (updates.coordinates !== undefined) updateData.coordinates = updates.coordinates;
-  if (updates.locationData !== undefined) updateData.location_data = updates.locationData;
-  if (updates.startTime !== undefined) updateData.start_time = updates.startTime;
-  if (updates.endTime !== undefined) updateData.end_time = updates.endTime;
-  if (updates.isAllDay !== undefined) updateData.is_all_day = updates.isAllDay;
-  if (updates.isFlexibleStart !== undefined) updateData.is_flexible_start = updates.isFlexibleStart;
-  if (updates.isFlexibleEnd !== undefined) updateData.is_flexible_end = updates.isFlexibleEnd;
-  if (updates.visibilityType !== undefined) updateData.visibility_type = updates.visibilityType;
-  if (updates.allowFriendInvites !== undefined)
-    updateData.allow_friend_invites = updates.allowFriendInvites;
-  if (updates.maxSeats !== undefined) updateData.max_seats = updates.maxSeats;
-  if (updates.itineraryAttendanceEnabled !== undefined)
-    updateData.itinerary_attendance_enabled = updates.itineraryAttendanceEnabled;
-  if (updates.noPhones !== undefined) updateData.no_phones = updates.noPhones;
-  if (updates.itineraryTimeDisplay !== undefined)
-    updateData.itinerary_time_display = updates.itineraryTimeDisplay;
-  if (updates.publishedAt !== undefined) updateData.published_at = updates.publishedAt;
+  for (const [field, column] of Object.entries(EVENT_UPDATE_COLUMN_BY_FIELD)) {
+    const value = updates[field as keyof SocialEvent];
+    if (value !== undefined) {
+      updateData[column] = value;
+    }
+  }
 
   // type EventUpdate = Database['public']['Tables']['events']['Update']; // unused
   const result = await supabase
