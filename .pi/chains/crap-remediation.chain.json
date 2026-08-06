@@ -1,0 +1,66 @@
+{
+  "name": "crap-remediation",
+  "description": "Select one CRAP hotspot, improve it in a single branch, review it, then open a PR.",
+  "chain": [
+    {
+      "agent": "scout",
+      "phase": "Targeting",
+      "label": "Generate one target",
+      "as": "target",
+      "task": "Run `pnpm crap:backlog {task}`. Read `artifacts/crap/next-target.json` and inspect the selected source file plus its nearest tests. Confirm the worktree is a clean, dedicated non-main branch. Select exactly one file; if no target exists or the branch/worktree is unsuitable, stop and report why. Do not modify project/source files. Return the target, affected functions, likely tests, baseline CRAP evidence, and any protected-area risk."
+    },
+    {
+      "agent": "planner",
+      "phase": "Planning",
+      "label": "Plan one-file improvement",
+      "as": "plan",
+      "task": "Using this target report: {outputs.target}\n\nCreate a minimal behavior-preserving plan for exactly one selected file. Choose targeted tests, small extraction/simplification, or both. Include explicit stop conditions for unclear behavior, cross-domain scope, auth/billing/migration risk, and any change requiring product approval. Do not modify project/source files."
+    },
+    {
+      "agent": "worker",
+      "phase": "Implementation",
+      "label": "Improve one target",
+      "as": "implementation",
+      "task": "Implement only the approved one-file plan below. You are the sole writer. Preserve behavior; add or update targeted tests when behavior is exercised. Do not commit, push, or open a PR yet. Run focused tests and `pnpm test:coverage`, then score only the target with `pnpm crap --src . --include <target-path>`. Stop and report instead of expanding scope if the plan's stop conditions occur.\n\nPlan:\n{outputs.plan}"
+    },
+    {
+      "parallel": [
+        {
+          "agent": "reviewer",
+          "phase": "Review",
+          "label": "Correctness review",
+          "as": "correctnessReview",
+          "task": "Review the current diff from a fresh perspective for behavior regressions and edge cases in the selected CRAP target. Inspect relevant callers and tests. Report only evidence-backed blocking findings with file/line references. Do not modify project/source files.\n\nImplementation report:\n{outputs.implementation}"
+        },
+        {
+          "agent": "reviewer",
+          "phase": "Review",
+          "label": "Test and metric review",
+          "as": "metricReview",
+          "task": "Review the current diff and CRAP evidence. Confirm tests exercise meaningful behavior rather than implementation details, the selected file improved or has an explicit justified exception, and no score was hidden by weakening coverage. Report only evidence-backed blocking findings with file/line references. Do not modify project/source files.\n\nImplementation report:\n{outputs.implementation}"
+        },
+        {
+          "agent": "reviewer",
+          "phase": "Review",
+          "label": "Scope review",
+          "as": "scopeReview",
+          "task": "Review the current diff for maintainability and scope discipline. Confirm it remains one target file/cohesive tests, uses no speculative abstraction, and is safe to review as one PR. Report only evidence-backed blocking findings with file/line references. Do not modify project/source files.\n\nImplementation report:\n{outputs.implementation}"
+        }
+      ],
+      "concurrency": 3
+    },
+    {
+      "agent": "worker",
+      "phase": "Finalization",
+      "label": "Fix and validate",
+      "as": "validation",
+      "task": "You are the sole writer. Triage the three reviews below and apply only valid blocking fixes. Then validate: `pnpm lint`, `pnpm types`, relevant tests, `pnpm test:coverage`, and `pnpm crap --src . --include <target-path>`. Also run `pnpm build` unless the target is an explicitly documented infrastructure-only exception. Do not commit, push, or open a PR if any required validation fails, the target score did not improve, or scope has expanded beyond the selected file/cohesive tests.\n\nCorrectness review:\n{outputs.correctnessReview}\n\nMetric review:\n{outputs.metricReview}\n\nScope review:\n{outputs.scopeReview}"
+    },
+    {
+      "agent": "worker",
+      "phase": "Delivery",
+      "label": "Commit and open PR",
+      "task": "Use the final validation report below. Only if every required check passed, the working branch is dedicated and not main, and `NO_COMMIT_MODE`, `PAUSE_AUTONOMY`, and `REVIEW_ONLY_MODE` are not set: inspect `git diff`, create one scoped commit, push the current branch, and open a GitHub PR with `gh pr create`. The PR body must include target file, before/after CRAP score, test changes, validation commands, reviewer findings addressed, and deferred risks. Never merge. If any condition is not met, do not mutate git/GitHub; report the blocker.\n\nValidation report:\n{outputs.validation}"
+    }
+  ]
+}

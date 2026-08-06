@@ -19,8 +19,10 @@ It is intentionally non-automator-specific.
 - Type-check: `pnpm run types`
 - Lint: `pnpm run lint`
 - Tests: `pnpm test -- --run`
+- Coverage: `pnpm run test:coverage`
 - Build: `pnpm run build`
 - Full local validation chain: `pnpm run ai-workflow:validate-local`
+- CRAP (refactor-risk) on changed files: `pnpm run test:coverage && pnpm run crap:changed` — flags complex, under-tested functions. See `automation/crap/README.md`.
 
 ## 3) Organization rules
 - Keep domain logic near its owning domain.
