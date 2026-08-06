@@ -16,6 +16,7 @@ node_modules
 dist
 dist-ssr
 coverage
+artifacts/crap/
 *.local
 
 # Editor directories and files

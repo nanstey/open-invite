@@ -12,6 +12,7 @@
     "test:coverage": "vitest run --coverage",
     "crap": "crap4ts --coverage coverage/coverage-final.json",
     "crap:changed": "crap4ts --coverage coverage/coverage-final.json --changed-since origin/main",
+    "crap:backlog": "node automation/crap/generate-backlog.mjs",
     "supabase:start": "supabase start --exclude vector --ignore-health-check",
     "supabase:stop": "supabase stop",
     "supabase:reset": "supabase db reset",

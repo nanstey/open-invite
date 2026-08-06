@@ -55,6 +55,37 @@ Pass extra flags directly after `pnpm crap` — **do not** use a `--` separator
 > filter with `--include <path-or-glob...>`, or (preferred for agents) use
 > `--changed-since <ref>`, which resolves changed files for you.
 
+### Semi-automated remediation loop
+
+Generate a fresh, ranked backlog and select one file for a remediation PR:
+
+```bash
+pnpm crap:backlog
+# Restrict the selection to one file or folder when needed.
+pnpm crap:backlog --target services/eventService.ts
+pnpm crap:backlog --target domains/events
+```
+
+This refreshes coverage, runs `crap4ts`, and writes ignored artifacts to
+`artifacts/crap/`:
+
+- `backlog.json` / `backlog.md` — every file with a function above threshold.
+- `next-target.json` / `next-target.md` — exactly one highest-risk file for the
+  next PR.
+
+From a clean, dedicated branch or worktree, run the checked-in Pi chain:
+
+```text
+/run-chain crap-remediation
+# or, to constrain its first target:
+/run-chain crap-remediation --target services/eventService.ts
+```
+
+The chain selects one file, plans and implements a narrow improvement, obtains
+parallel correctness/metric/scope reviews, applies only accepted blocking fixes,
+and opens a PR only after validation passes. It never merges. Do not run it from
+`main`, a dirty worktree, or a branch that contains unrelated work.
+
 ### Suggested agent workflow
 
 After modifying files, regenerate coverage and score just the changed files:
